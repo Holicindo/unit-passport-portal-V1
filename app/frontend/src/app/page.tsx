@@ -1,5 +1,4 @@
 import { mockUnit } from '@/lib/mock-data';
-import SpecCard from '@/components/SpecCard';
 import DocumentLibrary from '@/components/DocumentLibrary';
 import ServiceHistory from '@/components/ServiceHistory';
 import styles from './page.module.css';
@@ -9,14 +8,14 @@ export default function UnitDetailPage() {
 
   return (
     <main className={styles.container}>
-      <h1 className={styles.pageTitle}>Unit Detail</h1>
+      <h1 className={styles.pageTitle}>Detail Unit</h1>
 
       <section className={styles.unitCard}>
         <div className={styles.cardHeader}>
           <div className={styles.titleInfo}>
             <div className={styles.mainId}>
               <h2 className={styles.serialNumber}>{unit.serial_number}</h2>
-              <span className={styles.authorizedBadge}>AUTHORIZED BOGA GROUP ASSET</span>
+              <span className={styles.authorizedBadge}>ASET RESMI BOGA GROUP</span>
             </div>
             <p className={styles.modelSubtitle}>({unit.model_name})</p>
           </div>
@@ -25,30 +24,29 @@ export default function UnitDetailPage() {
         <div className={styles.cardContent}>
           <div className={styles.specsSide}>
             <div className={styles.inlineSpec}>
-              <span className={styles.specLabel}>Compressor:</span>
+              <span className={styles.specLabel}>Kompresor:</span>
               <span className={styles.specValue}>{unit.compressor}</span>
             </div>
             <div className={styles.inlineSpec}>
-              <span className={styles.specLabel}>Refrigerant:</span>
+              <span className={styles.specLabel}>Refrigeran:</span>
               <span className={styles.specValue}>{unit.refrigerant}</span>
             </div>
             <div className={styles.inlineSpec}>
-              <span className={styles.specLabel}>Location:</span>
+              <span className={styles.specLabel}>Lokasi:</span>
               <span className={styles.specValue}>{unit.outlet_name}</span>
             </div>
 
             <div className={styles.actionButtons}>
-              <button className={styles.btnDownload}>DOWNLOAD MANUAL</button>
-              <button className={styles.btnEmergency}>EMERGENCY SERVICE REQUEST</button>
+              <button className={styles.btnDownload}>UNDUH MANUAL</button>
+              <button className={styles.btnEmergency}>PERMINTAAN SERVIS DARURAT</button>
             </div>
           </div>
 
           <div className={styles.imageSide}>
             <div className={styles.productFrame}>
-              {/* Placeholder image matching the one in Gambar 2 */}
-              <img 
-                src="https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=80&w=800&auto=format&fit=crop" 
-                alt={unit.model_name} 
+              <img
+                src="https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=80&w=800&auto=format&fit=crop"
+                alt={unit.model_name}
               />
             </div>
             <div className={styles.pagination}>

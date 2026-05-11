@@ -1,4 +1,5 @@
 import styles from './ServiceHistory.module.css';
+import { Wrench, CheckCircle } from 'lucide-react';
 import type { ServiceLog } from '@/lib/mock-data';
 
 interface ServiceHistoryProps {
@@ -9,15 +10,15 @@ export default function ServiceHistory({ logs }: ServiceHistoryProps) {
   if (logs.length === 0) {
     return (
       <div className={styles.card}>
-        <h2 className={styles.title}>Service History</h2>
-        <p className={styles.empty}>No service records found for this unit.</p>
+        <h2 className={styles.title}>Riwayat Servis</h2>
+        <p className={styles.empty}>Belum ada catatan servis untuk unit ini.</p>
       </div>
     );
   }
 
   return (
     <div className={styles.card}>
-      <h2 className={styles.title}>Verified Service History</h2>
+      <h2 className={styles.title}>Riwayat Servis Terverifikasi</h2>
       <div className={styles.timeline}>
         {logs.map((log, index) => (
           <div key={log.id} className={styles.entry}>
@@ -31,13 +32,14 @@ export default function ServiceHistory({ logs }: ServiceHistoryProps) {
                 <span className={styles.logDate}>{log.date}</span>
               </div>
               <div className={styles.logMeta}>
-                <span>🔧 {log.technician}</span>
+                <Wrench size={12} />
+                <span>{log.technician}</span>
                 <span>·</span>
                 <span>{log.partner}</span>
               </div>
               <p className={styles.logNotes}>{log.notes}</p>
               <span className={styles.logStatus} data-status={log.status}>
-                ✓ {log.status}
+                <CheckCircle size={12} /> {log.status === 'Completed' ? 'Selesai' : log.status}
               </span>
             </div>
           </div>
