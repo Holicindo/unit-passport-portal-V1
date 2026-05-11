@@ -1,0 +1,97 @@
+.topBar {
+  height: 70px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 30px;
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  border-bottom: 1px solid #EAEAEA;
+}
+
+.searchBox {
+  display: flex;
+  align-items: center;
+  background: #F5F5F5;
+  border-radius: 8px;
+  padding: 8px 16px;
+  width: 400px;
+  gap: 12px;
+}
+
+.searchIcon {
+  font-size: 16px;
+  opacity: 0.4;
+}
+
+.searchInput {
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  width: 100%;
+  color: var(--color-deep-navy);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.actionBtn {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  position: relative;
+  opacity: 0.7;
+}
+
+.badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #FF4D4F;
+  color: white;
+  font-size: 10px;
+  padding: 2px 5px;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+.userProfile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-left: 20px;
+  border-left: 1px solid #EAEAEA;
+  cursor: pointer;
+}
+
+.avatar {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #EEE;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.userName {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-deep-navy);
+}
+
+.userArrow {
+  font-size: 12px;
+  opacity: 0.4;
+}

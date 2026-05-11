@@ -1,0 +1,101 @@
+.sidebar {
+  width: 260px;
+  background: #5D5E61; /* Space Grey dari Gambar 2 */
+  height: 100vh;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 100;
+}
+
+@media (max-width: 1024px) {
+  .sidebar {
+    display: none; /* Sembunyi di mobile, nanti pakai hamburger */
+  }
+}
+
+.logoSection {
+  padding: 30px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logoIcon {
+  font-size: 24px;
+  color: white;
+}
+
+.logoText {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  font-size: 18px;
+}
+
+.nav {
+  flex: 1;
+  padding: 0 12px;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+  letter-spacing: 0.05em;
+}
+
+.menuItem:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.active {
+  color: white;
+}
+
+.icon {
+  font-size: 18px;
+  width: 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.arrow {
+  margin-left: auto;
+  font-size: 12px;
+  opacity: 0.5;
+}
+
+.subItems {
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+.subItem {
+  padding: 10px 12px 10px 48px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.subItem:hover {
+  color: white;
+}
+
+.subActive {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+  border-left: 3px solid #00C4CC; /* Teal accent dari Gambar 2 */
+}

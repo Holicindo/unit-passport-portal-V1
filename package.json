@@ -1,0 +1,12 @@
+{
+  "name": "holicindo-unit-passport-portal",
+  "version": "1.0.0",
+  "scripts": {
+    "dev:backend": "cd app/backend && npm run start:dev",
+    "dev:frontend": "cd app/frontend && npm run dev",
+    "dev": "npx concurrently \"npm run dev:backend\" \"npm run dev:frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

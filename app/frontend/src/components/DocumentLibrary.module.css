@@ -1,0 +1,94 @@
+.card {
+  background: var(--color-optic-white);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  box-shadow: var(--shadow-card);
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-space-grey);
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-light-tech-grey);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.docItem {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border-radius: var(--radius-sm);
+  background: var(--color-light-tech-grey);
+  border: 1.5px solid transparent;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.docItem:hover {
+  border-color: var(--accent, var(--color-cobalt-blue));
+  background: rgba(46, 91, 255, 0.04);
+  transform: translateX(3px);
+}
+
+.docIcon {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  border: 1px solid rgba(0,0,0,0.06);
+}
+
+.docInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.docType {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent, var(--color-cobalt-blue));
+  font-family: var(--font-body);
+}
+
+.docLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-deep-navy);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.docArrow {
+  font-size: 16px;
+  color: var(--color-space-grey);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.docItem:hover .docArrow {
+  transform: translateX(3px);
+  color: var(--accent, var(--color-cobalt-blue));
+}
