@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, CreateDateColumn } from 'typeorm';
-import { Unit } from './unit.entity';
-import { Partner } from './partner.entity';
+import { Unit } from '../../units/entities/unit.entity';
+import { Partner } from '../../partners/entities/partner.entity';
 import { ServiceLogAttachment } from './service-log-attachment.entity';
 
 @Entity('service_logs')

@@ -1,9 +1,9 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Unit } from '../entities/unit.entity';
-import { OwnershipHistory } from '../entities/ownership-history.entity';
-import { Client } from '../entities/client.entity';
+import { Unit } from './entities/unit.entity';
+import { OwnershipHistory } from '../ownership/entities/ownership-history.entity';
+import { Client } from '../clients/entities/client.entity';
 
 @Injectable()
 export class UnitsService {

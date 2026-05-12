@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn } from 'typeorm';
-import { ServiceLog } from './service-log.entity';
+import { ServiceLog } from '../../service-logs/entities/service-log.entity';
 
 @Entity('partners')
 export class Partner {

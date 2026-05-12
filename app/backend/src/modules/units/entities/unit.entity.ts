@@ -1,8 +1,8 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, CreateDateColumn, UpdateDateColumn, Index } from 'typeorm';
-import { Client } from './client.entity';
-import { ServiceLog } from './service-log.entity';
-import { Warranty } from './warranty.entity';
-import { OwnershipHistory } from './ownership-history.entity';
+import { Client } from '../../clients/entities/client.entity';
+import { ServiceLog } from '../../service-logs/entities/service-log.entity';
+import { Warranty } from '../../warranties/entities/warranty.entity';
+import { OwnershipHistory } from '../../ownership/entities/ownership-history.entity';
 
 @Entity('units')
 export class Unit {

@@ -3,43 +3,51 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { Client } from './entities/client.entity';
-import { Unit } from './entities/unit.entity';
-import { Warranty } from './entities/warranty.entity';
-import { Partner } from './entities/partner.entity';
-import { ServiceLog } from './entities/service-log.entity';
-import { ServiceLogAttachment } from './entities/service-log-attachment.entity';
-import { OwnershipHistory } from './entities/ownership-history.entity';
-import { UnitsModule } from './units/units.module';
+import { Client } from './modules/clients/entities/client.entity';
+import { Unit } from './modules/units/entities/unit.entity';
+import { Warranty } from './modules/warranties/entities/warranty.entity';
+import { Partner } from './modules/partners/entities/partner.entity';
+import { ServiceLog } from './modules/service-logs/entities/service-log.entity';
+import { ServiceLogAttachment } from './modules/service-logs/entities/service-log-attachment.entity';
+import { OwnershipHistory } from './modules/ownership/entities/ownership-history.entity';
+import { UnitsModule } from './modules/units/units.module';
+import { ClientsModule } from './modules/clients/clients.module';
+import { PartnersModule } from './modules/partners/partners.module';
+import { WarrantiesModule } from './modules/warranties/warranties.module';
+import { ServiceLogsModule } from './modules/service-logs/service-logs.module';
+import { OwnershipModule } from './modules/ownership/ownership.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
+    ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
+      useFactory: (config: ConfigService) => ({
         type: 'postgres',
-        host: configService.get<string>('DB_HOST'),
-        port: configService.get<number>('DB_PORT'),
-        username: configService.get<string>('DB_USER'),
-        password: configService.get<string>('DB_PASS'),
-        database: configService.get<string>('DB_NAME'),
+        host: config.get<string>('DB_HOST'),
+        port: config.get<number>('DB_PORT'),
+        username: config.get<string>('DB_USER'),
+        password: config.get<string>('DB_PASS'),
+        database: config.get<string>('DB_NAME'),
+        ssl: config.get<string>('DB_SSL') === 'true'
+          ? { rejectUnauthorized: false }
+          : false,
         entities: [
-          Client,
-          Unit,
-          Warranty,
-          Partner,
-          ServiceLog,
-          ServiceLogAttachment,
-          OwnershipHistory,
+          Client, Unit, Warranty, Partner,
+          ServiceLog, ServiceLogAttachment, OwnershipHistory,
         ],
-        synchronize: true, // Set to false in production
+        synchronize: true,
+        logging: false,
       }),
     }),
+
     UnitsModule,
+    ClientsModule,
+    PartnersModule,
+    WarrantiesModule,
+    ServiceLogsModule,
+    OwnershipModule,
   ],
   controllers: [AppController],
   providers: [AppService],

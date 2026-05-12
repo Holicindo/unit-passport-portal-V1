@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn } from 'typeorm';
-import { Unit } from './unit.entity';
-import { Client } from './client.entity';
+import { Unit } from '../../units/entities/unit.entity';
+import { Client } from '../../clients/entities/client.entity';
 
 @Entity('ownership_history')
 export class OwnershipHistory {

@@ -1,6 +1,6 @@
 import { mockUnit } from '@/lib/mock-data';
-import DocumentLibrary from '@/components/DocumentLibrary';
-import ServiceHistory from '@/components/ServiceHistory';
+import DocumentLibrary from '@/components/passport/DocumentLibrary';
+import ServiceHistory from '@/components/passport/ServiceHistory';
 import styles from './page.module.css';
 
 export default function UnitDetailPage() {

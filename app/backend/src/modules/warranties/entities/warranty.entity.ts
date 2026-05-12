@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn } from 'typeorm';
-import { Unit } from './unit.entity';
+import { Unit } from '../../units/entities/unit.entity';
 
 @Entity('warranties')
 export class Warranty {
