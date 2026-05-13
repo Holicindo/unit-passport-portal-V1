@@ -1,10 +1,18 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn } from 'typeorm';
+import { Entity, PrimaryColumn, Column, ManyToOne, CreateDateColumn, BeforeInsert } from 'typeorm';
 import { ServiceLog } from './service-log.entity';
+import { generatePrefixedId } from '../../../common/utils/id-generator';
 
 @Entity('service_log_attachments')
 export class ServiceLogAttachment {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryColumn()
+  id!: string;
+
+  @BeforeInsert()
+  generateId() {
+    if (!this.id) {
+      this.id = generatePrefixedId('ATT');
+    }
+  }
 
   @ManyToOne(() => ServiceLog, (log) => log.attachments)
   service_log: ServiceLog;

@@ -1,22 +1,35 @@
 import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Global validation pipe
+  app.useGlobalPipes(new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: true,
+    transform: true,
+  }));
+
   // Enable CORS for frontend access
   app.enableCors();
 
   // Swagger Configuration
   const config = new DocumentBuilder()
-    .setTitle('Holicindo Unit Passport API')
-    .setDescription('Documentation for Holicindo Unit Passport Management Portal')
+    .setTitle('Holicindo Unit Passport API [Phase 1]')
+    .setDescription(
+      'REST API for managing equipment lifecycles, warranties, and technical documentation. ' +
+      'Implements 4 Access Levels: Public (QR), Client (Fleet), Partner (Technical), and Admin (Internal).',
+    )
     .setVersion('1.0')
-    .addTag('units')
-    .addTag('clients')
-    .addTag('partners')
-    .addTag('warranties')
+    .addTag('Authentication', 'Login and account management')
+    .addTag('Units Management', 'Equipment tracking, QR scanning, and technical diagrams')
+    .addTag('Clients Management', 'Customer data and fleet ownership')
+    .addTag('Partners Management', 'Service technician network')
+    .addTag('Warranties', 'Unit warranty periods')
+    .addTag('Service Logs', 'Maintenance and repair records')
     .addBearerAuth()
     .build();
     

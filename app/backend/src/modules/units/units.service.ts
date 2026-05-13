@@ -4,6 +4,8 @@ import { Repository } from 'typeorm';
 import { Unit } from './entities/unit.entity';
 import { OwnershipHistory } from '../ownership/entities/ownership-history.entity';
 import { Client } from '../clients/entities/client.entity';
+import { CreateUnitDto } from './dto/create-unit.dto';
+import { TransferOwnershipDto } from './dto/transfer-ownership.dto';
 
 @Injectable()
 export class UnitsService {
@@ -13,23 +15,66 @@ export class UnitsService {
     @InjectRepository(Client) private clientRepo: Repository<Client>,
   ) {}
 
-  // L1 Public — passport view via QR scan
-  async findByQrToken(qr_token: string) {
+  // L1 Public — Limited view for guest scan
+  async findByQrTokenPublic(qr_token: string) {
     const unit = await this.unitRepo.findOne({
       where: { qr_token },
-      relations: ['current_client', 'warranties', 'service_logs', 'service_logs.attachments'],
+      select: ['id', 'serial_number', 'model_name', 'specs', 'warranty_expiry', 'status'],
     });
     if (!unit) throw new NotFoundException('Unit tidak ditemukan');
     return unit;
   }
 
-  // L2 Client — fleet list
-  async findAll() {
-    return this.unitRepo.find({ relations: ['current_client', 'warranties'] });
+  // L2 Client — Fleet list for specific client
+  async findAllByClient(clientId: string) {
+    return this.unitRepo.find({
+      where: { current_client: { id: clientId } },
+      relations: ['warranties', 'service_logs'],
+    });
   }
 
-  // Transfer kepemilikan — riwayat servis TETAP melekat pada unit
-  async transferOwnership(unitId: string, toClientId: string, reason: string, notes?: string) {
+  // L3 Partner — Technical view
+  async findTechnicalById(id: string) {
+    const unit = await this.unitRepo.findOne({
+      where: { id },
+      relations: ['current_client', 'warranties', 'service_logs'],
+    });
+    if (!unit) throw new NotFoundException('Unit tidak ditemukan');
+    return unit;
+  }
+
+  // L4 Admin — Full list with pagination
+  async findAll(page: number = 1, limit: number = 10) {
+    const [data, total] = await this.unitRepo.findAndCount({
+      relations: ['current_client', 'warranties', 'service_logs'],
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { created_at: 'DESC' },
+    });
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        last_page: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  async findOne(id: string) {
+    const unit = await this.unitRepo.findOne({
+      where: { id },
+      relations: ['current_client', 'warranties', 'service_logs'],
+    });
+    if (!unit) throw new NotFoundException('Unit tidak ditemukan');
+    return unit;
+  }
+
+  // Transfer kepemilikan
+  async transferOwnership(unitId: string, transferDto: TransferOwnershipDto) {
+    const { toClientId, reason, notes } = transferDto;
+    
     const unit = await this.unitRepo.findOne({
       where: { id: unitId },
       relations: ['current_client'],
@@ -55,8 +100,16 @@ export class UnitsService {
     return this.unitRepo.save(unit);
   }
 
-  async create(data: Partial<Unit>) {
-    const unit = this.unitRepo.create(data);
+  async create(data: CreateUnitDto) {
+    const { current_client_id, ...unitData } = data;
+    
+    const client = await this.clientRepo.findOne({ where: { id: current_client_id } });
+    if (!client) throw new BadRequestException('Client tidak ditemukan');
+
+    const unit = this.unitRepo.create({
+      ...unitData,
+      current_client: client,
+    });
     return this.unitRepo.save(unit);
   }
 }

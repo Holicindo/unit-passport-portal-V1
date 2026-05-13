@@ -1,4 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, CreateDateColumn, UpdateDateColumn, Index } from 'typeorm';
+import { Entity, PrimaryColumn, Column, ManyToOne, OneToMany, CreateDateColumn, UpdateDateColumn, Index, BeforeInsert } from 'typeorm';
+import { ApiProperty } from '@nestjs/swagger';
+import { generatePrefixedId } from '../../../common/utils/id-generator';
 import { Client } from '../../clients/entities/client.entity';
 import { ServiceLog } from '../../service-logs/entities/service-log.entity';
 import { Warranty } from '../../warranties/entities/warranty.entity';
@@ -6,8 +8,15 @@ import { OwnershipHistory } from '../../ownership/entities/ownership-history.ent
 
 @Entity('units')
 export class Unit {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryColumn()
   id!: string;
+
+  @BeforeInsert()
+  generateId() {
+    if (!this.id) {
+      this.id = generatePrefixedId('UNT');
+    }
+  }
 
   @Index({ unique: true })
   @Column()
@@ -22,6 +31,14 @@ export class Unit {
   @Index({ unique: true })
   @Column()
   qr_token!: string;
+
+  @ApiProperty({ example: 'https://example.com/diagram.pdf', required: false })
+  @Column({ nullable: true })
+  exploded_view_url?: string;
+
+  @ApiProperty({ example: 'https://example.com/circuit.pdf', required: false })
+  @Column({ nullable: true })
+  circuit_diagram_url?: string;
 
   @ManyToOne(() => Client, (client) => client.units)
   current_client!: Client;

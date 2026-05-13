@@ -10,12 +10,15 @@ import { Partner } from './modules/partners/entities/partner.entity';
 import { ServiceLog } from './modules/service-logs/entities/service-log.entity';
 import { ServiceLogAttachment } from './modules/service-logs/entities/service-log-attachment.entity';
 import { OwnershipHistory } from './modules/ownership/entities/ownership-history.entity';
+import { User } from './modules/auth/entities/user.entity';
 import { UnitsModule } from './modules/units/units.module';
 import { ClientsModule } from './modules/clients/clients.module';
 import { PartnersModule } from './modules/partners/partners.module';
 import { WarrantiesModule } from './modules/warranties/warranties.module';
 import { ServiceLogsModule } from './modules/service-logs/service-logs.module';
 import { OwnershipModule } from './modules/ownership/ownership.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { StorageModule } from './modules/storage/storage.module';
 
 @Module({
   imports: [
@@ -36,9 +39,10 @@ import { OwnershipModule } from './modules/ownership/ownership.module';
         entities: [
           Client, Unit, Warranty, Partner,
           ServiceLog, ServiceLogAttachment, OwnershipHistory,
+          User,
         ],
-        synchronize: true,
-        logging: false,
+        synchronize: config.get<string>('DB_SYNC') === 'true',
+        logging: config.get<string>('DB_LOGGING') === 'true',
       }),
     }),
 
@@ -48,6 +52,8 @@ import { OwnershipModule } from './modules/ownership/ownership.module';
     WarrantiesModule,
     ServiceLogsModule,
     OwnershipModule,
+    AuthModule,
+    StorageModule,
   ],
   controllers: [AppController],
   providers: [AppService],

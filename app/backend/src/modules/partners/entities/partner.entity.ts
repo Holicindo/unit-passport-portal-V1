@@ -1,10 +1,18 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn } from 'typeorm';
+import { Entity, PrimaryColumn, Column, OneToMany, CreateDateColumn, BeforeInsert } from 'typeorm';
 import { ServiceLog } from '../../service-logs/entities/service-log.entity';
+import { generatePrefixedId } from '../../../common/utils/id-generator';
 
 @Entity('partners')
 export class Partner {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryColumn()
   id!: string;
+
+  @BeforeInsert()
+  generateId() {
+    if (!this.id) {
+      this.id = generatePrefixedId('PTR');
+    }
+  }
 
   @Column()
   partner_name!: string;

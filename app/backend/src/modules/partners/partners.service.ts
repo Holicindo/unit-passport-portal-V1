@@ -18,4 +18,8 @@ export class PartnersService {
     const partner = this.partnerRepo.create(data);
     return this.partnerRepo.save(partner);
   }
+
+  async findOne(id: string) {
+    return this.partnerRepo.findOne({ where: { id } });
+  }
 }
