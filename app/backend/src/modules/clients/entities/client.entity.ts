@@ -4,20 +4,20 @@ import { Unit } from '../../units/entities/unit.entity';
 @Entity('clients')
 export class Client {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  company_name: string;
+  company_name!: string;
 
   @Column({ nullable: true })
-  industry: string;
+  industry!: string;
 
   @Column({ nullable: true })
-  logo_url: string;
+  logo_url!: string;
 
   @OneToMany(() => Unit, (unit) => unit.current_client)
-  units: Unit[];
+  units!: Unit[];
 
   @CreateDateColumn()
-  created_at: Date;
+  created_at!: Date;
 }

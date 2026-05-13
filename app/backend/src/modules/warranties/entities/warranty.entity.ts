@@ -4,29 +4,29 @@ import { Unit } from '../../units/entities/unit.entity';
 @Entity('warranties')
 export class Warranty {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @ManyToOne(() => Unit, (unit) => unit.warranties)
-  unit: Unit;
+  unit!: Unit;
 
   @Column()
-  warranty_type: string; // e.g., 'GENERAL', 'COMPRESSOR'
+  warranty_type!: string; // e.g., 'GENERAL', 'COMPRESSOR'
 
   @Column()
-  duration_label: string; // e.g., '1_TAHUN'
+  duration_label!: string; // e.g., '1_TAHUN'
 
   @Column({ type: 'date' })
-  start_date: Date;
+  start_date!: Date;
 
   @Column({ type: 'date' })
-  end_date: Date;
+  end_date!: Date;
 
   @Column({ default: 'ACTIVE' })
-  status: string; // e.g., 'ACTIVE', 'EXPIRED', 'VOIDED'
+  status!: string; // e.g., 'ACTIVE', 'EXPIRED', 'VOIDED'
 
   @Column({ type: 'text', nullable: true })
-  voided_reason: string;
+  voided_reason!: string;
 
   @CreateDateColumn()
-  created_at: Date;
+  created_at!: Date;
 }

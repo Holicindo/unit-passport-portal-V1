@@ -7,46 +7,46 @@ import { OwnershipHistory } from '../../ownership/entities/ownership-history.ent
 @Entity('units')
 export class Unit {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Index({ unique: true })
   @Column()
-  serial_number: string;
+  serial_number!: string;
 
   @Column()
-  model_name: string;
+  model_name!: string;
 
   @Column({ type: 'jsonb', default: {} })
-  specs: any;
+  specs!: any;
 
   @Index({ unique: true })
   @Column()
-  qr_token: string;
+  qr_token!: string;
 
   @ManyToOne(() => Client, (client) => client.units)
-  current_client: Client;
+  current_client!: Client;
 
   @Column({ type: 'date', nullable: true })
-  production_date: Date;
+  production_date!: Date;
 
   @Column({ type: 'date', nullable: true })
-  warranty_expiry: Date;
+  warranty_expiry!: Date;
 
   @Column({ default: 'ACTIVE' })
-  status: string;
+  status!: string;
 
   @OneToMany(() => ServiceLog, (log) => log.unit)
-  service_logs: ServiceLog[];
+  service_logs!: ServiceLog[];
 
   @OneToMany(() => Warranty, (warranty) => warranty.unit)
-  warranties: Warranty[];
+  warranties!: Warranty[];
 
   @OneToMany(() => OwnershipHistory, (history) => history.unit)
-  ownership_history: OwnershipHistory[];
+  ownership_history!: OwnershipHistory[];
 
   @CreateDateColumn()
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn()
-  updated_at: Date;
+  updated_at!: Date;
 }
