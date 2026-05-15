@@ -3,6 +3,7 @@ import { OwnershipService } from './ownership.service';
 import { ApiTags } from '@nestjs/swagger';
 
 @ApiTags('ownership')
+@Controller('ownership')
 export class OwnershipController {
   constructor(private readonly ownershipService: OwnershipService) {}
 

@@ -1,8 +1,10 @@
-import type { Metadata } from 'next'
+'use client';
+
 import { Inter, Montserrat } from 'next/font/google'
 import './globals.css'
 import Sidebar from '@/components/layout/Sidebar'
 import TopBar from '@/components/layout/TopBar'
+import { usePathname } from 'next/navigation'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -17,22 +19,35 @@ const montserrat = Montserrat({
   display: 'swap',
 })
 
-export const metadata: Metadata = {
-  title: 'Holicindo Unit Passport Portal',
-  description: 'Industrial-Chic Unit Passport Portal for Holicindo.',
-}
+import { useState } from 'react'
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const pathname = usePathname();
+  const isLoginPage = pathname === '/login';
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+
   return (
     <html lang="id" className={`${inter.variable} ${montserrat.variable}`}>
-      <body style={{ display: 'flex', margin: 0, padding: 0 }}>
-        <Sidebar />
-        <div className="main-wrapper" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh', transition: 'margin 0.3s ease' }}>
-          <TopBar />
+      <body style={{ display: 'flex', margin: 0, padding: 0, background: 'var(--color-light-tech-grey)' }}>
+        {!isLoginPage && <Sidebar isOpen={sidebarOpen} />}
+        <div 
+          className={`${!isLoginPage ? "main-wrapper" : ""} ${!sidebarOpen && !isLoginPage ? "sidebar-collapsed" : ""}`} 
+          style={{ 
+            flex: 1, 
+            display: 'flex', 
+            flexDirection: 'column', 
+            minHeight: '100vh',
+            maxWidth: '100vw',
+            overflowX: 'hidden'
+          }}
+        >
+          {!isLoginPage && <TopBar onToggleSidebar={toggleSidebar} isSidebarOpen={sidebarOpen} />}
           <div style={{ flex: 1 }}>
             {children}
           </div>

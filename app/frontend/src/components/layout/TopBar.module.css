@@ -4,11 +4,34 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 30px;
+  padding: 0 20px;
   position: sticky;
   top: 0;
   z-index: 90;
   border-bottom: 1px solid #EAEAEA;
+}
+
+.leftSection {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.toggleBtn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 8px;
+  color: var(--color-deep-navy);
+  transition: background 0.2s;
+}
+
+.toggleBtn:hover {
+  background: var(--color-light-tech-grey);
 }
 
 .searchBox {

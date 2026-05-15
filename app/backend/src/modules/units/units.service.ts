@@ -62,9 +62,12 @@ export class UnitsService {
     };
   }
 
-  async findOne(id: string) {
+  async findOne(identifier: string) {
     const unit = await this.unitRepo.findOne({
-      where: { id },
+      where: [
+        { id: identifier },
+        { serial_number: identifier }
+      ],
       relations: ['current_client', 'warranties', 'service_logs'],
     });
     if (!unit) throw new NotFoundException('Unit tidak ditemukan');

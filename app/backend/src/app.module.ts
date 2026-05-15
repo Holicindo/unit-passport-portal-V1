@@ -19,6 +19,7 @@ import { ServiceLogsModule } from './modules/service-logs/service-logs.module';
 import { OwnershipModule } from './modules/ownership/ownership.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { StorageModule } from './modules/storage/storage.module';
+import { ReportsModule } from './modules/reports/reports.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { StorageModule } from './modules/storage/storage.module';
     OwnershipModule,
     AuthModule,
     StorageModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

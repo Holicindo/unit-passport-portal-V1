@@ -3,6 +3,7 @@ import { WarrantiesService } from './warranties.service';
 import { ApiTags } from '@nestjs/swagger';
 
 @ApiTags('warranties')
+@Controller('warranties')
 export class WarrantiesController {
   constructor(private readonly warrantiesService: WarrantiesService) {}
 

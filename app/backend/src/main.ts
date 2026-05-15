@@ -14,7 +14,11 @@ async function bootstrap() {
   }));
 
   // Enable CORS for frontend access
-  app.enableCors();
+  app.enableCors({
+    origin: 'http://localhost:3000',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true,
+  });
 
   // Swagger Configuration
   const config = new DocumentBuilder()

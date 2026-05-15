@@ -16,8 +16,9 @@
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
-  --shadow-card: 0 4px 24px rgba(0, 31, 63, 0.08);
-  --shadow-button: 0 4px 12px rgba(46, 91, 255, 0.25);
+  --sidebar-width: 260px;
+  --sidebar-collapsed-width: 0px;
+  --main-padding: 40px;
 }
 
 * {
@@ -42,7 +43,13 @@ h1, h2, h3, h4 {
 }
 
 .main-wrapper {
-  margin-left: 260px;
+  margin-left: var(--sidebar-width);
+  padding: var(--main-padding);
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.main-wrapper.sidebar-collapsed {
+  margin-left: var(--sidebar-collapsed-width);
 }
 
 @media (max-width: 1024px) {

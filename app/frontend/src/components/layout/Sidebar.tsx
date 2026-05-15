@@ -1,63 +1,110 @@
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import styles from './Sidebar.module.css';
-import { LayoutDashboard, Package, Wrench, BarChart3, ChevronDown } from 'lucide-react';
+import { 
+  LayoutDashboard, Package, Wrench, BarChart3, ChevronDown,
+  List, PlusCircle, ClipboardCheck, History, Wrench as Tool, Calendar
+} from 'lucide-react';
 
 const menuItems = [
-  { id: 'fleet', label: 'RINGKASAN ARMADA', icon: <LayoutDashboard size={20} /> },
+  { id: 'dashboard', label: 'Ringkasan Armada', icon: <LayoutDashboard size={20} />, href: '/dashboard' },
   { 
     id: 'units', 
-    label: 'UNIT', 
+    label: 'Unit', 
     icon: <Package size={20} />, 
-    active: true, 
-    subItems: ['Detail Unit', 'Daftar Nama Unit'] 
+    href: '/units',
+    subItems: [
+      { label: 'Daftar Unit', icon: <List size={18} />, href: '/units' },
+      { label: 'Registrasi Unit', icon: <PlusCircle size={18} />, href: '/units/new' }
+    ] 
   },
   { 
     id: 'service', 
-    label: 'SERVIS', 
+    label: 'Servis', 
     icon: <Wrench size={20} />, 
-    subItems: ['Uji Kelayakan', 'Perencanaan Servis'] 
+    href: '/service',
+    subItems: [
+      { label: 'Log Servis', icon: <Tool size={18} />, href: '/service' },
+      { label: 'Rencana Servis', icon: <Calendar size={18} />, href: '/service/planning' }
+    ] 
   },
   { 
-    id: 'analytics', 
-    label: 'ANALITIK', 
+    id: 'reports', 
+    label: 'Laporan', 
     icon: <BarChart3 size={20} />, 
-    subItems: ['Analitik', 'Riwayat Servis'] 
+    href: '/reports',
+    subItems: [
+      { label: 'Digital QC', icon: <ClipboardCheck size={18} />, href: '/reports/inspection' },
+      { label: 'Riwayat Laporan', icon: <History size={18} />, href: '/reports' }
+    ] 
   },
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+  isOpen: boolean;
+}
+
+export default function Sidebar({ isOpen }: SidebarProps) {
+  const pathname = usePathname();
+
   return (
-    <aside className={styles.sidebar}>
+    <aside className={`${styles.sidebar} ${!isOpen ? styles.hidden : ''}`}>
       <div className={styles.logoSection}>
         <div className={styles.logoWrapper}>
-          {/* Logo Holicindo sesuai Gambar 2 & 3 */}
           <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M50 5L5 85H95L50 5Z" stroke="white" strokeWidth="6" strokeLinejoin="round"/>
-            <path d="M50 5V85" stroke="white" strokeWidth="6"/>
-            <path d="M65 40H85M65 55H80M65 70H75" stroke="white" strokeWidth="6" strokeLinecap="round"/>
+            <path d="M50 5L5 85H95L50 5Z" stroke="var(--color-cobalt-blue)" strokeWidth="6" strokeLinejoin="round"/>
+            <path d="M50 5V85" stroke="var(--color-cobalt-blue)" strokeWidth="6"/>
+            <path d="M65 40H85M65 55H80M65 70H75" stroke="var(--color-cobalt-blue)" strokeWidth="6" strokeLinecap="round"/>
           </svg>
         </div>
         <span className={styles.logoText}>HOLICINDO</span>
       </div>
 
       <nav className={styles.nav}>
-        {menuItems.map((item) => (
-          <div key={item.id} className={styles.menuGroup}>
-            <div className={`${styles.menuItem} ${item.active ? styles.active : ''}`}>
-              <span className={styles.icon}>{item.icon}</span>
-              <span className={styles.label}>{item.label}</span>
-              {item.subItems && <ChevronDown size={14} className={styles.arrow} />}
-            </div>
-            {item.subItems && item.active && (
-              <div className={styles.subItems}>
-                {item.subItems.map((sub) => (
-                  <div key={sub} className={`${styles.subItem} ${sub === 'Detail Unit' ? styles.subActive : ''}`}>
-                    {sub}
+        {menuItems.map((item) => {
+          const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+          const hasSubItems = !!item.subItems;
+          
+          return (
+            <div key={item.id} className={styles.menuGroup}>
+              <Link 
+                href={item.href} 
+                className={`${styles.menuItem} ${isActive ? styles.active : ''}`}
+              >
+                <div className={styles.menuItemMain}>
+                  <span className={styles.icon}>{item.icon}</span>
+                  <span className={styles.label}>{item.label}</span>
+                </div>
+                {hasSubItems && (
+                  <ChevronDown 
+                    size={16} 
+                    className={`${styles.arrow} ${isActive ? styles.arrowOpen : ''}`} 
+                  />
+                )}
+              </Link>
+              
+              {hasSubItems && (
+                <div className={`${styles.subItemsContainer} ${isActive ? styles.expanded : ''}`}>
+                  <div className={styles.subItems}>
+                    {item.subItems.map((sub) => {
+                      const isSubActive = pathname === sub.href;
+                      return (
+                        <Link 
+                          key={sub.label} 
+                          href={sub.href} 
+                          className={`${styles.subItem} ${isSubActive ? styles.subActive : ''}`}
+                        >
+                          <span className={styles.subIcon}>{sub.icon}</span>
+                          {sub.label}
+                        </Link>
+                      );
+                    })}
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </nav>
     </aside>
   );

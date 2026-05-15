@@ -2,14 +2,12 @@
   "name": "holicindo-unit-passport-portal",
   "version": "1.0.0",
   "scripts": {
-    "dev:backend": "cd app/backend && npm run start:dev",
-    "dev:frontend": "cd app/frontend && npm run dev",
-    "dev": "npx concurrently \"npm run dev:backend\" \"npm run dev:frontend\""
+    "install:all": "npm install --prefix app/backend && npm install --prefix app/frontend",
+    "dev": "npx concurrently \"npm run start:dev --prefix app/backend\" \"npm run dev --prefix app/frontend\"",
+    "seed": "npm run start:dev --prefix app/backend -- src/scripts/migrations/seed-users.ts",
+    "migrate": "npm run start:dev --prefix app/backend -- src/scripts/migrations/migrate-master-data.ts"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
-  },
-  "dependencies": {
-    "@nestjs/swagger": "^11.4.2"
   }
 }
