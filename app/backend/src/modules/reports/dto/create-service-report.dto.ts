@@ -27,4 +27,9 @@ export class CreateServiceReportDto {
   @IsString()
   @IsOptional()
   revision_note?: string;
+
+  @ApiProperty({ required: false, example: 'REP-XXXXXXX' })
+  @IsString()
+  @IsOptional()
+  baseReportId?: string;
 }

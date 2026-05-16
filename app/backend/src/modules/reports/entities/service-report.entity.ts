@@ -1,4 +1,4 @@
-import { Entity, PrimaryColumn, Column, ManyToOne, CreateDateColumn, BeforeInsert, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryColumn, Column, ManyToOne, CreateDateColumn, BeforeInsert, UpdateDateColumn, JoinColumn } from 'typeorm';
 import { Unit } from '../../units/entities/unit.entity';
 import { User } from '../../auth/entities/user.entity';
 import { generatePrefixedId } from '../../../common/utils/id-generator';
@@ -27,9 +27,11 @@ export class ServiceReport {
   }
 
   @ManyToOne(() => Unit)
+  @JoinColumn({ name: 'unit_id' })
   unit!: Unit;
 
   @ManyToOne(() => User)
+  @JoinColumn({ name: 'created_by_id' })
   created_by!: User;
 
   @Column({ type: 'enum', enum: FormType })

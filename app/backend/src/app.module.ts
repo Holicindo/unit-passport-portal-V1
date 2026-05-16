@@ -11,6 +11,7 @@ import { ServiceLog } from './modules/service-logs/entities/service-log.entity';
 import { ServiceLogAttachment } from './modules/service-logs/entities/service-log-attachment.entity';
 import { OwnershipHistory } from './modules/ownership/entities/ownership-history.entity';
 import { User } from './modules/auth/entities/user.entity';
+import { ServiceReport } from './modules/reports/entities/service-report.entity';
 import { UnitsModule } from './modules/units/units.module';
 import { ClientsModule } from './modules/clients/clients.module';
 import { PartnersModule } from './modules/partners/partners.module';
@@ -40,7 +41,7 @@ import { ReportsModule } from './modules/reports/reports.module';
         entities: [
           Client, Unit, Warranty, Partner,
           ServiceLog, ServiceLogAttachment, OwnershipHistory,
-          User,
+          User, ServiceReport,
         ],
         synchronize: config.get<string>('DB_SYNC') === 'true',
         logging: config.get<string>('DB_LOGGING') === 'true',

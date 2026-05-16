@@ -3,7 +3,7 @@ import { usePathname } from 'next/navigation';
 import styles from './Sidebar.module.css';
 import { 
   LayoutDashboard, Package, Wrench, BarChart3, ChevronDown,
-  List, PlusCircle, ClipboardCheck, History, Wrench as Tool, Calendar
+  List, PlusCircle, ClipboardCheck, History, Wrench as Tool, Calendar, FileText
 } from 'lucide-react';
 
 const menuItems = [
@@ -34,8 +34,8 @@ const menuItems = [
     icon: <BarChart3 size={20} />, 
     href: '/reports',
     subItems: [
-      { label: 'Digital QC', icon: <ClipboardCheck size={18} />, href: '/reports/inspection' },
-      { label: 'Riwayat Laporan', icon: <History size={18} />, href: '/reports' }
+      { label: 'Digital Form', icon: <FileText size={18} />, href: '/reports' },
+      { label: 'Riwayat Laporan', icon: <History size={18} />, href: '/reports/history' }
     ] 
   },
 ];

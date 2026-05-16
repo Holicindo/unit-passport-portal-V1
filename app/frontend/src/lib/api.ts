@@ -31,5 +31,15 @@ export const unitApi = {
 
 export const reportApi = {
   create: (data: any) => api.post('/reports', data),
+  findAll: (page = 1, limit = 10, type?: string) => api.get(`/reports?page=${page}&limit=${limit}${type ? `&type=${type}` : ''}`),
+  findOne: (id: string) => api.get(`/reports/${id}`),
   findByUnit: (unitId: string) => api.get(`/reports/unit/${unitId}`),
+  uploadPhotos: (files: File[]) => {
+    const formData = new FormData();
+    files.forEach(f => formData.append('photos', f));
+    return api.post('/reports/upload-photos', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
+  deleteBulk: (ids: string[]) => api.post('/reports/delete-bulk', { ids }),
 };
