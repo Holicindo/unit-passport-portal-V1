@@ -1,0 +1,60 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  padding: 24px;
+  color: var(--color-deep-navy);
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+  color: var(--color-cobalt-blue);
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.errorCard {
+  background: white;
+  padding: 40px;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  text-align: center;
+  max-width: 480px;
+  width: 100%;
+  border: 1px solid #e2e8f0;
+}
+
+.errorIcon {
+  color: var(--color-safety-orange);
+  margin-bottom: 20px;
+}
+
+.errorCard h2 {
+  font-size: 1.5rem;
+  margin-bottom: 12px;
+}
+
+.errorCard p {
+  color: var(--color-space-grey);
+  margin-bottom: 24px;
+}
+
+.btnBack {
+  background: var(--color-deep-navy);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btnBack:hover {
+  background: var(--color-cobalt-blue);
+}

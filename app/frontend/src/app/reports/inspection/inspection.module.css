@@ -1,23 +1,680 @@
-.formContainer {
-  max-width: 210mm;
-  margin: 0 auto;
-  padding: 20px;
-  background: #fff;
+/* ============================================================
+   QC DIGITAL INSPECTION REPORT — Holicindo Premium Style Guide
+   ============================================================ */
+
+/* ---- Page Wrapper ---- */
+.pageWrapper {
+  background: radial-gradient(circle at top left, #f3f6fa, #e6ecf5);
   min-height: 100vh;
-  font-family: Arial, Helvetica, sans-serif;
+  padding-bottom: 80px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #1e293b;
+  overflow-x: hidden;
 }
 
-.loadingOverlay {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(255, 255, 255, 0.9);
+/* ---- Toolbar ---- */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 16px 32px;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  border-bottom: 4px solid #2e5bff;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.15);
+}
+
+.backBtn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.backBtn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateX(-2px);
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* ---- Unit Selector Bar ---- */
+.unitBar {
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 18px 32px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
+}
+
+.unitBarInner {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+
+.unitField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 320px;
+}
+
+.unitField label {
+  font-size: 10px;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.unitField select {
+  padding: 10px 14px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  background: #ffffff;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23475569'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 16px;
+  padding-right: 40px;
+  appearance: none;
+}
+
+.unitField select:focus {
+  border-color: #2e5bff;
+  box-shadow: 0 0 0 4px rgba(46, 91, 255, 0.12);
+}
+
+.unitInfo {
+  flex: 1;
+  display: flex;
+  gap: 16px 24px;
+  flex-wrap: wrap;
+  padding: 12px 18px;
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+  border: 1px solid rgba(46, 91, 255, 0.15);
+  border-left: 5px solid #2e5bff;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #1e1b4b;
+}
+
+.unitInfo span {
+  white-space: nowrap;
+}
+
+.unitInfo strong {
+  color: #2e5bff;
+  font-weight: 700;
+}
+
+/* ---- Sheet Container (A4 Proportions) ---- */
+.sheetContainer {
+  width: 100%;
+  max-width: 900px;
+  margin: 32px auto;
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+
+.a4Sheet {
+  background: #ffffff;
+  padding: 40px;
+  box-shadow: 0 12px 48px rgba(15, 23, 42, 0.08), 0 2px 8px rgba(15, 23, 42, 0.04);
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+  position: relative;
+  min-height: 1120px; /* A4 Ratio feel */
+  box-sizing: border-box;
+}
+
+/* ---- Sheet Header Grid ---- */
+.sheetHeaderGrid {
+  display: grid;
+  grid-template-columns: 1.2fr 1.6fr 1.2fr;
+  gap: 20px;
+  align-items: center;
+  border-bottom: 2px solid #0f172a;
+  padding-bottom: 20px;
+}
+
+.logoBlock {
+  display: flex;
+  flex-direction: column;
+}
+
+.logoText {
+  font-family: 'Outfit', 'Inter', sans-serif;
+  font-size: 26px;
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: 0.15em;
+  line-height: 1.1;
+}
+
+.logoSubtitle {
+  font-size: 7px;
+  font-weight: 800;
+  color: #64748b;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+
+.sheetTitleBlock {
+  text-align: center;
+  border-left: 1px solid #e2e8f0;
+  border-right: 1px solid #e2e8f0;
+  padding: 0 15px;
+}
+
+.sheetTitle {
+  font-size: 20px;
+  font-weight: 900;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: 0.08em;
+}
+
+.sheetSubtitle {
+  font-size: 9px;
+  font-weight: 700;
+  color: #2e5bff;
+  letter-spacing: 0.2em;
+  display: block;
+  margin-top: 4px;
+}
+
+.metadataBlock {
+  font-size: 11px;
+}
+
+.compactTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.compactTable td {
+  padding: 3px 2px;
+  vertical-align: middle;
+}
+
+.compactTable td strong {
+  color: #475569;
+}
+
+/* ---- Grid and Tables Layouts ---- */
+.gridTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+  font-size: 11px;
+}
+
+.topSpace {
+  margin-top: 18px;
+}
+
+.gridTable th {
+  background: #0f172a;
+  color: #ffffff;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: left;
+  padding: 8px 10px;
+  border: 1px solid #0f172a;
+  font-size: 10px;
+}
+
+.gridTable td {
+  padding: 7px 10px;
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
+  vertical-align: middle;
+}
+
+.gridTable tr:nth-child(even) td {
+  background: #f8fafc;
+}
+
+.subRowHeader td {
+  background: #f1f5f9 !important;
+  color: #1e293b;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid #94a3b8;
+}
+
+/* Section Divider Headers */
+.sectionDivider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+  padding: 8px 12px;
+  background: #f1f5f9;
+  border-left: 4px solid #0f172a;
+  font-size: 11px;
+  font-weight: 800;
+  color: #0f172a;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sectionIcon {
+  color: #2e5bff;
+}
+
+/* ---- Clean Form Inputs (Inline-editable look) ---- */
+.readOnlyText {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.editableCell input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed #cbd5e1;
+  outline: none;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  color: #2e5bff;
+  padding: 2px 4px;
+  box-sizing: border-box;
+  transition: all 0.2s;
+}
+
+.editableCell input:focus {
+  border-bottom-color: #2e5bff;
+  background: rgba(46, 91, 255, 0.03);
+}
+
+.editableInputCell {
+  padding: 0 !important;
+  position: relative;
+}
+
+.editableInputCell input {
+  width: 100%;
+  height: 32px;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: #0f172a;
+  padding: 0 10px;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
+}
+
+.editableInputCell input:hover {
+  background: rgba(46, 91, 255, 0.03);
+}
+
+.editableInputCell input:focus {
+  background: rgba(46, 91, 255, 0.06);
+  box-shadow: inset 0 -2px 0 #2e5bff;
+}
+
+/* For numeric inputs, hide spinners */
+.editableInputCell input::-webkit-outer-spin-button,
+.editableInputCell input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* ---- Pass / Fail Custom Toggle Buttons ---- */
+.toggleButtonGroup {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  align-items: center;
+}
+
+.toggleBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+}
+
+.toggleBtn:hover {
+  background: #e2e8f0;
+  transform: translateY(-0.5px);
+}
+
+/* Active styles */
+.toggleBtn.pass.active {
+  background: #d1fae5;
+  border-color: #10b981;
+  color: #065f46;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);
+}
+
+.toggleBtn.fail.active {
+  background: #fee2e2;
+  border-color: #ef4444;
+  color: #991b1b;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.25);
+}
+
+/* Row highlight when checked */
+.activeRow td {
+  background-color: rgba(248, 250, 252, 0.5);
+}
+
+/* ---- Condition Span Cell ---- */
+.conditionSpanCell {
+  background: #fafbfd !important;
+  vertical-align: top !important;
+  padding: 12px !important;
+}
+
+.conditionBox {
+  font-size: 10px;
+  color: #64748b;
+  line-height: 1.5;
+  background: #ffffff;
+  border: 1px dashed #cbd5e1;
+  border-radius: 6px;
+  padding: 10px;
+}
+
+/* ---- Light Specs Section ---- */
+.lightSpecsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 14px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 14px;
+}
+
+.lightField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lightField label {
+  font-size: 9px;
+  font-weight: 800;
+  color: #475569;
+  text-transform: uppercase;
+}
+
+.lightField input {
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  outline: none;
+  background: #ffffff;
+  transition: border-color 0.2s;
+}
+
+.lightField input:focus {
+  border-color: #2e5bff;
+}
+
+/* ---- Notes Textarea ---- */
+.notesTextarea {
+  margin-top: 12px;
+}
+
+.notesTextarea textarea {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 12px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  color: #0f172a;
+  outline: none;
+  resize: vertical;
+  background: #ffffff;
+  box-sizing: border-box;
+  line-height: 1.6;
+  transition: all 0.2s;
+}
+
+.notesTextarea textarea:focus {
+  border-color: #2e5bff;
+  box-shadow: 0 0 0 3px rgba(46, 91, 255, 0.08);
+}
+
+/* ---- Signature Layout ---- */
+.signatureRowGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  margin-top: 32px;
+  padding: 0 20px;
+}
+
+.signatureBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  padding: 20px;
+  background: #fafbfd;
+}
+
+.sigRole {
+  font-size: 11px;
+  font-weight: 800;
+  color: #0f172a;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sigLine {
+  width: 160px;
+  height: 1px;
+  background-color: #94a3b8;
+  margin-top: 50px;
+  margin-bottom: 8px;
+}
+
+.sigName {
+  font-size: 10px;
+  color: #64748b;
+}
+
+/* ---- Photo documentation section ---- */
+.photoBar {
+  width: 100%;
+  max-width: 900px;
+  margin: 24px auto 0;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 24px 32px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
+  box-sizing: border-box;
+}
+
+.sectionHeader {
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.sectionHeader h3 {
+  font-size: 11px;
+  font-weight: 800;
+  color: #475569;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.photoGallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 16px;
+  margin-top: 14px;
+}
+
+.photoItem {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.photoItem img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.removePhotoBtn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: #0f172a;
+  color: #ffffff;
+  border: none;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.removePhotoBtn:hover {
+  background: #ef4444;
+  transform: scale(1.1);
+}
+
+.addPhotoCard {
+  aspect-ratio: 1;
+  border: 2px dashed #cbd5e1;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
-  color: #000;
-  font-weight: bold;
+  gap: 8px;
+  cursor: pointer;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 11px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.addPhotoCard:hover {
+  border-color: #2e5bff;
+  background: #f0f4ff;
+  color: #2e5bff;
+  transform: translateY(-2px);
+}
+
+.addPhotoCard span {
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.addPhotoCard small {
+  font-size: 9px;
+  color: #94a3b8;
+}
+
+/* ---- Form Footer (Save report) ---- */
+.formFooter {
+  width: 100%;
+  max-width: 900px;
+  margin: 24px auto 0;
+  background: #0f172a;
+  padding: 20px 32px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: flex-end;
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.2);
+  box-sizing: border-box;
+}
+
+.saveBtn {
+  background: #2e5bff;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 14px 40px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 14px rgba(46, 91, 255, 0.35);
+}
+
+.saveBtn:hover:not(:disabled) {
+  background: #1d4ed8;
+  transform: translateY(-1.5px);
+  box-shadow: 0 6px 20px rgba(46, 91, 255, 0.45);
+}
+
+.saveBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 .spinner {
@@ -29,320 +686,25 @@
   to { transform: rotate(360deg); }
 }
 
-.formHeader {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
-  border-bottom: 2px solid #000;
-  padding-bottom: 10px;
-}
-
-.backBtn {
-  background: #fff;
-  border: 1px solid #000;
-  padding: 4px;
-  cursor: pointer;
-  display: flex;
-}
-
-.title {
-  font-size: 18px;
-  font-weight: bold;
-  color: #000;
-  margin: 0;
-  text-transform: uppercase;
-}
-
-/* --- Industrial Sections --- */
-.formSection {
-  background: white;
-  padding: 15px;
-  margin-bottom: 20px;
-  border: 1px solid #000;
-}
-
-.sectionHeader {
-  margin-bottom: 15px;
-  border-bottom: 1px solid #000;
-  padding-bottom: 5px;
-}
-
-.sectionHeader h3 {
-  font-size: 12px;
-  font-weight: bold;
-  color: #000;
-  margin: 0;
-  text-transform: uppercase;
-}
-
-/* --- Unit Selector --- */
-.unitSelector {
-  background: #fff;
-  padding: 15px;
-  margin-bottom: 20px;
-  border: 1px solid #000;
-}
-
-.searchBox {
-  display: flex;
-  gap: 5px;
-}
-
-.searchBox input {
-  flex: 1;
-  padding: 6px 10px;
-  border: 1px solid #000;
-  font-size: 11px;
-  outline: none;
-}
-
-.searchBox button {
-  background: #000;
-  color: white;
-  border: 1px solid #000;
-  padding: 0 15px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.unitInfoCard {
-  margin-top: 15px;
-  padding: 10px;
-  background: #f9f9f9;
-  border: 1px dashed #000;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 10px;
-}
-
-.unitInfoCard p {
-  margin: 0;
-  font-size: 11px;
-  color: #000;
-}
-
-.headerGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
-  margin-top: 10px;
-}
-
-.selectInput {
-  height: 30px;
-  padding: 0 8px;
-  border: 1px solid #000;
-  font-size: 11px;
-}
-
-/* --- Form Grids --- */
-.gridInputs {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 10px;
-}
-
-.inputField {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.inputField label {
-  font-size: 10px;
-  font-weight: bold;
-  color: #000;
-  text-transform: uppercase;
-}
-
-.inputField input, .inputField select, .inputField textarea {
-  padding: 6px 8px;
-  border: 1px solid #000;
-  font-size: 11px;
-  outline: none;
-  background: #fff;
-}
-
-.inputField input:focus, .inputField textarea:focus {
-  background: #fffbe6;
-}
-
-/* --- Tables for Checks --- */
-.checkTable {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
-  border: 1px solid #000;
-}
-
-.checkTable th {
-  text-align: center;
-  padding: 5px;
-  background: #f2f2f2;
-  color: #000;
-  font-size: 10px;
-  text-transform: uppercase;
-  border: 1px solid #000;
-}
-
-.checkTable td {
-  padding: 4px 8px;
-  border: 1px solid #000;
-  font-size: 10px;
-  color: #000;
-}
-
-.checkLabel {
-  width: 70%;
-}
-
-.radioGroup {
-  display: flex;
-  justify-content: center;
-  gap: 15px;
-}
-
-.radioLabel {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 10px;
-}
-
-.radioLabel input {
-  width: 14px;
-  height: 14px;
-  accent-color: #000;
-}
-
-/* --- Performance Table --- */
-.perfTable {
-  width: 100%;
-  border-collapse: collapse;
-  border: 1px solid #000;
-}
-
-.perfTable th {
-  background: #f2f2f2;
-  padding: 5px;
-  font-size: 10px;
-  border: 1px solid #000;
-}
-
-.perfTable td {
-  padding: 4px;
-  border: 1px solid #000;
-}
-
-.perfInput {
-  width: 100%;
-  border: 1px solid #eee;
-  padding: 4px;
-  font-size: 10px;
-  outline: none;
-  background: transparent;
-}
-
-/* --- Photo Section --- */
-.photoSection {
-  background: white;
-  padding: 15px;
-  margin-bottom: 20px;
-  border: 1px solid #000;
-}
-
-.photoGallery {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.photoItem {
-  position: relative;
-  aspect-ratio: 1;
-  border: 1px solid #000;
-  overflow: hidden;
-}
-
-.photoItem img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.removePhotoBtn {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  background: #000;
-  color: white;
-  border: none;
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-}
-
-.addPhotoCard {
-  aspect-ratio: 1;
-  border: 1px dashed #000;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  cursor: pointer;
-  background: #fdfdfd;
-  color: #000;
-  font-size: 10px;
-}
-
-.addPhotoCard span {
-  font-weight: bold;
-}
-
-/* --- Footer --- */
-.formFooter {
-  background: #f2f2f2;
-  padding: 15px;
-  border: 1px solid #000;
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 40px;
-}
-
-.saveBtn {
-  background: #000;
-  color: white;
-  border: none;
-  padding: 10px 30px;
-  font-size: 12px;
-  font-weight: bold;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.saveBtn:hover:not(:disabled) {
-  background: #333;
-}
-
-.saveBtn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
+/* ---- Responsive Adaptations ---- */
 @media (max-width: 768px) {
-  .gridInputs {
+  .sheetHeaderGrid {
     grid-template-columns: 1fr;
+    text-align: center;
+  }
+  
+  .sheetTitleBlock {
+    border-left: none;
+    border-right: none;
+    padding: 10px 0;
+  }
+  
+  .a4Sheet {
+    padding: 20px;
+  }
+  
+  .signatureRowGrid {
+    grid-template-columns: 1fr;
+    gap: 20px;
   }
 }
-

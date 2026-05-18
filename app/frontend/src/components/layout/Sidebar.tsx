@@ -40,12 +40,30 @@ const menuItems = [
   },
 ];
 
+import { useState, useEffect } from 'react';
+
 interface SidebarProps {
   isOpen: boolean;
 }
 
 export default function Sidebar({ isOpen }: SidebarProps) {
   const pathname = usePathname();
+  const [role, setRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      const user = JSON.parse(userData);
+      setRole(user.role);
+    }
+  }, []);
+
+  const filteredMenuItems = menuItems.filter((item) => {
+    if (role === 'PARTNER') {
+      return item.id !== 'units';
+    }
+    return true;
+  });
 
   return (
     <aside className={`${styles.sidebar} ${!isOpen ? styles.hidden : ''}`}>
@@ -61,7 +79,7 @@ export default function Sidebar({ isOpen }: SidebarProps) {
       </div>
 
       <nav className={styles.nav}>
-        {menuItems.map((item) => {
+        {filteredMenuItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
           const hasSubItems = !!item.subItems;
           

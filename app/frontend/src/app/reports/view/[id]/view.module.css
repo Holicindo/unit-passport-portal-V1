@@ -1,73 +1,114 @@
+/* ============================================================
+   REPORT VIEWER — Holicindo Brand Style Guide
+   Value-Luxury | Space Grey × Cobalt Blue × Deep Navy
+   ============================================================ */
+
 .pageContainer {
   min-height: 100vh;
-  background: #f0f2f5;
-  padding: 20px;
+  background: var(--color-light-tech-grey);
+  padding: 24px 20px;
   overflow-x: auto;
 }
 
+/* ---- Toolbar / Action Bar ---- */
 .toolbar {
-  max-width: 794px;
+  max-width: 900px;
   margin: 0 auto 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: white;
-  padding: 10px 20px;
-  border: 1px solid #ddd;
+  background: var(--color-optic-white);
+  padding: 12px 20px;
+  border-radius: var(--radius-md);
+  border: 1px solid #e0e4ea;
+  box-shadow: 0 2px 8px rgba(0, 31, 63, 0.07);
 }
 
 .toolbarLeft {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .backBtn {
-  background: #fff;
-  border: 1px solid #000;
-  padding: 4px;
+  background: var(--color-optic-white);
+  border: 1px solid #cdd2dc;
+  border-radius: 6px;
+  padding: 6px 8px;
   cursor: pointer;
   display: flex;
-  color: #000;
+  align-items: center;
+  color: var(--color-deep-navy);
+  transition: all 0.2s;
+}
+
+.backBtn:hover {
+  background: var(--color-space-grey);
+  border-color: var(--color-space-grey);
+  color: white;
 }
 
 .reportId {
-  font-weight: bold;
-  font-family: Arial, sans-serif;
+  font-family: var(--font-heading);
+  font-weight: 800;
   font-size: 12px;
+  color: var(--color-deep-navy);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .toolbarActions {
   display: flex;
-  gap: 8px;
+  gap: 10px;
 }
 
 .actionBtn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  font-weight: bold;
+  gap: 7px;
+  padding: 9px 18px;
+  font-family: var(--font-heading);
+  font-weight: 800;
   font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   cursor: pointer;
-  border: 1px solid #000;
-  background: white;
-  font-family: Arial, sans-serif;
+  border-radius: 7px;
+  border: 1px solid #cdd2dc;
+  background: var(--color-optic-white);
+  color: var(--color-deep-navy);
+  transition: all 0.2s;
+}
+
+.actionBtn:hover {
+  background: var(--color-light-tech-grey);
+  border-color: var(--color-space-grey);
 }
 
 .actionBtn.primary {
-  background: #000;
+  background: var(--color-cobalt-blue);
   color: white;
+  border-color: var(--color-cobalt-blue);
+  box-shadow: 0 2px 8px rgba(46, 91, 255, 0.3);
 }
 
-/* --- PDF PREVIEW --- */
+.actionBtn.primary:hover {
+  background: #1a45e8;
+  border-color: #1a45e8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(46, 91, 255, 0.4);
+}
+
+/* ---- PDF Preview Area ---- */
 .previewWrapper {
-  max-width: 1000px;
+  max-width: 900px;
   margin: 0 auto;
-  height: calc(100vh - 120px);
+  height: calc(100vh - 140px);
   background: white;
-  border: 1px solid #ddd;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  border-radius: var(--radius-md);
+  border: 1px solid #e0e4ea;
+  box-shadow: 0 4px 24px rgba(0, 31, 63, 0.10);
+  overflow: hidden;
 }
 
 .pdfFrame {
@@ -76,21 +117,24 @@
   border: none;
 }
 
-/* Loading State */
+/* ---- Loading State ---- */
 .loadingState {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   min-height: 80vh;
-  font-family: Arial, sans-serif;
-  color: #666;
+  gap: 16px;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--color-space-grey);
+  letter-spacing: 0.05em;
 }
 
 .spinner {
   animation: spin 1s linear infinite;
-  margin-bottom: 15px;
-  color: #000;
+  color: var(--color-cobalt-blue);
 }
 
 @keyframes spin {
@@ -100,11 +144,14 @@
 
 .error {
   text-align: center;
-  padding: 40px;
-  color: #ff4d4f;
-  font-weight: bold;
+  padding: 60px 40px;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  color: #e53e3e;
+  letter-spacing: 0.04em;
 }
 
+/* ---- Print Mode ---- */
 @media print {
   .toolbar {
     display: none !important;
@@ -118,7 +165,6 @@
     height: auto !important;
     border: none !important;
     box-shadow: none !important;
+    border-radius: 0 !important;
   }
 }
-
-

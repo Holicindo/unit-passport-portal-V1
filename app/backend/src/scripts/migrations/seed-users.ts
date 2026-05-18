@@ -1,5 +1,12 @@
 import { DataSource } from 'typeorm';
 import { User, UserRole } from '../../modules/auth/entities/user.entity';
+import { Client } from '../../modules/clients/entities/client.entity';
+import { Partner } from '../../modules/partners/entities/partner.entity';
+import { Unit } from '../../modules/units/entities/unit.entity';
+import { ServiceLog } from '../../modules/service-logs/entities/service-log.entity';
+import { Warranty } from '../../modules/warranties/entities/warranty.entity';
+import { ServiceLogAttachment } from '../../modules/service-logs/entities/service-log-attachment.entity';
+import { OwnershipHistory } from '../../modules/ownership/entities/ownership-history.entity';
 import * as bcrypt from 'bcrypt';
 import * as dotenv from 'dotenv';
 
@@ -13,25 +20,126 @@ const AppDataSource = new DataSource({
   password: process.env.DB_PASS,
   database: process.env.DB_NAME,
   ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
-  entities: [User],
+  entities: [User, Client, Partner, Unit, ServiceLog, Warranty, ServiceLogAttachment, OwnershipHistory],
 });
 
 async function seed() {
   await AppDataSource.initialize();
   const userRepo = AppDataSource.getRepository(User);
+  const clientRepo = AppDataSource.getRepository(Client);
+  const partnerRepo = AppDataSource.getRepository(Partner);
+  const unitRepo = AppDataSource.getRepository(Unit);
 
-  console.log('Seeding users...');
-  
+  console.log('Starting Holicindo Seeder...');
+
+  // 1. Get or create Client PT Indah Putih Cemerlang
+  let client = await clientRepo.findOne({ where: { company_name: 'PT Indah Putih Cemerlang' } });
+  if (!client) {
+    client = clientRepo.create({
+      company_name: 'PT Indah Putih Cemerlang',
+      bp_code: 'CLI-IPC001',
+      industry: 'RETAIL',
+    });
+    client = await clientRepo.save(client);
+    console.log('Created Client: PT Indah Putih Cemerlang');
+  }
+
+  // 2. Get or create Partners (Jakarta = ON, Medan = OFF as per brief)
+  let partnerMedan = await partnerRepo.findOne({ where: { partner_name: 'Partner Medan Official' } });
+  if (!partnerMedan) {
+    partnerMedan = partnerRepo.create({
+      partner_name: 'Partner Medan Official',
+      city: 'Medan',
+      is_active: false, // Medan is off (fallback to HQ WhatsApp)
+      contact_wa: '6287808780006',
+    });
+    partnerMedan = await partnerRepo.save(partnerMedan);
+    console.log('Created Partner: Partner Medan (OFF)');
+  } else {
+    // Force active state to false for consistency with the brief
+    partnerMedan.is_active = false;
+    await partnerRepo.save(partnerMedan);
+  }
+
+  let partnerJakarta = await partnerRepo.findOne({ where: { partner_name: 'Partner Jakarta Official' } });
+  if (!partnerJakarta) {
+    partnerJakarta = partnerRepo.create({
+      partner_name: 'Partner Jakarta Official',
+      city: 'Jakarta',
+      is_active: true, // Jakarta is active (Smart Routed)
+      contact_wa: '6287808780006',
+    });
+    partnerJakarta = await partnerRepo.save(partnerJakarta);
+    console.log('Created Partner: Partner Jakarta (ON)');
+  } else {
+    // Force active state to true for consistency with the brief
+    partnerJakarta.is_active = true;
+    await partnerRepo.save(partnerJakarta);
+  }
+
+  // 3. Setup/assign Demo Unit with token holi-cp-001
+  let unit = await unitRepo.findOne({ where: { qr_token: 'holi-cp-001' } });
+  if (!unit) {
+    // Try to find first unit without token and hijack it, or create a new one
+    const existingUnit = await unitRepo.findOne({ where: {} });
+    if (existingUnit) {
+      existingUnit.qr_token = 'holi-cp-001';
+      existingUnit.current_client = client;
+      existingUnit.specs = { 
+        compressor: 'Embraco 1/2 HP (Premium)', 
+        refrigerant: 'R290 (Eco-Friendly)', 
+        wattage: '450W',
+        city: 'Jakarta'
+      };
+      await unitRepo.save(existingUnit);
+      console.log(`Hijacked existing unit ${existingUnit.serial_number} for demo with token 'holi-cp-001'`);
+    } else {
+      const newUnit = unitRepo.create({
+        serial_number: 'HOLI-CP-001',
+        model_name: 'Premium Showcase Cooler HC-450',
+        specs: { 
+          compressor: 'Embraco 1/2 HP (Premium)', 
+          refrigerant: 'R290 (Eco-Friendly)', 
+          wattage: '450W',
+          city: 'Jakarta'
+        },
+        current_client: client,
+        production_date: new Date(),
+        status: 'ACTIVE',
+        qr_token: 'holi-cp-001',
+      } as any);
+      await unitRepo.save(newUnit);
+      console.log('Created new demo unit HOLI-CP-001');
+    }
+  } else {
+    // Make sure it has correct specifications & owner client
+    unit.current_client = client;
+    if (!unit.specs || !unit.specs.compressor) {
+      unit.specs = {
+        compressor: 'Embraco 1/2 HP (Premium)', 
+        refrigerant: 'R290 (Eco-Friendly)', 
+        wattage: '450W',
+        city: 'Jakarta'
+      };
+    }
+    await unitRepo.save(unit);
+  }
+
+  // 4. Seed user accounts
   const users = [
     { name: 'Super Admin', email: 'admin@holicindo.com', password: 'admin123', role: UserRole.ADMIN },
-    { name: 'Teknisi Holicindo', email: 'tech@holicindo.com', password: 'tech123', role: UserRole.PARTNER },
-    { name: 'PT Indah Putih Cemerlang', email: 'client@ipc.com', password: 'client123', role: UserRole.CLIENT },
+    { name: 'Teknisi Holicindo', email: 'tech@holicindo.com', password: 'tech123', role: UserRole.PARTNER, partner_id: partnerJakarta.id },
+    { name: 'PT Indah Putih Cemerlang', email: 'client@ipc.com', password: 'client123', role: UserRole.CLIENT, client_id: client.id },
   ];
 
   for (const u of users) {
-    const existing = await userRepo.findOne({ where: { email: u.email } });
+    let existing = await userRepo.findOne({ where: { email: u.email } });
     if (existing) {
-      console.log(`User ${u.email} already exists.`);
+      existing.role = u.role;
+      if (u.client_id) existing.client_id = u.client_id;
+      if (u.partner_id) existing.partner_id = u.partner_id;
+      await userRepo.save(existing);
+      console.log(`Updated existing user: ${u.email}`);
       continue;
     }
 
@@ -45,7 +153,7 @@ async function seed() {
   }
 
   await AppDataSource.destroy();
-  console.log('Seeding completed!');
+  console.log('Holicindo Seeding completed successfully!');
 }
 
 seed().catch(console.error);

@@ -112,9 +112,72 @@
   font-size: 14px;
   font-weight: 600;
   color: var(--color-deep-navy);
+  line-height: 1.2;
 }
 
 .userArrow {
   font-size: 12px;
   opacity: 0.4;
+}
+
+.profileContainer {
+  position: relative;
+}
+
+.roleBadge {
+  font-size: 9px;
+  font-weight: 700;
+  background: #f1f5f9;
+  color: #64748b;
+  padding: 1px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  background: white;
+  border: 1px solid #EAEAEA;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  width: 200px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdownEmail {
+  padding: 12px 16px;
+  font-size: 12px;
+  color: var(--color-space-grey);
+  border-bottom: 1px solid #F0F0F0;
+  word-break: break-all;
+  background: #FAFAFA;
+}
+
+.dropdownItem {
+  background: transparent;
+  border: none;
+  padding: 12px 16px;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  transition: background 0.2s;
+}
+
+.dropdownItem:hover {
+  background: #FFF1F0;
 }

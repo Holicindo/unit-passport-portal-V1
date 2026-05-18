@@ -9,6 +9,7 @@ import { UserRole } from '../auth/entities/user.entity';
 
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { StorageService } from '../storage/storage.service';
+import { Multer } from 'multer';
 
 @ApiTags('Service Reports')
 @Controller('reports')

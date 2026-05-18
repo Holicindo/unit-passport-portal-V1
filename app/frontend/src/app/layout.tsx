@@ -28,6 +28,8 @@ export default function RootLayout({
 }>) {
   const pathname = usePathname();
   const isLoginPage = pathname === '/login';
+  const isPassportPage = pathname?.startsWith('/id/');
+  const hideLayout = isLoginPage || isPassportPage;
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
@@ -35,9 +37,9 @@ export default function RootLayout({
   return (
     <html lang="id" className={`${inter.variable} ${montserrat.variable}`}>
       <body style={{ display: 'flex', margin: 0, padding: 0, background: 'var(--color-light-tech-grey)' }}>
-        {!isLoginPage && <Sidebar isOpen={sidebarOpen} />}
+        {!hideLayout && <Sidebar isOpen={sidebarOpen} />}
         <div 
-          className={`${!isLoginPage ? "main-wrapper" : ""} ${!sidebarOpen && !isLoginPage ? "sidebar-collapsed" : ""}`} 
+          className={`${!hideLayout ? "main-wrapper" : ""} ${!sidebarOpen && !hideLayout ? "sidebar-collapsed" : ""}`} 
           style={{ 
             flex: 1, 
             display: 'flex', 
@@ -47,7 +49,7 @@ export default function RootLayout({
             overflowX: 'hidden'
           }}
         >
-          {!isLoginPage && <TopBar onToggleSidebar={toggleSidebar} isSidebarOpen={sidebarOpen} />}
+          {!hideLayout && <TopBar onToggleSidebar={toggleSidebar} isSidebarOpen={sidebarOpen} />}
           <div style={{ flex: 1 }}>
             {children}
           </div>

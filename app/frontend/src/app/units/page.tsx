@@ -36,19 +36,29 @@ export default function UnitsPage() {
   const loadUnits = useCallback(async (page: number) => {
     setLoading(true);
     try {
-      const { data } = await unitApi.findAll(page, PAGE_SIZE);
+      const userData = localStorage.getItem('user');
+      const user = userData ? JSON.parse(userData) : null;
+      
+      let response;
+      if (user?.role === 'CLIENT') {
+        response = await unitApi.findMyFleet();
+      } else {
+        response = await unitApi.findAll(page, PAGE_SIZE);
+      }
+      
+      const { data } = response;
       
       let unitsArray: any[] = [];
       let countValue = 0;
 
-      if (data && typeof data === 'object') {
+      if (Array.isArray(data)) {
+        // Handle flat array (Client's fleet)
+        unitsArray = data;
+        countValue = data.length;
+      } else if (data && typeof data === 'object') {
         // Handle NestJS backend format { data: [], meta: { total: 0 } }
         unitsArray = data.data || data.items || [];
         countValue = data.meta?.total ?? data.total ?? data.count ?? unitsArray.length;
-      } else if (Array.isArray(data)) {
-        // Handle [units, count] format
-        unitsArray = data[0] || [];
-        countValue = typeof data[1] === 'number' ? data[1] : unitsArray.length;
       }
 
       setUnits(unitsArray);

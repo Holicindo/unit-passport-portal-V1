@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3001';
 
 export const api = axios.create({
   baseURL: API_URL,
@@ -26,7 +26,10 @@ export const authApi = {
 
 export const unitApi = {
   findAll: (page = 1, limit = 10) => api.get(`/units?page=${page}&limit=${limit}`),
+  findMyFleet: () => api.get('/units/my-fleet'),
   findOne: (id: string) => api.get(`/units/${id}`),
+  findByQrToken: (token: string) => api.get(`/units/scan/${token}`),
+  requestService: (id: string, data: any) => api.post(`/units/${id}/request-service`, data),
 };
 
 export const reportApi = {

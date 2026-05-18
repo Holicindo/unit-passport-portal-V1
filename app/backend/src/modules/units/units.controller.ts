@@ -22,7 +22,15 @@ export class UnitsController {
     return this.unitsService.findByQrTokenPublic(qrToken);
   }
 
-  // --- LEVEL 2: CLIENT ---
+  @Post(':id/request-service')
+  @ApiOperation({ summary: 'Smart Routing: Request service for a unit. Automatically routes to active partner or defaults to WhatsApp HQ.' })
+  requestService(
+    @Param('id') id: string,
+    @Body() body: { city?: string; notes?: string; contact_phone?: string; contact_name?: string }
+  ) {
+    return this.unitsService.requestServiceSmartRouting(id, body);
+  }
+
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CLIENT, UserRole.ADMIN)
   @ApiBearerAuth()
@@ -31,6 +39,15 @@ export class UnitsController {
   @ApiResponse({ status: 200, description: 'Fleet overview' })
   findMyFleet(@Request() req: any) {
     return this.unitsService.findAllByClient(req.user.client_id);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.CLIENT, UserRole.PARTNER, UserRole.ADMIN)
+  @ApiBearerAuth()
+  @Get(':id')
+  @ApiOperation({ summary: 'Get full unit detail by ID' })
+  findOne(@Param('id') id: string) {
+    return this.unitsService.findOne(id);
   }
 
   // --- LEVEL 3: PARTNER ---

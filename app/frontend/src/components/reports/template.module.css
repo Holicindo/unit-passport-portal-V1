@@ -1,0 +1,339 @@
+/* ============================================================
+   OFFICIAL HOLICINDO SHEET TEMPLATE — Google Sheets Replica Styling
+   Designed for absolute layout preservation in print & screen
+   ============================================================ */
+
+.a4Sheet {
+  width: 210mm;
+  min-height: 297mm;
+  padding: 12mm 15mm;
+  margin: 0 auto;
+  background: #ffffff;
+  box-sizing: border-box;
+  font-family: Arial, Helvetica, sans-serif;
+  color: #000000;
+  font-size: 8.5px;
+  line-height: 1.25;
+}
+
+/* Print Overrides */
+@media print {
+  :global(body) {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  .a4Sheet {
+    width: 100% !important;
+    min-height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
+  .a4Sheet input, .a4Sheet select, .a4Sheet textarea {
+    border: none !important;
+    background: transparent !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    color: #000000 !important;
+    font-weight: bold !important;
+    padding: 0 !important;
+  }
+}
+
+/* Header Grid Layout - Dense Google Sheets Style */
+.sheetHeaderTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 8px;
+}
+
+.sheetHeaderTable td {
+  border: 1px solid #475569;
+  padding: 3px 5px;
+  vertical-align: middle;
+}
+
+.logoCell {
+  font-size: 16px;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  text-align: center;
+  width: 25%;
+  background: #f1f5f9;
+}
+
+.titleCell {
+  text-align: center;
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  background: #f1f5f9;
+  width: 50%;
+}
+
+.metaGridCell {
+  width: 25%;
+  padding: 0 !important;
+}
+
+.innerMetaTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.innerMetaTable td {
+  border: none !important;
+  border-bottom: 1px solid #cbd5e1 !important;
+  padding: 2px 4px !important;
+  font-size: 7.5px;
+}
+
+.innerMetaTable tr:last-child td {
+  border-bottom: none !important;
+}
+
+/* Grid Layout for Customer / Model Info */
+.infoGridTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 8px;
+}
+
+.infoGridTable td, .infoGridTable th {
+  border: 1px solid #475569;
+  padding: 3px 5px;
+  text-align: left;
+}
+
+.infoGridTable th {
+  background: #f8fafc;
+  font-weight: bold;
+  font-size: 8px;
+}
+
+/* Section Dividers */
+.sectionHeaderRow {
+  background: #e2e8f0 !important;
+  font-weight: bold;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Dense Data Tables */
+.denseTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 8px;
+}
+
+.denseTable th, .denseTable td {
+  border: 1px solid #475569;
+  padding: 2px 4px;
+  font-size: 8px;
+}
+
+.denseTable th {
+  background: #f1f5f9;
+  font-weight: bold;
+  text-align: center;
+}
+
+.checkLabel {
+  text-align: left;
+}
+
+.centerCell {
+  text-align: center;
+}
+
+/* Spreadsheet Input Styles */
+.cellInput {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-size: 8px;
+  color: #000000;
+  padding: 2px 4px;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.cellInput:focus {
+  outline: 1.5px solid #2e5bff;
+  background: #f8fafc;
+}
+
+.cellSelect {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-size: 8px;
+  color: #000000;
+  padding: 1px 2px;
+  box-sizing: border-box;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.cellSelect:focus {
+  outline: 1.5px solid #2e5bff;
+}
+
+/* Toggle Buttons for Edit Result Cells */
+.resultToggleGroup {
+  display: inline-flex;
+  gap: 3px;
+  justify-content: center;
+  align-items: center;
+}
+
+.resultBtn {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #64748b;
+  font-size: 8px;
+  font-weight: bold;
+  padding: 1px 6px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.resultBtn.pass:hover, .resultBtn.pass.active {
+  background: #22c55e;
+  border-color: #22c55e;
+  color: #ffffff;
+}
+
+.resultBtn.fail:hover, .resultBtn.fail.active {
+  background: #ef4444;
+  border-color: #ef4444;
+  color: #ffffff;
+}
+
+/* Readonly Status badging matching Sheets exactly */
+.statusBadge {
+  font-weight: bold;
+  font-size: 8.5px;
+}
+
+.statusBadge.pass {
+  color: #16a34a;
+}
+
+.statusBadge.fail {
+  color: #dc2626;
+}
+
+/* Outer Dimension Block Layout */
+.dimGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+
+/* Power light colors */
+.specsFooterRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border: 1px solid #475569;
+  border-top: none;
+  background: #f8fafc;
+}
+
+.specField {
+  border-right: 1px solid #475569;
+  padding: 3px 5px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.specField:last-child {
+  border-right: none;
+}
+
+.specField label {
+  font-weight: bold;
+  color: #334155;
+  font-size: 7.5px;
+}
+
+/* Notes Block */
+.notesArea {
+  width: 100%;
+  border: 1px solid #475569;
+  border-top: none;
+  padding: 4px 6px;
+  box-sizing: border-box;
+}
+
+.notesArea label {
+  font-weight: bold;
+  color: #000000;
+  display: block;
+  margin-bottom: 2px;
+  font-size: 7.5px;
+}
+
+.notesArea textarea {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 8px;
+  resize: vertical;
+}
+
+.notesArea textarea:focus {
+  outline: 1.5px solid #2e5bff;
+  background: #f8fafc;
+}
+
+.notesView {
+  font-size: 8px;
+  white-space: pre-wrap;
+  color: #1e293b;
+  min-height: 24px;
+}
+
+/* Footnotes */
+.footnoteText {
+  font-size: 6.8px;
+  color: #475569;
+  line-height: 1.3;
+  margin-top: 4px;
+}
+
+/* Signatures layout mimicking standard GSheets tables */
+.signatureTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+
+.signatureTable td {
+  border: 1px solid #475569;
+  width: 50%;
+  text-align: center;
+  padding: 4px;
+  height: 48px;
+  vertical-align: bottom;
+}
+
+.signatureTitle {
+  font-weight: bold;
+  font-size: 7.5px;
+  display: block;
+  margin-bottom: 28px;
+  text-align: center;
+}
+
+.signatureName {
+  font-size: 7px;
+  color: #64748b;
+  border-top: 1px dotted #cbd5e1;
+  display: block;
+  padding-top: 2px;
+}

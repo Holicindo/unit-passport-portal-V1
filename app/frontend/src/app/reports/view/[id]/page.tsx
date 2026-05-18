@@ -1,149 +1,160 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { reportApi } from '@/lib/api';
-import { Printer, FileDown, ArrowLeft, Loader2 } from 'lucide-react';
-import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import { Printer, FileDown, ArrowLeft, Loader2, Camera } from 'lucide-react';
+import InspectionReportTemplate from '@/components/reports/InspectionReportTemplate';
 import styles from './view.module.css';
-
-import { REPORT_TEMPLATE_BYTES } from '@/assets/report-template';
-
-/**
- * NEW APPROACH: ACROFORM / FILLABLE PDF
- * Kita tidak lagi menggunakan koordinat absolut di sini.
- * Kita akan menggunakan named fields.
- */
 
 export default function ReportView() {
   const { id } = useParams();
   const router = useRouter();
   const [report, setReport] = useState<any>(null);
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-
-  const generateReportPdf = useCallback(async (reportData: any) => {
-    if (!reportData) return null;
-    try {
-      const pdfDoc = await PDFDocument.load(REPORT_TEMPLATE_BYTES);
-      const form = pdfDoc.getForm();
-      const firstPage = pdfDoc.getPages()[0];
-      const { data } = reportData;
-
-      /**
-       * HELPER: Fill or Create Field
-       * Karena template asli belum punya field, kita akan CREATE field tersebut 
-       * SATU KALI di posisi yang sudah kita kalibrasi sebelumnya.
-       * 
-       * Nanti, jika template PDF-nya sudah diganti dengan PDF yang sudah ada field-nya dari Acrobat,
-       * fungsi ini tinggal memanggil 'form.getTextField(name)'.
-       */
-      const fillField = (name: string, value: any, x: number, y: number, width: number, height: number = 12) => {
-        let field;
-        try {
-          field = form.getTextField(name);
-        } catch (e) {
-          // Jika field belum ada di PDF, kita buatkan (Hanya untuk masa transisi template)
-          field = form.createTextField(name);
-          field.addToPage(firstPage, { x, y, width, height, textColor: rgb(0,0,0) });
-        }
-        field.setText(String(value || ''));
-        field.setFontSize(7);
-      };
-
-      // --- 1. HEADER FIELDS ---
-      // Menggunakan koordinat terakhir Anda sebagai lokasi "Anchor" Field
-      fillField('reportNo', reportData.id.toUpperCase(), 420, 831, 100);
-      fillField('serialNumber', reportData.unit?.serial_number, 430, 828, 100);
-      fillField('orderDocument', data.header?.order_document, 430, 825, 100);
-      fillField('productionCode', data.header?.production_code, 430, 811, 100);
-
-      // --- 2. CUSTOMER & INFO ---
-      fillField('customer', reportData.unit?.current_client?.company_name || 'INTERNAL', 100, 804, 250);
-      fillField('startDate', data.header?.starting_date, 360, 804, 80);
-      fillField('finishDate', data.header?.finishing_date, 460, 804, 80);
-      fillField('category', reportData.unit?.specs?.category, 100, 802, 150);
-      fillField('model', reportData.unit?.model_name, 400, 802, 150);
-
-      // --- 3. DIMENSIONS ---
-      fillField('dimBodyPanjang', data.dimensions?.body?.panjang, 100, 690, 50);
-      fillField('dimBodyLebar', data.dimensions?.body?.lebar, 200, 690, 50);
-      fillField('dimBodyTinggi', data.dimensions?.body?.tinggi, 300, 690, 50);
-      
-      fillField('dimKacaDepan', data.dimensions?.kaca?.depan, 150, 640, 50);
-      fillField('dimKacaSamping', data.dimensions?.kaca?.samping, 150, 620, 50);
-      fillField('dimKacaAtas', data.dimensions?.kaca?.atas, 150, 600, 50);
-      fillField('dimKacaPintu', data.dimensions?.kaca?.pintu, 150, 580, 50);
-      fillField('dimKacaTingkatan', data.dimensions?.kaca?.tingkatan, 150, 560, 50);
-
-      // --- FINALIZING ---
-      // Flatten akan "membakar" isi field ke PDF sehingga tidak bisa diedit manual lagi
-      form.flatten();
-
-      const pdfBytes = await pdfDoc.save();
-      const blob = new Blob([(pdfBytes as any)], { type: 'application/pdf' });
-      return URL.createObjectURL(blob);
-    } catch (err) {
-      console.error('PDF Form Fill Error:', err);
-      return null;
-    }
-  }, []);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const init = async () => {
+    const fetchReport = async () => {
       try {
         const { data } = await reportApi.findOne(id as string);
-        setReport(data);
-        const url = await generateReportPdf(data);
-        setPdfUrl(url);
+        if (data) {
+          setReport(data);
+        } else {
+          setError('Laporan tidak ditemukan.');
+        }
       } catch (err) {
         console.error(err);
+        setError('Gagal memuat data laporan dari server.');
       } finally {
         setLoading(false);
       }
     };
-    if (id) init();
-  }, [id, generateReportPdf]);
+    if (id) fetchReport();
+  }, [id]);
 
   const handlePrint = () => {
-    const iframe = document.getElementById('pdf-preview') as HTMLIFrameElement;
-    if (iframe) iframe.contentWindow?.print();
+    // Natively trigger browser print (user can select printer or save as PDF)
+    window.print();
   };
 
-  const handleDownload = () => {
-    if (pdfUrl) {
-      const link = document.createElement('a');
-      link.href = pdfUrl;
-      link.download = `Report-${id}.pdf`;
-      link.click();
-    }
-  };
+  if (loading) {
+    return (
+      <div className={styles.loadingState}>
+        <Loader2 className={styles.spinner} size={44} />
+        <p>Memuat Lembar Laporan QC...</p>
+      </div>
+    );
+  }
 
-  if (loading) return <div className={styles.loadingState}><Loader2 className={styles.spinner} size={40} /><p>Menyiapkan Laporan...</p></div>;
+  if (error || !report) {
+    return (
+      <div className={styles.pageContainer}>
+        <div className={styles.toolbar}>
+          <button onClick={() => router.back()} className={styles.backBtn}>
+            <ArrowLeft size={16} /> Kembali
+          </button>
+        </div>
+        <div className={styles.error}>
+          <h3>⚠️ Kesalahan Terjadi</h3>
+          <p>{error || 'Data laporan kosong.'}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.pageContainer}>
+      {/* Action Toolbar */}
       <header className={styles.toolbar}>
         <div className={styles.toolbarLeft}>
-          <button onClick={() => router.back()} className={styles.backBtn}><ArrowLeft size={16} /></button>
-          <span className={styles.reportId}>INSPECTION REPORT - {report?.id}</span>
+          <button onClick={() => router.back()} className={styles.backBtn}>
+            <ArrowLeft size={16} />
+          </button>
+          <div>
+            <span className={styles.reportId}>LAPORAN QC — {report.id}</span>
+            <div style={{ fontSize: '10px', color: '#64748b', marginTop: '2px' }}>
+              Unit Seri: {report.unit?.serial_number} · Model: {report.unit?.model_name}
+            </div>
+          </div>
         </div>
         <div className={styles.toolbarActions}>
-          <button onClick={handlePrint} className={styles.actionBtn}><Printer size={14} /> PRINT</button>
-          <button onClick={handleDownload} className={`${styles.actionBtn} ${styles.primary}`}><FileDown size={14} /> DOWNLOAD PDF</button>
+          <button onClick={handlePrint} className={styles.actionBtn}>
+            <Printer size={14} /> Cetak Lembar / Print
+          </button>
+          <button onClick={handlePrint} className={`${styles.actionBtn} ${styles.primary}`}>
+            <FileDown size={14} /> Simpan PDF / Download
+          </button>
         </div>
       </header>
 
+      {/* Screen Render Container */}
       <div className={styles.previewWrapper}>
-        {pdfUrl && (
-          <iframe 
-            id="pdf-preview"
-            src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0`} 
-            className={styles.pdfFrame}
-            title="PDF Preview"
-          />
+        <InspectionReportTemplate
+          mode="view"
+          data={report.data}
+          unit={report.unit}
+        />
+
+        {/* Optional: Photo Documentation Section at the bottom of the screen */}
+        {report.photo_urls && report.photo_urls.length > 0 && (
+          <div style={{
+            marginTop: '20px',
+            background: '#ffffff',
+            padding: '24px',
+            borderTop: '1px solid #e2e8f0',
+            borderRadius: '0 0 4px 4px'
+          }} className="photoContainerPrintExclude">
+            <h4 style={{
+              fontSize: '11px',
+              fontWeight: 800,
+              color: '#475569',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              margin: '0 0 12px 0',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}>
+              <Camera size={14} style={{ color: '#2e5bff' }} />
+              Lampiran Foto Dokumentasi QC (Documentation Photos)
+            </h4>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
+              gap: '16px'
+            }}>
+              {report.photo_urls.map((url: string, index: number) => (
+                <div key={`view-photo-${index}`} style={{
+                  aspectRatio: '1',
+                  borderRadius: '6px',
+                  border: '1px solid #e2e8f0',
+                  overflow: 'hidden',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.03)'
+                }}>
+                  <img
+                    src={url}
+                    alt={`QC Documentation Photo ${index + 1}`}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
         )}
       </div>
+
+      {/* CSS overrides to exclude photos or hide specific areas from physical prints if needed */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media print {
+          .photoContainerPrintExclude {
+            display: none !important;
+          }
+          nav, header, footer, aside, .sidebar_active, .toolbar {
+            display: none !important;
+          }
+        }
+      ` }} />
     </div>
   );
 }

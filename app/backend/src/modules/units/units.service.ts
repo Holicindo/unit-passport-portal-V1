@@ -6,6 +6,8 @@ import { OwnershipHistory } from '../ownership/entities/ownership-history.entity
 import { Client } from '../clients/entities/client.entity';
 import { CreateUnitDto } from './dto/create-unit.dto';
 import { TransferOwnershipDto } from './dto/transfer-ownership.dto';
+import { Partner } from '../partners/entities/partner.entity';
+import { ServiceLog } from '../service-logs/entities/service-log.entity';
 
 @Injectable()
 export class UnitsService {
@@ -114,5 +116,57 @@ export class UnitsService {
       current_client: client,
     });
     return this.unitRepo.save(unit);
+  }
+
+  async requestServiceSmartRouting(unitId: string, body: { city?: string; notes?: string; contact_phone?: string; contact_name?: string }) {
+    const unit = await this.unitRepo.findOne({
+      where: { id: unitId },
+      relations: ['current_client'],
+    });
+    if (!unit) throw new NotFoundException('Unit tidak ditemukan');
+
+    // Tentukan kota untuk routing
+    const targetCity = body.city || unit.specs?.city || 'Jakarta';
+
+    // Cari partner lokal di kota tersebut yang aktif
+    const partner = await this.unitRepo.manager.getRepository(Partner).findOne({
+      where: { city: targetCity, is_active: true }
+    });
+
+    if (partner) {
+      // Jika partner lokal siap & aktif, lakukan Smart Routing
+      const logRepo = this.unitRepo.manager.getRepository(ServiceLog);
+      const newLog = logRepo.create({
+        unit,
+        partner,
+        service_date: new Date(),
+        service_type: 'CORRECTIVE_MAINTENANCE',
+        technician_name: 'Pending Assignment',
+        notes: `Smart Routed Service Request for ${unit.serial_number} at ${body.contact_name || 'Outlet'}. Notes: ${body.notes || '-'}`,
+        status: 'PENDING',
+      } as any);
+      await logRepo.save(newLog);
+
+      return {
+        success: true,
+        routed_to: 'PARTNER',
+        partner_name: partner.partner_name,
+        city: partner.city,
+        contact_wa: partner.contact_wa,
+        message: `Permintaan servis berhasil diarahkan ke partner regional kami di ${partner.city} (${partner.partner_name}). Tembusan (CC) telah dikirim ke Holicindo HQ.`,
+      };
+    } else {
+      // Jika partner lokal belum siap / tidak aktif, fallback ke Holicindo HQ via WhatsApp
+      const hqWaNumber = '6287808780006'; // Nomor WA Holicindo HQ
+      const waText = `Halo Holicindo HQ, saya ingin meminta servis untuk:\n\n*Serial Number:* ${unit.serial_number}\n*Model:* ${unit.model_name}\n*Lokasi:* ${targetCity}\n*Catatan Kendala:* ${body.notes || '-'}\n\nMohon bantuannya untuk assign teknisi secara manual. Terima kasih!`;
+      const waLink = `https://wa.me/${hqWaNumber}?text=${encodeURIComponent(waText)}`;
+
+      return {
+        success: true,
+        routed_to: 'HQ_FALLBACK',
+        whatsapp_link: waLink,
+        message: `Layanan di kota ${targetCity} belum memiliki partner regional yang aktif. Permintaan Anda akan dikirimkan langsung ke Holicindo HQ untuk penugasan manual via WhatsApp.`,
+      };
+    }
   }
 }
