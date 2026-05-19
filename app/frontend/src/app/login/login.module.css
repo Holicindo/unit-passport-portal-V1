@@ -1,33 +1,37 @@
+/* LOGIN — Dark Background + Light Glass Card
+   Keep dark immersive feel for login, but fix input bug:
+   blur() reduced to 16px to prevent browser jank/freeze */
+
 .container {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   background:
-    radial-gradient(at 20% 20%, rgba(46, 91, 255, 0.15) 0%, transparent 50%),
-    radial-gradient(at 80% 80%, rgba(0, 196, 140, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at top left, #001F3F 0%, #000a14 100%);
+    radial-gradient(ellipse at 20% 25%, rgba(46, 91, 255, 0.25) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 75%, rgba(0, 196, 140, 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(0, 31, 63, 0.95) 0%, #000a1a 100%);
   padding: 20px;
 }
 
+/* FIX: Reduced blur from 40px → 16px to eliminate input lag/freeze */
 .loginCard {
   width: 100%;
   max-width: 440px;
-  background: rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(40px) saturate(160%);
-  -webkit-backdrop-filter: blur(40px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 28px;
   padding: 48px 40px;
   box-shadow:
-    0 30px 60px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  animation: cardIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes cardIn {
-  from { opacity: 0; transform: translateY(20px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+    0 24px 60px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  /* FIX: will-change promotes to GPU layer, prevents input freeze */
+  will-change: transform;
+  transform: translateZ(0);
+  position: relative;
+  z-index: 1;
 }
 
 .header {
@@ -38,22 +42,23 @@
 .logo {
   font-family: var(--font-heading);
   font-size: 2rem;
-  letter-spacing: 4px;
+  letter-spacing: 5px;
   color: var(--color-optic-white);
   margin-bottom: 8px;
 }
 
 .subtitle {
-  color: var(--color-space-grey);
-  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.8rem;
   text-transform: uppercase;
-  letter-spacing: 2px;
+  letter-spacing: 3px;
+  font-weight: 500;
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
 }
 
 .inputGroup {
@@ -63,26 +68,41 @@
 }
 
 .inputGroup label {
-  color: var(--color-optic-white);
-  font-size: 0.85rem;
-  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
 }
 
+/* FIX: Input uses simple bg, no backdrop-filter — prevents freeze */
 .inputGroup input {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: var(--radius-md);
   padding: 14px 16px;
   color: var(--color-optic-white);
-  font-size: 1rem;
-  transition: all 0.3s ease;
+  font-size: 0.95rem;
+  font-family: var(--font-body);
+  transition: border-color 0.2s ease, background 0.2s ease;
   width: 100%;
+  /* FIX: Explicit pointer-events to prevent click-blocking */
+  pointer-events: auto;
+  position: relative;
+  z-index: 2;
+}
+
+.inputGroup input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
 }
 
 .passwordWrapper {
   position: relative;
   display: flex;
   align-items: center;
+}
+
+.passwordWrapper input {
+  padding-right: 48px;
 }
 
 .eyeBtn {
@@ -97,6 +117,7 @@
   justify-content: center;
   padding: 8px;
   transition: color 0.2s ease;
+  z-index: 3;
 }
 
 .eyeBtn:hover {
@@ -106,17 +127,17 @@
 .inputGroup input:focus {
   outline: none;
   border-color: var(--color-cobalt-blue);
-  background: rgba(255, 255, 255, 0.08);
-  box-shadow: 0 0 0 4px rgba(46, 91, 255, 0.15);
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 0 0 3px rgba(46, 91, 255, 0.2);
 }
 
 .errorMessage {
-  color: #ff4d4d;
+  color: #ff6b6b;
   font-size: 0.85rem;
-  background: rgba(255, 77, 77, 0.1);
-  padding: 10px;
+  background: rgba(255, 107, 107, 0.1);
+  padding: 12px 14px;
   border-radius: var(--radius-sm);
-  border-left: 3px solid #ff4d4d;
+  border-left: 3px solid #ff6b6b;
 }
 
 .loginButton {
@@ -124,32 +145,34 @@
   color: white;
   border: none;
   border-radius: var(--radius-md);
-  padding: 17px;
-  font-size: 1rem;
+  padding: 16px;
+  font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.25s ease;
   margin-top: 8px;
-  box-shadow: 0 4px 15px rgba(46, 91, 255, 0.3);
-  letter-spacing: 0.02em;
+  box-shadow: 0 4px 16px rgba(46, 91, 255, 0.35);
+  letter-spacing: 0.03em;
+  font-family: var(--font-body);
 }
 
 .loginButton:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 30px rgba(46, 91, 255, 0.45);
+  box-shadow: 0 10px 28px rgba(46, 91, 255, 0.45);
 }
 
 .loginButton:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  transform: none;
 }
 
 .footer {
-  margin-top: 40px;
+  margin-top: 36px;
   text-align: center;
 }
 
 .footer p {
-  color: var(--color-space-grey);
+  color: rgba(255, 255, 255, 0.25);
   font-size: 0.75rem;
 }

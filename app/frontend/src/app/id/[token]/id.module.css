@@ -210,25 +210,25 @@
 
 /* Cards styling (Glassmorphism inspired) */
 .card {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: var(--glass-white);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   border-radius: var(--radius-lg);
-  border: 1px solid rgba(226, 232, 240, 0.8);
+  border: 1px solid var(--glass-white-border);
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 31, 63, 0.03);
+  box-shadow: var(--glass-shadow);
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 20px 40px rgba(0, 31, 63, 0.06);
+  box-shadow: var(--glass-shadow-hover);
 }
 
 .cardHeader {
-  background: #fafafa;
+  background: rgba(255, 255, 255, 0.4);
   padding: 20px 24px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
   display: flex;
   align-items: center;
   gap: 14px;
@@ -298,11 +298,14 @@
 
 /* Action hub components */
 .actionCard {
-  background: linear-gradient(135deg, #001f3f 0%, #08335e 100%);
-  color: white;
-  border: none;
-  box-shadow: 0 15px 35px rgba(0, 31, 63, 0.12);
+  background: var(--glass-white);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  color: var(--color-deep-navy);
+  border: 1px solid var(--glass-white-border);
+  box-shadow: var(--glass-shadow);
   position: relative;
+  overflow: hidden;
 }
 
 .actionCard::before {
@@ -312,23 +315,23 @@
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(circle, rgba(46, 91, 255, 0.15) 0%, transparent 60%);
+  background: radial-gradient(circle, rgba(46, 91, 255, 0.05) 0%, transparent 60%);
   pointer-events: none;
 }
 
 .actionCard:hover {
   transform: translateY(-4px);
-  box-shadow: 0 25px 50px rgba(0, 31, 63, 0.22);
+  box-shadow: var(--glass-shadow-hover);
 }
 
 .actionCard .cardHeader {
-  background: rgba(255, 255, 255, 0.04);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  color: white;
+  background: rgba(46, 91, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+  color: var(--color-deep-navy);
 }
 
 .restrictedText {
-  color: #cbd5e1;
+  color: var(--color-space-grey);
   font-size: 0.95rem;
   line-height: 1.6;
   margin-bottom: 24px;
@@ -386,7 +389,7 @@
 }
 
 .sectionInfo {
-  color: #cbd5e1;
+  color: var(--color-space-grey);
   font-size: 0.95rem;
   line-height: 1.5;
 }
@@ -416,10 +419,12 @@
 
 /* Document grid section */
 .sectionCard {
-  background: white;
+  background: var(--glass-white);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   border-radius: var(--radius-lg);
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 10px 30px rgba(0, 31, 63, 0.02);
+  border: 1px solid var(--glass-white-border);
+  box-shadow: var(--glass-shadow);
   margin-bottom: 40px;
   overflow: hidden;
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -427,7 +432,7 @@
 
 .sectionCard:hover {
   transform: translateY(-2px);
-  box-shadow: 0 15px 35px rgba(0, 31, 63, 0.04);
+  box-shadow: var(--glass-shadow-hover);
 }
 
 .docGrid {
@@ -441,10 +446,10 @@
   display: flex;
   align-items: center;
   gap: 18px;
-  background: #f8fafc;
+  background: rgba(255, 255, 255, 0.4);
   padding: 20px;
   border-radius: var(--radius-md);
-  border: 1px solid #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.5);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
