@@ -1,8 +1,8 @@
 .topBar {
   height: 70px;
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -10,8 +10,8 @@
   position: sticky;
   top: 0;
   z-index: 90;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
-  box-shadow: 0 1px 20px rgba(0, 31, 63, 0.03);
+  border-bottom: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
 }
 
 .leftSection {
@@ -34,20 +34,20 @@
 }
 
 .toggleBtn:hover {
-  background: var(--color-light-tech-grey);
+  background: rgba(0, 31, 63, 0.05);
 }
 
 .searchBox {
   display: flex;
   align-items: center;
-  background: rgba(241, 245, 249, 0.8);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(226, 232, 240, 0.7);
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid var(--glass-border);
   border-radius: 12px;
-  padding: 10px 16px;
-  width: 380px;
-  gap: 12px;
+  padding: 8px 16px;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  width: 100%;
+  max-width: 260px; /* Fluid max-width instead of massive fixed width */
 }
 
 .searchBox:focus-within {
@@ -73,7 +73,7 @@
 .actions {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 14px; /* Slightly tighter gap for fluid responsiveness */
 }
 
 .actionBtn {
@@ -82,7 +82,16 @@
   font-size: 20px;
   cursor: pointer;
   position: relative;
-  opacity: 0.7;
+  color: var(--color-deep-navy); /* Bold, crisp navy color */
+  transition: transform 0.2s, color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.actionBtn:hover {
+  color: var(--color-cobalt-blue);
+  transform: scale(1.05);
 }
 
 .badge {
@@ -101,17 +110,21 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding-left: 20px;
-  border-left: 1px solid #EAEAEA;
+  padding-left: 16px;
+  padding-right: 8px; /* Safe breathing room from absolute right boundary */
+  border-left: 1px solid var(--glass-border);
   cursor: pointer;
+  flex-shrink: 0; /* Prevents user profile from ever shrinking */
 }
 
 .avatar {
-  width: 35px;
-  height: 35px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   overflow: hidden;
   background: #EEE;
+  border: 1.5px solid rgba(0, 31, 63, 0.1);
+  flex-shrink: 0;
 }
 
 .avatar img {
@@ -122,9 +135,10 @@
 
 .userName {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--color-deep-navy);
   line-height: 1.2;
+  white-space: nowrap; /* Prevents username from breaking into two lines */
 }
 
 .userArrow {
@@ -173,9 +187,53 @@
   padding: 12px 16px;
   font-size: 12px;
   color: var(--color-space-grey);
-  border-bottom: 1px solid #F0F0F0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
   word-break: break-all;
-  background: #FAFAFA;
+  background: rgba(255,255,255,0.4);
+}
+
+.iconContainer {
+  position: relative;
+}
+
+.notificationDropdown {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: -10px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  box-shadow: var(--glass-shadow-hover);
+  width: 280px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.notificationHeader {
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-deep-navy);
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  background: rgba(255,255,255,0.4);
+}
+
+.notificationItem {
+  padding: 14px 16px;
+  font-size: 12.5px;
+  color: var(--color-deep-navy);
+  border-bottom: 1px solid rgba(0,0,0,0.03);
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.notificationItem:hover {
+  background: rgba(46, 91, 255, 0.05);
 }
 
 .dropdownItem {
@@ -194,4 +252,32 @@
 
 .dropdownItem:hover {
   background: #FFF1F0;
+}
+
+.topBarScanBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--color-optic-white);
+  border: 1.5px solid rgba(46, 91, 255, 0.35); /* Elegant cobalt border tint */
+  color: var(--color-cobalt-blue); /* Clear focused cobalt text */
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-family: var(--font-heading);
+  font-size: 0.82rem;
+  font-weight: 800; /* Bold & distinct */
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(46, 91, 255, 0.06);
+  white-space: nowrap; /* ABSOLUTELY PREVENTS LINE BREAKS */
+  flex-shrink: 0;
+}
+
+.topBarScanBtn:hover {
+  border-color: var(--color-cobalt-blue);
+  color: var(--color-optic-white);
+  background: var(--color-cobalt-blue);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(46, 91, 255, 0.3);
 }

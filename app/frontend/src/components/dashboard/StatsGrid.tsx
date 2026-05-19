@@ -27,7 +27,7 @@ export default function StatsGrid() {
               backdropFilter: 'blur(16px) saturate(160%)',
               WebkitBackdropFilter: 'blur(16px) saturate(160%)',
               padding: '28px 24px',
-              borderRadius: '20px',
+              borderRadius: 'var(--radius-lg)',
               display: 'flex',
               alignItems: 'center',
               gap: '20px',
@@ -73,11 +73,11 @@ export default function StatsGrid() {
               </h3>
               <p style={{
                 fontSize: '0.82rem',
-                margin: 0,
-                color: 'var(--color-space-grey)',
                 fontWeight: 600,
-                letterSpacing: '0.02em',
+                color: 'var(--color-space-grey)',
+                margin: 0,
                 textTransform: 'uppercase',
+                letterSpacing: '0.05em',
               }}>
                 {stat.label}
               </p>

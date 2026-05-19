@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './TopBar.module.css';
-import { Search, Mail, Bell, ChevronDown, Menu, LogOut } from 'lucide-react';
+import { Search, Mail, Bell, ChevronDown, Menu, LogOut, QrCode } from 'lucide-react';
+import QrScannerModal from './QrScannerModal';
 
 interface TopBarProps {
   onToggleSidebar: () => void;
@@ -14,6 +15,9 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mailOpen, setMailOpen] = useState(false);
+  const [bellOpen, setBellOpen] = useState(false);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -57,16 +61,43 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
       </div>
 
       <div className={styles.actions}>
-        <button className={styles.actionBtn}>
-          <Mail size={20} />
-          <span className={styles.badge}>1</span>
+        <button className={styles.topBarScanBtn} onClick={() => setIsScannerOpen(true)} title="Pindai QR Code Mesin">
+          <QrCode size={16} />
+          <span>Pindai QR</span>
         </button>
-        <button className={styles.actionBtn}>
-          <Bell size={20} />
-        </button>
+
+        <div className={styles.iconContainer}>
+          <button className={styles.actionBtn} onClick={() => { setMailOpen(!mailOpen); setBellOpen(false); setDropdownOpen(false); }}>
+            <Mail size={20} />
+            <span className={styles.badge}>1</span>
+          </button>
+          {mailOpen && (
+            <div className={styles.notificationDropdown}>
+              <div className={styles.notificationHeader}>Pesan Masuk</div>
+              <div className={styles.notificationItem}>
+                <strong>Sistem</strong><br/>
+                Selamat datang di Portal Armada.
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className={styles.iconContainer}>
+          <button className={styles.actionBtn} onClick={() => { setBellOpen(!bellOpen); setMailOpen(false); setDropdownOpen(false); }}>
+            <Bell size={20} />
+          </button>
+          {bellOpen && (
+            <div className={styles.notificationDropdown}>
+              <div className={styles.notificationHeader}>Notifikasi Terbaru</div>
+              <div className={styles.notificationItem} style={{ color: 'var(--color-space-grey)' }}>
+                Belum ada notifikasi baru.
+              </div>
+            </div>
+          )}
+        </div>
         
         <div className={styles.profileContainer}>
-          <div className={styles.userProfile} onClick={() => setDropdownOpen(!dropdownOpen)}>
+          <div className={styles.userProfile} onClick={() => { setDropdownOpen(!dropdownOpen); setMailOpen(false); setBellOpen(false); }}>
             <div className={styles.avatar}>
               <img 
                 src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(getDisplayName())}`} 
@@ -93,6 +124,8 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
           )}
         </div>
       </div>
+      
+      <QrScannerModal isOpen={isScannerOpen} onClose={() => setIsScannerOpen(false)} />
     </header>
   );
 }

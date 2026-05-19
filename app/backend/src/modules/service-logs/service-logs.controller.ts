@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Request, Query, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param, UseGuards, Request, Query, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { ServiceLogsService } from './service-logs.service';
@@ -70,5 +70,12 @@ export class ServiceLogsController {
     file: Express.Multer.File,
   ) {
     return this.serviceLogsService.addAttachment(id, file);
+  }
+
+  @Put(':id')
+  @Roles(UserRole.PARTNER, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Partner/Admin: Update an existing service log' })
+  update(@Param('id') id: string, @Body() body: any) {
+    return this.serviceLogsService.update(id, body);
   }
 }

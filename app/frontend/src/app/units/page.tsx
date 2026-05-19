@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { unitApi } from '@/lib/api';
-import { Search, QrCode, ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { Search, QrCode, ChevronRight, ChevronLeft, Pencil } from 'lucide-react';
 import Link from 'next/link';
 import styles from './units.module.css';
 
@@ -17,6 +18,7 @@ function TableSkeleton() {
           <td><div className={styles.skeletonCell} style={{ width: '24px' }} /></td>
           <td><div className={styles.skeletonCell} style={{ width: '110px' }} /></td>
           <td><div className={styles.skeletonCell} style={{ width: '150px' }} /></td>
+          <td><div className={styles.skeletonCell} style={{ width: '80px', borderRadius: '20px' }} /></td>
           <td><div className={styles.skeletonCell} style={{ width: '130px' }} /></td>
           <td><div className={styles.skeletonCell} style={{ width: '64px', borderRadius: '20px' }} /></td>
           <td><div className={styles.skeletonCell} style={{ width: '54px' }} /></td>
@@ -27,11 +29,21 @@ function TableSkeleton() {
 }
 
 export default function UnitsPage() {
+  const router = useRouter();
   const [units, setUnits] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+
+  const handleDownloadQR = (serialNumber: string, qrToken: string) => {
+    // Generate the URL for the QR code
+    const targetUrl = `${window.location.origin}/id/${qrToken}`;
+    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(targetUrl)}`;
+    
+    // Open in a new tab which allows the user to see and print it
+    window.open(qrApiUrl, '_blank');
+  };
 
   const loadUnits = useCallback(async (page: number) => {
     setLoading(true);
@@ -118,10 +130,6 @@ export default function UnitsPage() {
           <h2 className={styles.title}>Unit Digital Passport</h2>
           <p className={styles.subtitle}>Manage and track all registered units in the system.</p>
         </div>
-        <button className={styles.scanBtn}>
-          <QrCode size={18} />
-          <span>Scan QR</span>
-        </button>
       </header>
 
       <div className={styles.tableCard}>
@@ -150,6 +158,7 @@ export default function UnitsPage() {
                 <th>#</th>
                 <th>Serial Number</th>
                 <th>Model</th>
+                <th>Kategori</th>
                 <th>Customer</th>
                 <th>Status</th>
                 <th>Action</th>
@@ -161,7 +170,7 @@ export default function UnitsPage() {
             ) : displayedUnits.length === 0 ? (
               <tbody>
                 <tr>
-                  <td colSpan={6} className={styles.emptyState}>
+                  <td colSpan={7} className={styles.emptyState}>
                     No units found.
                   </td>
                 </tr>
@@ -170,6 +179,8 @@ export default function UnitsPage() {
               <tbody>
                 {displayedUnits.map((unit, idx) => {
                   const statusKey = `status_${(unit.status ?? 'active').toLowerCase()}` as keyof typeof styles;
+                  const isMachine = unit.specs?.type === 'MESIN' || (!unit.specs?.type && unit.specs?.dimension);
+                  
                   return (
                     <tr key={unit.id} className={styles.dataRow}>
                       <td className={styles.numCol}>{startRow + idx}</td>
@@ -177,6 +188,11 @@ export default function UnitsPage() {
                         <span className={styles.serialTag}>{unit.serial_number}</span>
                       </td>
                       <td className={styles.modelCell}>{unit.model_name}</td>
+                      <td>
+                        <span className={`${styles.typeBadge} ${isMachine ? styles.type_mesin : styles.type_showcase}`}>
+                          {isMachine ? 'MESIN' : 'SHOWCASE'}
+                        </span>
+                      </td>
                       <td className={styles.customerCell}>
                         {unit.current_client?.company_name || <span className={styles.noOwner}>—</span>}
                       </td>
@@ -185,12 +201,27 @@ export default function UnitsPage() {
                           {unit.status ?? 'Active'}
                         </span>
                       </td>
-                      <td>
-                        <Link href={`/units/${unit.id}`} className={styles.actionBtn}>
-                          Detail <ChevronRight size={14} />
+                      <td style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                        <button 
+                          onClick={() => handleDownloadQR(unit.serial_number, unit.qr_token)}
+                          className={styles.qrIconBtn}
+                          title="Generate QR Code"
+                        >
+                          <QrCode size={15} />
+                        </button>
+                        <button
+                          onClick={() => router.push(`/units/edit?id=${unit.id}`)}
+                          className={styles.editBtn}
+                          title="Edit Unit"
+                        >
+                          <Pencil size={13} />
+                          Edit
+                        </button>
+                        <Link href={`/id/${unit.qr_token}`} className={styles.actionBtn}>
+                          Detail <ChevronRight size={13} />
                         </Link>
                       </td>
-       </tr>
+                    </tr>
                   );
                 })}
               </tbody>
@@ -200,17 +231,14 @@ export default function UnitsPage() {
 
         {/* ── Pagination ── */}
         <div className={styles.pagination}>
-          <span className={styles.paginationInfo}>
-            {loading
-              ? 'Loading...'
-              : totalCount === 0
-              ? 'No data'
-              : `Showing ${startRow}–${endRow} of ${effectiveTotal} units`}
-          </span>
-        {/* ── Pagination ── */}
-        <div className={styles.pagination}>
           <div className={styles.paginationLeft}>
-            <span className={styles.totalText}>Total {effectiveTotal} unit</span>
+            <span className={styles.totalText}>
+              {loading
+                ? 'Loading...'
+                : totalCount === 0
+                ? 'No data'
+                : `Showing ${startRow}–${endRow} of ${effectiveTotal} units`}
+            </span>
           </div>
           
           <div className={styles.paginationCenter}>
@@ -262,7 +290,6 @@ export default function UnitsPage() {
               {PAGE_SIZE} / page
             </div>
           </div>
-        </div>
         </div>
       </div>
     </div>

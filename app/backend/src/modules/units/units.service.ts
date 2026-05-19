@@ -5,6 +5,7 @@ import { Unit } from './entities/unit.entity';
 import { OwnershipHistory } from '../ownership/entities/ownership-history.entity';
 import { Client } from '../clients/entities/client.entity';
 import { CreateUnitDto } from './dto/create-unit.dto';
+import { UpdateUnitDto } from './dto/update-unit.dto';
 import { TransferOwnershipDto } from './dto/transfer-ownership.dto';
 import { Partner } from '../partners/entities/partner.entity';
 import { ServiceLog } from '../service-logs/entities/service-log.entity';
@@ -111,10 +112,48 @@ export class UnitsService {
     const client = await this.clientRepo.findOne({ where: { id: current_client_id } });
     if (!client) throw new BadRequestException('Client tidak ditemukan');
 
+    // Generate beautiful unique QR token matching our custom format
+    const qr_token = `holi-cp-${Math.random().toString(36).substring(2, 10)}`;
+
     const unit = this.unitRepo.create({
       ...unitData,
+      qr_token,
       current_client: client,
     });
+    
+    const savedUnit = await this.unitRepo.save(unit);
+
+    // Save initial ownership history record for history log tracking!
+    const history = this.ownershipRepo.create({
+      unit: savedUnit,
+      to_client: client,
+      reason: 'REGISTRASI_AWAL',
+      notes: 'Initial unit passport registration and digital twin activation',
+      transfer_date: new Date(),
+    });
+    await this.ownershipRepo.save(history);
+
+    return savedUnit;
+  }
+
+  async update(id: string, dto: UpdateUnitDto) {
+    const unit = await this.unitRepo.findOne({
+      where: { id },
+      relations: ['current_client'],
+    });
+    if (!unit) throw new NotFoundException('Unit tidak ditemukan');
+
+    if (dto.model_name !== undefined) unit.model_name = dto.model_name;
+    if (dto.specs !== undefined) unit.specs = dto.specs;
+    if (dto.warranty_expiry !== undefined) (unit as any).warranty_expiry = dto.warranty_expiry;
+    if (dto.status !== undefined) (unit as any).status = dto.status;
+
+    if (dto.current_client_id) {
+      const newClient = await this.clientRepo.findOne({ where: { id: dto.current_client_id } });
+      if (!newClient) throw new BadRequestException('Klien tidak ditemukan');
+      unit.current_client = newClient;
+    }
+
     return this.unitRepo.save(unit);
   }
 
@@ -140,9 +179,9 @@ export class UnitsService {
         unit,
         partner,
         service_date: new Date(),
-        service_type: 'CORRECTIVE_MAINTENANCE',
         technician_name: 'Pending Assignment',
-        notes: `Smart Routed Service Request for ${unit.serial_number} at ${body.contact_name || 'Outlet'}. Notes: ${body.notes || '-'}`,
+        issue_description: `${body.notes || '-'} (Kontak: ${body.contact_name || 'Outlet'} - ${body.contact_phone || '-'})`,
+        action_taken: 'Menunggu penugasan teknisi dan konfirmasi jadwal servis.',
         status: 'PENDING',
       } as any);
       await logRepo.save(newLog);

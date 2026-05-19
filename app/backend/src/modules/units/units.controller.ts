@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Body, UseGuards, Request, Query } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Param, Body, UseGuards, Request, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { UnitsService } from './units.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -6,6 +6,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../auth/entities/user.entity';
 import { CreateUnitDto } from './dto/create-unit.dto';
+import { UpdateUnitDto } from './dto/update-unit.dto';
 import { TransferOwnershipDto } from './dto/transfer-ownership.dto';
 
 @ApiTags('Units Management')
@@ -31,6 +32,7 @@ export class UnitsController {
     return this.unitsService.requestServiceSmartRouting(id, body);
   }
 
+  // --- LEVEL 2: CLIENT ---
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CLIENT, UserRole.ADMIN)
   @ApiBearerAuth()
@@ -81,6 +83,18 @@ export class UnitsController {
   @ApiOperation({ summary: 'Admin: Create a new unit' })
   create(@Body() createUnitDto: CreateUnitDto) {
     return this.unitsService.create(createUnitDto);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @Patch(':id')
+  @ApiOperation({ summary: 'Admin: Update unit specs, model name, warranty, etc.' })
+  update(
+    @Param('id') id: string,
+    @Body() updateUnitDto: UpdateUnitDto,
+  ) {
+    return this.unitsService.update(id, updateUnitDto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

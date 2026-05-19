@@ -32,4 +32,9 @@ export class CreateServiceLogDto {
   @IsString()
   @IsOptional()
   technician_name?: string;
+
+  @ApiProperty({ example: '2026-08-18T00:00:00.000Z', required: false })
+  @IsString()
+  @IsOptional()
+  service_date?: string;
 }

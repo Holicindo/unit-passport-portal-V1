@@ -30,6 +30,8 @@ export const unitApi = {
   findOne: (id: string) => api.get(`/units/${id}`),
   findByQrToken: (token: string) => api.get(`/units/scan/${token}`),
   requestService: (id: string, data: any) => api.post(`/units/${id}/request-service`, data),
+  create: (data: any) => api.post('/units', data),
+  update: (id: string, data: any) => api.patch(`/units/${id}`, data),
 };
 
 export const reportApi = {
@@ -45,4 +47,15 @@ export const reportApi = {
     });
   },
   deleteBulk: (ids: string[]) => api.post('/reports/delete-bulk', { ids }),
+};
+
+export const serviceLogApi = {
+  findAll: (page = 1, limit = 100) => api.get(`/service-logs?page=${page}&limit=${limit}`),
+  create: (data: any) => api.post('/service-logs', data),
+  update: (id: string, data: any) => api.put(`/service-logs/${id}`, data),
+  findByUnit: (unitId: string) => api.get(`/service-logs/unit/${unitId}`),
+};
+
+export const partnerApi = {
+  findAll: () => api.get('/partners'),
 };

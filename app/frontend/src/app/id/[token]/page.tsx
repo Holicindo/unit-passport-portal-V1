@@ -6,9 +6,66 @@ import { unitApi } from '@/lib/api';
 import { 
   ShieldAlert, Wrench, FileText, CheckCircle2, 
   ExternalLink, Phone, ArrowLeft, Loader2, RefreshCw, 
-  Lock, Check, UserCheck, Settings, BookOpen, Clock
+  Lock, Check, UserCheck, Settings, BookOpen, Clock, Image as ImageIcon
 } from 'lucide-react';
 import styles from './id.module.css';
+
+// SVG Blueprint Component for Airflow & Dimensions
+const AirflowDiagram = () => (
+  <div style={{ width: '100%', height: '100%', backgroundColor: '#001F3F', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+    {/* Background Grid Pattern */}
+    <div style={{ position: 'absolute', inset: 0, opacity: 0.1, backgroundImage: 'linear-gradient(#2E5BFF 1px, transparent 1px), linear-gradient(90deg, #2E5BFF 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
+    
+    <svg viewBox="0 0 200 300" width="100%" height="100%" style={{ zIndex: 1, padding: '20px' }} xmlns="http://www.w3.org/2000/svg">
+       <defs>
+         <marker id="arrowhead" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+           <polygon points="0 0, 6 3, 0 6" fill="#00C48C" />
+         </marker>
+       </defs>
+
+       {/* Outer Showcase Frame */}
+       <rect x="45" y="20" width="110" height="240" fill="rgba(0, 31, 63, 0.8)" stroke="#2E5BFF" strokeWidth="2.5" rx="4" />
+       
+       {/* Glass Door Area */}
+       <rect x="52.5" y="28" width="95" height="175" fill="rgba(46, 91, 255, 0.05)" stroke="#2E5BFF" strokeWidth="1" strokeDasharray="2 2" />
+       
+       {/* Bottom Compressor Box */}
+       <rect x="45" y="215" width="110" height="45" fill="rgba(255,255,255,0.02)" stroke="#2E5BFF" strokeWidth="1.5" />
+       <line x1="55" y1="225" x2="135" y2="225" stroke="#2E5BFF" strokeWidth="1" opacity="0.5" />
+       <line x1="55" y1="235" x2="135" y2="235" stroke="#2E5BFF" strokeWidth="1" opacity="0.5" />
+       <line x1="55" y1="245" x2="135" y2="245" stroke="#2E5BFF" strokeWidth="1" opacity="0.5" />
+       
+       {/* Shelves */}
+       <line x1="52.5" y1="65" x2="147.5" y2="65" stroke="#2E5BFF" strokeWidth="1.5" opacity="0.8" />
+       <line x1="52.5" y1="105" x2="147.5" y2="105" stroke="#2E5BFF" strokeWidth="1.5" opacity="0.8" />
+       <line x1="52.5" y1="145" x2="147.5" y2="145" stroke="#2E5BFF" strokeWidth="1.5" opacity="0.8" />
+       <line x1="52.5" y1="185" x2="147.5" y2="185" stroke="#2E5BFF" strokeWidth="1.5" opacity="0.8" />
+
+       {/* Dynamic Airflow Arrows (Cyan/Green) */}
+       {/* Central Updraft from compressor */}
+       <path d="M 100 205 L 100 45" stroke="#00C48C" strokeWidth="2.5" fill="none" markerEnd="url(#arrowhead)" opacity="0.9" />
+       
+       {/* Right Downdraft */}
+       <path d="M 100 45 Q 135 45 135 70 L 135 190" stroke="#00C48C" strokeWidth="1.5" fill="none" markerEnd="url(#arrowhead)" strokeDasharray="4 3" opacity="0.8" />
+       
+       {/* Left Downdraft */}
+       <path d="M 100 45 Q 65 45 65 70 L 65 190" stroke="#00C48C" strokeWidth="1.5" fill="none" markerEnd="url(#arrowhead)" strokeDasharray="4 3" opacity="0.8" />
+
+       {/* Dimensions Lines */}
+       {/* Height Dimension */}
+       <line x1="25" y1="20" x2="25" y2="260" stroke="#F2F4F7" strokeWidth="1" opacity="0.6" />
+       <line x1="20" y1="20" x2="30" y2="20" stroke="#F2F4F7" strokeWidth="1" opacity="0.6" />
+       <line x1="20" y1="260" x2="30" y2="260" stroke="#F2F4F7" strokeWidth="1" opacity="0.6" />
+       <text x="15" y="140" fill="#F2F4F7" fontSize="10" transform="rotate(-90 15,140)" textAnchor="middle" opacity="0.9" style={{ fontFamily: 'sans-serif', fontWeight: 600 }}>1800 mm</text>
+       
+       {/* Width Dimension */}
+       <line x1="45" y1="280" x2="155" y2="280" stroke="#F2F4F7" strokeWidth="1" opacity="0.6" />
+       <line x1="45" y1="275" x2="45" y2="285" stroke="#F2F4F7" strokeWidth="1" opacity="0.6" />
+       <line x1="155" y1="275" x2="155" y2="285" stroke="#F2F4F7" strokeWidth="1" opacity="0.6" />
+       <text x="100" y="295" fill="#F2F4F7" fontSize="10" textAnchor="middle" opacity="0.9" style={{ fontFamily: 'sans-serif', fontWeight: 600 }}>600 mm</text>
+    </svg>
+  </div>
+);
 
 export default function QrPassportPage() {
   const params = useParams();
@@ -23,7 +80,8 @@ export default function QrPassportPage() {
 
   // Smart Routing states
   const [showServiceModal, setShowServiceModal] = useState(false);
-  const [serviceCity, setServiceCity] = useState('');
+  const [issueMainCategory, setIssueMainCategory] = useState('');
+  const [issueSubCategory, setIssueSubCategory] = useState('');
   const [serviceNotes, setServiceNotes] = useState('');
   const [serviceName, setServiceName] = useState('');
   const [servicePhone, setServicePhone] = useState('');
@@ -59,34 +117,38 @@ export default function QrPassportPage() {
     setLoading(true);
     setError(null);
     try {
-      // Step 1: Scan via public endpoint to get unit
+      // Strict Security Block: Require Login
+      const storedUser = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!) : null;
+      
+      if (!storedUser) {
+        // Stop execution and force login
+        router.push(`/login?redirect=/id/${token}`);
+        return; 
+      }
+
+      // If logged in, proceed to fetch
       const { data: publicUnit } = await unitApi.findByQrToken(token as string);
       
       if (!publicUnit) {
         throw new Error('Unit tidak ditemukan');
       }
 
-      // Step 2: If logged in, fetch full details depending on role
-      const storedUser = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!) : null;
-      
-      if (storedUser) {
-        if (storedUser.role === 'PARTNER' || storedUser.role === 'ADMIN') {
-          // Tech/Admin gets full data
-          const { data: fullUnit } = await unitApi.findOne(publicUnit.id);
-          setUnit(fullUnit);
-        } else if (storedUser.role === 'CLIENT') {
-          // Client gets owner view (validates on server/client side)
-          const { data: fullUnit } = await unitApi.findOne(publicUnit.id);
-          setUnit(fullUnit);
-        } else {
-          setUnit(publicUnit);
-        }
+      if (storedUser.role === 'PARTNER' || storedUser.role === 'ADMIN') {
+        const { data: fullUnit } = await unitApi.findOne(publicUnit.id);
+        setUnit(fullUnit);
+      } else if (storedUser.role === 'CLIENT') {
+        const { data: fullUnit } = await unitApi.findOne(publicUnit.id);
+        setUnit(fullUnit);
       } else {
         setUnit(publicUnit);
       }
     } catch (err: any) {
       console.error('Failed to load unit:', err);
-      setError(err.response?.data?.message || 'Gagal memuat data Unit Passport. QR Code mungkin salah atau tidak terdaftar.');
+      if (err.code === 'ERR_NETWORK') {
+        setError('Network Error: Gagal terhubung ke server backend. Pastikan server (port 3001) berjalan dan koneksi internet stabil.');
+      } else {
+        setError(err.response?.data?.message || 'Gagal memuat data Unit Passport. QR Code mungkin salah atau tidak terdaftar.');
+      }
     } finally {
       setLoading(false);
     }
@@ -109,7 +171,13 @@ export default function QrPassportPage() {
               headers: { Authorization: `Bearer ${storedToken}` }
             });
             const data = await res.json();
-            setClients(data);
+            if (Array.isArray(data)) {
+              setClients(data);
+            } else if (data && Array.isArray(data.data)) {
+              setClients(data.data);
+            } else {
+              setClients([]);
+            }
           }
         } catch (e) {
           console.error(e);
@@ -124,9 +192,10 @@ export default function QrPassportPage() {
     e.preventDefault();
     setRoutingLoading(true);
     try {
+      const combinedNotes = `[${issueMainCategory}${issueSubCategory ? ` - ${issueSubCategory}` : ''}] ${serviceNotes}`.trim();
       const { data } = await unitApi.requestService(unit.id, {
-        city: serviceCity || unit.specs?.city || 'Jakarta',
-        notes: serviceNotes,
+        city: unit.current_client?.city || unit.specs?.city || 'Jakarta',
+        notes: combinedNotes,
         contact_name: serviceName,
         contact_phone: servicePhone
       });
@@ -296,19 +365,38 @@ export default function QrPassportPage() {
               <span className={styles.specValue}>{unit.serial_number}</span>
             </div>
             
-            {/* Specs nested values (Compressor, Refrigerant, etc.) */}
-            <div className={styles.specItem}>
-              <span className={styles.specLabel}>Kompresor / Compressor</span>
-              <span className={styles.specValue}>{unit.specs?.compressor || 'Embraco 1/2 HP (Premium)'}</span>
-            </div>
-            <div className={styles.specItem}>
-              <span className={styles.specLabel}>Refrigeran / Refrigerant</span>
-              <span className={styles.specValue}>{unit.specs?.refrigerant || 'R290 (Eco-Friendly)'}</span>
-            </div>
-            <div className={styles.specItem}>
-              <span className={styles.specLabel}>Daya / Wattage</span>
-              <span className={styles.specValue}>{unit.specs?.wattage || '450W'}</span>
-            </div>
+            {/* Specs nested values (Compressor, Refrigerant, etc. OR Dimension, Power, Capacity) */}
+            {unit.specs?.type === 'MESIN' || (!unit.specs?.type && unit.specs?.dimension) ? (
+              <>
+                <div className={styles.specItem}>
+                  <span className={styles.specLabel}>Dimensi / Dimension</span>
+                  <span className={styles.specValue}>{unit.specs?.dimension || '800 x 600 x 1100 mm'}</span>
+                </div>
+                <div className={styles.specItem}>
+                  <span className={styles.specLabel}>Daya Listrik / Power</span>
+                  <span className={styles.specValue}>{unit.specs?.power || '220V/50Hz / 1200W'}</span>
+                </div>
+                <div className={styles.specItem}>
+                  <span className={styles.specLabel}>Kapasitas / Capacity</span>
+                  <span className={styles.specValue}>{unit.specs?.capacity || '300 L / jam'}</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className={styles.specItem}>
+                  <span className={styles.specLabel}>Kompresor / Compressor</span>
+                  <span className={styles.specValue}>{unit.specs?.compressor || 'Embraco 1/2 HP (Premium)'}</span>
+                </div>
+                <div className={styles.specItem}>
+                  <span className={styles.specLabel}>Refrigeran / Refrigerant</span>
+                  <span className={styles.specValue}>{unit.specs?.refrigerant || 'R290 (Eco-Friendly)'}</span>
+                </div>
+                <div className={styles.specItem}>
+                  <span className={styles.specLabel}>Daya / Wattage</span>
+                  <span className={styles.specValue}>{unit.specs?.wattage || '450W'}</span>
+                </div>
+              </>
+            )}
             
             {/* Warranty expiry */}
             <div className={styles.specItem}>
@@ -401,111 +489,47 @@ export default function QrPassportPage() {
         </section>
       </div>
 
-      {/* DOCUMENT LIBRARY — Hidden for public/competitors */}
-      {!isGuest && !hasClientRestriction && (
-        <section className={styles.sectionCard}>
-          <div className={styles.cardHeader}>
-            <BookOpen size={20} />
-            <h2>Perpustakaan Dokumen &amp; Video</h2>
-          </div>
-          <div className={styles.docGrid}>
-            <div className={styles.docItem}>
-              <div className={styles.docIcon}>
-                <BookOpen size={20} className={styles.docIconSvg} />
+      {/* MEDIA & VERIFICATION (PUBLIC VIEW) */}
+      <section className={styles.sectionCard}>
+        <div className={styles.cardHeader}>
+          <ImageIcon size={20} />
+          <h2>Media &amp; Verifikasi Pabrik</h2>
+        </div>
+        <div className={styles.mediaGrid}>
+          {/* Test Run Quality Control */}
+          <div className={styles.mediaItem}>
+            <div className={styles.mediaImageWrapper}>
+              <img 
+                src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=800&auto=format&fit=crop" 
+                alt="Test Run QC" 
+                className={styles.mediaImage}
+              />
+              <div className={styles.mediaOverlay}>
+                <span className={styles.verifiedBadge}><CheckCircle2 size={14} /> Terverifikasi</span>
               </div>
-              <div className={styles.docText}>
-                <h3>User Manual (PDF)</h3>
-                <p>Panduan lengkap instruksi pemakaian dan pemeliharaan harian.</p>
-              </div>
-              <a href="#" className={styles.btnDownload}>Unduh</a>
             </div>
+            <div className={styles.mediaContent}>
+              <h3>Foto Test Run &amp; Quality Control</h3>
+              <p>Dokumentasi pengujian performa kompresor dan suhu ruang sebelum unit didistribusikan ke klien.</p>
+            </div>
+          </div>
 
-            {/* LEVEL 3 PARTNER & LEVEL 4 ADMIN ONLY: Deep Technical Diagrams */}
-            {(isPartner || isAdmin) ? (
-              <>
-                <div className={styles.docItem}>
-                  <div className={styles.docIcon}>
-                    <Wrench size={20} className={styles.docIconSvg} />
-                  </div>
-                  <div className={styles.docText}>
-                    <h3>Wiring Circuit Diagram (PDF)</h3>
-                    <p style={{ color: 'var(--color-safety-orange)' }}><strong>SANGAT RAHASIA:</strong> Diagram sirkuit kelistrikan.</p>
-                  </div>
-                  <a href={unit.circuit_diagram_url || '#'} target="_blank" className={styles.btnDownload}>Buka</a>
-                </div>
-                <div className={styles.docItem}>
-                  <div className={styles.docIcon}>
-                    <Settings size={20} className={styles.docIconSvg} />
-                  </div>
-                  <div className={styles.docText}>
-                    <h3>Exploded View Assembly (PDF)</h3>
-                    <p style={{ color: 'var(--color-safety-orange)' }}><strong>SANGAT RAHASIA:</strong> Komponen terurai showcase.</p>
-                  </div>
-                  <a href={unit.exploded_view_url || '#'} target="_blank" className={styles.btnDownload}>Buka</a>
-                </div>
-              </>
-            ) : (
-              <div className={`${styles.docItem} ${styles.docLocked}`}>
-                <div className={styles.docIcon}><Lock size={20} /></div>
-                <div className={styles.docText}>
-                  <h3>Technical Circuit &amp; Exploded Diagrams</h3>
-                  <p>Hanya dapat diakses oleh Mitra Teknisi Resmi PT Holicindo.</p>
-                </div>
+          {/* Diagram / Schematic */}
+          <div className={styles.mediaItem}>
+            <div className={styles.mediaImageWrapper}>
+              <AirflowDiagram />
+              <div className={styles.mediaOverlay}>
+                <span className={styles.verifiedBadge}><CheckCircle2 size={14} /> Cetak Biru Digital</span>
               </div>
-            )}
+            </div>
+            <div className={styles.mediaContent}>
+              <h3>Diagram Sirkulasi Udara &amp; Dimensi Fisik</h3>
+              <p>Representasi visual sirkulasi pendinginan udara yang merata dan ukuran presisi unit untuk referensi penempatan outlet pelanggan.</p>
+            </div>
           </div>
-        </section>
-      )}
+        </div>
+      </section>
 
-      {/* VERIFIED SERVICE HISTORY — Hidden for public/competitors */}
-      {!isGuest && !hasClientRestriction && (
-        <section className={styles.sectionCard}>
-          <div className={styles.cardHeader}>
-            <Clock size={20} />
-            <h2>Verified Service History</h2>
-          </div>
-          <div className={styles.tableWrapper}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Tanggal</th>
-                  <th>Kategori</th>
-                  <th>Teknisi</th>
-                  <th>Partner</th>
-                  <th>Catatan Perbaikan / Tindakan</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {unit.service_logs && unit.service_logs.length > 0 ? (
-                  unit.service_logs.map((log: any) => (
-                    <tr key={log.id} className={styles.dataRow}>
-                      <td className={styles.dateCol}>
-                        {new Date(log.service_date).toLocaleDateString('id-ID', { year: 'numeric', month: 'numeric', day: 'numeric' })}
-                      </td>
-                      <td>
-                        <span className={`${styles.typeTag} ${log.service_type === 'PREVENTIVE_MAINTENANCE' ? styles.typePrev : styles.typeCorr}`}>
-                          {log.service_type === 'PREVENTIVE_MAINTENANCE' ? 'Preventive' : 'Corrective'}
-                        </span>
-                      </td>
-                      <td>{log.technician_name}</td>
-                      <td>{log.partner?.partner_name || 'Holicindo HQ'}</td>
-                      <td>{log.notes}</td>
-                      <td>
-                        <span className={styles.statusCompleted}>✓ {log.status}</span>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={6} className={styles.emptyTable}>Belum ada riwayat servis tercatat untuk unit ini.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
 
       {/* ────────────────── MODALS & FORMS ────────────────── */}
 
@@ -515,29 +539,19 @@ export default function QrPassportPage() {
           <div className={styles.modalCard}>
             <div className={styles.modalHeader}>
               <h2>Request Service &amp; Smart Routing</h2>
-              <button onClick={() => { setShowServiceModal(false); setRoutingResult(null); }} className={styles.closeBtn}>×</button>
+              <button onClick={() => { 
+                setShowServiceModal(false); 
+                setRoutingResult(null); 
+                setIssueMainCategory('');
+                setIssueSubCategory('');
+                setServiceNotes('');
+              }} className={styles.closeBtn}>×</button>
             </div>
             
             {!routingResult ? (
               <form onSubmit={handleServiceRequest} className={styles.modalForm}>
                 <p className={styles.modalHint}>Permintaan akan diproses menggunakan sistem Smart Routing regional kami.</p>
                 
-                <div className={styles.formGroup}>
-                  <label>Kota Lokasi Unit Saat Ini</label>
-                  <select 
-                    value={serviceCity} 
-                    onChange={(e) => setServiceCity(e.target.value)}
-                    required
-                  >
-                    <option value="">— Pilih Kota —</option>
-                    <option value="Jakarta">DKI Jakarta</option>
-                    <option value="Medan">Medan (Sumatera Utara)</option>
-                    <option value="Surabaya">Surabaya (Jawa Timur)</option>
-                    <option value="Bandung">Bandung (Jawa Barat)</option>
-                    <option value="Semarang">Semarang (Jawa Tengah)</option>
-                  </select>
-                </div>
-
                 <div className={styles.formGroup}>
                   <label>Nama Kontak Penanggung Jawab Outlet</label>
                   <input 
@@ -561,11 +575,44 @@ export default function QrPassportPage() {
                 </div>
 
                 <div className={styles.formGroup}>
-                  <label>Deskripsi Kendala Mesin Showcase</label>
+                  <label>Pilih Kategori Kendala Utama</label>
+                  <select 
+                    value={issueMainCategory}
+                    onChange={(e) => {
+                      setIssueMainCategory(e.target.value);
+                      if (e.target.value !== 'Kendala Showcase') setIssueSubCategory('');
+                    }}
+                    required
+                  >
+                    <option value="">— Pilih Kategori —</option>
+                    <option value="Kendala Mesin">Kendala Mesin (Kompresor, dsb)</option>
+                    <option value="Kendala Showcase">Kendala Showcase (Fisik/Kabinet)</option>
+                  </select>
+                </div>
+
+                {issueMainCategory === 'Kendala Showcase' && (
+                  <div className={styles.formGroup}>
+                    <label>Sub-Kategori Kendala Showcase</label>
+                    <select 
+                      value={issueSubCategory}
+                      onChange={(e) => setIssueSubCategory(e.target.value)}
+                      required
+                    >
+                      <option value="">— Pilih Sub-Kategori —</option>
+                      <option value="Kaca">Kaca (Pecah/Berembun)</option>
+                      <option value="Lampu">Lampu (Mati/Redup)</option>
+                      <option value="Pendingin">Pendingin (Kurang Dingin/Bocor)</option>
+                      <option value="Kelistrikan">Kelistrikan (Korslet/Tidak Menyala)</option>
+                    </select>
+                  </div>
+                )}
+
+                <div className={styles.formGroup}>
+                  <label>Catatan Tambahan (Remark)</label>
                   <textarea 
                     value={serviceNotes} 
                     onChange={(e) => setServiceNotes(e.target.value)} 
-                    placeholder="Jelaskan kendala (misal: suhu tidak mau dingin di bawah 10°C, kompresor bising)..."
+                    placeholder="Jelaskan detail spesifik kendala di sini..."
                     required
                   />
                 </div>
@@ -604,7 +651,13 @@ export default function QrPassportPage() {
                 )}
                 
                 <button 
-                  onClick={() => { setShowServiceModal(false); setRoutingResult(null); }}
+                  onClick={() => { 
+                    setShowServiceModal(false); 
+                    setRoutingResult(null); 
+                    setIssueMainCategory('');
+                    setIssueSubCategory('');
+                    setServiceNotes('');
+                  }}
                   className={styles.btnFinish}
                 >
                   Selesai
@@ -696,7 +749,7 @@ export default function QrPassportPage() {
                   required
                 >
                   <option value="">— Pilih Klien —</option>
-                  {clients.map((c: any) => (
+                  {Array.isArray(clients) && clients.map((c: any) => (
                     <option key={c.id} value={c.id}>{c.company_name} ({c.bp_code})</option>
                   ))}
                 </select>

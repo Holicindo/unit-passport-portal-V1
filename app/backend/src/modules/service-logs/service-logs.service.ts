@@ -18,7 +18,7 @@ export class ServiceLogsService {
 
   async findAll(page: number = 1, limit: number = 10) {
     const [data, total] = await this.logRepo.findAndCount({
-      relations: ['unit', 'partner', 'attachments'],
+      relations: ['unit', 'unit.current_client', 'partner', 'attachments'],
       skip: (page - 1) * limit,
       take: limit,
       order: { created_at: 'DESC' },
@@ -66,5 +66,25 @@ export class ServiceLogsService {
     });
 
     return this.attachmentRepo.save(attachment);
+  }
+
+  async update(id: string, data: any) {
+    const log = await this.logRepo.findOne({ where: { id } });
+    if (!log) throw new NotFoundException('Service Log tidak ditemukan');
+
+    if (data.technician_name !== undefined) log.technician_name = data.technician_name;
+    if (data.action_taken !== undefined) log.action_taken = data.action_taken;
+    if (data.status !== undefined) log.status = data.status;
+    if (data.partnerId !== undefined) {
+      log.partner = data.partnerId ? { id: data.partnerId } as any : null;
+    }
+    if (data.service_date !== undefined) {
+      log.service_date = new Date(data.service_date);
+    }
+    if (data.status === 'COMPLETED') {
+      log.completed_at = new Date();
+    }
+
+    return this.logRepo.save(log);
   }
 }
