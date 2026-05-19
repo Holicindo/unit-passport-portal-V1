@@ -37,31 +37,34 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  background: var(--color-deep-navy);
+  background: linear-gradient(135deg, var(--color-deep-navy) 0%, #08335e 100%);
   color: #fff;
   border: none;
-  padding: 12px 24px;
-  border-radius: 12px;
-  font-weight: 700;
+  padding: 13px 26px;
+  border-radius: 14px;
+  font-weight: 800;
   font-size: 0.9rem;
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.2s;
-  box-shadow: 0 4px 12px rgba(0, 31, 63, 0.15);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 16px rgba(0, 31, 63, 0.2);
+  letter-spacing: 0.02em;
 }
 
 .scanBtn:hover {
-  background: var(--color-cobalt-blue);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 31, 63, 0.2);
+  background: linear-gradient(135deg, var(--color-cobalt-blue) 0%, #1a47e5 100%);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(46, 91, 255, 0.3);
 }
 
 /* ---- Table Card ---- */
 .tableCard {
-  background: #fff;
-  border-radius: 20px;
-  box-shadow: 0 10px 40px rgba(0, 31, 63, 0.06);
-  border: 1px solid rgba(0, 31, 63, 0.05);
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border-radius: 24px;
+  box-shadow: 0 10px 40px rgba(0, 31, 63, 0.05), inset 0 1px 0 rgba(255,255,255,0.7);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -82,17 +85,17 @@
   align-items: center;
   gap: 12px;
   flex: 1;
-  background: #f8f9fc;
-  border-radius: 10px;
+  background: rgba(248, 250, 252, 0.8);
+  border-radius: 12px;
   padding: 0 16px;
-  border: 1px solid #eee;
-  transition: all 0.2s;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .searchBox:focus-within {
-  border-color: var(--color-cobalt-blue);
-  background: #fff;
-  box-shadow: 0 0 0 3px rgba(46, 91, 255, 0.1);
+  border-color: rgba(46, 91, 255, 0.5);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 0 4px rgba(46, 91, 255, 0.1);
 }
 
 .searchInput {
@@ -147,8 +150,12 @@
   color: var(--color-deep-navy);
 }
 
+.dataRow {
+  transition: background 0.2s ease;
+}
+
 .dataRow:hover {
-  background: #f9fbff;
+  background: rgba(46, 91, 255, 0.025);
 }
 
 .serialTag {

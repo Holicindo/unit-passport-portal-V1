@@ -353,7 +353,7 @@ export default function QrPassportPage() {
                     : 'Pindai publik membatasi akses detail riwayat servis dan diagram kelistrikan untuk melindungi rahasia industri.'}
                 </p>
                 <button className={styles.btnEmergency} onClick={() => setShowServiceModal(true)}>
-                  🚨 Laporkan Masalah / Request Service
+                  Laporkan Masalah / Request Service
                 </button>
                 {isGuest && (
                   <p className={styles.guestNote}>
@@ -368,7 +368,7 @@ export default function QrPassportPage() {
               <div className={styles.clientActions}>
                 <p className={styles.sectionInfo}>Unit terdaftar sebagai aset resmi perusahaan Anda.</p>
                 <button className={styles.btnEmergency} onClick={() => setShowServiceModal(true)}>
-                  🚨 Request Emergency Service
+                  Request Emergency Service
                 </button>
               </div>
             )}
@@ -378,7 +378,7 @@ export default function QrPassportPage() {
               <div className={styles.partnerActions}>
                 <p className={styles.sectionInfo}>Technical Mode Aktif: Anda berada di depan unit.</p>
                 <button className={styles.btnPrimary} onClick={() => setShowLogModal(true)}>
-                  ➕ Tambah Log Servis &amp; Tutup Tiket
+                  Tambah Log Servis &amp; Tutup Tiket
                 </button>
               </div>
             )}
@@ -389,10 +389,10 @@ export default function QrPassportPage() {
                 <p className={styles.sectionInfo}>Administrator Mode Aktif: Kontrol Master.</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <button className={styles.btnEmergency} onClick={() => setShowServiceModal(true)}>
-                    🚨 Uji Alur Smart Routing
+                    Uji Alur Smart Routing
                   </button>
                   <button className={styles.btnPrimary} onClick={() => setShowTransferModal(true)}>
-                    🔄 Pindahkan Kepemilikan Unit
+                    Pindahkan Kepemilikan Unit
                   </button>
                 </div>
               </div>
@@ -410,7 +410,9 @@ export default function QrPassportPage() {
           </div>
           <div className={styles.docGrid}>
             <div className={styles.docItem}>
-              <div className={styles.docIcon}>📄</div>
+              <div className={styles.docIcon}>
+                <BookOpen size={20} className={styles.docIconSvg} />
+              </div>
               <div className={styles.docText}>
                 <h3>User Manual (PDF)</h3>
                 <p>Panduan lengkap instruksi pemakaian dan pemeliharaan harian.</p>
@@ -422,7 +424,9 @@ export default function QrPassportPage() {
             {(isPartner || isAdmin) ? (
               <>
                 <div className={styles.docItem}>
-                  <div className={styles.docIcon}>⚡</div>
+                  <div className={styles.docIcon}>
+                    <Wrench size={20} className={styles.docIconSvg} />
+                  </div>
                   <div className={styles.docText}>
                     <h3>Wiring Circuit Diagram (PDF)</h3>
                     <p style={{ color: 'var(--color-safety-orange)' }}><strong>SANGAT RAHASIA:</strong> Diagram sirkuit kelistrikan.</p>
@@ -430,7 +434,9 @@ export default function QrPassportPage() {
                   <a href={unit.circuit_diagram_url || '#'} target="_blank" className={styles.btnDownload}>Buka</a>
                 </div>
                 <div className={styles.docItem}>
-                  <div className={styles.docIcon}>⚙️</div>
+                  <div className={styles.docIcon}>
+                    <Settings size={20} className={styles.docIconSvg} />
+                  </div>
                   <div className={styles.docText}>
                     <h3>Exploded View Assembly (PDF)</h3>
                     <p style={{ color: 'var(--color-safety-orange)' }}><strong>SANGAT RAHASIA:</strong> Komponen terurai showcase.</p>
@@ -508,7 +514,7 @@ export default function QrPassportPage() {
         <div className={styles.modalOverlay}>
           <div className={styles.modalCard}>
             <div className={styles.modalHeader}>
-              <h2>🚨 Request Service &amp; Smart Routing</h2>
+              <h2>Request Service &amp; Smart Routing</h2>
               <button onClick={() => { setShowServiceModal(false); setRoutingResult(null); }} className={styles.closeBtn}>×</button>
             </div>
             
@@ -614,7 +620,7 @@ export default function QrPassportPage() {
         <div className={styles.modalOverlay}>
           <div className={styles.modalCard}>
             <div className={styles.modalHeader}>
-              <h2>➕ Record Service Log &amp; Close Ticket</h2>
+              <h2>Record Service Log &amp; Close Ticket</h2>
               <button onClick={() => setShowLogModal(false)} className={styles.closeBtn}>×</button>
             </div>
             
@@ -665,7 +671,7 @@ export default function QrPassportPage() {
         <div className={styles.modalOverlay}>
           <div className={styles.modalCard}>
             <div className={styles.modalHeader}>
-              <h2>🔄 Transfer Ownership (Pindahkan Aset)</h2>
+              <h2>Transfer Ownership (Pindahkan Aset)</h2>
               <button onClick={() => setShowTransferModal(false)} className={styles.closeBtn}>×</button>
             </div>
             
