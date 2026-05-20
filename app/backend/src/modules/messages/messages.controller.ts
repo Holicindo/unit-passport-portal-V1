@@ -13,19 +13,19 @@ export class MessagesController {
   @Get('conversations')
   @ApiOperation({ summary: 'Dapatkan daftar obrolan aktif untuk pengguna' })
   getConversations(@Request() req: any) {
-    return this.messagesService.getUserConversations(req.user.id);
+    return this.messagesService.getUserConversations(req.user.userId);
   }
 
   @Post('conversations/start')
   @ApiOperation({ summary: 'Mulai atau cari obrolan dengan user lain' })
   startConversation(@Request() req: any, @Body('targetUserId') targetUserId: string) {
-    return this.messagesService.findOrCreateConversation(req.user.id, targetUserId);
+    return this.messagesService.findOrCreateConversation(req.user.userId, targetUserId);
   }
 
   @Get('conversations/:id')
   @ApiOperation({ summary: 'Dapatkan riwayat chat dari satu obrolan' })
   getChatHistory(@Param('id') id: string, @Request() req: any) {
-    return this.messagesService.getChatHistory(id, req.user.id);
+    return this.messagesService.getChatHistory(id, req.user.userId);
   }
 
   @Post('conversations/:id/send')
@@ -35,6 +35,6 @@ export class MessagesController {
     @Request() req: any,
     @Body('content') content: string,
   ) {
-    return this.messagesService.sendMessage(conversationId, req.user.id, content);
+    return this.messagesService.sendMessage(conversationId, req.user.userId, content);
   }
 }

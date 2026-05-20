@@ -13,18 +13,18 @@ export class NotificationsController {
   @Get('alerts')
   @ApiOperation({ summary: 'Mendapatkan notifikasi sistem (Lonceng)' })
   getAlerts(@Request() req: any) {
-    return this.notificationsService.findAlerts(req.user.id);
+    return this.notificationsService.findAlerts(req.user.userId);
   }
 
   @Get('messages')
   @ApiOperation({ summary: 'Mendapatkan pesan masuk (Mail)' })
   getMessages(@Request() req: any) {
-    return this.notificationsService.findMessages(req.user.id);
+    return this.notificationsService.findMessages(req.user.userId);
   }
 
   @Patch(':id/read')
   @ApiOperation({ summary: 'Tandai notifikasi sebagai sudah dibaca' })
   markAsRead(@Param('id') id: string, @Request() req: any) {
-    return this.notificationsService.markAsRead(id, req.user.id);
+    return this.notificationsService.markAsRead(id, req.user.userId);
   }
 }
