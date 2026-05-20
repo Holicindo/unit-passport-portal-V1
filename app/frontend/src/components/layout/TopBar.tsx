@@ -33,13 +33,13 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
     if (!localStorage.getItem('token')) return;
     const fetchNotifications = async () => {
       try {
-        const { notificationApi } = await import('@/lib/api');
-        const [alertsRes, msgsRes] = await Promise.all([
+        const { notificationApi, messageApi } = await import('@/lib/api');
+        const [alertsRes, convsRes] = await Promise.all([
           notificationApi.getAlerts(),
-          notificationApi.getMessages(),
+          messageApi.getConversations(),
         ]);
         setAlerts(alertsRes.data || []);
-        setMessages(msgsRes.data || []);
+        setMessages(convsRes.data || []); // Storing conversations as 'messages' state for simplicity right now
       } catch (e) {
         console.error('Failed to load notifications', e);
       }
@@ -83,7 +83,7 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
     return user.role;
   };
 
-  const unreadMessagesCount = messages.filter(m => !m.is_read).length;
+  const unreadMessagesCount = 0; // TODO: Implement unread count from conversations API
   const unreadAlertsCount = alerts.filter(a => !a.is_read).length;
 
   return (

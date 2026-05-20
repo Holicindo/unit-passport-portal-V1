@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { messageApi } from '@/lib/api';
-import { Send, User, Loader2, ArrowLeft } from 'lucide-react';
+import { Send, User, Loader2, ArrowLeft, Mail } from 'lucide-react';
 import styles from './messages.module.css';
 
 export default function MessagesPage() {
