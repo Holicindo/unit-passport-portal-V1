@@ -12,6 +12,9 @@ import { ServiceLogAttachment } from './modules/service-logs/entities/service-lo
 import { OwnershipHistory } from './modules/ownership/entities/ownership-history.entity';
 import { User } from './modules/auth/entities/user.entity';
 import { ServiceReport } from './modules/reports/entities/service-report.entity';
+import { Notification } from './modules/notifications/entities/notification.entity';
+import { Conversation } from './modules/messages/entities/conversation.entity';
+import { ChatMessage } from './modules/messages/entities/chat-message.entity';
 import { UnitsModule } from './modules/units/units.module';
 import { ClientsModule } from './modules/clients/clients.module';
 import { PartnersModule } from './modules/partners/partners.module';
@@ -21,6 +24,8 @@ import { OwnershipModule } from './modules/ownership/ownership.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { StorageModule } from './modules/storage/storage.module';
 import { ReportsModule } from './modules/reports/reports.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { MessagesModule } from './modules/messages/messages.module';
 
 @Module({
   imports: [
@@ -41,7 +46,7 @@ import { ReportsModule } from './modules/reports/reports.module';
         entities: [
           Client, Unit, Warranty, Partner,
           ServiceLog, ServiceLogAttachment, OwnershipHistory,
-          User, ServiceReport,
+          User, ServiceReport, Notification, Conversation, ChatMessage,
         ],
         synchronize: config.get<string>('DB_SYNC') === 'true',
         logging: config.get<string>('DB_LOGGING') === 'true',
@@ -57,6 +62,8 @@ import { ReportsModule } from './modules/reports/reports.module';
     AuthModule,
     StorageModule,
     ReportsModule,
+    NotificationsModule,
+    MessagesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

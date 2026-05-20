@@ -59,3 +59,16 @@ export const serviceLogApi = {
 export const partnerApi = {
   findAll: () => api.get('/partners'),
 };
+
+export const notificationApi = {
+  getAlerts: () => api.get('/notifications/alerts'),
+  getMessages: () => api.get('/notifications/messages'),
+  markAsRead: (id: string) => api.patch(`/notifications/${id}/read`),
+};
+
+export const messageApi = {
+  getConversations: () => api.get('/messages/conversations'),
+  startConversation: (targetUserId: string) => api.post('/messages/conversations/start', { targetUserId }),
+  getChatHistory: (id: string) => api.get(`/messages/conversations/${id}`),
+  sendMessage: (id: string, content: string) => api.post(`/messages/conversations/${id}/send`, { content }),
+};

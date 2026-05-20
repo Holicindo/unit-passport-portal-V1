@@ -19,6 +19,9 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
   const [bellOpen, setBellOpen] = useState(false);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
 
+  const [alerts, setAlerts] = useState<any[]>([]);
+  const [messages, setMessages] = useState<any[]>([]);
+
   useEffect(() => {
     const userData = localStorage.getItem('user');
     if (userData) {
@@ -26,10 +29,42 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
     }
   }, []);
 
+  useEffect(() => {
+    if (!localStorage.getItem('token')) return;
+    const fetchNotifications = async () => {
+      try {
+        const { notificationApi } = await import('@/lib/api');
+        const [alertsRes, msgsRes] = await Promise.all([
+          notificationApi.getAlerts(),
+          notificationApi.getMessages(),
+        ]);
+        setAlerts(alertsRes.data || []);
+        setMessages(msgsRes.data || []);
+      } catch (e) {
+        console.error('Failed to load notifications', e);
+      }
+    };
+    fetchNotifications();
+  }, []);
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     router.push('/login');
+  };
+
+  const markAsRead = async (id: string, type: 'ALERT' | 'MESSAGE') => {
+    try {
+      const { notificationApi } = await import('@/lib/api');
+      await notificationApi.markAsRead(id);
+      if (type === 'ALERT') {
+        setAlerts(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+      } else {
+        setMessages(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const getDisplayName = () => {
@@ -47,6 +82,9 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
     if (user.role === 'CLIENT') return 'CLIENT OWNER';
     return user.role;
   };
+
+  const unreadMessagesCount = messages.filter(m => !m.is_read).length;
+  const unreadAlertsCount = alerts.filter(a => !a.is_read).length;
 
   return (
     <header className={styles.topBar}>
@@ -67,31 +105,37 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
         </button>
 
         <div className={styles.iconContainer}>
-          <button className={styles.actionBtn} onClick={() => { setMailOpen(!mailOpen); setBellOpen(false); setDropdownOpen(false); }}>
+          <button className={styles.actionBtn} onClick={() => router.push('/messages')} title="Buka Live Chat (Inbox)">
             <Mail size={20} />
-            <span className={styles.badge}>1</span>
+            {unreadMessagesCount > 0 && <span className={styles.badge}>{unreadMessagesCount}</span>}
           </button>
-          {mailOpen && (
-            <div className={styles.notificationDropdown}>
-              <div className={styles.notificationHeader}>Pesan Masuk</div>
-              <div className={styles.notificationItem}>
-                <strong>Sistem</strong><br/>
-                Selamat datang di Portal Armada.
-              </div>
-            </div>
-          )}
         </div>
 
         <div className={styles.iconContainer}>
           <button className={styles.actionBtn} onClick={() => { setBellOpen(!bellOpen); setMailOpen(false); setDropdownOpen(false); }}>
             <Bell size={20} />
+            {unreadAlertsCount > 0 && <span className={styles.badge} style={{ background: '#f59e0b' }}>{unreadAlertsCount}</span>}
           </button>
           {bellOpen && (
             <div className={styles.notificationDropdown}>
               <div className={styles.notificationHeader}>Notifikasi Terbaru</div>
-              <div className={styles.notificationItem} style={{ color: 'var(--color-space-grey)' }}>
-                Belum ada notifikasi baru.
-              </div>
+              {alerts.length === 0 ? (
+                <div className={styles.notificationItem} style={{ color: 'var(--color-space-grey)' }}>
+                  Belum ada notifikasi baru.
+                </div>
+              ) : (
+                alerts.map(alert => (
+                  <div 
+                    key={alert.id} 
+                    className={styles.notificationItem} 
+                    style={{ background: alert.is_read ? 'transparent' : '#fffbeb' }}
+                    onClick={() => markAsRead(alert.id, 'ALERT')}
+                  >
+                    <div style={{ fontSize: '0.8rem', fontWeight: 600 }}>{alert.title}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--color-space-grey)', marginTop: '2px' }}>{alert.content}</div>
+                  </div>
+                ))
+              )}
             </div>
           )}
         </div>
