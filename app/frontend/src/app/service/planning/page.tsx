@@ -89,15 +89,15 @@ export default function ServicePlanningPage() {
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
     let statusLabel = 'SCHEDULED';
-    let statusText = 'Terjadwal (Aman)';
+    let statusText = 'Terjadwal';
     
     if (diffDays <= 15) {
       statusLabel = 'DUE';
-      statusText = 'Jatuh Tempo Bulan Ini';
+      statusText = 'Jatuh Tempo';
     } else if (diffDays > 90) {
       // Out of sync or long past
       statusLabel = 'OVERDUE';
-      statusText = 'Terlambat Penjadwalan';
+      statusText = 'Terlambat';
     }
 
     // Find last PM done date if any

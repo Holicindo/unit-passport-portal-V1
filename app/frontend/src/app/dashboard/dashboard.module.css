@@ -27,7 +27,7 @@
 .updateTime {
   font-size: 0.85rem;
   color: var(--color-space-grey);
-  fontWeight: 500;
+  font-weight: 500;
   margin: 0;
 }
 
@@ -42,9 +42,9 @@
   background: var(--color-optic-white);
   border-radius: var(--radius-lg);
   border: 1px solid rgba(113, 115, 120, 0.15);
-  padding: 24px;
+  padding: 20px 24px;
   box-shadow: 0 8px 30px rgba(113, 115, 120, 0.08);
-  min-height: 400px;
+  min-height: 290px;
 }
 
 .chartTitle {
@@ -199,4 +199,23 @@
     margin-bottom: 12px;
     padding-bottom: 8px;
   }
+}
+
+.spin {
+  animation: rotation 1s linear infinite;
+}
+
+@keyframes rotation {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.syncBtn:hover {
+  background: rgba(0, 31, 63, 0.05) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(0,31,63,0.06) !important;
+}
+
+.syncBtn:active {
+  transform: translateY(0) !important;
 }
