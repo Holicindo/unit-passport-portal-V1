@@ -205,6 +205,55 @@
   }
 }
 
+@media (max-width: 768px) {
+  .container {
+    padding: 12px;
+  }
+
+  .pageHeader {
+    margin-bottom: 20px;
+  }
+
+  .title {
+    font-size: 1.4rem;
+  }
+
+  .subtitle {
+    font-size: 0.82rem;
+  }
+
+  .formCard {
+    padding: 20px 16px;
+    gap: 24px;
+  }
+
+  .formSection {
+    gap: 16px;
+    padding-bottom: 20px;
+  }
+
+  .sectionTitle {
+    font-size: 0.95rem;
+  }
+
+  .formGroup label {
+    font-size: 0.72rem;
+  }
+
+  .formGroup input, .formGroup select {
+    height: 42px;
+    font-size: 0.88rem;
+    padding: 0 12px;
+  }
+
+  .submitBtn {
+    width: 100%;
+    padding: 12px 20px;
+    font-size: 0.88rem;
+    justify-content: center;
+  }
+}
+
 /* Modal Confirmation Styles */
 .modalOverlay {
   position: fixed;

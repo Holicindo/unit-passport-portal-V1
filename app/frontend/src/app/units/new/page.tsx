@@ -146,6 +146,22 @@ export default function RegisterUnitPage() {
         </div>
       </header>
 
+      {/* Mobile Submenu Pill Tabs */}
+      <div className="mobile-sub-tabs">
+        <button 
+          className="mobile-sub-tab"
+          onClick={() => router.push('/units')}
+        >
+          Daftar Unit
+        </button>
+        <button 
+          className="mobile-sub-tab active"
+          onClick={() => router.push('/units/new')}
+        >
+          Registrasi Unit
+        </button>
+      </div>
+
       <form onSubmit={handlePreSubmit} autoComplete="off" className={styles.formCard}>
         {error && <div className={styles.errorAlert}>{error}</div>}
         

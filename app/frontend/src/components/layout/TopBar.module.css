@@ -305,12 +305,7 @@
     border-radius: 50%;
   }
 
-  .userProfile {
-    padding-left: 8px;
-    border-left: none;
-  }
-
-  .userName, .roleBadge, .userArrow {
+  .profileContainer {
     display: none !important;
   }
 }

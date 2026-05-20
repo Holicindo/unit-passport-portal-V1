@@ -2,6 +2,7 @@
 
 import { FileCheck, Thermometer, AlertTriangle, Settings, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';                           
+import { useRouter } from 'next/navigation';
 import styles from '../menu.module.css';
 
 const formTypes = [
@@ -15,12 +16,30 @@ const formTypes = [
 ];
 
 export default function ReportsMenu() {
+  const router = useRouter();
+
   return (
     <div>
       <header className={styles.pageHeader}>
         <h2 className={styles.pageTitle}>Reports &amp; Digital Forms</h2>
         <p className={styles.pageSubtitle}>Select a form type to create a new report or view history.</p>
       </header>
+
+      {/* Mobile Submenu Pill Tabs */}
+      <div className="mobile-sub-tabs">
+        <button 
+          className="mobile-sub-tab active"
+          onClick={() => router.push('/reports')}
+        >
+          Digital Form
+        </button>
+        <button 
+          className="mobile-sub-tab"
+          onClick={() => router.push('/reports/history')}
+        >
+          Riwayat Laporan
+        </button>
+      </div>
 
       <div className={styles.menuGrid}>
         {formTypes.map((form) => {

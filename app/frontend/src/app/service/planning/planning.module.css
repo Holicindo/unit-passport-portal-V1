@@ -528,3 +528,113 @@
   max-width: 320px;
   line-height: 1.5;
 }
+
+@media (max-width: 768px) {
+  .container {
+    padding: 12px;
+    gap: 16px;
+  }
+
+  .title {
+    font-size: 1.4rem;
+  }
+
+  .subtitle {
+    font-size: 0.82rem;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .statCard {
+    padding: 14px 18px;
+    gap: 12px;
+  }
+
+  .statIconWrapper {
+    padding: 10px;
+  }
+
+  .statValue {
+    font-size: 1.4rem;
+  }
+
+  .statLabel {
+    font-size: 0.72rem;
+  }
+
+  .controlsRow {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .searchWrapper {
+    max-width: 100%;
+    padding: 6px 12px;
+  }
+
+  .filterGroup {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .filterSelect {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+
+  .planningGrid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .planningCard {
+    padding: 16px;
+    gap: 14px;
+  }
+
+  .modelName {
+    font-size: 0.98rem;
+  }
+
+  .serialNumber {
+    font-size: 0.7rem;
+    padding: 2px 6px;
+  }
+
+  .statusBadge {
+    font-size: 0.68rem;
+    padding: 3px 8px;
+  }
+
+  .cardBody {
+    padding: 10px 0;
+    gap: 8px;
+  }
+
+  .metaRow {
+    font-size: 0.8rem;
+  }
+
+  .forecastBox {
+    padding: 8px 12px;
+  }
+
+  .forecastTitle {
+    font-size: 0.68rem;
+  }
+
+  .forecastDate {
+    font-size: 0.88rem;
+  }
+
+  .assignBtn {
+    padding: 8px 12px;
+    font-size: 0.78rem;
+    border-radius: 6px;
+  }
+}

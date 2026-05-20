@@ -208,6 +208,22 @@ export default function ServicePlanningPage() {
         </div>
       </header>
 
+      {/* Mobile Submenu Pill Tabs */}
+      <div className="mobile-sub-tabs">
+        <button 
+          className="mobile-sub-tab"
+          onClick={() => router.push('/service')}
+        >
+          Log Servis
+        </button>
+        <button 
+          className="mobile-sub-tab active"
+          onClick={() => router.push('/service/planning')}
+        >
+          Rencana Servis
+        </button>
+      </div>
+
       {/* Stats Cards */}
       <div className={styles.statsGrid}>
         <div className={styles.statCard}>
