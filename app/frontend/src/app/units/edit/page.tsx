@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { unitApi } from '@/lib/api';
 import { ArrowLeft, Loader2, Save, HelpCircle } from 'lucide-react';
+import { categorizeUnitType } from '@/lib/utils';
 import styles from '../../units/new/new.module.css';
 
 function EditUnitForm() {
@@ -192,7 +193,11 @@ function EditUnitForm() {
               <input
                 type="text"
                 value={modelName}
-                onChange={(e) => setModelName(e.target.value)}
+                onChange={(e) => {
+                  const newName = e.target.value;
+                  setModelName(newName);
+                  setUnitType(categorizeUnitType(newName));
+                }}
                 placeholder="Contoh: Undercounter Chiller B610"
                 autoComplete="new-password"
                 required

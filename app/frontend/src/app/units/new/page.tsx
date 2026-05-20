@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { unitApi } from '@/lib/api';
 import { ArrowLeft, Loader2, Save, Wrench, HelpCircle, ShieldAlert } from 'lucide-react';
+import { categorizeUnitType } from '@/lib/utils';
 import styles from './new.module.css';
 
 export default function RegisterUnitPage() {
@@ -168,7 +169,11 @@ export default function RegisterUnitPage() {
               <input 
                 type="text" 
                 value={modelName} 
-                onChange={(e) => setModelName(e.target.value)} 
+                onChange={(e) => {
+                  const newName = e.target.value;
+                  setModelName(newName);
+                  setUnitType(categorizeUnitType(newName));
+                }} 
                 placeholder="Contoh: Undercounter Chiller B610"
                 autoComplete="new-password"
                 required
