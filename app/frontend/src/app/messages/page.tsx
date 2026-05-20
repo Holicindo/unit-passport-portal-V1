@@ -18,7 +18,18 @@ export default function MessagesPage() {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Detect mobile viewport
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -36,7 +47,8 @@ export default function MessagesPage() {
         
         if (initialChatId && data.find((c: any) => c.id === initialChatId)) {
           loadChat(initialChatId);
-        } else if (data.length > 0 && !activeChat) {
+        } else if (data.length > 0 && !activeChat && !isMobile) {
+          // Auto load first chat only on desktop to avoid forcing mobile users into a chat immediately
           loadChat(data[0].id);
         }
       } catch (err) {
@@ -46,7 +58,7 @@ export default function MessagesPage() {
       }
     };
     fetchConversations();
-  }, [initialChatId]);
+  }, [initialChatId, isMobile]);
 
   const loadChat = async (conversationId: string) => {
     try {
@@ -104,98 +116,118 @@ export default function MessagesPage() {
     );
   }
 
+  // Render Sidebar - Chat List
+  const renderSidebar = () => (
+    <div className={styles.sidebar} style={{ width: isMobile ? '100%' : undefined }}>
+      <div className={styles.sidebarHeader}>
+        <button onClick={() => router.push('/dashboard')} className={styles.backBtn} title="Kembali ke Dashboard">
+          <ArrowLeft size={18} />
+        </button>
+        <h2 className={styles.sidebarTitle}>Pesan Masuk</h2>
+      </div>
+      <div className={styles.conversationList}>
+        {conversations.length === 0 ? (
+          <div className={styles.emptyStateSidebar}>Belum ada percakapan.</div>
+        ) : (
+          conversations.map((conv) => (
+            <div 
+              key={conv.id} 
+              className={`${styles.conversationItem} ${activeChat?.id === conv.id ? styles.active : ''}`}
+              onClick={() => loadChat(conv.id)}
+            >
+              <div className={styles.avatarPlaceholder}>
+                <User size={20} />
+              </div>
+              <div className={styles.conversationDetails}>
+                <div className={styles.conversationName}>{getChatPartnerName(conv)}</div>
+                <div className={styles.lastMessage}>{conv.last_message || 'Mulai percakapan...'}</div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+
+  // Render Chat Window
+  const renderChatWindow = () => (
+    <div className={styles.chatWindow} style={{ display: isMobile && !activeChat ? 'none' : 'flex' }}>
+      {activeChat ? (
+        <>
+          <div className={styles.chatHeader}>
+            {isMobile && (
+              <button onClick={() => setActiveChat(null)} className={styles.backChatBtn} title="Kembali ke Daftar Obrolan">
+                <ArrowLeft size={20} />
+              </button>
+            )}
+            <div className={styles.avatarPlaceholder}>
+              <User size={20} />
+            </div>
+            <div className={styles.chatHeaderDetails}>
+              <div className={styles.chatHeaderName}>{getChatPartnerName(activeChat)}</div>
+              <div className={styles.chatHeaderStatus}>Live Chat</div>
+            </div>
+          </div>
+
+          <div className={styles.messagesContainer}>
+            {messages.length === 0 ? (
+              <div className={styles.emptyStateChat}>Belum ada pesan. Mulai sapa sekarang!</div>
+            ) : (
+              messages.map((msg) => {
+                const isMe = msg.sender_id === currentUser?.id;
+                return (
+                  <div key={msg.id} className={`${styles.messageWrapper} ${isMe ? styles.messageMe : styles.messageThem}`}>
+                    <div className={styles.messageBubble}>
+                      {msg.content}
+                      <div className={styles.messageTime}>
+                        {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          <form className={styles.inputArea} onSubmit={handleSend}>
+            <input 
+              type="text" 
+              className={styles.messageInput} 
+              placeholder="Ketik pesan..." 
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              disabled={sending}
+            />
+            <button type="submit" className={styles.sendBtn} disabled={!newMessage.trim() || sending}>
+              {sending ? <Loader2 size={18} className={styles.spin} /> : <Send size={18} />}
+            </button>
+          </form>
+        </>
+      ) : (
+        <div className={styles.noChatSelected}>
+          <Mail size={48} style={{ opacity: 0.2, marginBottom: '16px' }} />
+          <h3>Tidak ada obrolan terpilih</h3>
+          <p>Pilih percakapan dari panel sebelah kiri untuk mulai mengirim pesan.</p>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className={styles.container}>
       <div className={styles.layout}>
-        {/* Left Sidebar - Chat List */}
-        <div className={styles.sidebar}>
-          <div className={styles.sidebarHeader}>
-            <button onClick={() => router.push('/units')} className={styles.backBtn} title="Kembali ke Dashboard">
-              <ArrowLeft size={18} />
-            </button>
-            <h2 className={styles.sidebarTitle}>Pesan Masuk</h2>
-          </div>
-          <div className={styles.conversationList}>
-            {conversations.length === 0 ? (
-              <div className={styles.emptyStateSidebar}>Belum ada percakapan.</div>
-            ) : (
-              conversations.map((conv) => (
-                <div 
-                  key={conv.id} 
-                  className={`${styles.conversationItem} ${activeChat?.id === conv.id ? styles.active : ''}`}
-                  onClick={() => loadChat(conv.id)}
-                >
-                  <div className={styles.avatarPlaceholder}>
-                    <User size={20} />
-                  </div>
-                  <div className={styles.conversationDetails}>
-                    <div className={styles.conversationName}>{getChatPartnerName(conv)}</div>
-                    <div className={styles.lastMessage}>{conv.last_message || 'Mulai percakapan...'}</div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* Right Area - Chat Window */}
-        <div className={styles.chatWindow}>
-          {activeChat ? (
-            <>
-              <div className={styles.chatHeader}>
-                <div className={styles.avatarPlaceholder}>
-                  <User size={20} />
-                </div>
-                <div className={styles.chatHeaderDetails}>
-                  <div className={styles.chatHeaderName}>{getChatPartnerName(activeChat)}</div>
-                  <div className={styles.chatHeaderStatus}>Live Chat</div>
-                </div>
-              </div>
-
-              <div className={styles.messagesContainer}>
-                {messages.length === 0 ? (
-                  <div className={styles.emptyStateChat}>Belum ada pesan. Mulai sapa sekarang!</div>
-                ) : (
-                  messages.map((msg) => {
-                    const isMe = msg.sender_id === currentUser?.id;
-                    return (
-                      <div key={msg.id} className={`${styles.messageWrapper} ${isMe ? styles.messageMe : styles.messageThem}`}>
-                        <div className={styles.messageBubble}>
-                          {msg.content}
-                          <div className={styles.messageTime}>
-                            {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-                <div ref={messagesEndRef} />
-              </div>
-
-              <form className={styles.inputArea} onSubmit={handleSend}>
-                <input 
-                  type="text" 
-                  className={styles.messageInput} 
-                  placeholder="Ketik pesan..." 
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  disabled={sending}
-                />
-                <button type="submit" className={styles.sendBtn} disabled={!newMessage.trim() || sending}>
-                  {sending ? <Loader2 size={18} className={styles.spin} /> : <Send size={18} />}
-                </button>
-              </form>
-            </>
-          ) : (
-            <div className={styles.noChatSelected}>
-              <Mail size={48} style={{ opacity: 0.2, marginBottom: '16px' }} />
-              <h3>Tidak ada obrolan terpilih</h3>
-              <p>Pilih percakapan dari panel sebelah kiri untuk mulai mengirim pesan.</p>
-            </div>
-          )}
-        </div>
+        {/* On Mobile: Conditionally render based on whether a chat is active */}
+        {isMobile ? (
+          activeChat ? renderChatWindow() : renderSidebar()
+        ) : (
+          <>
+            {renderSidebar()}
+            {renderChatWindow()}
+          </>
+        )}
       </div>
     </div>
   );
 }
+

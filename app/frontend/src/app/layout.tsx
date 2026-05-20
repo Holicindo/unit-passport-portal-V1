@@ -4,6 +4,7 @@ import { Inter, Montserrat } from 'next/font/google'
 import './globals.css'
 import Sidebar from '@/components/layout/Sidebar'
 import TopBar from '@/components/layout/TopBar'
+import BottomNav from '@/components/layout/BottomNav'
 import { usePathname } from 'next/navigation'
 
 const inter = Inter({
@@ -53,8 +54,10 @@ export default function RootLayout({
           <div style={{ flex: 1 }}>
             {children}
           </div>
+          {!hideLayout && <BottomNav />}
         </div>
       </body>
     </html>
   )
 }
+

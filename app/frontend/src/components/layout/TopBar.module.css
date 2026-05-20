@@ -281,3 +281,37 @@
   transform: translateY(-1px);
   box-shadow: 0 4px 14px rgba(46, 91, 255, 0.3);
 }
+
+@media (max-width: 768px) {
+  .topBar {
+    padding: 0 12px;
+    height: 60px;
+  }
+
+  .toggleBtn {
+    display: none !important;
+  }
+
+  .searchBox {
+    display: none !important;
+  }
+
+  .topBarScanBtn span {
+    display: none;
+  }
+
+  .topBarScanBtn {
+    padding: 8px;
+    border-radius: 50%;
+  }
+
+  .userProfile {
+    padding-left: 8px;
+    border-left: none;
+  }
+
+  .userName, .roleBadge, .userArrow {
+    display: none !important;
+  }
+}
+
