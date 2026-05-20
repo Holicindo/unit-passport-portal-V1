@@ -378,82 +378,132 @@ export default function ServicePage() {
           </div>
         </div>
       ) : (
-        <div className={styles.tableContainer}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>LOG ID</th>
-                <th>Unit / Mesin</th>
-                <th>Mitra Regional</th>
-                <th>Deskripsi Kendala (Problem)</th>
-                <th>Tindakan / Hasil</th>
-                <th>Tgl Servis</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredLogs.map((log) => (
-                <tr key={log.id} onClick={() => setSelectedDetailLog(log)} style={{ cursor: 'pointer' }}>
-                  <td className={styles.logId}>{log.id}</td>
-                  <td onClick={(e) => e.stopPropagation()}>
-                    <div className={styles.unitLink} onClick={() => router.push(`/id/${log.unit?.qr_token}`)}>
-                      <span className={styles.unitModel}>{log.unit?.model_name || 'Unit Tidak Diketahui'}</span>
-                      <span className={styles.unitSn}>{log.unit?.serial_number}</span>
-                    </div>
-                  </td>
-                  <td>
-                    {log.partner ? (
-                      <div>
-                        <span className={styles.partnerName}>{log.partner.partner_name}</span>
-                        <span className={styles.partnerCity}> ({log.partner.city})</span>
-                      </div>
-                    ) : (
-                      <span style={{ fontStyle: 'italic', color: 'var(--color-space-grey)', fontSize: '0.85rem' }}>
-                        HQ (Manual Routing)
-                      </span>
-                    )}
-                  </td>
-                  <td>
-                    {(() => {
-                      const { issue, contact } = parseIssueDescription(log.issue_description);
-                      return (
-                        <div className={styles.issueCell}>
-                          <span className={styles.issueTextMain} title={issue}>
-                            {issue}
-                          </span>
-                          {contact && (
-                            <span className={styles.issueContactSub}>
-                              👤 {contact.name} ({contact.phone})
-                            </span>
-                          )}
-                        </div>
-                      );
-                    })()}
-                  </td>
-                  <td>
-                    <span className={styles.issueText} title={log.action_taken}>
-                      {log.action_taken}
-                    </span>
-                  </td>
-                  <td>
-                    <span style={{ fontWeight: 600, color: 'var(--color-deep-navy)' }}>
-                      {formatDate(log.service_date)}
-                    </span>
-                  </td>
-                  <td>
-                    <span className={`${styles.badge} ${
-                      log.status === 'PENDING' ? styles.badgePending :
-                      log.status === 'COMPLETED' ? styles.badgeCompleted :
-                      styles.badgeCancelled
-                    }`}>
-                      {log.status}
-                    </span>
-                  </td>
+        <>
+          {/* Desktop Table View */}
+          <div className={`${styles.tableContainer} ${styles.desktopView}`}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>LOG ID</th>
+                  <th>Unit / Mesin</th>
+                  <th>Mitra Regional</th>
+                  <th>Deskripsi Kendala (Problem)</th>
+                  <th>Tindakan / Hasil</th>
+                  <th>Tgl Servis</th>
+                  <th>Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filteredLogs.map((log) => (
+                  <tr key={log.id} onClick={() => setSelectedDetailLog(log)} style={{ cursor: 'pointer' }}>
+                    <td className={styles.logId}>{log.id}</td>
+                    <td onClick={(e) => e.stopPropagation()}>
+                      <div className={styles.unitLink} onClick={() => router.push(`/id/${log.unit?.qr_token}`)}>
+                        <span className={styles.unitModel}>{log.unit?.model_name || 'Unit Tidak Diketahui'}</span>
+                        <span className={styles.unitSn}>{log.unit?.serial_number}</span>
+                      </div>
+                    </td>
+                    <td>
+                      {log.partner ? (
+                        <div>
+                          <span className={styles.partnerName}>{log.partner.partner_name}</span>
+                          <span className={styles.partnerCity}> ({log.partner.city})</span>
+                        </div>
+                      ) : (
+                        <span style={{ fontStyle: 'italic', color: 'var(--color-space-grey)', fontSize: '0.85rem' }}>
+                          HQ (Manual Routing)
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      {(() => {
+                        const { issue, contact } = parseIssueDescription(log.issue_description);
+                        return (
+                          <div className={styles.issueCell}>
+                            <span className={styles.issueTextMain} title={issue}>
+                              {issue}
+                            </span>
+                            {contact && (
+                              <span className={styles.issueContactSub}>
+                                👤 {contact.name} ({contact.phone})
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </td>
+                    <td>
+                      <span className={styles.issueText} title={log.action_taken}>
+                        {log.action_taken}
+                      </span>
+                    </td>
+                    <td>
+                      <span style={{ fontWeight: 600, color: 'var(--color-deep-navy)' }}>
+                        {formatDate(log.service_date)}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`${styles.badge} ${
+                        log.status === 'PENDING' ? styles.badgePending :
+                        log.status === 'COMPLETED' ? styles.badgeCompleted :
+                        styles.badgeCancelled
+                      }`}>
+                        {log.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Card List View */}
+          <div className={styles.mobileView}>
+            {filteredLogs.map((log) => (
+              <div key={log.id} className={styles.mobileCard} onClick={() => setSelectedDetailLog(log)}>
+                <div className={styles.mobileCardHeader}>
+                  <span className={styles.mobileLogId}>{log.id}</span>
+                  <span className={`${styles.badge} ${
+                    log.status === 'PENDING' ? styles.badgePending :
+                    log.status === 'COMPLETED' ? styles.badgeCompleted :
+                    styles.badgeCancelled
+                  }`}>
+                    {log.status}
+                  </span>
+                </div>
+                
+                <div className={styles.mobileCardBody}>
+                  <div className={styles.mobileCardRow}>
+                    <span className={styles.mobileLabel}>Unit / Mesin</span>
+                    <div className={styles.mobileUnitInfo}>
+                      <span className={styles.mobileUnitModel}>{log.unit?.model_name || 'Unit Tidak Diketahui'}</span>
+                      <span className={styles.mobileUnitSn}>SN: {log.unit?.serial_number || '-'}</span>
+                    </div>
+                  </div>
+
+                  <div className={styles.mobileCardRow}>
+                    <span className={styles.mobileLabel}>Mitra Regional</span>
+                    <span className={styles.mobileValue}>
+                      {log.partner ? `${log.partner.partner_name} (${log.partner.city})` : 'HQ (Manual Routing)'}
+                    </span>
+                  </div>
+
+                  <div className={styles.mobileCardRow}>
+                    <span className={styles.mobileLabel}>Deskripsi Kendala</span>
+                    <span className={styles.mobileValueIssue}>
+                      {parseIssueDescription(log.issue_description).issue}
+                    </span>
+                  </div>
+
+                  <div className={styles.mobileCardRow}>
+                    <span className={styles.mobileLabel}>Tanggal Servis</span>
+                    <span className={styles.mobileValueDate}>{formatDate(log.service_date)}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {/* Record New Call Modal Overlay */}

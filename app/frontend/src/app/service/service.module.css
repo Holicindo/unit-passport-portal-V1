@@ -581,12 +581,204 @@
   to { transform: rotate(360deg); }
 }
 
+.desktopView {
+  display: block;
+}
+
+.mobileView {
+  display: none;
+}
+
 @media (max-width: 768px) {
+  .container {
+    padding: 16px !important;
+    gap: 16px !important;
+  }
+
+  .title {
+    font-size: 1.4rem;
+  }
+
+  .subtitle {
+    font-size: 0.85rem;
+  }
+
+  .pageHeader {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .createBtn {
+    justify-content: center;
+    padding: 10px 16px;
+    font-size: 0.85rem;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+
+  .statCard {
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .statValue {
+    font-size: 1.5rem;
+  }
+
+  .controlsRow {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .searchWrapper {
+    max-width: 100%;
+  }
+
+  .filterGroup {
+    justify-content: space-between;
+  }
+
+  .filterSelect {
+    flex: 1;
+    text-align: right;
+  }
+
+  .desktopView {
+    display: none !important;
+  }
+
+  .mobileView {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .mobileCard {
+    background: var(--color-optic-white);
+    border-radius: 16px;
+    border: 1px solid rgba(0, 31, 63, 0.05);
+    padding: 16px;
+    box-shadow: 0 4px 20px rgba(0, 31, 63, 0.03);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .mobileCard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(0, 31, 63, 0.06);
+  }
+
+  .mobileCardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px dashed rgba(0, 0, 0, 0.06);
+    padding-bottom: 10px;
+    margin-bottom: 12px;
+  }
+
+  .mobileLogId {
+    font-family: var(--font-heading);
+    font-weight: 800;
+    color: var(--color-cobalt-blue);
+    font-size: 0.85rem;
+  }
+
+  .mobileCardBody {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .mobileCardRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .mobileLabel {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--color-space-grey);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    width: 35%;
+    flex-shrink: 0;
+  }
+
+  .mobileValue {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-deep-navy);
+    text-align: right;
+    word-break: break-word;
+  }
+
+  .mobileUnitInfo {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    text-align: right;
+  }
+
+  .mobileUnitModel {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--color-deep-navy);
+  }
+
+  .mobileUnitSn {
+    font-size: 0.65rem;
+    color: var(--color-space-grey);
+    font-weight: 600;
+    background: #F1F5F9;
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+
+  .mobileValueIssue {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-deep-navy);
+    text-align: right;
+    max-width: 65%;
+    word-break: break-word;
+  }
+
+  .mobileValueDate {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--color-deep-navy);
+  }
+
   .formGrid {
     grid-template-columns: 1fr;
   }
+  
   .formGroupFull {
     grid-column: span 1;
+  }
+
+  .modalCard {
+    max-height: 95vh;
+  }
+
+  .modalBody {
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .modalHeader, .modalFooter {
+    padding: 16px;
   }
 }
 
@@ -617,6 +809,15 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .detailGrid {
+    grid-template-columns: 1fr;
+  }
+  .detailItemFull {
+    grid-column: span 1;
+  }
 }
 
 .detailGridFull {
@@ -677,4 +878,5 @@
 .waBtn:hover {
   opacity: 0.9;
 }
+
 
