@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@400;500;600;700;800&display=swap');
 
 :root {
   --color-space-grey: #717378;
@@ -7,8 +7,8 @@
   --color-optic-white: #FFFFFF;
   --color-cobalt-blue: #2E5BFF;
   --color-safety-orange: #FF6B00;
-  --color-success: #00C48C;
-  --color-warning: #FFB800;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
 
   --font-heading: 'Montserrat', sans-serif;
   --font-body: 'Inter', sans-serif;
@@ -22,11 +22,11 @@
   --main-padding: 20px;
 
   /* Premium Light Glass System Tokens */
-  --glass-bg: rgba(255, 255, 255, 0.72);
-  --glass-border: rgba(255, 255, 255, 0.55);
-  --glass-blur: blur(20px) saturate(180%);
-  --glass-shadow: 0 8px 32px rgba(0, 31, 63, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  --glass-shadow-hover: 0 20px 48px rgba(0, 31, 63, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.7);
+  --glass-blur: blur(24px) saturate(180%);
+  --glass-shadow: 0 10px 30px rgba(0, 0, 50, 0.03), inset 0 1px 0 rgba(255, 255, 255, 1);
+  --glass-shadow-hover: 0 20px 48px rgba(0, 0, 50, 0.06), inset 0 1px 0 rgba(255, 255, 255, 1);
 
   /* Background Gradient Image Token */
   --bg-gradient-image: 
@@ -73,6 +73,12 @@ html, body {
 h1, h2, h3, h4 {
   font-family: var(--font-heading);
   font-weight: 700;
+}
+
+/* Force all titles and subtitles to be black/deep-navy per user request */
+[class*="title"], [class*="Title"],
+[class*="subtitle"], [class*="Subtitle"] {
+  color: var(--color-deep-navy) !important;
 }
 
 .main-wrapper {
@@ -521,22 +527,23 @@ a {
 [data-theme="dark"] [class*="countBadge"],
 [data-theme="dark"] [class*="CountBadge"] {
   background: rgba(46, 91, 255, 0.15) !important;
-  color: #8892b0 !important;
+  color: #ffffff !important;
 }
 
-/* Interactive Table overrides */
+/* Interactive Table & List overrides */
 [data-theme="dark"] table thead th {
   background: rgba(15, 32, 67, 0.8) !important;
-  color: #8892b0 !important;
+  color: #ffffff !important;
   border-bottom: 2px solid rgba(255, 255, 255, 0.08) !important;
 }
 
 [data-theme="dark"] table td {
   border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
-  color: #e2e8f0 !important;
+  color: #ffffff !important;
 }
 
-[data-theme="dark"] [class*="dataRow"]:hover {
+[data-theme="dark"] [class*="dataRow"]:hover,
+[data-theme="dark"] tr:hover td {
   background: rgba(46, 91, 255, 0.08) !important;
 }
 
@@ -544,29 +551,315 @@ a {
   background: transparent !important;
 }
 
+/* Table Text & Meta contrast adjustments (White & high-contrast silver) */
+[data-theme="dark"] [class*="unitModel"],
+[data-theme="dark"] [class*="partnerName"],
+[data-theme="dark"] [class*="issueTextMain"],
+[data-theme="dark"] [class*="issueText"],
+[data-theme="dark"] [class*="partnerCity"],
+[data-theme="dark"] [class*="issueContactSub"],
+[data-theme="dark"] [class*="clientName"],
+[data-theme="dark"] [class*="unitName"] {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] [class*="metaLabel"],
+[data-theme="dark"] [class*="mobileLabel"],
+[data-theme="dark"] [class*="forecastTitle"] {
+  color: #b3b9c9 !important;
+  font-weight: 700 !important;
+}
+
+[data-theme="dark"] [class*="metaValue"],
+[data-theme="dark"] [class*="mobileValue"],
+[data-theme="dark"] [class*="mobileValueIssue"],
+[data-theme="dark"] [class*="mobileValueDate"] {
+  color: #ffffff !important;
+}
+
+/* Serial Number Tags & Badges */
+[data-theme="dark"] [class*="serialTag"],
+[data-theme="dark"] [class*="unitSn"],
+[data-theme="dark"] [class*="serialNumber"],
+[data-theme="dark"] [class*="mobileUnitSn"] {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* PM Forecast Box (Inspeksi PM Terdekat) */
+[data-theme="dark"] [class*="forecastBox"] {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px dashed rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] [class*="forecastDate"] {
+  color: #ffffff !important;
+}
+
+/* Card lines & separation borders */
+[data-theme="dark"] [class*="cardBody"] {
+  border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Pagination container overrides (White pagination card removal) */
+[data-theme="dark"] [class*="pagination"],
+[data-theme="dark"] [class*="mobilePagination"] {
+  background: transparent !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+[data-theme="dark"] [class*="totalText"],
+[data-theme="dark"] [class*="mobilePageIndicator"] {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] [class*="pageBtn"],
+[data-theme="dark"] [class*="pageArrow"],
+[data-theme="dark"] [class*="mobilePageArrow"] {
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+
+[data-theme="dark"] [class*="pageBtn"]:hover:not([class*="activePage"]),
+[data-theme="dark"] [class*="pageArrow"]:hover:not([disabled]),
+[data-theme="dark"] [class*="mobilePageArrow"]:hover:not([disabled]) {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] [class*="activePage"],
+[data-theme="dark"] [class*="pageBtn"][class*="active"] {
+  background: var(--color-cobalt-blue) !important;
+  color: #ffffff !important;
+  border-color: var(--color-cobalt-blue) !important;
+  box-shadow: 0 4px 12px rgba(46, 91, 255, 0.3) !important;
+}
+
+[data-theme="dark"] [class*="ellipsis"] {
+  color: #ffffff !important;
+}
+
+/* Highly pronounced, vibrant status badges in dark mode */
+[data-theme="dark"] [class*="status_active"],
+[data-theme="dark"] [class*="badgeCompleted"] {
+  background: rgba(0, 196, 140, 0.18) !important;
+  color: #00e0a1 !important;
+  border: 1px solid rgba(0, 196, 140, 0.3) !important;
+}
+
+[data-theme="dark"] [class*="status_inactive"],
+[data-theme="dark"] [class*="badgeCancelled"] {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #b3b9c9 !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+[data-theme="dark"] [class*="badgePending"] {
+  background: rgba(255, 107, 0, 0.18) !important;
+  color: #ff822e !important;
+  border: 1px solid rgba(255, 107, 0, 0.3) !important;
+}
+
 /* Theme switch & standard button backgrounds */
-[data-theme="dark"] button {
+[data-theme="dark"] button:not([class*="activePage"]):not([class*="assignBtn"]):not([class*="scanBtn"]) {
   background: rgba(255, 255, 255, 0.06) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
   color: #ffffff !important;
 }
 
-[data-theme="dark"] button:hover {
+[data-theme="dark"] button:hover:not([class*="activePage"]):not([class*="assignBtn"]):not([class*="scanBtn"]):not([disabled]) {
   background: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
 }
 
-/* Form input dark overrides */
+/* Enhanced status badges for better prominence */
+[data-theme="dark"] .statusDue, [data-theme="dark"] .badgePending {
+  background: rgba(255, 107, 0, 0.22) !important;
+  color: #ff822e !important;
+  border: 1px solid rgba(255, 107, 0, 0.4) !important;
+}
+
+[data-theme="dark"] .statusOverdue {
+  background: rgba(255, 77, 77, 0.22) !important;
+  color: #ff4d4d !important;
+  border: 1px solid rgba(255, 77, 77, 0.4) !important;
+}
+
+[data-theme="dark"] .statusScheduled {
+  background: rgba(46, 91, 255, 0.22) !important;
+  color: #2e5bff !important;
+  border: 1px solid rgba(46, 91, 255, 0.4) !important;
+}
+
+/* Explicit Primary Blue Button overrides to keep them visible and vibrant */
+[data-theme="dark"] button[class*="assignBtn"],
+[data-theme="dark"] button[class*="scanBtn"],
+[data-theme="dark"] [class*="scanBtn"] {
+  background: var(--color-cobalt-blue) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(46, 91, 255, 0.4) !important;
+  box-shadow: 0 4px 14px rgba(46, 91, 255, 0.3) !important;
+}
+
+[data-theme="dark"] button[class*="assignBtn"]:hover,
+[data-theme="dark"] button[class*="scanBtn"]:hover,
+[data-theme="dark"] [class*="scanBtn"]:hover {
+  background: #1e4bd6 !important;
+  box-shadow: 0 6px 20px rgba(46, 91, 255, 0.45) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Form input, search wrapper & dropdown select overrides */
 [data-theme="dark"] input,
 [data-theme="dark"] select,
-[data-theme="dark"] textarea {
+[data-theme="dark"] textarea,
+[data-theme="dark"] [class*="searchWrapper"],
+[data-theme="dark"] [class*="filterSelect"] {
   background: rgba(15, 32, 67, 0.6) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] [class*="searchWrapper"] input,
+[data-theme="dark"] [class*="filterSelect"] option {
+  background: #0a192f !important;
   color: #ffffff !important;
 }
 
 [data-theme="dark"] input::placeholder,
 [data-theme="dark"] textarea::placeholder {
   color: #64748b !important;
+}
+
+/* Button span & SVG icon color inheritance overrides to preserve pure white */
+[data-theme="dark"] button span,
+[data-theme="dark"] button[class*="Btn"] span,
+[data-theme="dark"] a[class*="Btn"] span,
+[data-theme="dark"] button svg,
+[data-theme="dark"] button[class*="Btn"] svg {
+  color: inherit !important;
+}
+
+/* Stat Summary Card Values & Labels high contrast overrides (e.g. 514, 0, 1) */
+[data-theme="dark"] [class*="statValue"] {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] [class*="statLabel"] {
+  color: #e2e8f0 !important;
+}
+
+/* ============================================================
+   ENTERPRISE DATATABLE TOOLBAR
+   ============================================================ */
+.dtToolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid rgba(0, 31, 63, 0.06);
+  background: rgba(0, 31, 63, 0.015);
+}
+
+.dtToolbarLeft, .dtToolbarRight {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.dtToolbarText {
+  font-size: 0.85rem;
+  color: var(--color-space-grey);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dtToolbarSelect {
+  background: var(--color-optic-white);
+  border: 1px solid rgba(0, 31, 63, 0.12);
+  border-radius: 6px;
+  padding: 6px 32px 6px 12px;
+  font-size: 0.85rem;
+  color: var(--color-deep-navy);
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.dtToolbarSelect:focus {
+  outline: none;
+  border-color: rgba(46, 91, 255, 0.4);
+  box-shadow: 0 0 0 3px rgba(46, 91, 255, 0.08);
+}
+
+.dtToolbarSearch {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.dtToolbarSearchInput {
+  background: var(--color-optic-white);
+  border: 1px solid rgba(0, 31, 63, 0.12);
+  border-radius: 6px;
+  padding: 8px 36px 8px 12px;
+  font-size: 0.85rem;
+  width: 240px;
+  color: var(--color-deep-navy);
+  transition: all 0.2s ease;
+}
+
+.dtToolbarSearchInput:focus {
+  outline: none;
+  border-color: rgba(46, 91, 255, 0.4);
+  box-shadow: 0 0 0 3px rgba(46, 91, 255, 0.08);
+}
+
+.dtToolbarSearchIcon {
+  position: absolute;
+  right: 12px;
+  color: var(--color-space-grey);
+}
+
+.dtToolbarCreateBtn {
+  background: var(--color-cobalt-blue);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dtToolbarCreateBtn:hover {
+  background: #1e4bd6;
+}
+
+[data-theme="dark"] .dtToolbar {
+  background: rgba(15, 32, 67, 0.8);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .dtToolbarSelect,
+[data-theme="dark"] .dtToolbarSearchInput {
+  background: rgba(15, 32, 67, 0.6);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
 }
 
 

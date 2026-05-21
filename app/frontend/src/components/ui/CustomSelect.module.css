@@ -1,0 +1,115 @@
+.selectContainer {
+  position: relative;
+  display: inline-block;
+  min-width: 140px;
+}
+
+.selectTrigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: var(--color-optic-white, #ffffff);
+  border: 1px solid rgba(0, 31, 63, 0.15);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  color: var(--color-deep-navy, #001f3f);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  gap: 8px;
+}
+
+.selectTrigger:hover {
+  border-color: rgba(0, 31, 63, 0.25);
+}
+
+.selectTrigger.open {
+  border-color: var(--color-cobalt-blue, #2E5BFF);
+  box-shadow: 0 0 0 3px rgba(46, 91, 255, 0.15);
+}
+
+.placeholder {
+  color: var(--color-space-grey, #6B7280);
+}
+
+.value {
+  color: var(--color-deep-navy, #001f3f);
+  font-weight: 500;
+}
+
+.icon {
+  color: var(--color-space-grey, #6B7280);
+  transition: transform 0.2s ease;
+}
+
+.iconOpen {
+  transform: rotate(180deg);
+  color: var(--color-cobalt-blue, #2E5BFF);
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 100%;
+  min-width: max-content;
+  background: #ffffff;
+  border: 1px solid rgba(0, 31, 63, 0.08);
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  padding: 6px;
+  z-index: 100;
+  animation: slideDown 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.option {
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  color: var(--color-deep-navy, #001f3f);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.option:hover {
+  background: rgba(46, 91, 255, 0.08);
+  color: var(--color-cobalt-blue, #2E5BFF);
+}
+
+.option.selected {
+  background: rgba(46, 91, 255, 0.12);
+  color: var(--color-cobalt-blue, #2E5BFF);
+  font-weight: 600;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+[data-theme="dark"] .selectTrigger {
+  background: rgba(15, 32, 67, 0.6);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+[data-theme="dark"] .dropdownMenu {
+  background: #0f2043;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+[data-theme="dark"] .option {
+  color: #fff;
+}
+[data-theme="dark"] .option:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+[data-theme="dark"] .option.selected {
+  background: rgba(46, 91, 255, 0.2);
+}

@@ -1,0 +1,238 @@
+.container {
+  padding: 0;
+}
+
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  margin-bottom: 40px;
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--color-deep-dark);
+  margin: 0 0 7px 0;
+  letter-spacing: -0.03em;
+  line-height: 1.0;
+}
+
+.subtitle {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: var(--color-space-dark);
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+.addBtn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, var(--color-deep-navy) 0%, #08335e 100%);
+  color: #fff;
+  border: none;
+  padding: 13px 26px;
+  border-radius: 14px;
+  font-weight: 800;
+  font-size: 0.9rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 6px 20px rgba(0, 31, 63, 0.2);
+}
+
+.addBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 31, 63, 0.3);
+  background: linear-gradient(135deg, var(--color-cobalt-blue) 0%, #1a47e5 100%);
+}
+
+.tableCard {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  border: 1px solid #f0f0f4;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+  overflow: hidden;
+}
+
+.tableControls {
+  display: flex;
+  justify-content: space-between;
+  padding: 24px;
+  border-bottom: 1px solid rgba(0, 31, 63, 0.05);
+  gap: 16px;
+}
+
+.searchBox {
+  position: relative;
+  flex: 1;
+  max-width: 400px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-space-grey);
+}
+
+.searchInput {
+  width: 100%;
+  padding: 12px 14px 12px 42px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(0, 31, 63, 0.1);
+  background: rgba(255, 255, 255, 0.6);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: var(--color-deep-navy);
+  transition: all 0.2s ease;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: var(--color-cobalt-blue);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(46, 91, 255, 0.1);
+}
+
+.filterBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 20px;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(0, 31, 63, 0.1);
+  border-radius: var(--radius-md);
+  color: var(--color-deep-navy);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filterBtn:hover {
+  background: #fff;
+  border-color: var(--color-space-grey);
+}
+
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+}
+
+.table th {
+  background: #f8fafc;
+  color: var(--color-space-grey);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 16px 24px;
+  font-weight: 700;
+  border-bottom: 1px solid #f0f0f4;
+  text-align: left;
+}
+
+.table td {
+  padding: 16px 24px;
+  border-bottom: 1px solid #f0f0f4;
+  vertical-align: middle;
+  color: var(--color-deep-navy);
+}
+
+.dataRow {
+  transition: background 0.2s ease;
+}
+
+.dataRow:hover {
+  background: rgba(46, 91, 255, 0.025);
+}
+
+.nameCell, .locationCell, .contactCell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.iconBlue {
+  color: var(--color-cobalt-blue);
+}
+
+.iconGrey {
+  color: var(--color-space-grey);
+}
+
+.partnerName {
+  font-weight: 700;
+  color: var(--color-deep-navy);
+}
+
+.slaScore {
+  font-weight: 800;
+  font-family: var(--font-heading);
+  color: var(--color-deep-navy);
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 50px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.badgeSuccess {
+  background: rgba(0, 196, 140, 0.1);
+  color: #00C48C;
+}
+
+.badgeWarning {
+  background: rgba(245, 158, 11, 0.1);
+  color: #F59E0B;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  color: var(--color-space-grey);
+}
+
+.actionIconBtn {
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s;
+  display: flex;
+  align-items: center;
+}
+
+.actionIconBtn:hover {
+  color: var(--color-cobalt-blue);
+}
+
+.actionIconBtnDanger:hover {
+  color: #E11D48;
+}
+
+.loadingCell {
+  text-align: center;
+  padding: 60px !important;
+  color: var(--color-space-grey);
+  font-weight: 500;
+}

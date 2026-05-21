@@ -58,7 +58,7 @@
 }
 
 .createBtn:hover {
-  background: #1e4bd6;
+  background: #2E5BFF;
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(46, 91, 255, 0.3);
 }
@@ -227,7 +227,13 @@
   font-family: var(--font-heading);
   font-weight: 700;
   font-size: 0.78rem;
+  color: var(--color-deep-navy);
+  transition: color 0.2s;
+}
+
+.logId:hover {
   color: var(--color-cobalt-blue);
+  text-decoration: underline;
 }
 
 .unitLink {
@@ -319,12 +325,12 @@
 }
 
 .badgePending {
-  background: rgba(255, 107, 0, 0.1);
+  background: rgba(221, 139, 81, 0.1);
   color: var(--color-safety-orange);
 }
 
 .badgeCompleted {
-  background: rgba(0, 196, 140, 0.1);
+  background: rgba(104, 205, 177, 0.1);
   color: var(--color-success);
 }
 
@@ -557,7 +563,7 @@
 }
 
 .saveBtn:hover {
-  background: #1e4bd6;
+  background: #2E5BFF;
   box-shadow: 0 4px 14px rgba(46, 91, 255, 0.25);
 }
 

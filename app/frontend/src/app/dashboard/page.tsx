@@ -350,36 +350,42 @@ export default function DashboardPage() {
     fetchDashboardData();
   }, []);
 
-  const getSplinePathCoordinates = () => {
-    if (!chartData || chartData.length === 0) return { linePath: '', fillPath: '', points: [] };
+  const getDualSplinePaths = () => {
+    if (!chartData || chartData.length === 0) return { completedLine: '', completedFill: '', pendingLine: '', pendingFill: '', points: [] };
     
-    const xCoordinates = [40, 120, 200, 280, 360, 440];
-    const counts = chartData.map(c => c.count);
-    const maxVal = Math.max(...counts, 4);
+    const pointsCount = chartData.length;
+    const maxVal = Math.max(...chartData.map(c => Math.max(c.completed, c.pending)), 4);
 
-    const points = chartData.map((d, i) => {
-      const x = xCoordinates[i];
-      const y = 140 - (d.count / maxVal) * 80; // Adjusted for a visually tighter, optimized chart size
-      return { x, y, ...d };
-    });
+    const getPath = (dataKey: 'completed' | 'pending') => {
+      const points = chartData.map((d, i) => {
+        const x = 5 + (i / (pointsCount - 1)) * 90;
+        const y = 85 - (d[dataKey] / maxVal) * 70; // 85 is bottom, 15 is top
+        return { x, y, ...d };
+      });
 
-    let linePath = `M ${points[0].x} ${points[0].y}`;
-    for (let i = 0; i < points.length - 1; i++) {
-      const p0 = points[i];
-      const p1 = points[i + 1];
-      const cp1x = p0.x + (p1.x - p0.x) / 3;
-      const cp1y = p0.y;
-      const cp2x = p0.x + (2 * (p1.x - p0.x)) / 3;
-      const cp2y = p1.y;
-      linePath += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p1.x} ${p1.y}`;
-    }
+      let linePath = `M ${points[0].x} ${points[0].y}`;
+      for (let i = 0; i < points.length - 1; i++) {
+        const p0 = points[i];
+        const p1 = points[i + 1];
+        const cp1x = p0.x + (p1.x - p0.x) / 2.5;
+        const cp2x = p0.x + (p1.x - p0.x) / 1.5;
+        linePath += ` C ${cp1x} ${p0.y}, ${cp2x} ${p1.y}, ${p1.x} ${p1.y}`;
+      }
+      const fillPath = `${linePath} L 95 100 L 5 100 Z`;
+      return { linePath, fillPath, points };
+    };
 
-    const fillPath = `${linePath} L ${points[points.length - 1].x} 150 L ${points[0].x} 150 Z`;
+    const comp = getPath('completed');
+    const pend = getPath('pending');
 
-    return { linePath, fillPath, points };
+    return { 
+      completedLine: comp.linePath, completedFill: comp.fillPath, 
+      pendingLine: pend.linePath, pendingFill: pend.fillPath, 
+      points: comp.points 
+    };
   };
 
-  const { linePath, fillPath, points } = getSplinePathCoordinates();
+  const { completedLine, completedFill, pendingLine, pendingFill, points } = getDualSplinePaths();
 
   return (
     <div className={styles.container}>
@@ -462,154 +468,135 @@ export default function DashboardPage() {
           {/* Spline Area Chart Section */}
           <div className={styles.chartCard}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-              <h3 className={styles.chartTitle} style={{ margin: 0 }}>
-                <TrendingUp size={18} style={{ color: 'var(--color-cobalt-blue)' }} />
-                Aktivitas Servis Bulanan
-              </h3>
-              <span style={{
-                fontSize: '0.72rem',
-                background: 'rgba(0,196,140,0.08)',
-                color: '#00C48C',
-                padding: '4px 10px',
-                borderRadius: '12px',
-                fontWeight: 800,
-                letterSpacing: '0.5px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px'
-              }}>
-                <span style={{ width: '6px', height: '6px', background: '#00C48C', borderRadius: '50%', display: 'inline-block', animation: 'pulse 1.2s infinite' }}></span>
-                REAL-TIME SYNCED ({liveTime || 'Live Clock'})
-              </span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <h3 className={styles.chartTitle} style={{ margin: 0 }}>
+                  <TrendingUp size={18} style={{ color: '#E11D48' }} />
+                  Tren Aktivitas Servis (6 Bulan Terakhir)
+                </h3>
+                <p style={{ margin: 0, fontSize: '0.74rem', color: 'var(--color-space-grey)' }}>Membandingkan jumlah servis selesai vs yang masih pending/terjadwal secara bulanan.</p>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
+                <span style={{
+                  fontSize: '0.72rem', background: 'rgba(0,196,140,0.08)', color: '#00C48C',
+                  padding: '4px 10px', borderRadius: '12px', fontWeight: 800, letterSpacing: '0.5px',
+                  display: 'flex', alignItems: 'center', gap: '4px'
+                }}>
+                  <span style={{ width: '6px', height: '6px', background: '#00C48C', borderRadius: '50%', display: 'inline-block', animation: 'pulse 1.2s infinite' }}></span>
+                  REAL-TIME SYNCED ({liveTime || 'Live Clock'})
+                </span>
+                <div style={{ display: 'flex', gap: '12px', fontSize: '0.72rem', fontWeight: 700 }}>
+                  <span style={{ color: '#E11D48' }}>● Pending</span>
+                  <span style={{ color: '#00C48C' }}>● Selesai</span>
+                </div>
+              </div>
             </div>
             
-            <div style={{ position: 'relative', width: '100%', height: '190px' }}>
+            <div style={{ position: 'relative', width: '100%', height: '240px' }}>
               {loading ? (
                 <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '8px' }}>
                   <RefreshCw size={24} className={styles.spin} style={{ color: 'var(--color-cobalt-blue)' }} />
                   <span style={{ fontSize: '0.8rem', color: 'var(--color-space-grey)', fontWeight: 600 }}>Memuat Grafik Aktivitas...</span>
                 </div>
               ) : (
-                <svg width="100%" height="100%" viewBox="0 0 500 170" preserveAspectRatio="xMidYMid meet">
-                  <defs>
-                    <linearGradient id="chart-grad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="var(--color-cobalt-blue)" stopOpacity="0.32" />
-                      <stop offset="100%" stopColor="var(--color-cobalt-blue)" stopOpacity="0.0" />
-                    </linearGradient>
-                    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
-                      <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="var(--color-cobalt-blue)" floodOpacity="0.12" />
-                    </filter>
-                  </defs>
+                <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                  <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    <defs>
+                      <linearGradient id="comp-grad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#00C48C" stopOpacity="0.25" />
+                        <stop offset="100%" stopColor="#00C48C" stopOpacity="0.0" />
+                      </linearGradient>
+                      <linearGradient id="pend-grad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#E11D48" stopOpacity="0.25" />
+                        <stop offset="100%" stopColor="#E11D48" stopOpacity="0.0" />
+                      </linearGradient>
+                    </defs>
 
-                  <line x1="30" y1="40" x2="470" y2="40" stroke="rgba(0,31,63,0.04)" strokeDasharray="3 3" />
-                  <line x1="30" y1="95" x2="470" y2="95" stroke="rgba(0,31,63,0.04)" strokeDasharray="3 3" />
-                  <line x1="30" y1="150" x2="470" y2="150" stroke="rgba(0,31,63,0.06)" />
+                    <line x1="0" y1="15" x2="100" y2="15" stroke="rgba(0,31,63,0.03)" strokeDasharray="2 2" vectorEffect="non-scaling-stroke" />
+                    <line x1="0" y1="50" x2="100" y2="50" stroke="rgba(0,31,63,0.03)" strokeDasharray="2 2" vectorEffect="non-scaling-stroke" />
+                    <line x1="0" y1="85" x2="100" y2="85" stroke="rgba(0,31,63,0.06)" vectorEffect="non-scaling-stroke" />
 
-                  {fillPath && <path d={fillPath} fill="url(#chart-grad)" />}
+                    {completedFill && <path d={completedFill} fill="url(#comp-grad)" />}
+                    {pendingFill && <path d={pendingFill} fill="url(#pend-grad)" />}
 
-                  {linePath && (
-                    <path 
-                      d={linePath} 
-                      stroke="var(--color-cobalt-blue)" 
-                      strokeWidth="3.5" 
-                      fill="none" 
-                      strokeLinecap="round"
-                      filter="url(#shadow)"
-                    />
-                  )}
-
+                    {pendingLine && (
+                      <path d={pendingLine} stroke="#E11D48" strokeWidth="2.5" fill="none" vectorEffect="non-scaling-stroke" />
+                    )}
+                    {completedLine && (
+                      <path d={completedLine} stroke="#00C48C" strokeWidth="2.5" fill="none" vectorEffect="non-scaling-stroke" />
+                    )}
+                  </svg>
+                  
                   {points.map((p, idx) => (
-                    <g 
-                      key={idx} 
+                    <div 
+                      key={idx}
+                      style={{
+                        position: 'absolute',
+                        left: `${p.x}%`,
+                        top: 0,
+                        bottom: 0,
+                        width: `${90 / Math.max(1, points.length - 1)}%`,
+                        minWidth: '20px',
+                        transform: 'translateX(-50%)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'flex-end',
+                        alignItems: 'center',
+                        zIndex: 10
+                      }}
                       onMouseEnter={() => setHoveredPoint(p)}
                       onMouseLeave={() => setHoveredPoint(null)}
-                      style={{ cursor: 'pointer' }}
                     >
-                      <circle 
-                        cx={p.x} 
-                        cy={p.y} 
-                        r={hoveredPoint?.key === p.key ? 9 : 0} 
-                        fill="var(--color-cobalt-blue)" 
-                        opacity="0.18" 
-                        style={{ transition: 'all 0.15s ease' }}
-                      />
-                      <circle 
-                        cx={p.x} 
-                        cy={p.y} 
-                        r={hoveredPoint?.key === p.key ? 7 : 0} 
-                        fill="none" 
-                        stroke="var(--color-cobalt-blue)" 
-                        strokeWidth="1.5" 
-                        style={{ transition: 'all 0.15s ease' }}
-                      />
-                      <circle 
-                        cx={p.x} 
-                        cy={p.y} 
-                        r={hoveredPoint?.key === p.key ? 4.5 : 3.5} 
-                        fill="white" 
-                        stroke="var(--color-cobalt-blue)" 
-                        strokeWidth={hoveredPoint?.key === p.key ? 3 : 2} 
-                        style={{ transition: 'all 0.15s ease' }}
-                      />
-                      <text
-                        x={p.x}
-                        y={p.y - 12}
-                        textAnchor="middle"
-                        fontSize="9"
-                        fontWeight="800"
-                        fill="var(--color-cobalt-blue)"
-                        opacity={hoveredPoint?.key === p.key ? 1 : 0.7}
-                        style={{ transition: 'all 0.15s ease' }}
-                      >
-                        {p.count}
-                      </text>
-
-                      <text
-                        x={p.x}
-                        y="164"
-                        textAnchor="middle"
-                        fontSize="10"
-                        fontWeight={hoveredPoint?.key === p.key ? "800" : "600"}
-                        fill={hoveredPoint?.key === p.key ? "var(--color-deep-navy)" : "var(--color-space-grey)"}
-                        style={{ transition: 'all 0.15s' }}
-                      >
+                      {hoveredPoint?.key === p.key && (
+                        <div style={{ position: 'absolute', top: 0, bottom: '24px', width: '1px', background: 'rgba(0,31,63,0.15)', borderLeft: '1px dashed rgba(0,31,63,0.2)' }} />
+                      )}
+                      <span style={{ 
+                        fontSize: '0.72rem', 
+                        fontWeight: hoveredPoint?.key === p.key ? 800 : 600,
+                        color: hoveredPoint?.key === p.key ? 'var(--color-deep-navy)' : 'var(--color-space-grey)',
+                        marginBottom: '4px',
+                        transition: 'all 0.2s'
+                      }}>
                         {p.label}
-                      </text>
-                    </g>
+                      </span>
+                    </div>
                   ))}
-                </svg>
+                </div>
               )}
 
               {hoveredPoint && (
                 <div 
                   style={{
                     position: 'absolute',
-                    top: '8px',
+                    top: '0px',
                     left: '50%',
                     transform: 'translateX(-50%)',
-                    background: 'rgba(255, 255, 255, 0.9)',
-                    backdropFilter: 'blur(12px) saturate(140%)',
-                    WebkitBackdropFilter: 'blur(12px) saturate(140%)',
+                    background: 'rgba(255, 255, 255, 0.95)',
+                    backdropFilter: 'blur(12px)',
+                    WebkitBackdropFilter: 'blur(12px)',
                     border: '1px solid rgba(0, 31, 63, 0.08)',
-                    padding: '8px 14px',
+                    padding: '10px 16px',
                     borderRadius: '12px',
-                    boxShadow: '0 10px 25px rgba(0, 31, 63, 0.08)',
+                    boxShadow: '0 10px 30px rgba(0, 31, 63, 0.08)',
                     zIndex: 200,
                     pointerEvents: 'none',
                     animation: 'fadeIn 0.2s ease',
                     textAlign: 'center',
-                    minWidth: '160px',
+                    minWidth: '170px',
                   }}
                 >
-                  <div style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--color-space-grey)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>
+                  <div style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--color-space-grey)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
                     {hoveredPoint.fullName}
                   </div>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 850, color: 'var(--color-deep-navy)', marginBottom: '2px', letterSpacing: '-0.3px' }}>
-                    {hoveredPoint.count} <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--color-space-grey)' }}>Aktivitas</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', fontSize: '0.68rem', fontWeight: 700 }}>
-                    <span style={{ color: '#00C48C' }}>🟢 {hoveredPoint.completed} Selesai</span>
-                    <span style={{ color: 'var(--color-cobalt-blue)' }}>🔵 {hoveredPoint.pending} Pending</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.75rem', fontWeight: 700 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#E11D48' }}>
+                      <span>● Pending</span>
+                      <span style={{ fontWeight: 800 }}>{hoveredPoint.pending}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#00C48C' }}>
+                      <span>● Selesai</span>
+                      <span style={{ fontWeight: 800 }}>{hoveredPoint.completed}</span>
+                    </div>
                   </div>
                 </div>
               )}

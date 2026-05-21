@@ -8,6 +8,7 @@ import {
   User, CheckCircle, Clock, AlertCircle, X, Loader2, ArrowLeft,
   HelpCircle, ShieldCheck
 } from 'lucide-react';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 import styles from './planning.module.css';
 
 export default function ServicePlanningPage() {
@@ -257,31 +258,37 @@ export default function ServicePlanningPage() {
         </div>
       </div>
 
-      {/* Filters & Controls */}
-      <div className={styles.controlsRow}>
-        <div className={styles.searchWrapper}>
-          <Search size={18} className={styles.searchIcon} />
-          <input 
-            type="text" 
-            placeholder="Cari SN, model, atau klien..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className={styles.searchInput}
+      {/* Enterprise Datatable Toolbar */}
+      <div className="dtToolbar">
+        <div className="dtToolbarLeft">
+          <div className="dtToolbarText">
+            Urgensi PM:
+          </div>
+          
+          <CustomSelect 
+            value={priorityFilter} 
+            onChange={(val) => setPriorityFilter(val)}
+            options={[
+              { value: 'ALL', label: 'Semua Unit' },
+              { value: 'DUE', label: 'Jatuh Tempo Bulan Ini' },
+              { value: 'SCHEDULED', label: 'Terjadwal (Aman)' },
+              { value: 'OVERDUE', label: 'Terlambat Penjadwalan' }
+            ]}
+            placeholder="Urgensi PM..."
           />
         </div>
 
-        <div className={styles.filterGroup}>
-          <span className={styles.filterLabel}>Urgensi PM:</span>
-          <select 
-            value={priorityFilter} 
-            onChange={(e) => setPriorityFilter(e.target.value)}
-            className={styles.filterSelect}
-          >
-            <option value="ALL">Semua Unit</option>
-            <option value="DUE">Jatuh Tempo Bulan Ini</option>
-            <option value="SCHEDULED">Terjadwal (Aman)</option>
-            <option value="OVERDUE">Terlambat Penjadwalan</option>
-          </select>
+        <div className="dtToolbarRight">
+          <div className="dtToolbarSearch">
+            <input 
+              type="text" 
+              placeholder="Cari SN, model, atau klien..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="dtToolbarSearchInput"
+            />
+            <Search size={16} className="dtToolbarSearchIcon" />
+          </div>
         </div>
       </div>
 

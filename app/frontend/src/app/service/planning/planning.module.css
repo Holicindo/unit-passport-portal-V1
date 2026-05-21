@@ -311,7 +311,7 @@
 }
 
 .assignBtn:hover {
-  background: #1e4bd6;
+  background: #2E5BFF;
   box-shadow: 0 4px 14px rgba(46, 91, 255, 0.2);
 }
 
@@ -479,7 +479,7 @@
 }
 
 .saveBtn:hover {
-  background: #1e4bd6;
+  background: #2E5BFF;
 }
 
 .errorAlert {

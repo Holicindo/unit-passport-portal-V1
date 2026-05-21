@@ -17,18 +17,18 @@
 
 .title {
   font-family: var(--font-heading); /* Matching Sidebar Font */
-  font-size: 2.1rem;
+  font-size: 1.8rem;
   font-weight: 800;
-  color: var(--color-deep-navy);
-  margin: 0 0 6px 0;
+  color: var(--color-deep-dark);
+  margin: 0 0 7px 0;
   letter-spacing: -0.03em;
-  line-height: 1.2;
+  line-height: 1.0;
 }
 
 .subtitle {
   font-family: var(--font-body);
   font-size: 0.95rem;
-  color: var(--color-space-grey);
+  color: var(--color-space-dark);
   font-weight: 400;
   opacity: 0.7;
 }
@@ -139,7 +139,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--color-space-grey);
+  color: var(--color-space-dark);
   background: #fcfdfe;
   border-bottom: 2px solid #f0f0f4;
 }
@@ -175,7 +175,7 @@
   text-transform: uppercase;
 }
 
-.status_active { background: #e6f9f0; color: #00a870; }
+.status_active { background: #e6f9f0; color: #35a37f; }
 .status_inactive { background: #f2f4f7; color: #667085; }
 
 .typeBadge {
@@ -189,62 +189,34 @@
 
 .type_showcase {
   background: #e0e7ff;
-  color: #3b82f6;
+  color: #5a8fe4;
 }
 
 .type_mesin {
   background: #fef3c7;
-  color: #d97706;
+  color: #d08d40;
 }
 
-.actionBtn {
+.actions {
   display: flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--color-cobalt-blue);
-  font-weight: 600;
-  text-decoration: none;
-  transition: opacity 0.2s;
+  justify-content: flex-end;
+  gap: 16px;
+  color: var(--color-space-grey);
 }
 
-.actionBtn:hover { opacity: 0.7; }
-
-.qrIconBtn {
-  background: transparent;
+.actionIconBtn {
+  color: inherit;
+  background: none;
   border: none;
   cursor: pointer;
-  color: var(--color-space-grey);
+  padding: 0;
+  transition: color 0.2s;
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 6px;
-  border-radius: 6px;
-  transition: all 0.2s;
 }
 
-.qrIconBtn:hover {
-  background: rgba(46, 91, 255, 0.1);
+.actionIconBtn:hover {
   color: var(--color-cobalt-blue);
-}
-
-.editBtn {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  background: rgba(245, 158, 11, 0.08);
-  color: #d97706;
-  border: 1px solid rgba(245, 158, 11, 0.2);
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.editBtn:hover {
-  background: rgba(245, 158, 11, 0.15);
-  border-color: rgba(245, 158, 11, 0.3);
 }
 
 /* ---- Pagination (Image 2 Style) ---- */

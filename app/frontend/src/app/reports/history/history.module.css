@@ -172,16 +172,18 @@
 
 .reportId {
   font-weight: 700;
-  color: var(--color-cobalt-blue);
+  color: var(--color-deep-navy);
 }
 
 .reportId a {
   text-decoration: none;
   color: inherit;
+  transition: color 0.2s;
 }
 
 .reportId a:hover {
   text-decoration: underline;
+  color: var(--color-cobalt-blue);
 }
 
 .unitInfo {

@@ -1,9 +1,11 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import styles from './Sidebar.module.css';
 import { 
   LayoutDashboard, Package, Wrench, BarChart3, ChevronDown,
-  List, PlusCircle, ClipboardCheck, History, Wrench as Tool, Calendar, FileText
+  List, PlusCircle, ClipboardCheck, History, Wrench as Tool, Calendar, FileText,
+  Users, Shield, Briefcase, Building2, Activity, Database
 } from 'lucide-react';
 
 const menuItems = [
@@ -29,6 +31,16 @@ const menuItems = [
     ] 
   },
   { 
+    id: 'partners', 
+    label: 'Mitra & Klien', 
+    icon: <Briefcase size={20} />, 
+    href: '/partners',
+    subItems: [
+      { label: 'Manajemen Mitra', icon: <Building2 size={18} />, href: '/partners' },
+      { label: 'Manajemen Klien', icon: <Users size={18} />, href: '/partners/clients' }
+    ] 
+  },
+  { 
     id: 'reports', 
     label: 'Laporan', 
     icon: <BarChart3 size={20} />, 
@@ -37,6 +49,22 @@ const menuItems = [
       { label: 'Digital Form', icon: <FileText size={18} />, href: '/reports' },
       { label: 'Riwayat Laporan', icon: <History size={18} />, href: '/reports/history' }
     ] 
+  },
+  { 
+    id: 'users', 
+    label: 'Pengaturan Akses', 
+    icon: <Shield size={20} />, 
+    href: '/users',
+    subItems: [
+      { label: 'Manajemen Pengguna', icon: <Users size={18} />, href: '/users' },
+      { label: 'Matriks Hak Akses', icon: <Shield size={18} />, href: '/users/roles' }
+    ] 
+  },
+  { 
+    id: 'audit', 
+    label: 'Aktivitas Log', 
+    icon: <Activity size={20} />, 
+    href: '/audit'
   },
 ];
 
@@ -60,7 +88,7 @@ export default function Sidebar({ isOpen }: SidebarProps) {
 
   const filteredMenuItems = menuItems.filter((item) => {
     if (role === 'PARTNER') {
-      return item.id !== 'units';
+      return item.id !== 'units' && item.id !== 'users'; // Partner cannot access users/roles
     }
     return true;
   });
@@ -69,11 +97,7 @@ export default function Sidebar({ isOpen }: SidebarProps) {
     <aside className={`${styles.sidebar} ${!isOpen ? styles.hidden : ''}`}>
       <div className={styles.logoSection}>
         <div className={styles.logoWrapper}>
-          <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M50 5L5 85H95L50 5Z" stroke="var(--color-cobalt-blue)" strokeWidth="6" strokeLinejoin="round"/>
-            <path d="M50 5V85" stroke="var(--color-cobalt-blue)" strokeWidth="6"/>
-            <path d="M65 40H85M65 55H80M65 70H75" stroke="var(--color-cobalt-blue)" strokeWidth="6" strokeLinecap="round"/>
-          </svg>
+          <Image src="/logo-icon.png" alt="Holicindo Logo" width={65} height={65} priority className={styles.logoImg} />
         </div>
         <span className={styles.logoText}>HOLICINDO</span>
       </div>

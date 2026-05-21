@@ -3,17 +3,16 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { unitApi } from '@/lib/api';
-import { Search, QrCode, ChevronRight, ChevronLeft, Pencil } from 'lucide-react';
+import { Search, QrCode, ChevronRight, ChevronLeft, FileEdit, Eye, Plus } from 'lucide-react';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 import Link from 'next/link';
 import styles from './units.module.css';
 
-const PAGE_SIZE = 15;
-
 /** Instant skeleton table — renders before any API call completes */
-function TableSkeleton() {
+function TableSkeleton({ pageSize }: { pageSize: number }) {
   return (
     <tbody>
-      {Array.from({ length: PAGE_SIZE }).map((_, i) => (
+      {Array.from({ length: pageSize }).map((_, i) => (
         <tr key={i} className={styles.skeletonRow}>
           <td><div className={styles.skeletonCell} style={{ width: '24px' }} /></td>
           <td><div className={styles.skeletonCell} style={{ width: '110px' }} /></td>
@@ -34,6 +33,7 @@ export default function UnitsPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(15);
   const [totalCount, setTotalCount] = useState(0);
 
   const handleDownloadQR = (serialNumber: string, qrToken: string) => {
@@ -55,7 +55,7 @@ export default function UnitsPage() {
       if (user?.role === 'CLIENT') {
         response = await unitApi.findMyFleet();
       } else {
-        response = await unitApi.findAll(page, PAGE_SIZE);
+        response = await unitApi.findAll(page, pageSize);
       }
       
       const { data } = response;
@@ -81,7 +81,7 @@ export default function UnitsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [pageSize]);
 
   useEffect(() => {
     loadUnits(currentPage);
@@ -96,9 +96,9 @@ export default function UnitsPage() {
 
   const displayedUnits = searchTerm ? filteredUnits : units;
   const effectiveTotal = searchTerm ? filteredUnits.length : totalCount;
-  const totalPages = Math.max(1, Math.ceil(effectiveTotal / PAGE_SIZE));
-  const startRow = (currentPage - 1) * PAGE_SIZE + 1;
-  const endRow = Math.min(currentPage * PAGE_SIZE, effectiveTotal);
+  const totalPages = Math.max(1, Math.ceil(effectiveTotal / pageSize));
+  const startRow = (currentPage - 1) * pageSize + 1;
+  const endRow = Math.min(currentPage * pageSize, effectiveTotal);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -111,7 +111,7 @@ export default function UnitsPage() {
 
   useEffect(() => {
     // If the backend supports search, we should call it here.
-    // unitApi.findAll(1, PAGE_SIZE, searchTerm)
+    // unitApi.findAll(1, pageSize, searchTerm)
     loadUnits(1);
   }, [searchTerm, loadUnits]);
 
@@ -149,21 +149,56 @@ export default function UnitsPage() {
       </div>
 
       <div className={styles.tableCard}>
-        {/* ── Toolbar ── */}
-        <div className={styles.toolbar}>
-          <div className={styles.searchBox}>
-            <Search size={16} color="var(--color-space-grey)" />
-            <input
-              type="text"
-              placeholder="Search serial number, model, or customer..."
-              value={searchTerm}
-              onChange={handleSearch}
-              className={styles.searchInput}
+        {/* ── Enterprise Datatable Toolbar ── */}
+        <div className="dtToolbar">
+          <div className="dtToolbarLeft">
+            <div className="dtToolbarText">
+              Show
+              <CustomSelect
+                options={[
+                  { value: '15', label: '15' },
+                  { value: '30', label: '30' },
+                  { value: '50', label: '50' }
+                ]}
+                value={pageSize.toString()}
+                onChange={(val) => {
+                  const num = parseInt(val, 10);
+                  setPageSize(num);
+                  setCurrentPage(1);
+                }}
+              />
+              entries
+            </div>
+
+            <CustomSelect
+              options={[
+                { value: '', label: 'Filter Status...' },
+                { value: 'ACTIVE', label: 'Active' },
+                { value: 'MAINTENANCE', label: 'Maintenance' },
+                { value: 'RETIRED', label: 'Retired' }
+              ]}
+              value=""
+              onChange={() => {}}
+              placeholder="Filter Status..."
             />
           </div>
-          <span className={styles.countBadge}>
-            {loading ? '...' : `${totalCount} units`}
-          </span>
+
+          <div className="dtToolbarRight">
+            <div className="dtToolbarSearch">
+              <input
+                type="text"
+                placeholder="Search serial number..."
+                value={searchTerm}
+                onChange={handleSearch}
+                className="dtToolbarSearchInput"
+              />
+              <Search size={16} className="dtToolbarSearchIcon" />
+            </div>
+            <button className="dtToolbarCreateBtn" onClick={() => router.push('/units/new')}>
+              <Plus size={16} strokeWidth={2.5} />
+              Create New
+            </button>
+          </div>
         </div>
 
         {/* ── Desktop View Table ── */}
@@ -183,7 +218,7 @@ export default function UnitsPage() {
               </thead>
 
               {loading ? (
-                <TableSkeleton />
+                <TableSkeleton pageSize={pageSize} />
               ) : displayedUnits.length === 0 ? (
                 <tbody>
                   <tr>
@@ -202,7 +237,7 @@ export default function UnitsPage() {
                       <tr key={unit.id} className={styles.dataRow}>
                         <td className={styles.numCol}>{startRow + idx}</td>
                         <td>
-                          <span className={styles.serialTag}>{unit.serial_number}</span>
+                          <span style={{ fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--color-deep-navy)' }}>{unit.serial_number}</span>
                         </td>
                         <td className={styles.modelCell}>{unit.model_name}</td>
                         <td>
@@ -218,25 +253,22 @@ export default function UnitsPage() {
                             {unit.status ?? 'Active'}
                           </span>
                         </td>
-                        <td style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                          <button 
-                            onClick={() => handleDownloadQR(unit.serial_number, unit.qr_token)}
-                            className={styles.qrIconBtn}
-                            title="Generate QR Code"
-                          >
-                            <QrCode size={15} />
-                          </button>
-                          <button
-                            onClick={() => router.push(`/units/edit?id=${unit.id}`)}
-                            className={styles.editBtn}
-                            title="Edit Unit"
-                          >
-                            <Pencil size={13} />
-                            Edit
-                          </button>
-                          <Link href={`/id/${unit.qr_token}`} className={styles.actionBtn}>
-                            Detail <ChevronRight size={13} />
-                          </Link>
+                        <td style={{ textAlign: 'right' }}>
+                          <div className={styles.actions}>
+                            <button 
+                              onClick={() => handleDownloadQR(unit.serial_number, unit.qr_token)}
+                              className={styles.actionIconBtn}
+                              title="Generate QR Code"
+                            >
+                              <QrCode size={18} />
+                            </button>
+                            <Link href={`/units/edit?id=${unit.id}`} title="Edit Unit" className={styles.actionIconBtn}>
+                              <FileEdit size={18} />
+                            </Link>
+                            <Link href={`/id/${unit.qr_token}`} title="Lihat Detail" className={styles.actionIconBtn}>
+                              <Eye size={18} />
+                            </Link>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -304,7 +336,7 @@ export default function UnitsPage() {
             
             <div className={styles.paginationRight}>
               <div className={styles.perPageSelect}>
-                {PAGE_SIZE} / page
+                {pageSize} / page
               </div>
             </div>
           </div>
@@ -364,7 +396,7 @@ export default function UnitsPage() {
                         onClick={() => router.push(`/units/edit?id=${unit.id}`)}
                         className={`${styles.mobileActionBtn} ${styles.mobileActionEdit}`}
                       >
-                        <Pencil size={14} />
+                        <FileEdit size={14} />
                         Edit
                       </button>
                       <button 

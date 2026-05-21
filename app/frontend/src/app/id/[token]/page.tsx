@@ -56,13 +56,13 @@ const AirflowDiagram = () => (
        <line x1="25" y1="20" x2="25" y2="260" stroke="#F2F4F7" strokeWidth="1" opacity="0.6" />
        <line x1="20" y1="20" x2="30" y2="20" stroke="#F2F4F7" strokeWidth="1" opacity="0.6" />
        <line x1="20" y1="260" x2="30" y2="260" stroke="#F2F4F7" strokeWidth="1" opacity="0.6" />
-       <text x="15" y="140" fill="#F2F4F7" fontSize="10" transform="rotate(-90 15,140)" textAnchor="middle" opacity="0.9" style={{ fontFamily: 'sans-serif', fontWeight: 600 }}>1800 mm</text>
+       <text x="15" y="140" fill="#F2F4F7" fontSize="10" transform="rotate(-90 15,140)" textAnchor="middle" opacity="0.9" style={{ fontFamily: 'sans-serif', fontWeight: 600 }}>Tinggi</text>
        
        {/* Width Dimension */}
        <line x1="45" y1="280" x2="155" y2="280" stroke="#F2F4F7" strokeWidth="1" opacity="0.6" />
        <line x1="45" y1="275" x2="45" y2="285" stroke="#F2F4F7" strokeWidth="1" opacity="0.6" />
        <line x1="155" y1="275" x2="155" y2="285" stroke="#F2F4F7" strokeWidth="1" opacity="0.6" />
-       <text x="100" y="295" fill="#F2F4F7" fontSize="10" textAnchor="middle" opacity="0.9" style={{ fontFamily: 'sans-serif', fontWeight: 600 }}>600 mm</text>
+       <text x="100" y="295" fill="#F2F4F7" fontSize="10" textAnchor="middle" opacity="0.9" style={{ fontFamily: 'sans-serif', fontWeight: 600 }}>Lebar</text>
     </svg>
   </div>
 );
@@ -101,6 +101,9 @@ export default function QrPassportPage() {
   const [targetClientId, setTargetClientId] = useState('');
   const [transferReason, setTransferReason] = useState('');
   const [transferLoading, setTransferLoading] = useState(false);
+
+  // Feature Flags
+  const showServiceHistory = false; // TODO: Set to true to show Service History Panel
 
   // Load user from localStorage
   useEffect(() => {
@@ -370,30 +373,30 @@ export default function QrPassportPage() {
               <>
                 <div className={styles.specItem}>
                   <span className={styles.specLabel}>Dimensi / Dimension</span>
-                  <span className={styles.specValue}>{unit.specs?.dimension || '800 x 600 x 1100 mm'}</span>
+                  <span className={styles.specValue}>{unit.specs?.dimension || '—'}</span>
                 </div>
                 <div className={styles.specItem}>
                   <span className={styles.specLabel}>Daya Listrik / Power</span>
-                  <span className={styles.specValue}>{unit.specs?.power || '220V/50Hz / 1200W'}</span>
+                  <span className={styles.specValue}>{unit.specs?.power || '—'}</span>
                 </div>
                 <div className={styles.specItem}>
                   <span className={styles.specLabel}>Kapasitas / Capacity</span>
-                  <span className={styles.specValue}>{unit.specs?.capacity || '300 L / jam'}</span>
+                  <span className={styles.specValue}>{unit.specs?.capacity || '—'}</span>
                 </div>
               </>
             ) : (
               <>
                 <div className={styles.specItem}>
                   <span className={styles.specLabel}>Kompresor / Compressor</span>
-                  <span className={styles.specValue}>{unit.specs?.compressor || 'Embraco 1/2 HP (Premium)'}</span>
+                  <span className={styles.specValue}>{unit.specs?.compressor || '—'}</span>
                 </div>
                 <div className={styles.specItem}>
                   <span className={styles.specLabel}>Refrigeran / Refrigerant</span>
-                  <span className={styles.specValue}>{unit.specs?.refrigerant || 'R290 (Eco-Friendly)'}</span>
+                  <span className={styles.specValue}>{unit.specs?.refrigerant || '—'}</span>
                 </div>
                 <div className={styles.specItem}>
                   <span className={styles.specLabel}>Daya / Wattage</span>
-                  <span className={styles.specValue}>{unit.specs?.wattage || '450W'}</span>
+                  <span className={styles.specValue}>{unit.specs?.wattage || '—'}</span>
                 </div>
               </>
             )}
@@ -417,7 +420,7 @@ export default function QrPassportPage() {
               <div className={styles.specItem}>
                 <span className={styles.specLabel}>Pelanggan Resmi / Client</span>
                 <span className={styles.specValue}>
-                  {unit.current_client?.company_name || 'PT HOLICINDO STOCK'}
+                  {unit.current_client?.company_name || 'Tidak ada pelanggan (Internal)'}
                 </span>
               </div>
             )}
@@ -530,6 +533,43 @@ export default function QrPassportPage() {
         </div>
       </section>
 
+      {/* SERVICE HISTORY SECTION (Temporarily Hidden via Feature Flag) */}
+      {showServiceHistory && (
+        <section className={styles.sectionCard} style={{ marginTop: '40px', marginBottom: '40px' }}>
+          <div className={styles.cardHeader}>
+            <Clock size={20} />
+            <h2>Riwayat Servis (Service History)</h2>
+          </div>
+          <div className={styles.cardContent} style={{ padding: '24px' }}>
+            {!unit.service_logs || unit.service_logs.length === 0 ? (
+              <div className={styles.emptyState}>
+                <CheckCircle2 size={40} style={{ marginBottom: '16px', color: 'var(--color-success)', opacity: 0.8 }} />
+                <p>Belum ada riwayat kerusakan atau servis.<br/>Unit beroperasi dalam kondisi optimal.</p>
+              </div>
+            ) : (
+              <div className={styles.timeline}>
+                {unit.service_logs.map((log: any, idx: number) => (
+                  <div key={log.id || idx} className={styles.timelineItem}>
+                    <div className={styles.timelineDot}></div>
+                    <div className={styles.timelineContent}>
+                      <div className={styles.timelineHeader}>
+                        <span className={styles.timelineDate}>
+                          {new Date(log.service_date).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })}
+                        </span>
+                        <span className={`${styles.logTypeBadge} ${log.service_type === 'PREVENTIVE_MAINTENANCE' ? styles.badgePreventive : styles.badgeCorrective}`}>
+                          {log.service_type === 'PREVENTIVE_MAINTENANCE' ? 'Preventive' : 'Corrective'}
+                        </span>
+                      </div>
+                      <h4 className={styles.timelineTech}>Teknisi: {log.technician_name}</h4>
+                      <p className={styles.timelineNotes}>{log.notes}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* ────────────────── MODALS & FORMS ────────────────── */}
 

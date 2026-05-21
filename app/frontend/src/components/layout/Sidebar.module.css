@@ -26,9 +26,11 @@
 }
 
 .logoSection {
-  padding: 28px 24px;
+  padding: 20px 25px;
   display: flex;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 12px;
   border-bottom: 1px solid var(--glass-border);
   overflow: hidden;
@@ -36,15 +38,24 @@
 }
 
 .logoWrapper {
-  width: 32px;
-  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logoImg {
+  transition: filter 0.3s ease;
+}
+
+:global([data-theme="dark"]) .logoImg {
+  filter: invert(1) brightness(1.2);
 }
 
 .logoText {
-  font-size: 17px;
+  font-size: 26px;
   font-weight: 800;
   letter-spacing: 0.08em;
-  color: var(--color-deep-navy);
+  color: var(--color-deep-dark);
   font-family: var(--font-heading);
   transition: opacity 0.2s;
 }
@@ -73,7 +84,7 @@
   padding: 12px 14px;
   font-size: 13.5px;
   font-weight: 600;
-  color: var(--color-space-grey);
+  color: var(--color-space-dark);
   cursor: pointer;
   border-radius: 12px;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
@@ -168,7 +179,7 @@
   padding: 9px 14px 9px 46px;
   font-size: 13px;
   font-weight: 500;
-  color: var(--color-space-grey);
+  color: var(--color-space-dark);
   cursor: pointer;
   border-radius: 10px;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);

@@ -8,6 +8,7 @@ import {
   X, Loader2, FileText, CheckCircle2, User, AlertTriangle, HelpCircle,
   MessageSquare
 } from 'lucide-react';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 import styles from './service.module.css';
 
 const parseIssueDescription = (desc: string) => {
@@ -134,6 +135,7 @@ export default function ServicePage() {
   // Filters & Search
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [pageSize, setPageSize] = useState(20);
 
   // Form states
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -267,7 +269,7 @@ export default function ServicePage() {
                           tech.includes(query);
 
     return matchesStatus && matchesSearch;
-  });
+  }).slice(0, pageSize);
 
   // Calculate statistics
   const totalRequests = logs.length;
@@ -295,10 +297,6 @@ export default function ServicePage() {
           <h1 className={styles.title}>Daftar Permintaan Servis</h1>
           <p className={styles.subtitle}>Rekap permasalahan dan permintaan service masuk dari Customer.</p>
         </div>
-        <button className={styles.createBtn} onClick={() => setIsModalOpen(true)}>
-          <Plus size={18} />
-          <span>Catat Permintaan Baru</span>
-        </button>
       </header>
 
       {/* Mobile Submenu Pill Tabs */}
@@ -350,31 +348,51 @@ export default function ServicePage() {
         </div>
       </div>
 
-      {/* Controls: Search & Filter */}
-      <div className={styles.controlsRow}>
-        <div className={styles.searchWrapper}>
-          <Search size={18} className={styles.searchIcon} />
-          <input 
-            type="text" 
-            placeholder="Cari SN, model, partner, kendala..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className={styles.searchInput}
+      {/* Enterprise Datatable Toolbar */}
+      <div className="dtToolbar">
+        <div className="dtToolbarLeft">
+          <div className="dtToolbarText">
+            Show
+            <CustomSelect
+              options={[
+                { value: '20', label: '20' },
+                { value: '50', label: '50' },
+                { value: '100', label: '100' }
+              ]}
+              value={pageSize.toString()}
+              onChange={(val) => setPageSize(parseInt(val, 10))}
+            />
+            entries
+          </div>
+
+          <CustomSelect
+            options={[
+              { value: 'ALL', label: 'Semua Status' },
+              { value: 'PENDING', label: 'PENDING' },
+              { value: 'COMPLETED', label: 'COMPLETED' },
+              { value: 'CANCELLED', label: 'CANCELLED' }
+            ]}
+            value={statusFilter}
+            onChange={(val) => setStatusFilter(val)}
+            placeholder="Filter Status..."
           />
         </div>
 
-        <div className={styles.filterGroup}>
-          <span className={styles.filterLabel}>Status:</span>
-          <select 
-            value={statusFilter} 
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className={styles.filterSelect}
-          >
-            <option value="ALL">Semua Status</option>
-            <option value="PENDING">PENDING (Antrean)</option>
-            <option value="COMPLETED">COMPLETED (Selesai)</option>
-            <option value="CANCELLED">CANCELLED (Dibatalkan)</option>
-          </select>
+        <div className="dtToolbarRight">
+          <div className="dtToolbarSearch">
+            <input 
+              type="text" 
+              placeholder="Cari SN, model, partner..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="dtToolbarSearchInput"
+            />
+            <Search size={16} className="dtToolbarSearchIcon" />
+          </div>
+          <button className="dtToolbarCreateBtn" onClick={() => setIsModalOpen(true)}>
+            <Plus size={16} strokeWidth={2.5} />
+            Catat Permintaan Baru
+          </button>
         </div>
       </div>
 

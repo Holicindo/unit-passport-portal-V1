@@ -16,12 +16,12 @@ interface StatsGridProps {
 
 export default function StatsGrid({ data, loading }: StatsGridProps) {
   const stats = [
-    { label: 'Active Units', value: loading ? '...' : String(data?.activeUnits ?? 514), icon: Package, accent: '#2E5BFF' },
-    { label: 'Under Warranty', value: loading ? '...' : String(data?.underWarranty ?? 384), icon: ShieldCheck, accent: '#00C48C' },
-    { label: 'Open Reports', value: loading ? '...' : String(data?.openReports ?? 12), icon: ClipboardList, accent: '#FFB800' },
-    { label: 'Issues Detected', value: loading ? '...' : String(data?.issuesDetected ?? 3), icon: AlertCircle, accent: '#FF6B00' },
-    { label: 'Mitra Resmi', value: loading ? '...' : String(data?.activePartners ?? 5), icon: Users, accent: '#9D4EDD' },
-    { label: 'Kesehatan Armada', value: loading ? '...' : `${data?.fleetHealth ?? 99.4}%`, icon: Activity, accent: '#00B4D8' },
+    { label: 'Active Units', value: loading ? '...' : String(data?.activeUnits ?? 514), max: 1000, icon: Package, accent: '#2E5BFF' },
+    { label: 'Under Warranty', value: loading ? '...' : String(data?.underWarranty ?? 384), max: 1000, icon: ShieldCheck, accent: '#00C48C' },
+    { label: 'Open Reports', value: loading ? '...' : String(data?.openReports ?? 12), max: 50, icon: ClipboardList, accent: '#FFB800' },
+    { label: 'Issues Detected', value: loading ? '...' : String(data?.issuesDetected ?? 3), max: 20, icon: AlertCircle, accent: '#FF6B00' },
+    { label: 'Mitra Resmi', value: loading ? '...' : String(data?.activePartners ?? 5), max: 20, icon: Users, accent: '#9D4EDD' },
+    { label: 'Kesehatan Armada', value: loading ? '...' : `${data?.fleetHealth ?? 99.4}%`, max: 100, icon: Activity, accent: '#00B4D8' },
   ];
 
   return (
@@ -33,18 +33,32 @@ export default function StatsGrid({ data, loading }: StatsGridProps) {
     }}>
       {stats.map((stat) => {
         const Icon = stat.icon;
+        
+        // Dynamic wave logic
+        const numValue = parseFloat(String(stat.value).replace(/[^0-9.]/g, '')) || 0;
+        let percentage = Math.min(1, numValue / stat.max);
+        if (loading || isNaN(percentage)) percentage = 0.5;
+        
+        const startY = 100 - (percentage * 50);
+        const peakY = 100 - (percentage * 90);
+        const dipY = 100 - (percentage * 30);
+        
+        const pathD = `M0,${startY} C60,${peakY} 140,${dipY} 200,${startY} L200,100 L0,100 Z`;
+
         return (
           <div
             key={stat.label}
             style={{
+              position: 'relative',
+              overflow: 'hidden',
               background: 'var(--glass-bg)',
               backdropFilter: 'var(--glass-blur)',
               WebkitBackdropFilter: 'var(--glass-blur)',
-              padding: '24px 20px',
+              padding: '26px 20px',
               borderRadius: 'var(--radius-lg)',
               display: 'flex',
               alignItems: 'center',
-              gap: '16px',
+              gap: '20px',
               border: '1px solid var(--glass-border)',
               boxShadow: 'var(--glass-shadow)',
               transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -60,8 +74,8 @@ export default function StatsGrid({ data, loading }: StatsGridProps) {
             }}
           >
             <div style={{
-              width: '48px',
-              height: '48px',
+              width: '42px',
+              height: '42px',
               borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
@@ -82,6 +96,8 @@ export default function StatsGrid({ data, loading }: StatsGridProps) {
                 fontFamily: 'var(--font-heading)',
                 letterSpacing: '-0.03em',
                 lineHeight: 1,
+                position: 'relative',
+                zIndex: 1
               }}>
                 {stat.value}
               </h3>
@@ -92,10 +108,36 @@ export default function StatsGrid({ data, loading }: StatsGridProps) {
                 margin: 0,
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em',
+                position: 'relative',
+                zIndex: 1
               }}>
                 {stat.label}
               </p>
             </div>
+            
+            {/* Elegant Background Wave */}
+            <svg 
+              viewBox="0 0 200 100" 
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                opacity: 0.15,
+                pointerEvents: 'none',
+                zIndex: 0
+              }}
+              preserveAspectRatio="none"
+            >
+              <defs>
+                <linearGradient id={`grad-${stat.label.replace(/\s+/g, '')}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={stat.accent} stopOpacity="1" />
+                  <stop offset="100%" stopColor={stat.accent} stopOpacity="0.1" />
+                </linearGradient>
+              </defs>
+              <path d={pathD} fill={`url(#grad-${stat.label.replace(/\s+/g, '')})`} style={{ transition: 'd 0.8s ease' }} />
+            </svg>
           </div>
         );
       })}

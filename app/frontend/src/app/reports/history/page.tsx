@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { reportApi } from '@/lib/api';
 import { Search, Filter, Eye, Printer, FileEdit, Trash2, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import styles from './history.module.css';
@@ -26,6 +27,7 @@ export default function ReportHistory() {
   const [reports, setReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [typeFilter, setTypeFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -39,7 +41,7 @@ export default function ReportHistory() {
   const loadReports = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await reportApi.findAll(page, 10, typeFilter);
+      const { data } = await reportApi.findAll(page, pageSize, typeFilter);
       setReports(data.data || []);
       setTotalPages(data.meta?.last_page || 1);
     } catch (err) {
@@ -47,7 +49,7 @@ export default function ReportHistory() {
     } finally {
       setLoading(false);
     }
-  }, [page, typeFilter]);
+  }, [page, pageSize, typeFilter]);
 
   useEffect(() => {
     loadReports();
@@ -92,20 +94,6 @@ export default function ReportHistory() {
           <h2 className={styles.title}>Riwayat Laporan</h2>
           <p className={styles.subtitle}>Daftar seluruh laporan digital yang telah diserahkan.</p>
         </div>
-        <div className={styles.headerActions}>
-          {selectedReports.length > 0 && isAdmin && (
-            <button 
-              className={styles.deleteBulkBtn} 
-              onClick={handleDeleteBulk}
-              disabled={isDeleting}
-            >
-              <Trash2 size={18} /> Hapus ({selectedReports.length})
-            </button>
-          )}
-          <Link href="/reports/inspection" className={styles.createBtn}>
-            <Plus size={18} /> Laporan Baru
-          </Link>
-        </div>
       </header>
 
       {/* Mobile Submenu Pill Tabs */}
@@ -124,26 +112,60 @@ export default function ReportHistory() {
         </button>
       </div>
 
-      {/* --- Filter Bar --- */}
-      <div className={styles.filterBar}>
-        <div className={styles.searchBox}>
-          <Search size={18} />
-          <input 
-            type="text" 
-            placeholder="Cari Nomor Laporan atau Unit..." 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+      {/* --- Enterprise Datatable Toolbar --- */}
+      <div className="dtToolbar">
+        <div className="dtToolbarLeft">
+          <div className="dtToolbarText">
+            Show
+            <CustomSelect
+              options={[
+                { value: '10', label: '10' },
+                { value: '25', label: '25' },
+                { value: '50', label: '50' }
+              ]}
+              value={pageSize.toString()}
+              onChange={(val) => {
+                setPageSize(parseInt(val, 10));
+                setPage(1);
+              }}
+            />
+            entries
+          </div>
+          
+          <CustomSelect 
+            value={typeFilter} 
+            onChange={(val) => setTypeFilter(val)}
+            options={[
+              { value: '', label: 'Semua Jenis Laporan' },
+              ...formTypes.map(t => ({ value: t.id, label: t.label }))
+            ]}
+            placeholder="Semua Jenis Laporan"
           />
         </div>
-        
-        <div className={styles.filterGroup}>
-          <Filter size={18} />
-          <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
-            <option value="">Semua Jenis Laporan</option>
-            {formTypes.map(t => (
-              <option key={t.id} value={t.id}>{t.label}</option>
-            ))}
-          </select>
+
+        <div className="dtToolbarRight">
+          {selectedReports.length > 0 && isAdmin && (
+            <button 
+              onClick={handleDeleteBulk}
+              disabled={isDeleting}
+              style={{ background: '#FF4D4D', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
+            >
+              <Trash2 size={16} /> Hapus ({selectedReports.length})
+            </button>
+          )}
+          <div className="dtToolbarSearch">
+            <input 
+              type="text" 
+              placeholder="Cari Laporan atau Unit..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="dtToolbarSearchInput"
+            />
+            <Search size={16} className="dtToolbarSearchIcon" />
+          </div>
+          <Link href="/reports/inspection" className="dtToolbarCreateBtn" style={{ textDecoration: 'none' }}>
+            <Plus size={16} strokeWidth={2.5} /> Laporan Baru
+          </Link>
         </div>
       </div>
 
@@ -163,9 +185,9 @@ export default function ReportHistory() {
                 <th>Nomor Laporan</th>
                 <th>Nama Unit</th>
                 <th>Tipe Laporan</th>
-                <th>Tanggal</th>
-                <th>Oleh</th>
-                <th style={{ textAlign: 'right' }}>Action</th>
+                <th>Waktu & Tanggal</th>
+                <th>Dilaporkan Oleh</th>
+                <th style={{ textAlign: 'right', minWidth: '120px' }}>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -206,13 +228,17 @@ export default function ReportHistory() {
                         {formTypes.find(t => t.id === report.form_type)?.label || report.form_type}
                       </span>
                     </td>
-                    <td className={styles.dateCell}>
-                      <span>{new Date(report.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
-                      <small>{new Date(report.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</small>
+                    <td>
+                      <div className={styles.dateCell}>
+                        <span>{new Date(report.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
+                        <small>{new Date(report.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</small>
+                      </div>
                     </td>
-                    <td className={styles.userCell}>
-                      <span>{report.created_by?.full_name || 'Admin'}</span>
-                      <small>QC Staff</small>
+                    <td>
+                      <div className={styles.userCell}>
+                        <span>{report.created_by?.full_name || 'Admin'}</span>
+                        <small>QC Staff</small>
+                      </div>
                     </td>
                     <td style={{ textAlign: 'right' }}>
                       <div className={styles.actions}>
