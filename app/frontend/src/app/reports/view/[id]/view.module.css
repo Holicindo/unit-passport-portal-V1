@@ -108,7 +108,7 @@
   border-radius: var(--radius-md);
   border: 1px solid #e0e4ea;
   box-shadow: 0 4px 24px rgba(0, 31, 63, 0.10);
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 .pdfFrame {
@@ -166,5 +166,6 @@
     border: none !important;
     box-shadow: none !important;
     border-radius: 0 !important;
+    overflow: visible !important;
   }
 }

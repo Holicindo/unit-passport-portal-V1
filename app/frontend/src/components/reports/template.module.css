@@ -16,20 +16,70 @@
   line-height: 1.25;
 }
 
+.coolingReport {
+  /* Cooling report specific: slightly tighter padding to fit all sections */
+  padding: 8mm 12mm;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  min-height: 297mm;
+}
+
 /* Print Overrides */
+@page {
+  size: A4 portrait;
+  margin: 0;
+}
+
 @media print {
-  :global(body) {
+  :global(*) {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    /* color-adjust removed for cross‑browser compatibility */
+  }
+
+  :global(html), :global(body) {
     background: #ffffff !important;
     color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
+
+  /* Hide sidebar, topbar, bottomnav, and all chrome elements */
+  :global(.main-wrapper) {
+    margin-left: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  :global([class*="Sidebar_sidebar"]),
+  :global([class*="TopBar_"]),
+  :global([class*="BottomNav_"]),
+  :global(nav),
+  :global(aside) {
+    display: none !important;
+  }
+
   .a4Sheet {
     width: 100% !important;
     min-height: auto !important;
-    padding: 0 !important;
+    padding: 10mm !important;
     margin: 0 !important;
     box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    page-break-inside: avoid;
+    font-size: 7.5px !important;
+    line-height: 1.2 !important;
   }
-  .a4Sheet input, .a4Sheet select, .a4Sheet textarea {
+
+  .a4Sheet input:not([type="checkbox"]), .a4Sheet select, .a4Sheet textarea {
     border: none !important;
     background: transparent !important;
     appearance: none !important;
@@ -37,6 +87,88 @@
     color: #000000 !important;
     font-weight: bold !important;
     padding: 0 !important;
+  }
+
+  .a4Sheet input[type="checkbox"] {
+    appearance: auto !important;
+    -webkit-appearance: auto !important;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+    accent-color: #2e5bff !important; /* blue accent matching design */
+  }
+
+  .a4Sheet input[type="checkbox"]:disabled {
+    accent-color: #2e5bff !important; /* blue accent matching design */
+    opacity: 1 !important; /* ensure visible when disabled */
+  }
+
+  /* Make tables more compact in print */
+  .denseTable th, .denseTable td {
+    padding: 1.5px 3px !important;
+    font-size: 7px !important;
+  }
+
+  .sheetHeaderTable td {
+    padding: 2px 4px !important;
+  }
+
+  .infoGridTable td, .infoGridTable th {
+    padding: 2px 4px !important;
+    font-size: 7px !important;
+  }
+
+  .sectionHeaderRow {
+    font-size: 8px !important;
+  }
+
+  .signatureTable td {
+    height: 40px !important;
+  }
+
+  .signatureTitle {
+    margin-bottom: 22px !important;
+  }
+
+  .specsFooterRow {
+    page-break-inside: avoid;
+  }
+
+  .notesArea {
+    page-break-inside: avoid;
+  }
+
+  .signatureTable {
+    page-break-inside: avoid;
+  }
+
+  .footnoteText {
+    font-size: 6px !important;
+  }
+
+  /* Cooling Report: fill full A4 page in print (match screen preview) */
+  .coolingReport {
+    padding: 8mm 10mm !important;
+    font-size: 8.5px !important;
+    line-height: 1.25 !important;
+    min-height: 100vh !important;
+    height: 100vh !important;
+    justify-content: space-between !important;
+  }
+
+  .coolingReport .denseTable th,
+  .coolingReport .denseTable td {
+    padding: 2px 4px !important;
+    font-size: 8px !important;
+  }
+
+  .coolingReport .sheetHeaderTable td {
+    padding: 3px 5px !important;
+  }
+
+  /* Remove all dotted/solid borders from disabled inputs in print */
+  .a4Sheet input:disabled {
+    border: none !important;
+    border-bottom: none !important;
   }
 }
 
@@ -157,6 +289,11 @@
   padding: 2px 4px;
   box-sizing: border-box;
   font-family: inherit;
+}
+
+.cellInput:disabled {
+  border: none !important;
+  border-bottom: none !important;
 }
 
 .cellInput:focus {
@@ -336,4 +473,137 @@
   border-top: 1px dotted #cbd5e1;
   display: block;
   padding-top: 2px;
+}
+
+/* Cooling Report Diagram Styles */
+.performanceArea {
+  display: flex;
+  border: 1px solid #475569;
+  border-top: none;
+  background: #ffffff;
+  padding: 10px;
+  min-height: 280px;
+}
+
+.diagramArea {
+  flex: 0 0 65%;
+  position: relative;
+  min-height: 250px;
+  border-right: 1px solid #e2e8f0;
+  padding-right: 15px;
+}
+
+.circuitLine {
+  position: absolute;
+  top: 15px;
+  left: 25px;
+  right: 25px;
+  bottom: 15px;
+  border: 1.5px solid #000000;
+  z-index: 1;
+}
+
+.circuitBox {
+  position: absolute;
+  background: #ffffff;
+  border: 1.5px solid #000000;
+  padding: 4px;
+  z-index: 2;
+  text-align: center;
+}
+
+.boxTitle {
+  font-weight: bold;
+  font-size: 8px;
+  margin-bottom: 4px;
+}
+
+.boxInputs {
+  display: flex;
+  gap: 8px;
+  font-size: 8px;
+}
+
+.boxCol {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.circuitInput {
+  width: 30px;
+  border: none;
+  border-bottom: 1px dotted #94a3b8;
+  background: transparent;
+  text-align: center;
+  font-size: 12px;
+  padding: 0;
+}
+
+.circuitInput:focus {
+  outline: none;
+  border-bottom-color: #2e5bff;
+}
+
+.kabinetArea {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  font-size: 7.5px;
+  z-index: 2;
+}
+
+.rightInfoArea {
+  flex: 1;
+  padding-left: 15px;
+  display: flex;
+  flex-direction: column;
+}
+
+.roomTempBox {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  padding: 8px;
+  text-align: center;
+  font-size: 12px; /* larger for humidity values */
+  margin-bottom: 12px;
+}
+
+.qcChecklistBox {
+  flex: 1;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  padding: 8px;
+}
+
+.qcLabel {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 10px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.qcLabel input[type="checkbox"] {
+  accent-color: #2e5bff !important; /* blue accent matching design */
+  margin: 0;
+  margin-top: 1px;
+}
+
+.inlineInput {
+  border: none;
+  border-bottom: 1px solid #94a3b8;
+  background: transparent;
+  text-align: center;
+  font-size: 7.5px;
+  padding: 0;
+}
+
+.inlineInput:focus {
+  outline: none;
+  border-bottom-color: #2e5bff;
 }

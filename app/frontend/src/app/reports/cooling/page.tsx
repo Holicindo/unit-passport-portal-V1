@@ -6,21 +6,10 @@ import { unitApi, reportApi } from '@/lib/api';
 import { Save, Camera, ArrowLeft, Loader2 } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import { CustomSelect } from '@/components/ui/CustomSelect';
-import InspectionReportTemplate from '@/components/reports/InspectionReportTemplate';
-import styles from './inspection.module.css';
+import CoolingReportTemplate from '@/components/reports/CoolingReportTemplate';
+import styles from './cooling.module.css';
 
-const WORKS_ITEMS = [
-  "Pemasangan Lampu",
-  "Pemasangan Kelistrikan",
-  "Pemasangan Heater",
-  "Pemasangan Unit System",
-  "Pengelasan Unit System",
-  "Pengelasan Body",
-  "Perakitan Rangka Body",
-  "Pemasangan Mechanical"
-];
-
-export default function InspectionForm() {
+export default function CoolingForm() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [allUnits, setAllUnits]   = useState<any[]>([]);
@@ -32,32 +21,25 @@ export default function InspectionForm() {
   const [photos, setPhotos]       = useState<File[]>([]);
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
 
-  // Initialize form state
+  // Initialize form state matching CoolingReportTemplate
   const [form, setForm] = useState<any>({
-    header:     { order_document: '', production_code: '', starting_date: '', finishing_date: '' },
-    dimensions: {
-      body: { panjang: '', lebar: '', tinggi: '' },
-      kaca: { depan: '', samping: '', atas: '', pintu: '', tingkatan: '' },
+    header: { order_document: '', production_code: '', starting_date: '', finishing_date: '', inspection_date: '', customer: '', category: '', item_code: '' },
+    general_inspection: { part: '', required: '', setting_temp: '', temp_dalam: '', digital_type: '', setting: '' },
+    cooling_system: {
+      left: { comp_type: '', comp_sn: '', freon_type: '', freon_weight: '', press_start: '', press_run: '', amp_start: '', amp_run: '', condensor: '', evaporator: '', fan_evap_model: '', fan_evap_qty: '', fan_antimist_model: '', fan_antimist_qty: '' },
+      right: { comp_type: '', comp_sn: '', freon_type: '', freon_weight: '', press_start: '', press_run: '', amp_start: '', amp_run: '', condensor: '', evaporator: '', fan_evap_model: '', fan_evap_qty: '', fan_antimist_model: '', fan_antimist_qty: '' }
     },
-    visual_checks: {
-      external: Array(13).fill(''),
-      internal: Array(6).fill('')
+    performance_inspection: {
+      evap_min: '', evap_max: '',
+      evap_left_min: '', evap_left_max: '',
+      evap_right_min: '', evap_right_max: '',
+      cond_min: '', cond_max: '',
+      comp_min: '', comp_max: '',
+      kabinet_min: '', kabinet_max: '', kabinet_hum: '',
+      room_min: '', room_max: '', room_hum: '',
+      qc_1: false, qc_2: false, qc_2_time: '', qc_3: false, qc_4: false
     },
-    performance: {
-      grounding:          { value: '', result: '', remarks: '' },
-      insulation:         { value: '', result: '', remarks: '' },
-      leakage:            { value: '', result: '', remarks: '' },
-      voltage_test:       { value: '', result: '', remarks: '' },
-      exterior_temp:      { value: '', result: '', remarks: '' },
-      cooling_time:       { value: '', result: '', remarks: '' },
-      cabinet_temp_range: { value: '', result: '', remarks: '' },
-      temp_variation:     { value: '', result: '', remarks: '' },
-      noise:              { value: '', result: '', remarks: '' },
-      power_rating:       { value: '', result: '', remarks: '' },
-      temp_report:        { value: '', result: '', remarks: '' },
-    },
-    works: WORKS_ITEMS.map(label => ({ label, name: '', time: '' })),
-    footer: { color: '', length: '', light: '', notes: '' },
+    footer: { tech_name: '', qc_name: '' }
   });
 
   // Load units for dropdown
@@ -94,7 +76,6 @@ export default function InspectionForm() {
     if (!unit) return alert('Pilih unit terlebih dahulu!');
     setLoading(true);
     try {
-      // Upload documentation photos if present
       let uploadedUrls: string[] = [];
       if (photos.length > 0) {
         try {
@@ -107,7 +88,7 @@ export default function InspectionForm() {
 
       const payload = { 
         unitId: unit.id, 
-        form_type: 'INSPECTION',
+        form_type: 'COOLING_1',
         data: form, 
         photo_urls: uploadedUrls 
       };
@@ -129,7 +110,7 @@ export default function InspectionForm() {
       {/* Toolbar */}
       <div className={styles.toolbar}>
         <button className={styles.backBtn} onClick={() => router.back()}><ArrowLeft size={16} /></button>
-        <h1 className={styles.title}>NEW INSPECTION REPORT</h1>
+        <h1 className={styles.title}>NEW COOLING SYSTEM REPORT 1 SUHU</h1>
       </div>
 
       {/* Unit Selector Bar */}
@@ -149,53 +130,59 @@ export default function InspectionForm() {
           </div>
           {unit && (
             <div className={styles.unitInfo}>
-              <span><strong>Serial Number:</strong> {unit.serial_number}</span>
-              <span><strong>Model Unit:</strong> {unit.model_name}</span>
-              <span><strong>Pelanggan:</strong> {unit.current_client?.company_name || 'INTERNAL / STOCK'}</span>
-              <span><strong>Kategori:</strong> {unit.specs?.category || 'N/A'}</span>
+              <span><strong>ID:</strong> {unit.id}</span>
+              <span><strong>Unit:</strong> {unit.model_name}</span>
+              <span><strong>Status:</strong> {unit.status}</span>
             </div>
           )}
         </div>
       </div>
 
-      {/* Shared Interactive Sheet Layout (Single Source of Truth) */}
       <div className={styles.sheetContainer}>
-        <InspectionReportTemplate
+        <CoolingReportTemplate
           mode="edit"
           data={form}
-          unit={unit}
-          onChange={setForm}
+          unit={unit || {}}
+          onChange={(key: string, val: any) => setForm((prev: any) => ({ ...prev, [key]: val }))}
         />
       </div>
 
-      {/* Photo documentation bar */}
       <div className={styles.photoBar}>
         <div className={styles.sectionHeader}>
-          <h3>Dokumentasi Foto Lapangan (Max 6 Foto)</h3>
+          <h3>Lampiran Foto Dokumentasi QC</h3>
         </div>
         <div className={styles.photoGallery}>
-          {photoUrls.map((url, index) => (
-            <div key={`photo-${index}`} className={styles.photoItem}>
-              <img src={url} alt={`Inspection Photo ${index + 1}`} />
-              <button className={styles.removePhotoBtn} onClick={() => removePhoto(index)}>×</button>
+          {photoUrls.map((url, i) => (
+            <div key={i} className={styles.photoItem}>
+              <img src={url} alt={`Photo ${i + 1}`} />
+              <button onClick={() => removePhoto(i)} className={styles.removePhotoBtn}>×</button>
             </div>
           ))}
-          {photoUrls.length < 6 && (
+          {photos.length < 6 && (
             <div className={styles.addPhotoCard} onClick={() => fileInputRef.current?.click()}>
-              <Camera size={20} />
+              <Camera size={24} />
               <span>Tambah Foto</span>
-              <small>Format JPG/PNG</small>
+              <small>Maks 6 Foto</small>
             </div>
           )}
         </div>
-        <input ref={fileInputRef} type="file" accept="image/*" multiple hidden onChange={handlePhoto} />
+        <input
+          type="file"
+          multiple
+          accept="image/*"
+          className="hidden"
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+          onChange={handlePhoto}
+        />
       </div>
 
-      {/* Save Button Footer */}
       <div className={styles.formFooter}>
-        <button className={styles.saveBtn} onClick={() => setIsConfirm(true)} disabled={loading || !unit}>
-          {loading ? <Loader2 size={14} className={styles.spinner} /> : <Save size={14} />}
-          Simpan Laporan & Selesai
+        <button className={styles.saveBtn} onClick={() => {
+          if (!unit) return alert('Pilih unit terlebih dahulu di bagian atas sebelum menyimpan laporan!');
+          setIsConfirm(true);
+        }}>
+          <Save size={16} /> Simpan Laporan Cooling
         </button>
       </div>
 
@@ -204,8 +191,8 @@ export default function InspectionForm() {
         isOpen={isConfirm}
         onClose={() => setIsConfirm(false)}
         onConfirm={handleSubmit}
-        title="Simpan Laporan Inspeksi?"
-        message={`Pastikan semua data inspeksi telah benar dan sesuai dengan kondisi fisik unit.\n\nUnit Serial: ${unit?.serial_number || '-'}\nModel: ${unit?.model_name || '-'}`}
+        title="Simpan Cooling System Report?"
+        message={`Pastikan semua data cooling system telah benar dan sesuai dengan kondisi fisik unit.\n\nUnit Serial: ${unit?.serial_number || '-'}\nModel: ${unit?.model_name || '-'}`}
         type="confirm"
         confirmText={loading ? 'Menyimpan...' : 'Ya, Simpan'}
         cancelText="Batal"
@@ -215,8 +202,8 @@ export default function InspectionForm() {
       <Modal
         isOpen={isSuccess}
         onClose={() => router.push('/reports/history')}
-        title="Laporan QC Berhasil Disimpan!"
-        message={`Laporan inspeksi untuk serial number ${unit?.serial_number} telah berhasil dicatat ke dalam unit passport. Anda sekarang dapat mencetak PDF laporan langsung dari riwayat.`}
+        title="Laporan Cooling Berhasil Disimpan!"
+        message={`Laporan cooling system untuk serial number ${unit?.serial_number} telah berhasil dicatat ke dalam unit passport. Anda sekarang dapat mencetak PDF laporan langsung dari riwayat.`}
         type="success"
       />
     </div>

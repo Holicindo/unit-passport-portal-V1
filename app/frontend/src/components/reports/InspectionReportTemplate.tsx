@@ -196,7 +196,7 @@ export default function InspectionReportTemplate({
       <table className={styles.sheetHeaderTable}>
         <tbody>
           <tr>
-            <td className={styles.logoCell}>
+            <td className={styles.logoCell} style={{ background: '#000000', color: '#ffffff', fontSize: '20px' }}>
               <div>HOLIC</div>
             </td>
             <td className={styles.titleCell}>
@@ -645,7 +645,7 @@ export default function InspectionReportTemplate({
       </table>
 
       {/* 7. Works Involved Section */}
-      <table className={styles.denseTable}>
+      <table className={styles.denseTable} style={{ marginBottom: 0 }}>
         <thead>
           <tr className={styles.sectionHeaderRow}>
             <th colSpan={4}>5. Works Involved (Person-In-Charge)</th>

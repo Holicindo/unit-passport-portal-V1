@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { reportApi } from '@/lib/api';
 import { Printer, FileDown, ArrowLeft, Loader2, Camera } from 'lucide-react';
 import InspectionReportTemplate from '@/components/reports/InspectionReportTemplate';
+import CoolingReportTemplate from '@/components/reports/CoolingReportTemplate';
 import styles from './view.module.css';
 
 export default function ReportView() {
@@ -90,11 +91,19 @@ export default function ReportView() {
 
       {/* Screen Render Container */}
       <div className={styles.previewWrapper}>
-        <InspectionReportTemplate
-          mode="view"
-          data={report.data}
-          unit={report.unit}
-        />
+        {report.form_type === 'COOLING_1' ? (
+          <CoolingReportTemplate
+            mode="view"
+            data={report.data}
+            unit={report.unit}
+          />
+        ) : (
+          <InspectionReportTemplate
+            mode="view"
+            data={report.data}
+            unit={report.unit}
+          />
+        )}
 
         {/* Optional: Photo Documentation Section at the bottom of the screen */}
         {report.photo_urls && report.photo_urls.length > 0 && (
@@ -120,15 +129,17 @@ export default function ReportView() {
               Lampiran Foto Dokumentasi QC (Documentation Photos)
             </h4>
             <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
+              display: 'flex',
+              flexWrap: 'wrap',
               gap: '16px'
             }}>
               {report.photo_urls.map((url: string, index: number) => (
                 <div key={`view-photo-${index}`} style={{
-                  aspectRatio: '1',
+                  width: '100px',
+                  height: '100px',
+                  flexShrink: 0,
                   borderRadius: '6px',
-                  border: '1px solid #e2e8f0',
+                  border: '1px solid #edf1f5ff',
                   overflow: 'hidden',
                   boxShadow: '0 2px 4px rgba(0,0,0,0.03)'
                 }}>

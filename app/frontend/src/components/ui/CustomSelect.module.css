@@ -64,6 +64,40 @@
   animation: slideDown 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.optionsList {
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.searchBox {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  border-bottom: 1px solid rgba(0, 31, 63, 0.08);
+  margin-bottom: 4px;
+}
+
+.searchIcon {
+  color: var(--color-space-grey, #6B7280);
+  margin-right: 8px;
+}
+
+.searchInput {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 0.85rem;
+  color: var(--color-deep-navy, #001f3f);
+}
+
+.noResult {
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  color: var(--color-space-grey, #6B7280);
+  text-align: center;
+}
+
 .option {
   padding: 8px 12px;
   font-size: 0.85rem;

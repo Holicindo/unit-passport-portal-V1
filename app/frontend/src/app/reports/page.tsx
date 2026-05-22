@@ -7,12 +7,13 @@ import styles from '../menu.module.css';
 
 const formTypes = [
   { id: 'inspection',    label: 'Inspection Report (QC)',  icon: FileCheck,     color: '#2E5BFF', path: '/reports/inspection' },
-  { id: 'cooling1',     label: 'Cooling Report (1 Suhu)', icon: Thermometer,   color: '#00C48C', path: '/reports/cooling1' },
-  { id: 'cooling2',     label: 'Cooling Report (2 Suhu)', icon: Thermometer,   color: '#00C48C', path: '/reports/cooling2' },
-  { id: 'cooling3',     label: 'Cooling Report (3 Suhu)', icon: Thermometer,   color: '#00C48C', path: '/reports/cooling3' },
-  { id: 'problem',      label: 'Analisis Masalah',        icon: AlertTriangle, color: '#FF4D4D', path: '/reports/issue-analysis' },
-  { id: 'maintenance',  label: 'Maintenance Log',         icon: Settings,      color: '#717378', path: '/reports/maintenance' },
-  { id: 'commissioning',label: 'Commissioning Report',    icon: ShieldCheck,   color: '#FFB800', path: '/reports/commissioning' },
+  { id: 'cooling_1',     label: 'Cooling System Report 1 Suhu', icon: Thermometer, color: '#10b981', path: '/reports/cooling' },
+  { id: 'cooling_2',     label: 'Cooling System Report 2 Suhu (Cake & RTD)', icon: Thermometer,   color: '#0ea5e9', path: '/reports/cooling2' },
+  { id: 'cooling_3',     label: 'Cooling System Report 3 Suhu (Cake, Ambient & RTD)', icon: Thermometer,   color: '#00C48C', path: '/reports/cooling3' },
+  { id: 'report_warm',     label: 'Cooling System Report Warm', icon: Thermometer,   color: '#a11603ff', path: '/reports/reportwarm' },
+  { id: 'analisis_masalah', label: 'Inspeksi & Analisis Masalah', icon: AlertTriangle, color: '#FF4D4D', path: '/reports/issue-analysis' },
+  { id: 'rework',  label: 'Pengecekan Rework', icon: Settings, color: '#717378', path: '/reports/rework' },
+  { id: 'graphic_record',label: 'Graphic Record', icon: ShieldCheck, color: '#FFB800', path: '/reports/commissioning' },
 ];
 
 export default function ReportsMenu() {
