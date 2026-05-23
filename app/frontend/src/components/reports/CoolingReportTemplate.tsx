@@ -201,7 +201,7 @@ export default function CoolingReportTemplate({ mode = 'edit', data = {}, unit =
               {isEdit ? (
                 <textarea className={styles.cellInput} style={{ minHeight: '30px', resize: 'vertical' }} placeholder="E1=2 E12=2..." value={data.general_inspection?.setting || ''} onChange={(e) => setGeneral('setting', e.target.value)} />
               ) : (
-                <div style={{ whiteSpace: 'pre-wrap' }}>{data.general_inspection?.setting || '-'}</div>
+                <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', maxHeight: '60px', overflow: 'hidden', fontSize: '7px' }}>{data.general_inspection?.setting || '-'}</div>
               )}
             </td>
           </tr>
@@ -431,20 +431,16 @@ export default function CoolingReportTemplate({ mode = 'edit', data = {}, unit =
                 : <div style={{ minHeight: '30px', padding: '2px 0', fontSize: '9px' }}>{data.cooling_system?.right?.fan_antimist_notes}</div>}
             </td>
           </tr>
-        </tbody>
-      </table>
 
-      {/* 4. PERFORMANCE INSPECTION (DIAGRAM) */}
-      <table className={styles.denseTable} style={{ marginBottom: 0 }}>
-        <thead>
+          {/* 4. PERFORMANCE INSPECTION — section header */}
           <tr className={styles.sectionHeaderRow} style={{ background: '#64748b', color: '#000000ff' }}>
-            <th style={{ padding: '6px', fontSize: '12px', textTransform: 'capitalize' }}>PERFORMANCE INSPECTION</th>
+            <th colSpan={15} style={{ padding: '6px', fontSize: '12px', textTransform: 'capitalize' }}>PERFORMANCE INSPECTION</th>
           </tr>
-        </thead>
-      </table>
 
-      <div className={styles.performanceArea} style={{ flexGrow: 1 }}>
-        <div className={styles.diagramArea} style={{ position: 'relative', flex: '0 0 65%' }}>
+          {/* 4. PERFORMANCE INSPECTION — diagram (cols 1-9) + right info (cols 10-15) */}
+          <tr>
+            <td colSpan={9} style={{ padding: 0, verticalAlign: 'top' }}>
+              <div style={{ position: 'relative', minHeight: '280px', padding: '10px' }}>
           <div className={styles.circuitLine} style={{ border: '2px solid #000', top: '30px', bottom: '30px', left: '40px', right: '40px' }}></div>
           
           {/* Arrow Left (Up) */}
@@ -543,9 +539,11 @@ export default function CoolingReportTemplate({ mode = 'edit', data = {}, unit =
             <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>Min {isEdit ? <input type="text" className={styles.circuitInput} style={{ width: '25px' }} value={data.performance_inspection?.comp_min || ''} onChange={(e) => setPerf('comp_min', e.target.value)} /> : <span>{data.performance_inspection?.comp_min ?? '-'}°C</span>}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '2px', marginTop: '2px' }}>Max {isEdit ? <input type="text" className={styles.circuitInput} style={{ width: '25px' }} value={data.performance_inspection?.comp_max || ''} onChange={(e) => setPerf('comp_max', e.target.value)} /> : <span>{data.performance_inspection?.comp_max ?? '-'}°C</span>}</div>
           </div>
-        </div>
-
-        <div className={styles.rightInfoArea}>
+              </div>
+            </td>
+            {/* Right: Suhu Ruangan + QC Checklist — spans cols 10-15 */}
+            <td colSpan={6} style={{ padding: '10px', verticalAlign: 'top' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
           <div className={styles.roomTempBox} style={{ borderStyle: 'dashed', padding: '16px', borderRadius: '4px', background: '#fff' }}>
             <div className={styles.boxTitle} style={{ fontSize: '11px', marginBottom: '12px' }}>Suhu Ruangan</div>
             <div style={{ display: 'flex', gap: '24px', justifyContent: 'center', margin: '8px 0' }}>
@@ -593,8 +591,11 @@ export default function CoolingReportTemplate({ mode = 'edit', data = {}, unit =
               <span>Unit telah melewati test tegangan listrik</span>
             </label>
           </div>
-        </div>
-      </div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
 
       {/* 5. SIGNATURES */}
       <table className={styles.signatureTable}>

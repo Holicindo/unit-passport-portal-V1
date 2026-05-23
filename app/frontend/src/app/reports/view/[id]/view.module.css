@@ -159,6 +159,7 @@
   .pageContainer {
     padding: 0 !important;
     background: white !important;
+    overflow: visible !important;
   }
   .previewWrapper {
     max-width: 100% !important;

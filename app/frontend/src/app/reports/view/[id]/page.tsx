@@ -6,6 +6,9 @@ import { reportApi } from '@/lib/api';
 import { Printer, FileDown, ArrowLeft, Loader2, Camera } from 'lucide-react';
 import InspectionReportTemplate from '@/components/reports/InspectionReportTemplate';
 import CoolingReportTemplate from '@/components/reports/CoolingReportTemplate';
+import Cooling2ReportTemplate from '@/components/reports/Cooling2ReportTemplate';
+import Cooling3ReportTemplate from '@/components/reports/Cooling3ReportTemplate';
+import WarmReportTemplate from '@/components/reports/WarmReportTemplate';
 import styles from './view.module.css';
 
 export default function ReportView() {
@@ -90,19 +93,17 @@ export default function ReportView() {
       </header>
 
       {/* Screen Render Container */}
-      <div className={styles.previewWrapper}>
+      <div id="report-print-area" className={styles.previewWrapper}>
         {report.form_type === 'COOLING_1' ? (
-          <CoolingReportTemplate
-            mode="view"
-            data={report.data}
-            unit={report.unit}
-          />
+          <CoolingReportTemplate mode="view" data={report.data} unit={report.unit} />
+        ) : report.form_type === 'COOLING_2' ? (
+          <Cooling2ReportTemplate mode="view" data={report.data} unit={report.unit} />
+        ) : report.form_type === 'COOLING_3' ? (
+          <Cooling3ReportTemplate mode="view" data={report.data} unit={report.unit} />
+        ) : report.form_type === 'COOLING_WARM' ? (
+          <WarmReportTemplate mode="view" data={report.data} unit={report.unit} />
         ) : (
-          <InspectionReportTemplate
-            mode="view"
-            data={report.data}
-            unit={report.unit}
-          />
+          <InspectionReportTemplate mode="view" data={report.data} unit={report.unit} />
         )}
 
         {/* Optional: Photo Documentation Section at the bottom of the screen */}

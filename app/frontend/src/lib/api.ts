@@ -36,6 +36,7 @@ export const unitApi = {
 
 export const reportApi = {
   create: (data: any) => api.post('/reports', data),
+  update: (id: string, data: any) => api.patch(`/reports/${id}`, data),
   findAll: (page = 1, limit = 10, type?: string) => api.get(`/reports?page=${page}&limit=${limit}${type ? `&type=${type}` : ''}`),
   findOne: (id: string) => api.get(`/reports/${id}`),
   findByUnit: (unitId: string) => api.get(`/reports/unit/${unitId}`),

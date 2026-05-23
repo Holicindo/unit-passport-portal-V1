@@ -863,3 +863,53 @@ a {
 }
 
 
+
+/* ============================================================
+   PRINT STYLES — Hide all UI chrome, show only report content
+   ============================================================ */
+@media print {
+  /* Hide sidebar, topbar, bottom nav */
+  nav, aside, header, footer,
+  [class*="Sidebar"],
+  [class*="TopBar"],
+  [class*="BottomNav"],
+  [class*="toolbar"],
+  [class*="unitBar"],
+  [class*="modeBar"],
+  [class*="photoBar"],
+  [class*="formFooter"],
+  [class*="pageWrapper"] > *:not([class*="sheetContainer"]):not([class*="formContainer"]) {
+    display: none !important;
+  }
+
+  /* Remove wrapper padding/margin */
+  .main-wrapper {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Sheet container fills page */
+  [class*="sheetContainer"],
+  [class*="formContainer"],
+  #report-print-area {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  /* Ensure textarea content doesn't overflow */
+  textarea {
+    overflow: hidden !important;
+    resize: none !important;
+    height: auto !important;
+    word-break: break-word !important;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+}

@@ -242,7 +242,17 @@ export default function ReportHistory() {
                     </td>
                     <td style={{ textAlign: 'right' }}>
                       <div className={styles.actions}>
-                        <Link href={`/reports/inspection?editId=${report.id}`} title="Edit Laporan" className={styles.editBtn}>
+                        <Link
+                          href={report.form_type === 'COOLING_1'
+                            ? `/reports/cooling?editId=${report.id}`
+                            : report.form_type === 'COOLING_2'
+                            ? `/reports/cooling2?editId=${report.id}`
+                            : report.form_type === 'COOLING_3'
+                            ? `/reports/cooling3?editId=${report.id}`
+                            : `/reports/inspection?editId=${report.id}`}
+                          title="Edit Laporan"
+                          className={styles.editBtn}
+                        >
                           <FileEdit size={18} />
                         </Link>
                         <Link href={`/reports/view/${report.id}`} title="Lihat Form">
@@ -330,7 +340,15 @@ export default function ReportHistory() {
 
                 <div className={styles.mobileCardActions}>
                   <button 
-                    onClick={() => router.push(`/reports/inspection?editId=${report.id}`)}
+                    onClick={() => router.push(
+                      report.form_type === 'COOLING_1'
+                        ? `/reports/cooling?editId=${report.id}`
+                        : report.form_type === 'COOLING_2'
+                        ? `/reports/cooling2?editId=${report.id}`
+                        : report.form_type === 'COOLING_3'
+                        ? `/reports/cooling3?editId=${report.id}`
+                        : `/reports/inspection?editId=${report.id}`
+                    )}
                     className={`${styles.mobileActionBtn} ${styles.mobileActionEdit}`}
                   >
                     <FileEdit size={14} />
