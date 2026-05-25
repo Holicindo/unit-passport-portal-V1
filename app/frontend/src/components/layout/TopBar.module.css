@@ -9,7 +9,7 @@
   padding: 0 24px;
   position: sticky;
   top: 0;
-  z-index: 90;
+  z-index: 999;
   border-bottom: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
 }

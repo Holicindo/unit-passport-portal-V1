@@ -2,7 +2,6 @@
 
 import React from 'react';
 import styles from './CoolingReportForm.module.css';
-import { CheckSquare, Square } from 'lucide-react';
 
 interface Props {
   data: any;
@@ -23,11 +22,11 @@ function Input({ value, onChange, placeholder, type = 'text' }: { value: string;
   return <input type={type} className={styles.input} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} />;
 }
 
-function SectionTitle({ number, title, icon }: { number: string; title: string; icon?: string }) {
+function SectionTitle({ number, title }: { number: string; title: string }) {
   return (
     <div className={styles.sectionTitle}>
       <span className={styles.sectionNumber}>{number}</span>
-      <span className={styles.sectionTitleText}>{icon} {title}</span>
+      <span className={styles.sectionTitleText}>{title}</span>
     </div>
   );
 }
@@ -41,15 +40,28 @@ function Card({ children, title }: { children: React.ReactNode; title?: string }
 function CheckItem({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <button type="button" className={`${styles.checkItem} ${checked ? styles.checkItemActive : ''}`} onClick={() => onChange(!checked)}>
-      <span className={styles.checkIcon}>{checked ? <CheckSquare size={20} color="#2e5bff" /> : <Square size={20} color="#94a3b8" />}</span>
+      <span className={styles.checkIcon}>
+        <span style={{
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          width: '18px', height: '18px', borderRadius: '4px',
+          border: checked ? '2px solid #2e5bff' : '2px solid #cbd5e1',
+          background: checked ? '#2e5bff' : '#fff', flexShrink: 0,
+        }}>
+          {checked && (
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+              <path d="M2 5L4.5 7.5L8.5 2.5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+        </span>
+      </span>
       <span className={styles.checkLabel}>{label}</span>
     </button>
   );
 }
 
-function TempSection({ title, icon, data, onChange }: { title: string; icon: string; data: any; onChange: (k: string, v: string) => void }) {
+function TempSection({ title, data, onChange }: { title: string; data: any; onChange: (k: string, v: string) => void }) {
   return (
-    <Card title={`${icon} ${title}`}>
+    <Card title={title}>
       <TwoCol>
         <Field label="Suhu yang Diminta (Required)"><Input value={data.required || ''} onChange={v => onChange('required', v)} placeholder="Contoh: -18 s/d -22" /></Field>
         <Field label="Suhu Setting (Disetting)"><Input value={data.setting_temp || ''} onChange={v => onChange('setting_temp', v)} placeholder="°C" /></Field>
@@ -84,7 +96,7 @@ export default function Cooling2ReportForm({ data, onChange }: Props) {
   return (
     <div className={styles.formWrapper}>
       {/* 1. INFO DOKUMEN */}
-      <SectionTitle number="1" title="Informasi Dokumen" icon="📋" />
+      <SectionTitle number="1" title="Informasi Dokumen" />
       <Card>
         <TwoCol>
           <Field label="Nomor Order Dokumen"><Input value={h.order_document || ''} onChange={v => setH('order_document', v)} placeholder="Nomor order..." /></Field>
@@ -100,19 +112,19 @@ export default function Cooling2ReportForm({ data, onChange }: Props) {
         </TwoCol>
       </Card>
 
-      {/* 2. GENERAL INSPECTION — CAKE & RTD */}
-      <SectionTitle number="2" title="Inspeksi Umum — 2 Suhu (CAKE & RTD)" icon="🌡️" />
+      {/* 2. GENERAL INSPECTION */}
+      <SectionTitle number="2" title="Inspeksi Umum — 2 Suhu (CAKE & RTD)" />
       <Card>
         <Field label="Bagian / Part" hint="Contoh: chiller, freezer">
           <Input value={gi.part || ''} onChange={v => setGI('part', v)} placeholder="Contoh: chiller" />
         </Field>
       </Card>
-      <TempSection title="Suhu CAKE" icon="🍰" data={cake} onChange={setCake} />
-      <TempSection title="Suhu RTD" icon="🌡️" data={rtd} onChange={setRtd} />
+      <TempSection title="Suhu CAKE" data={cake} onChange={setCake} />
+      <TempSection title="Suhu RTD" data={rtd} onChange={setRtd} />
 
       {/* 3. COOLING SYSTEM */}
-      <SectionTitle number="3" title="Sistem Pendingin (Cooling System)" icon="❄️" />
-      <div className={styles.subSectionTitle}>🔧 Kompresor (Compressor)</div>
+      <SectionTitle number="3" title="Sistem Pendingin (Cooling System)" />
+      <div className={styles.subSectionTitle}>Kompresor (Compressor)</div>
       <div className={styles.sideBySide}>
         <Card title="Sisi Kiri (Left)">
           <Field label="Tipe Kompresor"><Input value={cl.comp_type || ''} onChange={v => setCL('comp_type', v)} placeholder="Contoh: Embraco" /></Field>
@@ -139,12 +151,12 @@ export default function Cooling2ReportForm({ data, onChange }: Props) {
           </TwoCol>
         </Card>
       </div>
-      <div className={styles.subSectionTitle}>🌬️ Kondensor</div>
+      <div className={styles.subSectionTitle}>Kondensor</div>
       <div className={styles.sideBySide}>
         <Card title="Sisi Kiri"><Field label="Keterangan"><textarea className={styles.textarea} rows={2} value={cl.condensor || ''} onChange={e => setCL('condensor', e.target.value)} placeholder="Keterangan kondensor kiri..." /></Field></Card>
         <Card title="Sisi Kanan"><Field label="Keterangan"><textarea className={styles.textarea} rows={2} value={cr.condensor || ''} onChange={e => setCR('condensor', e.target.value)} placeholder="Keterangan kondensor kanan..." /></Field></Card>
       </div>
-      <div className={styles.subSectionTitle}>🧊 Evaporator</div>
+      <div className={styles.subSectionTitle}>Evaporator</div>
       <div className={styles.sideBySide}>
         <Card title="Sisi Kiri">
           <ThreeCol>
@@ -179,7 +191,7 @@ export default function Cooling2ReportForm({ data, onChange }: Props) {
           </div>
         </Card>
       </div>
-      <div className={styles.subSectionTitle}>💨 Fan Evaporator & Fan Antimist</div>
+      <div className={styles.subSectionTitle}>Fan Evaporator & Fan Antimist</div>
       <div className={styles.sideBySide}>
         <Card title="Sisi Kiri">
           <Field label="Model Fan Evaporator"><Input value={cl.fan_evap_model || ''} onChange={v => setCL('fan_evap_model', v)} placeholder="Contoh: EBM-Papst" /></Field>
@@ -194,9 +206,9 @@ export default function Cooling2ReportForm({ data, onChange }: Props) {
       </div>
 
       {/* 4. PERFORMANCE */}
-      <SectionTitle number="4" title="Inspeksi Performa (Performance Inspection)" icon="📊" />
-      <p className={styles.perfNote}>💡 Isi suhu-suhu berikut sesuai hasil pengukuran aktual.</p>
-      <Card title="🧊 Suhu Evaporator">
+      <SectionTitle number="4" title="Inspeksi Performa (Performance Inspection)" />
+      <p className={styles.perfNote}>Isi suhu-suhu berikut sesuai hasil pengukuran aktual.</p>
+      <Card title="Suhu Evaporator">
         <TwoCol>
           <Field label="Evaporator Min (°C)"><Input value={p.evap_min || ''} onChange={v => setP('evap_min', v)} placeholder="°C" /></Field>
           <Field label="Evaporator Max (°C)"><Input value={p.evap_max || ''} onChange={v => setP('evap_max', v)} placeholder="°C" /></Field>
@@ -206,14 +218,14 @@ export default function Cooling2ReportForm({ data, onChange }: Props) {
           <Field label="Sisi Kanan Max (°C)"><Input value={p.evap_right_max || ''} onChange={v => setP('evap_right_max', v)} placeholder="°C" /></Field>
         </TwoCol>
       </Card>
-      <Card title="🏠 Suhu Dalam Kabinet">
+      <Card title="Suhu Dalam Kabinet">
         <ThreeCol>
           <Field label="Min (°C)"><Input value={p.kabinet_min || ''} onChange={v => setP('kabinet_min', v)} placeholder="°C" /></Field>
           <Field label="Max (°C)"><Input value={p.kabinet_max || ''} onChange={v => setP('kabinet_max', v)} placeholder="°C" /></Field>
           <Field label="Humidity (%)"><Input value={p.kabinet_hum || ''} onChange={v => setP('kabinet_hum', v)} placeholder="%" /></Field>
         </ThreeCol>
       </Card>
-      <Card title="🌡️ Suhu Ruangan">
+      <Card title="Suhu Ruangan">
         <ThreeCol>
           <Field label="Min (°C)"><Input value={p.room_min || ''} onChange={v => setP('room_min', v)} placeholder="°C" /></Field>
           <Field label="Max (°C)"><Input value={p.room_max || ''} onChange={v => setP('room_max', v)} placeholder="°C" /></Field>
@@ -221,20 +233,20 @@ export default function Cooling2ReportForm({ data, onChange }: Props) {
         </ThreeCol>
       </Card>
       <div className={styles.sideBySide}>
-        <Card title="🌬️ Suhu Kondenser">
+        <Card title="Suhu Kondenser">
           <TwoCol>
             <Field label="Min (°C)"><Input value={p.cond_min || ''} onChange={v => setP('cond_min', v)} placeholder="°C" /></Field>
             <Field label="Max (°C)"><Input value={p.cond_max || ''} onChange={v => setP('cond_max', v)} placeholder="°C" /></Field>
           </TwoCol>
         </Card>
-        <Card title="🔧 Suhu Kompresor">
+        <Card title="Suhu Kompresor">
           <TwoCol>
             <Field label="Min (°C)"><Input value={p.comp_min || ''} onChange={v => setP('comp_min', v)} placeholder="°C" /></Field>
             <Field label="Max (°C)"><Input value={p.comp_max || ''} onChange={v => setP('comp_max', v)} placeholder="°C" /></Field>
           </TwoCol>
         </Card>
       </div>
-      <Card title="✅ QC Checklist">
+      <Card title="QC Checklist">
         <p className={styles.checklistNote}>Centang item yang sudah terpenuhi:</p>
         <div className={styles.checklistGrid}>
           <CheckItem label="Suhu yang direquest sudah benar tercapai" checked={p.qc_1 || false} onChange={v => setP('qc_1', v)} />
@@ -248,7 +260,7 @@ export default function Cooling2ReportForm({ data, onChange }: Props) {
       </Card>
 
       {/* 5. TANDA TANGAN */}
-      <SectionTitle number="5" title="Tanda Tangan" icon="✍️" />
+      <SectionTitle number="5" title="Tanda Tangan" />
       <Card>
         <TwoCol>
           <Field label="Nama Teknisi"><Input value={data.footer?.tech_name || ''} onChange={v => setFooter('tech_name', v)} placeholder="Nama teknisi..." /></Field>

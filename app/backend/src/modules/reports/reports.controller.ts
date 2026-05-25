@@ -1,4 +1,4 @@
-                                                                                                                                  import { Controller, Post, Get, Body, Param, UseGuards, Request, Query, UseInterceptors, UploadedFiles } from '@nestjs/common';
+                                                                                                                                  import { Controller, Post, Get, Patch, Body, Param, UseGuards, Request, Query, UseInterceptors, UploadedFiles } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ReportsService } from './reports.service';
 import { CreateServiceReportDto } from './dto/create-service-report.dto';
@@ -69,5 +69,12 @@ export class ReportsController {
   @ApiOperation({ summary: 'Delete multiple reports (Admin only)' })
   deleteBulk(@Body('ids') ids: string[]) {
     return this.reportsService.removeBulk(ids);
+  }
+
+  @Patch(':id')
+  @Roles(UserRole.ADMIN, UserRole.PARTNER)
+  @ApiOperation({ summary: 'Update specific report details' })
+  update(@Param('id') id: string, @Body() updateData: any) {
+    return this.reportsService.update(id, updateData);
   }
 }

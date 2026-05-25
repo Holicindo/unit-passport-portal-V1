@@ -83,6 +83,9 @@ export default function ReportWarmPage() {
         if (data) {
           setForm({ ...EMPTY_FORM, ...data.data });
           setUnit(data.unit || null);
+          if (data.photo_urls && Array.isArray(data.photo_urls)) {
+             setPhotoUrls(data.photo_urls);
+          }
         }
       })
       .catch(() => alert('Gagal memuat data laporan.'))
@@ -120,9 +123,12 @@ export default function ReportWarmPage() {
         } catch {}
       }
       if (isEditMode && editId) {
-        await reportApi.update(editId, {
+        await reportApi.create({
+          unitId: unit.id,
+          form_type: 'COOLING_WARM',
           data: form,
-          ...(uploadedUrls.length > 0 ? { photo_urls: uploadedUrls } : {}),
+          photo_urls: uploadedUrls.length > 0 ? uploadedUrls : photoUrls,
+          baseReportId: editId
         });
       } else {
         await reportApi.create({
@@ -245,7 +251,7 @@ export default function ReportWarmPage() {
               marginLeft: '8px',
             }}
           >
-            ⚠️ Sedang mengedit laporan {editId}
+            Sedang mengedit laporan {editId}
           </span>
         )}
       </div>

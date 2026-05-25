@@ -1,0 +1,160 @@
+/* ============================================================
+   QC SERVICE TEMPLATE — A4 Sheet
+   Kotak setengah A4, font lebih besar
+   ============================================================ */
+
+.qcSheet {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 15mm 15mm;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* ── Outer Box — setengah A4 ── */
+.outerBox {
+  width: 100%;
+  max-width: 170mm;
+  border: 2.5px solid #000;
+  font-size: 12px;
+  color: #000;
+}
+
+/* ── Title Row ── */
+.titleRow {
+  font-size: 13px;
+  font-weight: 900;
+  text-align: center;
+  padding: 10px 14px;
+  border-bottom: 2.5px solid #000;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  background: #fff;
+}
+
+/* ── Checklist Section ── */
+.checklistSection {
+  padding: 16px 20px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-bottom: 1px solid #000;
+}
+
+.checkRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+}
+
+.checkBox {
+  width: 15px;
+  height: 15px;
+  min-width: 15px;
+  border: 2px solid #000;
+  border-radius: 2.5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.checkLabel {
+  font-size: 12px;
+  color: #000;
+}
+
+/* ── Sign Section ── */
+.signSection {
+  padding: 16px 20px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.signHeader {
+  font-size: 12px;
+  font-weight: bold;
+  margin-bottom: 16px;
+}
+
+.signRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  margin-bottom: 28px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.signLabel {
+  font-size: 12px;
+  font-weight: bold;
+  white-space: nowrap;
+  min-width: 44px;
+}
+
+.signLine {
+  flex: 1;
+  border-bottom: 1.5px solid #000;
+  min-width: 80px;
+  min-height: 18px;
+  font-size: 12px;
+  font-weight: normal;
+  padding-bottom: 2px;
+  display: inline-block;
+}
+
+.signTtd {
+  font-size: 12px;
+  font-weight: bold;
+  white-space: nowrap;
+  margin-left: 6px;
+}
+
+.tanggalRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.tanggalLine {
+  border-bottom: 1.5px solid #000;
+  min-width: 80px;
+  min-height: 18px;
+  font-size: 12px;
+  font-weight: normal;
+  padding-bottom: 2px;
+  display: inline-block;
+}
+
+/* ── Print ── */
+@media print {
+  .qcSheet {
+    padding: 10mm 10mm !important;
+  }
+
+  .outerBox {
+    max-width: 160mm !important;
+    font-size: 11px !important;
+  }
+
+  .titleRow {
+    font-size: 12px !important;
+  }
+
+  .checkLabel,
+  .signLabel,
+  .signLine,
+  .signTtd,
+  .signHeader,
+  .tanggalLine,
+  .checkRow {
+    font-size: 11px !important;
+  }
+}

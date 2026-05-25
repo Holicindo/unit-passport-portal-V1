@@ -53,31 +53,12 @@ export default function DashboardPage() {
     fleetHealth: 99.4,
   });
   
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [chartData, setChartData] = useState<any[]>([]);
   const [activeClients, setActiveClients] = useState<any[]>([]);
   const [frequentUnits, setFrequentUnits] = useState<any[]>([]);
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
   const [upcomingPMs, setUpcomingPMs] = useState<any[]>([]);
   const [hoveredPoint, setHoveredPoint] = useState<any>(null);
-
-  // Initialize theme from localStorage
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
-    if (savedTheme) {
-      setTheme(savedTheme);
-      document.documentElement.setAttribute('data-theme', savedTheme);
-    } else {
-      document.documentElement.setAttribute('data-theme', 'light');
-    }
-  }, []);
-
-  const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
-    document.documentElement.setAttribute('data-theme', newTheme);
-  };
 
   // Live ticking clock effect updating every second
   useEffect(() => {
@@ -400,37 +381,6 @@ export default function DashboardPage() {
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {/* Theme Toggle Button */}
-          <button 
-            onClick={toggleTheme}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              background: 'rgba(255,255,255,0.7)',
-              border: '1px solid rgba(0,31,63,0.08)',
-              padding: '8px 16px',
-              borderRadius: '24px',
-              fontSize: '0.82rem',
-              fontWeight: 700,
-              color: 'var(--color-deep-navy)',
-              cursor: 'pointer',
-              boxShadow: '0 4px 12px rgba(0,31,63,0.02)',
-              transition: 'all 0.2s',
-            }}
-          >
-            {theme === 'light' ? (
-              <>
-                <Moon size={14} style={{ color: 'var(--color-cobalt-blue)' }} />
-                <span>Midnight Mode</span>
-              </>
-            ) : (
-              <>
-                <Sun size={14} style={{ color: '#FFB800' }} />
-                <span>Light Mode</span>
-              </>
-            )}
-          </button>
 
           {/* Sync Button */}
           <button 

@@ -111,9 +111,9 @@ export default function Cooling2FormPage() {
 
       <div className={styles.modeBar}>
         <span className={showPreview ? styles.modeBadgePreview : styles.modeBadgeForm}>
-          {showPreview ? '👁️ Mode Preview — Tampilan Laporan Final' : isEditMode ? '✏️ Mode Edit — Merevisi Laporan' : '✏️ Mode Pengisian Form'}
+          {showPreview ? 'Mode Preview — Tampilan Laporan Final' : isEditMode ? 'Mode Edit — Merevisi Laporan' : 'Mode Pengisian Form'}
         </span>
-        {isEditMode && !showPreview && <span style={{ fontSize: '11px', color: '#92400e', background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: '12px', padding: '3px 12px', marginLeft: '8px' }}>⚠️ Sedang mengedit laporan {editId}</span>}
+        {isEditMode && !showPreview && <span style={{ fontSize: '11px', color: '#92400e', background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: '12px', padding: '3px 12px', marginLeft: '8px' }}>Sedang mengedit laporan {editId}</span>}
       </div>
 
       <div id={showPreview ? 'report-print-area' : undefined} className={showPreview ? styles.sheetContainer : styles.formContainer}>

@@ -1,0 +1,268 @@
+/* ============================================================
+   FORM INSPEKSI & ANALISIS MASALAH — A4 Sheet Styling
+   Menyerupai form fisik perusahaan Holicindo
+   ============================================================ */
+
+.issueSheet {
+  padding: 10mm 14mm;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 10px;
+  color: #000;
+}
+
+/* ── Company Header ── */
+.companyHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 6px;
+}
+
+.companyLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.companyName {
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #000;
+}
+
+.companyTagline {
+  font-size: 8.5px;
+  color: #444;
+  letter-spacing: 0.04em;
+}
+
+.companyRight {
+  text-align: right;
+  font-size: 9px;
+  color: #333;
+  line-height: 1.5;
+}
+
+/* ── Title ── */
+.docTitle {
+  text-align: center;
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 6px 0 8px;
+  padding: 5px 0;
+  border-top: 1.5px solid #000;
+  border-bottom: 1.5px solid #000;
+}
+
+/* ── Header Info Table ── */
+.headerTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 8px;
+}
+
+.headerTable td {
+  padding: 3px 5px;
+  font-size: 9.5px;
+  vertical-align: middle;
+}
+
+.headerLabel {
+  width: 18%;
+  font-weight: normal;
+  color: #000;
+  white-space: nowrap;
+}
+
+.headerValue {
+  width: 28%;
+  font-weight: normal;
+}
+
+.headerRight {
+  text-align: right;
+  font-size: 10px;
+  font-weight: bold;
+  color: #000;
+  white-space: nowrap;
+  padding-right: 0;
+}
+
+/* ── Main Analysis Table ── */
+.mainTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 8px;
+  font-size: 9.5px;
+}
+
+.mainTable th,
+.mainTable td {
+  border: 1px solid #000;
+  padding: 4px 6px;
+  vertical-align: top;
+}
+
+.mainTable th {
+  background: #f1f5f9;
+  font-weight: bold;
+  text-align: center;
+  font-size: 9.5px;
+  white-space: nowrap;
+}
+
+/* Bagian Bermasalah column — contains checkboxes */
+.bagianCell {
+  width: 120px;
+  vertical-align: top;
+  padding: 5px 7px !important;
+}
+
+.checkboxList {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 6px;
+}
+
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 9.5px;
+}
+
+.bagianNotes {
+  border: 1px solid #ccc;
+  min-height: 40px;
+  margin-top: 4px;
+  padding: 2px 3px;
+  font-size: 9px;
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  font-family: inherit;
+}
+
+/* Penanggung Jawab split cell */
+.pjHeader {
+  width: 75px;
+  text-align: center;
+}
+
+.pjCellTop {
+  border-bottom: 1px solid #000 !important;
+  min-height: 32px;
+  height: 32px;
+}
+
+.pjCellBottom {
+  min-height: 32px;
+  height: 32px;
+}
+
+/* ── Bottom Info Table ── */
+.bottomTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 14px;
+  font-size: 9.5px;
+}
+
+.bottomTable th,
+.bottomTable td {
+  border: 1px solid #000;
+  padding: 4px 6px;
+  vertical-align: top;
+}
+
+.bottomTable th {
+  background: #f1f5f9;
+  font-weight: bold;
+  text-align: center;
+  font-size: 9.5px;
+}
+
+/* ── Signature Row ── */
+.signRow {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 16px;
+  padding: 0 20px;
+}
+
+.signBlock {
+  text-align: center;
+  min-width: 120px;
+}
+
+.signTitle {
+  font-size: 10px;
+  font-weight: normal;
+  margin-bottom: 40px;
+}
+
+.signName {
+  font-size: 10px;
+  border-top: 1px solid #000;
+  padding-top: 3px;
+  display: inline-block;
+  min-width: 110px;
+}
+
+/* ── Print overrides ── */
+@media print {
+  .issueSheet {
+    padding: 8mm 10mm !important;
+    font-size: 9.5px !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .docTitle {
+    font-size: 12px !important;
+  }
+
+  .companyName {
+    font-size: 14px !important;
+  }
+
+  .companyTagline,
+  .companyRight {
+    font-size: 8px !important;
+  }
+
+  .headerTable td {
+    font-size: 9px !important;
+    padding: 2px 4px !important;
+  }
+
+  .mainTable th,
+  .mainTable td {
+    padding: 3px 5px !important;
+    font-size: 9px !important;
+  }
+
+  .bottomTable th,
+  .bottomTable td {
+    padding: 3px 5px !important;
+    font-size: 9px !important;
+  }
+
+  .checkboxRow {
+    font-size: 9px !important;
+  }
+
+  .signTitle {
+    font-size: 9.5px !important;
+    margin-bottom: 32px !important;
+  }
+
+  .signName {
+    font-size: 9.5px !important;
+  }
+}

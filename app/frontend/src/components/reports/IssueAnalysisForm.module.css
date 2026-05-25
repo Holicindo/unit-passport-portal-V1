@@ -1,0 +1,142 @@
+/* ============================================================
+   ISSUE ANALYSIS FORM — User-Friendly Form UI
+   ============================================================ */
+
+.tableWrapper {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.analysisTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 700px;
+}
+
+.analysisTable th {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 10px 12px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.analysisTable td {
+  border: 1px solid #e2e8f0;
+  padding: 10px 12px;
+  vertical-align: top;
+}
+
+.tableInput {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #0f172a;
+  background: #f8fafc;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.tableInput:focus {
+  border-color: #2e5bff;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(46, 91, 255, 0.1);
+}
+
+.tableTextarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #0f172a;
+  background: #f8fafc;
+  outline: none;
+  box-sizing: border-box;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.5;
+  transition: all 0.2s;
+  min-height: 80px;
+}
+
+.tableTextarea:focus {
+  border-color: #2e5bff;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(46, 91, 255, 0.1);
+}
+
+/* ── Checkbox list for Bagian Bermasalah ── */
+.checkList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.checkRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.checkItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.checkItem:hover {
+  border-color: #93c5fd;
+  background: #eff6ff;
+}
+
+.checkItemActive {
+  border-color: #2e5bff;
+  background: #eff6ff;
+}
+
+.checkBox {
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  border: 2px solid #cbd5e1;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.checkItemActive .checkBox {
+  border-color: #2e5bff;
+  background: #eff6ff;
+}
+
+.checkLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+}

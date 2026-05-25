@@ -1,6 +1,6 @@
 'use client';
 
-import { FileCheck, Thermometer, AlertTriangle, Settings, ShieldCheck } from 'lucide-react';
+import { FileCheck, Thermometer, AlertTriangle, Settings, ShieldCheck, Clipboard } from 'lucide-react';
 import Link from 'next/link';                           
 import { useRouter } from 'next/navigation';
 import styles from '../menu.module.css';
@@ -13,7 +13,8 @@ const formTypes = [
   { id: 'report_warm',     label: 'Cooling System Report Warm', icon: Thermometer,   color: '#2e5bff', path: '/reports/reportwarm' },
   { id: 'analisis_masalah', label: 'Inspeksi & Analisis Masalah', icon: AlertTriangle, color: '#FF4D4D', path: '/reports/issue-analysis' },
   { id: 'rework',  label: 'Pengecekan Rework', icon: Settings, color: '#717378', path: '/reports/rework' },
-  { id: 'graphic_record',label: 'Graphic Record', icon: ShieldCheck, color: '#FFB800', path: '/reports/commissioning' },
+  { id: 'graphic_record',label: 'Graphic Record', icon: ShieldCheck, color: '#FFB800', path: '/reports/graphic-record' },
+  { id: 'qc_service', label: 'Checklist QC Service', icon: Clipboard, color: '#059669', path: '/reports/qc-service' },
 ];
 
 export default function ReportsMenu() {

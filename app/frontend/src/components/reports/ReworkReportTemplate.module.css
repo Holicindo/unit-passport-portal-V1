@@ -1,0 +1,177 @@
+/* ============================================================
+   REWORK REPORT TEMPLATE — A4 Sheet Styling
+   Menyerupai form fisik perusahaan
+   ============================================================ */
+
+.reworkSheet {
+  padding: 14mm 16mm;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 8.5px;
+  color: #000;
+}
+
+/* ── Title ── */
+.docTitle {
+  text-align: center;
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  padding-bottom: 6px;
+}
+
+/* ── Header Info Table ── */
+.headerTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 14px;
+}
+
+.headerTable td {
+  padding: 3px 6px;
+  font-size: 8.5px;
+  vertical-align: middle;
+}
+
+.headerLabel {
+  width: 22%;
+  font-weight: normal;
+  color: #000;
+  white-space: nowrap;
+}
+
+.headerValue {
+  width: 28%;
+  font-weight: normal;
+}
+
+/* ── Section Label ── */
+.sectionLabel {
+  font-size: 8.5px;
+  font-weight: bold;
+  margin: 10px 0 4px;
+  color: #000;
+}
+
+/* ── Rework Table ── */
+.reworkTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 10px;
+  font-size: 8px;
+}
+
+.reworkTable th,
+.reworkTable td {
+  border: 1px solid #000;
+  padding: 3px 5px;
+  vertical-align: middle;
+}
+
+.reworkTable th {
+  background: #f1f5f9;
+  font-weight: bold;
+  text-align: center;
+  font-size: 8px;
+}
+
+.reworkTable td {
+  font-size: 8px;
+}
+
+/* ── Checkbox Section ── */
+.checkSection {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 8px;
+  padding-left: 8px;
+}
+
+.checkItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 8.5px;
+}
+
+.checkLabel {
+  font-size: 8.5px;
+  color: #000;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── Notes Box ── */
+.notesBox {
+  border: 1px solid #000;
+  margin-bottom: 14px;
+}
+
+.notesLabel {
+  font-size: 8px;
+  font-weight: bold;
+  padding: 3px 6px;
+  border-bottom: 1px solid #000;
+  background: #f8fafc;
+}
+
+/* ── Signature Table ── */
+.signTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+}
+
+.signCell {
+  width: 50%;
+  text-align: center;
+  padding: 6px 12px;
+  vertical-align: top;
+}
+
+.signTitle {
+  font-size: 8.5px;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.signSpace {
+  height: 48px;
+}
+
+.signName {
+  font-size: 8.5px;
+  border-top: 1px solid #000;
+  padding-top: 4px;
+  min-height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Print overrides ── */
+@media print {
+  .reworkSheet {
+    padding: 10mm 12mm !important;
+    font-size: 8px !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .docTitle {
+    font-size: 11px !important;
+  }
+
+  .reworkTable th,
+  .reworkTable td {
+    padding: 2px 4px !important;
+    font-size: 7.5px !important;
+  }
+
+  .signSpace {
+    height: 40px !important;
+  }
+}

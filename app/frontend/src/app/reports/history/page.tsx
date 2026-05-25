@@ -10,16 +10,14 @@ import styles from './history.module.css';
 
 const formTypes = [
   { id: 'INSPECTION',    label: 'Inspection Report (QC)' },
-  { id: 'COOLING_1',     label: 'Cooling Report (1 Suhu)' },
-  { id: 'COOLING_2',     label: 'Cooling Report (2 Suhu)' },
-  { id: 'COOLING_3',     label: 'Cooling Report (3 Suhu)' },
-  { id: 'ISSUE_ANALYSIS', label: 'Analisis Masalah' },
-  { id: 'MAINTENANCE',  label: 'Maintenance Log' },
-  { id: 'COMMISSIONING', label: 'Commissioning Report' },
-  { id: 'QA_TEST',       label: 'Uji Kelayakan (QA)' },
-  { id: 'INSTALLATION',  label: 'Installation Report' },
-  { id: 'WARRANTY_CLAIM', label: 'Klaim Garansi' },
-  { id: 'OTHER',         label: 'Laporan Lainnya' },
+  { id: 'COOLING_1',     label: 'Cooling System Report 1 Suhu' },
+  { id: 'COOLING_2',     label: 'Cooling System Report 2 Suhu' },
+  { id: 'COOLING_3',     label: 'Cooling System Report 3 Suhu' },
+  { id: 'COOLING_WARM',  label: 'Cooling System Report Warm' },
+  { id: 'ISSUE_ANALYSIS', label: 'Inspeksi & Analisis Masalah' },
+  { id: 'REWORK',        label: 'Pengecekan Rework' },
+  { id: 'COMMISSIONING', label: 'Graphic Record' },
+  { id: 'QC_SERVICE',    label: 'Checklist QC Service' },
 ];
 
 export default function ReportHistory() {
@@ -54,6 +52,13 @@ export default function ReportHistory() {
   useEffect(() => {
     loadReports();
   }, [loadReports]);
+
+  const parseDate = (dateStr: string) => {
+    if (!dateStr) return new Date();
+    const d = new Date(dateStr);
+    // Compensate for backend TypeORM timezone shift (+7 hours)
+    return new Date(d.getTime() + 7 * 60 * 60 * 1000);
+  };
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
@@ -137,6 +142,7 @@ export default function ReportHistory() {
             onChange={(val) => setTypeFilter(val)}
             options={[
               { value: '', label: 'Semua Jenis Laporan' },
+              { value: 'REVISED', label: 'Tampilkan Hanya Laporan Revisi' },
               ...formTypes.map(t => ({ value: t.id, label: t.label }))
             ]}
             placeholder="Semua Jenis Laporan"
@@ -213,8 +219,8 @@ export default function ReportHistory() {
                     </td>
                     <td className={styles.reportId}>
                       <Link href={`/reports/view/${report.id}`}>
-                        {report.id}
-                        {report.id.includes('-REV-') && <span className={styles.revBadge}>REVISI</span>}
+                        {report.id.replace(/-REV\d*-/, '-')}
+                        {report.id.includes('-REV') && <span className={styles.revBadge}>REVISI</span>}
                       </Link>
                     </td>
                     <td>
@@ -230,8 +236,8 @@ export default function ReportHistory() {
                     </td>
                     <td>
                       <div className={styles.dateCell}>
-                        <span>{new Date(report.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
-                        <small>{new Date(report.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</small>
+                        <span>{parseDate(report.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
+                        <small>{parseDate(report.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB</small>
                       </div>
                     </td>
                     <td>
@@ -249,6 +255,14 @@ export default function ReportHistory() {
                             ? `/reports/cooling2?editId=${report.id}`
                             : report.form_type === 'COOLING_3'
                             ? `/reports/cooling3?editId=${report.id}`
+                            : report.form_type === 'COOLING_WARM'
+                            ? `/reports/reportwarm?editId=${report.id}`
+                            : report.form_type === 'REWORK'
+                            ? `/reports/rework?editId=${report.id}`
+                            : report.form_type === 'COMMISSIONING'
+                            ? `/reports/graphic-record?editId=${report.id}`
+                            : report.form_type === 'QC_SERVICE'
+                            ? `/reports/qc-service?editId=${report.id}`
                             : `/reports/inspection?editId=${report.id}`}
                           title="Edit Laporan"
                           className={styles.editBtn}
@@ -309,8 +323,8 @@ export default function ReportHistory() {
               <div key={report.id} className={styles.mobileCard}>
                 <div className={styles.mobileCardHeader}>
                   <span className={styles.reportId} style={{ fontSize: '0.85rem' }}>
-                    {report.id}
-                    {report.id.includes('-REV-') && <span className={styles.revBadge} style={{ fontSize: '0.6rem' }}>REVISI</span>}
+                    {report.id.replace(/-REV\d*-/, '-')}
+                    {report.id.includes('-REV') && <span className={styles.revBadge} style={{ fontSize: '0.6rem' }}>REVISI</span>}
                   </span>
                   <span className={styles.typeBadge} style={{ fontSize: '0.65rem', padding: '3px 8px' }}>
                     {formTypes.find(t => t.id === report.form_type)?.label.split(' ')[0] || report.form_type}
@@ -329,7 +343,7 @@ export default function ReportHistory() {
                   <div className={styles.metaField}>
                     <span className={styles.metaLabel}>Tanggal:</span>
                     <span className={styles.metaValue}>
-                      {new Date(report.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      {parseDate(report.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })} {parseDate(report.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
                     </span>
                   </div>
                   <div className={styles.metaField}>
@@ -347,6 +361,14 @@ export default function ReportHistory() {
                         ? `/reports/cooling2?editId=${report.id}`
                         : report.form_type === 'COOLING_3'
                         ? `/reports/cooling3?editId=${report.id}`
+                        : report.form_type === 'COOLING_WARM'
+                        ? `/reports/reportwarm?editId=${report.id}`
+                        : report.form_type === 'REWORK'
+                        ? `/reports/rework?editId=${report.id}`
+                        : report.form_type === 'COMMISSIONING'
+                        ? `/reports/graphic-record?editId=${report.id}`
+                        : report.form_type === 'QC_SERVICE'
+                        ? `/reports/qc-service?editId=${report.id}`
                         : `/reports/inspection?editId=${report.id}`
                     )}
                     className={`${styles.mobileActionBtn} ${styles.mobileActionEdit}`}

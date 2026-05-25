@@ -12,11 +12,11 @@ interface Props {
 
 // ── Reusable primitives ──────────────────────────────────────
 
-function SectionTitle({ number, title, icon }: { number: string; title: string; icon?: string }) {
+function SectionTitle({ number, title }: { number: string; title: string; icon?: string }) {
   return (
     <div className={styles.sectionTitle}>
       <span className={styles.sectionNumber}>{number}</span>
-      <span className={styles.sectionTitleText}>{icon} {title}</span>
+      <span className={styles.sectionTitleText}>{title}</span>
     </div>
   );
 }
@@ -105,7 +105,7 @@ function PerfRow({ label, requirement, condition, value, result, remarks, onValu
       <div className={formStyles.perfLeft}>
         <div className={formStyles.perfLabel}>{label}</div>
         <div className={formStyles.perfReq}>{requirement}</div>
-        <div className={formStyles.perfCond}>📋 {condition}</div>
+        <div className={formStyles.perfCond}>{condition}</div>
       </div>
       <div className={formStyles.perfRight}>
         <Field label="Nilai Test">
@@ -204,7 +204,7 @@ export default function InspectionReportForm({ data, onChange }: Props) {
     <div className={styles.formWrapper}>
 
       {/* ── 1. INFORMASI DOKUMEN ── */}
-      <SectionTitle number="1" title="Informasi Dokumen" icon="📋" />
+      <SectionTitle number="1" title="Informasi Dokumen" />
       <Card>
         <TwoCol>
           <Field label="Nomor Order Dokumen" hint="Contoh: ITR-2025-001">
@@ -223,7 +223,7 @@ export default function InspectionReportForm({ data, onChange }: Props) {
       </Card>
 
       {/* ── 2. DIMENSI & UKURAN ── */}
-      <SectionTitle number="2" title="Dimensi & Ukuran Kabinet" icon="📐" />
+      <SectionTitle number="2" title="Dimensi & Ukuran Kabinet" />
       <Card title="Dimensi Body (mm)">
         <ThreeCol>
           <Field label="Panjang / Length (mm)">
@@ -258,9 +258,9 @@ export default function InspectionReportForm({ data, onChange }: Props) {
       </Card>
 
       {/* ── 3. VISUAL CHECK LUAR ── */}
-      <SectionTitle number="3" title="Visual Check — Bagian Luar" icon="👁️" />
+      <SectionTitle number="3" title="Visual Check — Bagian Luar" />
       <p className={styles.perfNote}>
-        💡 Tekan <strong>PASS</strong> jika kondisi sesuai standar, tekan <strong>FAIL</strong> jika tidak sesuai.
+        Tekan <strong>PASS</strong> jika kondisi sesuai standar, tekan <strong>FAIL</strong> jika tidak sesuai.
       </p>
       <Card>
         <div className={formStyles.visualList}>
@@ -277,7 +277,7 @@ export default function InspectionReportForm({ data, onChange }: Props) {
       </Card>
 
       {/* ── 4. VISUAL CHECK DALAM ── */}
-      <SectionTitle number="4" title="Visual Check — Bagian Dalam Kabinet" icon="🔍" />
+      <SectionTitle number="4" title="Visual Check — Bagian Dalam Kabinet" />
       <Card>
         <div className={formStyles.visualList}>
           {INT_LABELS.map((label, i) => (
@@ -293,9 +293,9 @@ export default function InspectionReportForm({ data, onChange }: Props) {
       </Card>
 
       {/* ── 5. PERFORMANCE REQUIREMENTS ── */}
-      <SectionTitle number="5" title="Performance Requirements — Sistem & Elektrikal" icon="⚡" />
+      <SectionTitle number="5" title="Performance Requirements — Sistem & Elektrikal" />
       <p className={styles.perfNote}>
-        💡 Isi nilai hasil pengujian, lalu pilih PASS atau FAIL untuk setiap item.
+        Isi nilai hasil pengujian, lalu pilih PASS atau FAIL untuk setiap item.
       </p>
       <Card>
         <div className={formStyles.perfList}>
@@ -320,7 +320,7 @@ export default function InspectionReportForm({ data, onChange }: Props) {
       </Card>
 
       {/* ── 6. WORKS INVOLVED ── */}
-      <SectionTitle number="6" title="Pekerjaan yang Terlibat (Person-In-Charge)" icon="👷" />
+      <SectionTitle number="6" title="Pekerjaan yang Terlibat (Person-In-Charge)" />
       <Card>
         <div className={formStyles.worksList}>
           {works.map((w: any, i: number) => (
@@ -341,7 +341,7 @@ export default function InspectionReportForm({ data, onChange }: Props) {
       </Card>
 
       {/* ── 7. SPESIFIKASI UNIT ── */}
-      <SectionTitle number="7" title="Spesifikasi Unit & Catatan" icon="📝" />
+      <SectionTitle number="7" title="Spesifikasi Unit & Catatan" />
       <Card>
         <ThreeCol>
           <Field label="Warna (Color)" hint="Contoh: Stainless Steel">

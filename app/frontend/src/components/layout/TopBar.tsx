@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './TopBar.module.css';
-import { Search, Mail, Bell, ChevronDown, Menu, LogOut, QrCode } from 'lucide-react';
+import { Search, Mail, Bell, ChevronDown, Menu, LogOut, QrCode, Sun, Moon } from 'lucide-react';
 import QrScannerModal from './QrScannerModal';
 
 interface TopBarProps {
@@ -21,6 +21,24 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
 
   const [alerts, setAlerts] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
+    if (savedTheme) {
+      setTheme(savedTheme);
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    } else {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+  };
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -103,6 +121,12 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
           <QrCode size={16} />
           <span>Pindai QR</span>
         </button>
+
+        <div className={styles.iconContainer}>
+          <button className={styles.actionBtn} onClick={toggleTheme} title="Ganti Tema">
+            {theme === 'light' ? <Moon size={20} /> : <Sun size={20} style={{ color: '#FFB800' }} />}
+          </button>
+        </div>
 
         <div className={styles.iconContainer}>
           <button className={styles.actionBtn} onClick={() => router.push('/messages')} title="Buka Live Chat (Inbox)">

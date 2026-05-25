@@ -15,7 +15,7 @@ export class ReportsService {
   ) {}
 
   async create(dto: CreateServiceReportDto, user: User) {
-    const { unitId, ...reportData } = dto;
+    const { unitId, baseReportId, ...reportData } = dto;
     
     // Find latest version for this unit and form type
     const latest = await this.reportRepo.findOne({
@@ -25,13 +25,11 @@ export class ReportsService {
     
     const nextVersion = latest ? latest.version + 1 : 1;
     
-    // Revision Logic: 
     let reportId: string;
     if (dto.baseReportId) {
-      // If original is REP-HQ8OJWK, revision should be REP-REV-HQ8OJWK
-      // Strip existing prefixes to get the core ID
-      const coreId = dto.baseReportId.replace(/^(REP-REV-|REP-)/, '');
-      reportId = `REP-REV-${coreId}`;
+      // Strip existing prefixes (REP-, REP-REV-, REP-REV2-, etc) to get the core ID
+      const coreId = dto.baseReportId.replace(/^(REP-REV\d*-|REP-)/, '');
+      reportId = `REP-REV${nextVersion > 2 ? nextVersion : ''}-${coreId}`;
     } else {
       reportId = generatePrefixedId('REP');
     }
@@ -70,7 +68,7 @@ export class ReportsService {
     return report;
   }
 
-  async findAll(page: number = 1, limit: number = 10, type?: FormType) {
+  async findAll(page: number = 1, limit: number = 10, type?: FormType | 'REVISED') {
     const query = this.reportRepo.createQueryBuilder('report')
       .leftJoinAndSelect('report.unit', 'unit')
       .leftJoinAndSelect('report.created_by', 'user')
@@ -79,7 +77,11 @@ export class ReportsService {
       .take(limit);
 
     if (type) {
-      query.andWhere('report.form_type = :type', { type });
+      if (type === 'REVISED') {
+        query.andWhere("report.id LIKE '%-REV%'");
+      } else {
+        query.andWhere('report.form_type = :type', { type });
+      }
     }
 
     const [data, total] = await query.getManyAndCount();
@@ -100,6 +102,24 @@ export class ReportsService {
     } catch (err: any) {
       console.error('[ReportsService] Delete Error:', err);
       throw new InternalServerErrorException(`Gagal menghapus laporan: ${err.message}`);
+    }
+  }
+
+  async update(id: string, updateData: any) {
+    const report = await this.findOne(id);
+    
+    if (updateData.data) {
+      report.data = updateData.data;
+    }
+    if (updateData.photo_urls && updateData.photo_urls.length > 0) {
+      report.photo_urls = updateData.photo_urls;
+    }
+    
+    try {
+      return await this.reportRepo.save(report);
+    } catch (err: any) {
+      console.error('[ReportsService] Update Error:', err);
+      throw new InternalServerErrorException(`Gagal mengupdate laporan: ${err.message}`);
     }
   }
 }

@@ -1,64 +1,147 @@
-/* LOGIN — Dark Background + Light Glass Card
-   Keep dark immersive feel for login, but fix input bug:
-   blur() reduced to 16px to prevent browser jank/freeze */
+/* ============================================================
+   LOGIN PAGE — Image 2 Replica Design
+   ============================================================ */
 
+/* ── Full-screen wrapper ── */
 .container {
   min-height: 100vh;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  background:
-    radial-gradient(ellipse at 20% 25%, rgba(46, 91, 255, 0.25) 0%, transparent 55%),
-    radial-gradient(ellipse at 80% 75%, rgba(0, 196, 140, 0.1) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 50%, rgba(0, 31, 63, 0.95) 0%, #000a1a 100%);
-  padding: 20px;
+  align-items: stretch;
+  background: #000510;
 }
 
-/* FIX: Reduced blur from 40px → 16px to eliminate input lag/freeze */
-.loginCard {
-  width: 100%;
-  max-width: 440px;
-  background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 28px;
-  padding: 48px 40px;
-  box-shadow:
-    0 24px 60px rgba(0, 0, 0, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
-  /* FIX: will-change promotes to GPU layer, prevents input freeze */
-  will-change: transform;
-  transform: translateZ(0);
+/* ── LEFT PANEL — Brand / Logo ── */
+.leftPanel {
+  flex: 0 0 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 48px;
+  background: radial-gradient(circle at 50% 50%, #061947 0%, #02071a 100%);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+/* subtle radial glow behind logo */
+.leftPanel::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 420px;
+  height: 420px;
+  background: radial-gradient(circle, rgba(46, 91, 255, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.brandLogo {
+  width: 180px;
+  height: 180px;
+  margin-bottom: 32px;
+  filter: drop-shadow(0 0 32px rgba(46, 91, 255, 0.4));
+  position: relative;
+  z-index: 1;
+  animation: floatLogo 6s ease-in-out infinite;
+}
+
+@keyframes floatLogo {
+  0% {
+    transform: translateY(0px);
+    filter: drop-shadow(0 0 32px rgba(46, 91, 255, 0.4));
+  }
+  50% {
+    transform: translateY(-12px) scale(1.02);
+    filter: drop-shadow(0 0 50px rgba(255, 215, 0, 0.6)); /* Memancarkan cahaya emas */
+  }
+  100% {
+    transform: translateY(0px);
+    filter: drop-shadow(0 0 32px rgba(46, 91, 255, 0.4));
+  }
+}
+
+.brandName {
+  font-family: var(--font-heading);
+  font-size: 2.2rem;
+  font-weight: 900;
+  letter-spacing: 8px;
+  color: #ffffff;
+  text-transform: uppercase;
+  margin-bottom: 10px;
   position: relative;
   z-index: 1;
 }
 
-.header {
-  text-align: center;
-  margin-bottom: 40px;
-}
-
-.logo {
-  font-family: var(--font-heading);
-  font-size: 2rem;
-  letter-spacing: 5px;
-  color: var(--color-optic-white);
-  margin-bottom: 8px;
-}
-
-.subtitle {
-  color: rgba(255, 255, 255, 0.45);
-  font-size: 0.8rem;
-  text-transform: uppercase;
+.brandTagline {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
   letter-spacing: 3px;
+  text-transform: uppercase;
   font-weight: 500;
+  text-align: center;
+  position: relative;
+  z-index: 1;
 }
 
+/* ── RIGHT PANEL — Form ── */
+.rightPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+  background: #000510; /* Solid dark like Image 3 right side */
+}
+
+/* ── Floating Form Card inside Right Panel ── */
+.formWrapper {
+  width: 100%;
+  max-width: 440px;
+  background: rgba(10, 24, 60, 0.6);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(46, 91, 255, 0.2);
+  border-radius: 24px;
+  padding: 48px 44px;
+  box-shadow: 
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset, 
+    0 24px 60px rgba(0, 0, 0, 0.6);
+}
+
+.formHeader {
+  margin-bottom: 36px;
+  text-align: left;
+}
+
+.formEyebrow {
+  font-size: 1rem; /* Fixed typo from '1 rem' */
+  color: rgba(255, 255, 255, 0.7) !important;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.formTitle {
+  font-family: var(--font-heading);
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #ffffff !important; /* Force override any global settings */
+  margin-bottom: 8px;
+  line-height: 1.2;
+}
+
+.formSubtitle {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.8) !important; /* Force override any global settings */
+}
+
+/* ── Form ── */
 .form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
 }
 
 .inputGroup {
@@ -68,33 +151,68 @@
 }
 
 .inputGroup label {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.82rem;
-  font-weight: 600;
-  letter-spacing: 0.03em;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.85rem;
+  font-weight: 500;
 }
 
-/* FIX: Input uses simple bg, no backdrop-filter — prevents freeze */
-.inputGroup input {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: var(--radius-md);
-  padding: 14px 16px;
-  color: var(--color-optic-white);
+/* ── Input Wrappers ── */
+.inputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.inputIcon {
+  position: absolute;
+  left: 16px;
+  color: rgba(255, 255, 255, 0.4);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.inputWrapper input {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 16px 18px;
+  color: #ffffff;
   font-size: 0.95rem;
   font-family: var(--font-body);
-  transition: border-color 0.2s ease, background 0.2s ease;
-  width: 100%;
-  /* FIX: Explicit pointer-events to prevent click-blocking */
+  transition: all 0.2s ease;
   pointer-events: auto;
   position: relative;
   z-index: 2;
+  box-sizing: border-box;
+  width: 100%;
 }
 
-.inputGroup input::placeholder {
-  color: rgba(255, 255, 255, 0.3);
+/* Chrome Autofill Fix */
+.inputWrapper input:-webkit-autofill,
+.inputWrapper input:-webkit-autofill:hover,
+.inputWrapper input:-webkit-autofill:focus,
+.inputWrapper input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px #08173b inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  transition: background-color 5000s ease-in-out 0s;
 }
 
+.inputGroup input.withIcon {
+  padding-left: 44px;
+}
+
+.inputWrapper input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.inputWrapper input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 24px rgba(46, 120, 255, 0.6);
+}
+
+/* ── Password wrapper ── */
 .passwordWrapper {
   position: relative;
   display: flex;
@@ -102,12 +220,13 @@
 }
 
 .passwordWrapper input {
+  width: 100%;
   padding-right: 48px;
 }
 
 .eyeBtn {
   position: absolute;
-  right: 12px;
+  right: 14px;
   background: none;
   border: none;
   color: rgba(255, 255, 255, 0.4);
@@ -115,64 +234,128 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 8px;
-  transition: color 0.2s ease;
+  padding: 4px;
   z-index: 3;
+  transition: color 0.2s ease;
 }
 
 .eyeBtn:hover {
-  color: var(--color-optic-white);
+  color: #ffffff;
 }
 
-.inputGroup input:focus {
-  outline: none;
-  border-color: var(--color-cobalt-blue);
-  background: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 0 0 3px rgba(46, 91, 255, 0.2);
+/* ── Forgot Password ── */
+.forgotPassword {
+  margin-top: -12px;
+  margin-bottom: 8px;
 }
 
+.forgotPassword a {
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-decoration: underline;
+  transition: opacity 0.2s ease;
+}
+
+.forgotPassword a:hover {
+  opacity: 0.8;
+}
+
+/* ── Error ── */
 .errorMessage {
   color: #ff6b6b;
   font-size: 0.85rem;
   background: rgba(255, 107, 107, 0.1);
   padding: 12px 14px;
-  border-radius: var(--radius-sm);
+  border-radius: 8px;
   border-left: 3px solid #ff6b6b;
 }
 
+/* ── Login button ── */
 .loginButton {
-  background: linear-gradient(135deg, var(--color-cobalt-blue) 0%, #1a47e5 100%);
-  color: white;
+  background: #000000;
+  color: #ffffff;
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: 12px;
   padding: 16px;
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.25s ease;
-  margin-top: 8px;
-  box-shadow: 0 4px 16px rgba(46, 91, 255, 0.35);
-  letter-spacing: 0.03em;
-  font-family: var(--font-body);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  width: 100%;
 }
 
-.loginButton:hover {
+.loginButton:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(46, 91, 255, 0.45);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
 .loginButton:disabled {
-  opacity: 0.6;
+  opacity: 0.55;
   cursor: not-allowed;
   transform: none;
 }
 
-.footer {
-  margin-top: 36px;
-  text-align: center;
-}
+/* ── Responsive: stack on mobile ── */
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+    align-items: stretch;
+  }
 
-.footer p {
-  color: rgba(255, 255, 255, 0.25);
-  font-size: 0.75rem;
+  .leftPanel {
+    flex: 0 0 auto;
+    padding: 40px 24px 30px;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .leftPanel::before {
+    width: 250px;
+    height: 250px;
+  }
+
+  .brandLogo {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 16px;
+  }
+
+  .brandName {
+    font-size: 1.5rem;
+    letter-spacing: 5px;
+    margin-bottom: 4px;
+  }
+
+  .brandTagline {
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+  }
+
+  .rightPanel {
+    padding: 30px 20px;
+    justify-content: flex-start;
+  }
+
+  .formWrapper {
+    max-width: 100%;
+    padding: 32px 24px;
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border: none;
+    box-shadow: none;
+  }
+
+  .formTitle {
+    font-size: 1.8rem;
+  }
+
+  .formSubtitle {
+    font-size: 0.85rem;
+  }
+
+  .form {
+    gap: 20px;
+  }
 }

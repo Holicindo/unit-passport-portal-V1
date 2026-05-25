@@ -9,6 +9,10 @@ import CoolingReportTemplate from '@/components/reports/CoolingReportTemplate';
 import Cooling2ReportTemplate from '@/components/reports/Cooling2ReportTemplate';
 import Cooling3ReportTemplate from '@/components/reports/Cooling3ReportTemplate';
 import WarmReportTemplate from '@/components/reports/WarmReportTemplate';
+import ReworkReportTemplate from '@/components/reports/ReworkReportTemplate';
+import GraphicRecordTemplate from '@/components/reports/GraphicRecordTemplate';
+import QcServiceTemplate from '@/components/reports/QcServiceTemplate';
+import IssueAnalysisTemplate from '@/components/reports/IssueAnalysisTemplate';
 import styles from './view.module.css';
 
 export default function ReportView() {
@@ -60,7 +64,7 @@ export default function ReportView() {
           </button>
         </div>
         <div className={styles.error}>
-          <h3>⚠️ Kesalahan Terjadi</h3>
+          <h3>Kesalahan Terjadi</h3>
           <p>{error || 'Data laporan kosong.'}</p>
         </div>
       </div>
@@ -102,12 +106,36 @@ export default function ReportView() {
           <Cooling3ReportTemplate mode="view" data={report.data} unit={report.unit} />
         ) : report.form_type === 'COOLING_WARM' ? (
           <WarmReportTemplate mode="view" data={report.data} unit={report.unit} />
+        ) : report.form_type === 'REWORK' ? (
+          <ReworkReportTemplate mode="view" data={report.data} unit={report.unit} />
+        ) : report.form_type === 'COMMISSIONING' ? (
+          (() => {
+            // Parse photo_urls (format: 'slot:url') back into data.images
+            const images: Record<string, string> = { ...(report.data?.images || {}) };
+            if (Array.isArray(report.photo_urls)) {
+              report.photo_urls.forEach((entry: string) => {
+                const idx = entry.indexOf(':');
+                if (idx > 0) {
+                  const slot = entry.substring(0, idx);
+                  const url = entry.substring(idx + 1);
+                  if (['top','front','back','left','right'].includes(slot)) {
+                    images[slot] = url;
+                  }
+                }
+              });
+            }
+            return <GraphicRecordTemplate data={{ ...report.data, images }} unit={report.unit} />;
+          })()
+        ) : report.form_type === 'QC_SERVICE' ? (
+          <QcServiceTemplate data={report.data} unit={report.unit} />
+        ) : report.form_type === 'ISSUE_ANALYSIS' ? (
+          <IssueAnalysisTemplate mode="view" data={report.data} unit={report.unit} />
         ) : (
           <InspectionReportTemplate mode="view" data={report.data} unit={report.unit} />
         )}
 
-        {/* Optional: Photo Documentation Section at the bottom of the screen */}
-        {report.photo_urls && report.photo_urls.length > 0 && (
+        {/* Photo Documentation — hidden for COMMISSIONING (photos are inside the template) */}
+        {report.photo_urls && report.photo_urls.length > 0 && report.form_type !== 'COMMISSIONING' && (
           <div style={{
             marginTop: '20px',
             background: '#ffffff',
