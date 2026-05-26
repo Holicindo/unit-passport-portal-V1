@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Get, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -23,9 +23,16 @@ export class AuthController {
     return this.authService.register(
       registerDto.email,
       registerDto.password,
+      registerDto.name,
       registerDto.role,
       registerDto.client_id,
       registerDto.partner_id,
     );
+  }
+
+  @Get('users')
+  @ApiOperation({ summary: 'Get all users' })
+  async getUsers() {
+    return this.authService.findAll();
   }
 }

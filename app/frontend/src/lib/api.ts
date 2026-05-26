@@ -22,6 +22,7 @@ api.interceptors.request.use((config) => {
 
 export const authApi = {
   login: (credentials: any) => api.post('/auth/login', credentials),
+  register: (data: any) => api.post('/auth/register', data),
 };
 
 export const unitApi = {
@@ -32,6 +33,13 @@ export const unitApi = {
   requestService: (id: string, data: any) => api.post(`/units/${id}/request-service`, data),
   create: (data: any) => api.post('/units', data),
   update: (id: string, data: any) => api.patch(`/units/${id}`, data),
+  uploadMedia: (files: File[]) => {
+    const formData = new FormData();
+    files.forEach(f => formData.append('files', f));
+    return api.post('/units/upload-media', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
 };
 
 export const reportApi = {
@@ -72,4 +80,8 @@ export const messageApi = {
   startConversation: (targetUserId: string) => api.post('/messages/conversations/start', { targetUserId }),
   getChatHistory: (id: string) => api.get(`/messages/conversations/${id}`),
   sendMessage: (id: string, content: string) => api.post(`/messages/conversations/${id}/send`, { content }),
+};
+
+export const userApi = {
+  findAll: () => api.get('/auth/users'),
 };

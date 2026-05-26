@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, DragEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { unitApi } from '@/lib/api';
-import { ArrowLeft, Loader2, Save, Wrench, HelpCircle, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, Loader2, Save, Wrench, HelpCircle, ShieldAlert, Upload, ImageIcon, X } from 'lucide-react';
 import { categorizeUnitType } from '@/lib/utils';
 import styles from './new.module.css';
 
@@ -31,6 +31,17 @@ export default function RegisterUnitPage() {
   const [warrantyStatus, setWarrantyStatus] = useState('ACTIVE');
   const [warrantyExpiry, setWarrantyExpiry] = useState('');
   
+  // Media upload states
+  const [testRunFile, setTestRunFile] = useState<File | null>(null);
+  const [testRunPreview, setTestRunPreview] = useState<string | null>(null);
+  const [diagramFile, setDiagramFile] = useState<File | null>(null);
+  const [diagramPreview, setDiagramPreview] = useState<string | null>(null);
+  const [uploadingMedia, setUploadingMedia] = useState(false);
+  const [dragActiveTestRun, setDragActiveTestRun] = useState(false);
+  const [dragActiveDiagram, setDragActiveDiagram] = useState(false);
+  const testRunInputRef = useRef<HTMLInputElement>(null);
+  const diagramInputRef = useRef<HTMLInputElement>(null);
+
   // UI states
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,6 +69,61 @@ export default function RegisterUnitPage() {
     };
     fetchClients();
   }, []);
+
+  // Drag & Drop handlers
+  const handleFileSelect = (file: File, type: 'testRun' | 'diagram') => {
+    if (!file.type.startsWith('image/')) {
+      setError('Hanya file gambar (JPG, PNG, WEBP) yang diperbolehkan.');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Ukuran file maksimal 10MB.');
+      return;
+    }
+    const preview = URL.createObjectURL(file);
+    if (type === 'testRun') {
+      setTestRunFile(file);
+      setTestRunPreview(preview);
+    } else {
+      setDiagramFile(file);
+      setDiagramPreview(preview);
+    }
+  };
+
+  const handleDrop = (e: DragEvent<HTMLDivElement>, type: 'testRun' | 'diagram') => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (type === 'testRun') setDragActiveTestRun(false);
+    else setDragActiveDiagram(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleFileSelect(file, type);
+  };
+
+  const handleDragOver = (e: DragEvent<HTMLDivElement>, type: 'testRun' | 'diagram') => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (type === 'testRun') setDragActiveTestRun(true);
+    else setDragActiveDiagram(true);
+  };
+
+  const handleDragLeave = (e: DragEvent<HTMLDivElement>, type: 'testRun' | 'diagram') => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (type === 'testRun') setDragActiveTestRun(false);
+    else setDragActiveDiagram(false);
+  };
+
+  const removeFile = (type: 'testRun' | 'diagram') => {
+    if (type === 'testRun') {
+      if (testRunPreview) URL.revokeObjectURL(testRunPreview);
+      setTestRunFile(null);
+      setTestRunPreview(null);
+    } else {
+      if (diagramPreview) URL.revokeObjectURL(diagramPreview);
+      setDiagramFile(null);
+      setDiagramPreview(null);
+    }
+  };
 
   // Intercept form submit to perform client-side validation and trigger custom modal
   const handlePreSubmit = (e: React.FormEvent) => {
@@ -93,11 +159,40 @@ export default function RegisterUnitPage() {
     setLoading(true);
     setError(null);
 
-    // Build perfect request payload exactly matching backend CreateUnitDto constraints
-    const payload = {
+    // Step 1: Upload media files if selected
+    let testRunUrl: string | undefined;
+    let diagramUrl: string | undefined;
+    
+    const filesToUpload: File[] = [];
+    const fileLabels: ('testRun' | 'diagram')[] = [];
+    if (testRunFile) { filesToUpload.push(testRunFile); fileLabels.push('testRun'); }
+    if (diagramFile) { filesToUpload.push(diagramFile); fileLabels.push('diagram'); }
+
+    if (filesToUpload.length > 0) {
+      try {
+        setUploadingMedia(true);
+        const uploadRes = await unitApi.uploadMedia(filesToUpload);
+        const uploadedFiles = uploadRes.data;
+        fileLabels.forEach((label, idx) => {
+          if (label === 'testRun') testRunUrl = uploadedFiles[idx]?.url;
+          if (label === 'diagram') diagramUrl = uploadedFiles[idx]?.url;
+        });
+      } catch (err) {
+        console.error('Upload media error:', err);
+        setError('Gagal mengunggah gambar. Silakan coba lagi.');
+        setLoading(false);
+        setUploadingMedia(false);
+        return;
+      } finally {
+        setUploadingMedia(false);
+      }
+    }
+
+    // Step 2: Build perfect request payload exactly matching backend CreateUnitDto constraints
+    const payload: any = {
       serial_number: serialNumber.trim(),
       model_name: modelName.trim(),
-      current_client_id: clientId, // UUID string stringently expected by NestJS
+      current_client_id: clientId,
       specs: {
         type: unitType,
         ...(unitType === 'SHOWCASE' ? {
@@ -111,8 +206,9 @@ export default function RegisterUnitPage() {
         }),
         warranty_status: warrantyStatus,
       },
-      // warranty_expiry must sit at top-level of the body as defined in CreateUnitDto
-      warranty_expiry: warrantyExpiry || undefined
+      warranty_expiry: warrantyExpiry || undefined,
+      test_run_image_url: testRunUrl || undefined,
+      diagram_image_url: diagramUrl || undefined,
     };
 
     try {
@@ -314,6 +410,84 @@ export default function RegisterUnitPage() {
                 onChange={(e) => setWarrantyExpiry(e.target.value)}
                 autoComplete="new-password"
               />
+            </div>
+          </div>
+        </div>
+
+        {/* Section 4: Media & Verifikasi Pabrik */}
+        <div className={styles.formSection}>
+          <h3 className={styles.sectionTitle}>4. Media & Verifikasi Pabrik (Opsional)</h3>
+          <div className={styles.dropZoneGrid}>
+            {/* Test Run Photo */}
+            <div className={styles.dropZoneWrapper}>
+              <label>Foto Test Run & Quality Control</label>
+              <div
+                className={`${styles.dropZone} ${dragActiveTestRun ? styles.dropZoneActive : ''}`}
+                onClick={() => testRunInputRef.current?.click()}
+                onDrop={(e) => handleDrop(e, 'testRun')}
+                onDragOver={(e) => handleDragOver(e, 'testRun')}
+                onDragLeave={(e) => handleDragLeave(e, 'testRun')}
+              >
+                {testRunPreview ? (
+                  <div className={styles.dropZonePreview}>
+                    <img src={testRunPreview} alt="Test Run Preview" />
+                    <button type="button" className={styles.dropZoneRemove} onClick={(e) => { e.stopPropagation(); removeFile('testRun'); }}>
+                      <X size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <Upload size={32} className={styles.dropZoneIcon} />
+                    <p className={styles.dropZoneText}>
+                      <strong>Klik atau seret foto</strong> ke area ini<br/>
+                      JPG, PNG, WEBP — Maks 10MB
+                    </p>
+                  </>
+                )}
+                <input
+                  ref={testRunInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={(e) => { if (e.target.files?.[0]) handleFileSelect(e.target.files[0], 'testRun'); }}
+                />
+              </div>
+            </div>
+
+            {/* Diagram / Blueprint */}
+            <div className={styles.dropZoneWrapper}>
+              <label>Diagram Sirkulasi / Cetak Biru Digital</label>
+              <div
+                className={`${styles.dropZone} ${dragActiveDiagram ? styles.dropZoneActive : ''}`}
+                onClick={() => diagramInputRef.current?.click()}
+                onDrop={(e) => handleDrop(e, 'diagram')}
+                onDragOver={(e) => handleDragOver(e, 'diagram')}
+                onDragLeave={(e) => handleDragLeave(e, 'diagram')}
+              >
+                {diagramPreview ? (
+                  <div className={styles.dropZonePreview}>
+                    <img src={diagramPreview} alt="Diagram Preview" />
+                    <button type="button" className={styles.dropZoneRemove} onClick={(e) => { e.stopPropagation(); removeFile('diagram'); }}>
+                      <X size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <ImageIcon size={32} className={styles.dropZoneIcon} />
+                    <p className={styles.dropZoneText}>
+                      <strong>Klik atau seret diagram</strong> ke area ini<br/>
+                      JPG, PNG, WEBP — Maks 10MB
+                    </p>
+                  </>
+                )}
+                <input
+                  ref={diagramInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={(e) => { if (e.target.files?.[0]) handleFileSelect(e.target.files[0], 'diagram'); }}
+                />
+              </div>
             </div>
           </div>
         </div>

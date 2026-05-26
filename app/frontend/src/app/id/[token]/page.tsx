@@ -85,6 +85,7 @@ export default function QrPassportPage() {
   const [serviceNotes, setServiceNotes] = useState('');
   const [serviceName, setServiceName] = useState('');
   const [servicePhone, setServicePhone] = useState('');
+  const [storeName, setStoreName] = useState('');
   const [routingResult, setRoutingResult] = useState<any>(null);
   const [routingLoading, setRoutingLoading] = useState(false);
 
@@ -97,6 +98,7 @@ export default function QrPassportPage() {
 
   // Admin Transfer state
   const [showTransferModal, setShowTransferModal] = useState(false);
+  const [selectedMedia, setSelectedMedia] = useState<string | null>(null);
   const [clients, setClients] = useState<any[]>([]);
   const [targetClientId, setTargetClientId] = useState('');
   const [transferReason, setTransferReason] = useState('');
@@ -105,44 +107,53 @@ export default function QrPassportPage() {
   // Feature Flags
   const showServiceHistory = false; // TODO: Set to true to show Service History Panel
 
-  // Load user from localStorage
+  // Load user from localStorage (safe parse)
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('user');
-      if (stored) {
-        setUser(JSON.parse(stored));
+      try {
+        const stored = localStorage.getItem('user');
+        if (stored && stored !== 'undefined' && stored !== 'null') {
+          setUser(JSON.parse(stored));
+        }
+      } catch (err) {
+        console.error('Failed to parse user data in QR Passport', err);
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
       }
     }
   }, []);
 
-  // Fetch unit data
+  // Fetch unit data — PUBLIC first, then enrich if logged in
   const loadUnitData = async () => {
     setLoading(true);
     setError(null);
     try {
-      // Strict Security Block: Require Login
-      const storedUser = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!) : null;
-      
-      if (!storedUser) {
-        // Stop execution and force login
-        router.push(`/login?redirect=/id/${token}`);
-        return; 
-      }
-
-      // If logged in, proceed to fetch
+      // Step 1: Always fetch public unit data (no auth required)
       const { data: publicUnit } = await unitApi.findByQrToken(token as string);
       
       if (!publicUnit) {
         throw new Error('Unit tidak ditemukan');
       }
 
-      if (storedUser.role === 'PARTNER' || storedUser.role === 'ADMIN') {
-        const { data: fullUnit } = await unitApi.findOne(publicUnit.id);
-        setUnit(fullUnit);
-      } else if (storedUser.role === 'CLIENT') {
-        const { data: fullUnit } = await unitApi.findOne(publicUnit.id);
-        setUnit(fullUnit);
+      // Step 2: If user is logged in, try to enrich with full data
+      let storedUser = null;
+      try {
+        const raw = localStorage.getItem('user');
+        if (raw && raw !== 'undefined' && raw !== 'null') {
+          storedUser = JSON.parse(raw);
+        }
+      } catch { /* ignore parse errors */ }
+
+      if (storedUser && localStorage.getItem('token')) {
+        try {
+          const { data: fullUnit } = await unitApi.findOne(publicUnit.id);
+          setUnit(fullUnit);
+        } catch {
+          // Fallback to public data if auth fails (401)
+          setUnit(publicUnit);
+        }
       } else {
+        // Guest view — show public data
         setUnit(publicUnit);
       }
     } catch (err: any) {
@@ -196,14 +207,22 @@ export default function QrPassportPage() {
     setRoutingLoading(true);
     try {
       const combinedNotes = `[${issueMainCategory}${issueSubCategory ? ` - ${issueSubCategory}` : ''}] ${serviceNotes}`.trim();
+      const contactInfo = storeName ? `${serviceName} (${storeName})` : serviceName;
       const { data } = await unitApi.requestService(unit.id, {
         city: unit.current_client?.city || unit.specs?.city || 'Jakarta',
         notes: combinedNotes,
-        contact_name: serviceName,
+        contact_name: contactInfo,
         contact_phone: servicePhone
       });
       setRoutingResult(data);
       loadUnitData(); // Refresh history
+      
+      // Auto-redirect to WhatsApp if fallback
+      if (data.routed_to === 'HQ_FALLBACK' && data.whatsapp_link) {
+        setTimeout(() => {
+          window.open(data.whatsapp_link, '_blank');
+        }, 1500); // 1.5 seconds delay so they can read the modal message first
+      }
     } catch (err: any) {
       console.error(err);
       alert('Gagal mengirim permintaan servis.');
@@ -327,185 +346,291 @@ export default function QrPassportPage() {
   const isWarrantyActive = expiryDate ? expiryDate > today : false;
 
   return (
-    <div className={styles.container}>
-      {/* Dynamic Header indicating access level */}
-      <header className={styles.header}>
-        <div className={styles.headerLeft}>
-          <button onClick={() => router.back()} className={styles.backBtn}>
-            <ArrowLeft size={16} />
-          </button>
-          <div>
-            <h1 className={styles.serialNumber}>{unit.serial_number}</h1>
+    <div className={styles.pageWrapper}>
+      {/* Background decorations */}
+      <div className={styles.dotGrid} aria-hidden="true" />
+      <div className={styles.dotGridRight} aria-hidden="true" />
+
+      <div className={styles.container}>
+        {/* Dynamic Header */}
+        <header className={styles.header}>
+          <div className={styles.headerLeft}>
+            <button onClick={() => router.back()} className={styles.backBtn}>
+              <ArrowLeft size={16} /> Kembali ke Daftar Unit
+            </button>
+            <div className={styles.titleRow}>
+              <h1 className={styles.serialNumber}>{unit.serial_number}</h1>
+              <span className={styles.verifiedBadgeTop}><CheckCircle2 size={16} /> Terverifikasi</span>
+            </div>
             <p className={styles.modelName}>{unit.model_name}</p>
           </div>
-        </div>
 
-        <div className={styles.accessBadge}>
-          {isGuest && <span className={`${styles.badge} ${styles.badgeGuest}`}>Level 1: Public Scan</span>}
-          {isClient && belongsToClient && <span className={`${styles.badge} ${styles.badgeClient}`}>Level 2: Fleet Owner</span>}
-          {hasClientRestriction && <span className={`${styles.badge} ${styles.badgeRestricted}`}>Level 2: Restricted</span>}
-          {isPartner && <span className={`${styles.badge} ${styles.badgePartner}`}>Level 3: Technical Partner</span>}
-          {isAdmin && <span className={`${styles.badge} ${styles.badgeAdmin}`}>Level 4: Administrator</span>}
-        </div>
-      </header>
-
-      {/* Main Digital Twin Grid */}
-      <div className={styles.grid}>
-        
-        {/* Left Card: Core Specifications */}
-        <section className={styles.card}>
-          <div className={styles.cardHeader}>
-            <Settings size={20} />
-            <h2>Digital Twin Specs</h2>
+          <div className={styles.headerRight}>
+            <div className={styles.accessBadgeTop}>
+              {isGuest && 'LEVEL 1: PUBLIC SCAN'}
+              {isClient && belongsToClient && 'LEVEL 2: FLEET OWNER'}
+              {hasClientRestriction && 'LEVEL 2: RESTRICTED'}
+              {isPartner && 'LEVEL 3: TECHNICAL PARTNER'}
+              {isAdmin && 'LEVEL 4: ADMINISTRATOR'}
+            </div>
+            <div className={styles.lastUpdated}>
+              <Clock size={12} /> Terakhir diperbarui: {new Date(unit.updated_at || Date.now()).toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' })} WIB
+            </div>
           </div>
-          <div className={styles.cardContent}>
-            <div className={styles.specItem}>
-              <span className={styles.specLabel}>Model</span>
-              <span className={styles.specValue}>{unit.model_name}</span>
-            </div>
-            <div className={styles.specItem}>
-              <span className={styles.specLabel}>Serial Number</span>
-              <span className={styles.specValue}>{unit.serial_number}</span>
-            </div>
-            
-            {/* Specs nested values (Compressor, Refrigerant, etc. OR Dimension, Power, Capacity) */}
-            {unit.specs?.type === 'MESIN' || (!unit.specs?.type && unit.specs?.dimension) ? (
-              <>
-                <div className={styles.specItem}>
-                  <span className={styles.specLabel}>Dimensi / Dimension</span>
-                  <span className={styles.specValue}>{unit.specs?.dimension || '—'}</span>
-                </div>
-                <div className={styles.specItem}>
-                  <span className={styles.specLabel}>Daya Listrik / Power</span>
-                  <span className={styles.specValue}>{unit.specs?.power || '—'}</span>
-                </div>
-                <div className={styles.specItem}>
-                  <span className={styles.specLabel}>Kapasitas / Capacity</span>
-                  <span className={styles.specValue}>{unit.specs?.capacity || '—'}</span>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className={styles.specItem}>
-                  <span className={styles.specLabel}>Kompresor / Compressor</span>
-                  <span className={styles.specValue}>{unit.specs?.compressor || '—'}</span>
-                </div>
-                <div className={styles.specItem}>
-                  <span className={styles.specLabel}>Refrigeran / Refrigerant</span>
-                  <span className={styles.specValue}>{unit.specs?.refrigerant || '—'}</span>
-                </div>
-                <div className={styles.specItem}>
-                  <span className={styles.specLabel}>Daya / Wattage</span>
-                  <span className={styles.specValue}>{unit.specs?.wattage || '—'}</span>
-                </div>
-              </>
-            )}
-            
-            {/* Warranty expiry */}
-            <div className={styles.specItem}>
-              <span className={styles.specLabel}>Status Garansi</span>
-              <span className={`${styles.warrantyStatus} ${isWarrantyActive ? styles.active : styles.expired}`}>
-                {isWarrantyActive ? 'AKTIF' : 'KEDALUWARSA / EXPIRED'}
-              </span>
-            </div>
-            <div className={styles.specItem}>
-              <span className={styles.specLabel}>Hingga / Expiry</span>
-              <span className={styles.specValue}>
-                {expiryDate ? expiryDate.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }) : '—'}
-              </span>
-            </div>
+        </header>
 
-            {/* Owner view only */}
-            {!isGuest && !hasClientRestriction && (
+        {/* 2-Column Top Grid Layout */}
+        <div className={styles.topGrid}>
+
+          {/* Column 2: Spesifikasi Utama */}
+          <section className={styles.card}>
+            <div className={styles.cardHeader}>
+              <div className={styles.cardHeaderLeft}>
+                <FileText size={16} color="#8bb2ff" />
+                <h2>Spesifikasi Utama</h2>
+              </div>
+            </div>
+            <div className={styles.cardContent}>
               <div className={styles.specItem}>
-                <span className={styles.specLabel}>Pelanggan Resmi / Client</span>
+                <span className={styles.specLabel}>Model</span>
+                <span className={styles.specValue}>{unit.model_name}</span>
+              </div>
+              <div className={styles.specItem}>
+                <span className={styles.specLabel}>Serial Number</span>
+                <span className={styles.specValue}>{unit.serial_number}</span>
+              </div>
+              
+              {unit.specs?.type === 'MESIN' || (!unit.specs?.type && unit.specs?.dimension) ? (
+                <>
+                  <div className={styles.specItem}>
+                    <span className={styles.specLabel}>Dimensi / Dimension</span>
+                    <span className={styles.specValue}>{unit.specs?.dimension || '—'}</span>
+                  </div>
+                  <div className={styles.specItem}>
+                    <span className={styles.specLabel}>Daya Listrik / Power</span>
+                    <span className={styles.specValue}>{unit.specs?.power || '—'}</span>
+                  </div>
+                  <div className={styles.specItem}>
+                    <span className={styles.specLabel}>Kapasitas / Capacity</span>
+                    <span className={styles.specValue}>{unit.specs?.capacity || '—'}</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className={styles.specItem}>
+                    <span className={styles.specLabel}>Kompresor / Compressor</span>
+                    <span className={styles.specValue}>{unit.specs?.compressor || '—'}</span>
+                  </div>
+                  <div className={styles.specItem}>
+                    <span className={styles.specLabel}>Refrigeran / Refrigerant</span>
+                    <span className={styles.specValue}>{unit.specs?.refrigerant || '—'}</span>
+                  </div>
+                  <div className={styles.specItem}>
+                    <span className={styles.specLabel}>Daya / Wattage</span>
+                    <span className={styles.specValue}>{unit.specs?.wattage || '—'}</span>
+                  </div>
+                </>
+              )}
+              
+              <div className={styles.specItem}>
+                <span className={styles.specLabel}>Dibuat Pada</span>
                 <span className={styles.specValue}>
-                  {unit.current_client?.company_name || 'Tidak ada pelanggan (Internal)'}
+                  {unit.created_at ? new Date(unit.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }) : '—'}
                 </span>
               </div>
-            )}
-          </div>
-        </section>
+              <div className={styles.specItem} style={{ borderBottom: 'none' }}>
+                <span className={styles.specLabel}>Lokasi Pembuatan</span>
+                <span className={styles.specValue}>Tangerang, Indonesia</span>
+              </div>
+              
+              <button className={styles.btnViewAll}>
+                Lihat Semua Spesifikasi <span>›</span>
+              </button>
+            </div>
+          </section>
 
-        {/* Right Card: Interactive Action Hub */}
-        <section className={`${styles.card} ${styles.actionCard}`}>
-          <div className={styles.cardHeader}>
-            <Wrench size={20} />
-            <h2>Layanan &amp; Dukungan</h2>
-          </div>
-          <div className={styles.cardContent}>
-            
-            {/* PUBLIC VIEW (Level 1) & RESTRICTED VIEW */}
-            {(isGuest || hasClientRestriction) && (
-              <div className={styles.publicPrompt}>
-                <p className={styles.restrictedText}>
-                  {hasClientRestriction 
-                    ? 'Anda tidak berwenang melihat riwayat servis lengkap untuk unit milik franchise lain.' 
-                    : 'Pindai publik membatasi akses detail riwayat servis dan diagram kelistrikan untuk melindungi rahasia industri.'}
-                </p>
-                <button className={styles.btnEmergency} onClick={() => setShowServiceModal(true)}>
-                  Laporkan Masalah / Request Service
-                </button>
-                {isGuest && (
-                  <p className={styles.guestNote}>
-                    Teknisi lapangan / pemilik unit? Silakan <span className={styles.loginLink} onClick={() => router.push('/login')}>Sign In</span> untuk melihat manual lengkap dan electrical circuits.
+          {/* Column 3: Layanan & Dukungan */}
+          <section className={`${styles.card} ${styles.actionCard}`}>
+            <div className={styles.cardHeader}>
+              <div className={styles.cardHeaderLeft}>
+                <Phone size={16} color="#8bb2ff" />
+                <h2>Layanan &amp; Dukungan</h2>
+              </div>
+            </div>
+            <div className={styles.cardContent} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', justifyContent: 'center' }}>
+              
+              {/* PUBLIC VIEW (Level 1) & RESTRICTED VIEW */}
+              {(isGuest || hasClientRestriction) && (
+                <div className={styles.publicPrompt}>
+                  <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
+                    <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(255, 255, 255, 0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                      <Lock size={20} color="#8f9bb3" />
+                    </div>
+                  </div>
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '8px' }}>
+                    {hasClientRestriction ? 'Akses Terbatas' : 'Layanan & Dukungan'}
+                  </h3>
+                  <p className={styles.restrictedText} style={{ fontSize: '0.85rem', color: '#8f9bb3', marginBottom: '24px', lineHeight: 1.5 }}>
+                    {hasClientRestriction 
+                      ? 'Anda tidak berwenang melihat riwayat servis lengkap untuk unit milik franchise lain.' 
+                      : 'Laporkan masalah teknis ke tim servis kami atau login untuk melihat riwayat servis lengkap.'}
                   </p>
-                )}
-              </div>
-            )}
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
+                    <button className={styles.btnEmergency} onClick={() => setShowServiceModal(true)}>
+                      Laporkan Masalah / Request Service
+                    </button>
+                    
+                    {isGuest && (
+                      <>
+                        <button className={styles.btnPrimary} onClick={() => router.push(`/login?redirect=/id/${token}`)}>
+                          <Lock size={16} /> Sign In (Manajemen Klien)
+                        </button>
+                        <p className={styles.guestNote} style={{ fontSize: '0.75rem', marginTop: '12px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '12px' }}>
+                          Pemilik unit, teknisi, atau mitra resmi Holicindo — masuk untuk melihat informasi lebih lengkap.
+                        </p>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
 
-            {/* CLIENT VIEW (Level 2) — Active Owner */}
-            {isClient && belongsToClient && (
-              <div className={styles.clientActions}>
-                <p className={styles.sectionInfo}>Unit terdaftar sebagai aset resmi perusahaan Anda.</p>
-                <button className={styles.btnEmergency} onClick={() => setShowServiceModal(true)}>
-                  Request Emergency Service
-                </button>
-              </div>
-            )}
-
-            {/* PARTNER VIEW (Level 3) — Technical Partner */}
-            {isPartner && (
-              <div className={styles.partnerActions}>
-                <p className={styles.sectionInfo}>Technical Mode Aktif: Anda berada di depan unit.</p>
-                <button className={styles.btnPrimary} onClick={() => setShowLogModal(true)}>
-                  Tambah Log Servis &amp; Tutup Tiket
-                </button>
-              </div>
-            )}
-
-            {/* ADMIN VIEW (Level 4) — Administrator */}
-            {isAdmin && (
-              <div className={styles.adminActions}>
-                <p className={styles.sectionInfo}>Administrator Mode Aktif: Kontrol Master.</p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {/* CLIENT VIEW (Level 2) — Active Owner */}
+              {isClient && belongsToClient && (
+                <div className={styles.clientActions} style={{ width: '100%', textAlign: 'left' }}>
+                  <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
+                    <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                      <UserCheck size={20} color="#3b82f6" />
+                    </div>
+                  </div>
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '8px', textAlign: 'center' }}>Akses Pemilik (Fleet Owner)</h3>
+                  <p className={styles.sectionInfo} style={{ textAlign: 'center', marginBottom: '24px' }}>Unit terdaftar sebagai aset resmi perusahaan Anda.</p>
                   <button className={styles.btnEmergency} onClick={() => setShowServiceModal(true)}>
-                    Uji Alur Smart Routing
-                  </button>
-                  <button className={styles.btnPrimary} onClick={() => setShowTransferModal(true)}>
-                    Pindahkan Kepemilikan Unit
+                    Request Emergency Service
                   </button>
                 </div>
-              </div>
-            )}
+              )}
+
+              {/* PARTNER VIEW (Level 3) — Technical Partner */}
+              {isPartner && (
+                <div className={styles.partnerActions} style={{ width: '100%', textAlign: 'left' }}>
+                  <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
+                    <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                      <Wrench size={20} color="#10b981" />
+                    </div>
+                  </div>
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '8px', textAlign: 'center' }}>Technical Partner Mode</h3>
+                  <p className={styles.sectionInfo} style={{ textAlign: 'center', marginBottom: '24px' }}>Anda terverifikasi sebagai teknisi untuk unit ini.</p>
+                  <button className={styles.btnPrimary} onClick={() => setShowLogModal(true)}>
+                    Tambah Log Servis
+                  </button>
+                </div>
+              )}
+
+              {/* ADMIN VIEW (Level 4) — Administrator */}
+              {isAdmin && (
+                <div className={styles.adminActions} style={{ width: '100%', textAlign: 'left' }}>
+                  <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
+                    <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(139, 92, 246, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(139, 92, 246, 0.2)' }}>
+                      <ShieldAlert size={20} color="#a78bfa" />
+                    </div>
+                  </div>
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '8px', textAlign: 'center' }}>Administrator Control</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
+                    <button className={styles.btnEmergency} onClick={() => setShowServiceModal(true)}>
+                      Uji Alur Smart Routing
+                    </button>
+                    <button className={styles.btnPrimary} onClick={() => setShowTransferModal(true)}>
+                      Pindahkan Kepemilikan
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
+
+        {/* 5-Column Status Bar (Middle Row) */}
+        <div className={styles.statusBar}>
+          {/* Status Unit */}
+          <div className={styles.statusCard}>
+            <div className={`${styles.statusIcon} ${styles.success}`}>
+              <CheckCircle2 size={24} />
+            </div>
+            <div className={styles.statusText}>
+              <h3>Status Unit</h3>
+              <p style={{ color: '#10b981' }}>Normal</p>
+              <span>Unit beroperasi dengan baik</span>
+            </div>
           </div>
-        </section>
-      </div>
+
+          {/* Garansi */}
+          <div className={styles.statusCard}>
+            <div className={`${styles.statusIcon} ${isWarrantyActive ? styles.success : styles.warning}`}>
+              <ShieldAlert size={24} />
+            </div>
+            <div className={styles.statusText}>
+              <h3>Garansi</h3>
+              <p style={{ color: isWarrantyActive ? '#10b981' : '#f59e0b' }}>{isWarrantyActive ? 'Aktif' : 'Kedaluwarsa'}</p>
+              <span>{isWarrantyActive ? `Hingga ${expiryDate ? expiryDate.toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }) : ''}` : 'Hubungi support'}</span>
+            </div>
+          </div>
+
+          {/* Last Service */}
+          <div className={styles.statusCard}>
+            <div className={`${styles.statusIcon} ${styles.info}`}>
+              <Wrench size={24} />
+            </div>
+            <div className={styles.statusText}>
+              <h3>Last Service</h3>
+              <p style={{ color: '#ffffff' }}>Belum Ada</p>
+              <span>Belum pernah diservis</span>
+            </div>
+          </div>
+
+          {/* Next Service */}
+          <div className={styles.statusCard}>
+            <div className={`${styles.statusIcon} ${styles.info}`}>
+              <Clock size={24} />
+            </div>
+            <div className={styles.statusText}>
+              <h3>Next Service</h3>
+              <p style={{ color: '#3b82f6' }}>Disarankan</p>
+              <span>Dalam 180 hari</span>
+            </div>
+          </div>
+
+          {/* Verifikasi */}
+          <div className={styles.statusCard}>
+            <div className={`${styles.statusIcon} ${styles.success}`}>
+              <CheckCircle2 size={24} />
+            </div>
+            <div className={styles.statusText}>
+              <h3>Verifikasi</h3>
+              <p style={{ color: '#10b981' }}>Asli</p>
+              <span>Unit terverifikasi Holicindo</span>
+            </div>
+          </div>
+        </div>
 
       {/* MEDIA & VERIFICATION (PUBLIC VIEW) */}
       <section className={styles.sectionCard}>
         <div className={styles.cardHeader}>
-          <ImageIcon size={20} />
-          <h2>Media &amp; Verifikasi Pabrik</h2>
+          <div className={styles.cardHeaderLeft}>
+            <ImageIcon size={16} color="#8bb2ff" />
+            <h2>Media &amp; Verifikasi Pabrik</h2>
+          </div>
         </div>
         <div className={styles.mediaGrid}>
           {/* Test Run Quality Control */}
           <div className={styles.mediaItem}>
             <div className={styles.mediaImageWrapper}>
               <img 
-                src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=800&auto=format&fit=crop" 
+                src={unit.test_run_image_url || '/test_run.png?v=2'} 
                 alt="Test Run QC" 
                 className={styles.mediaImage}
+                style={{ cursor: 'pointer', objectPosition: 'center 40%' }}
+                onClick={() => setSelectedMedia(unit.test_run_image_url || '/test_run.png?v=2')}
               />
               <div className={styles.mediaOverlay}>
                 <span className={styles.verifiedBadge}><CheckCircle2 size={14} /> Terverifikasi</span>
@@ -514,13 +639,25 @@ export default function QrPassportPage() {
             <div className={styles.mediaContent}>
               <h3>Foto Test Run &amp; Quality Control</h3>
               <p>Dokumentasi pengujian performa kompresor dan suhu ruang sebelum unit didistribusikan ke klien.</p>
+              <button className={styles.btnViewAll} style={{ width: 'fit-content', padding: '8px 16px', marginTop: '16px' }} onClick={() => setSelectedMedia(unit.test_run_image_url || '/test_run.png?v=2')}>
+                Lihat Foto <ImageIcon size={14} style={{marginLeft: '8px'}}/>
+              </button>
             </div>
           </div>
 
           {/* Diagram / Schematic */}
           <div className={styles.mediaItem}>
-            <div className={styles.mediaImageWrapper}>
-              <AirflowDiagram />
+            <div className={styles.mediaImageWrapper} style={{ cursor: 'pointer' }} onClick={() => setSelectedMedia(unit.diagram_image_url || 'diagram')}>
+              {unit.diagram_image_url ? (
+                <img 
+                  src={unit.diagram_image_url} 
+                  alt="Diagram" 
+                  className={styles.mediaImage}
+                  style={{ objectFit: 'cover' }}
+                />
+              ) : (
+                <AirflowDiagram />
+              )}
               <div className={styles.mediaOverlay}>
                 <span className={styles.verifiedBadge}><CheckCircle2 size={14} /> Cetak Biru Digital</span>
               </div>
@@ -528,10 +665,34 @@ export default function QrPassportPage() {
             <div className={styles.mediaContent}>
               <h3>Diagram Sirkulasi Udara &amp; Dimensi Fisik</h3>
               <p>Representasi visual sirkulasi pendinginan udara yang merata dan ukuran presisi unit untuk referensi penempatan outlet pelanggan.</p>
+              <button className={styles.btnViewAll} style={{ width: 'fit-content', padding: '8px 16px', marginTop: '16px' }} onClick={() => setSelectedMedia(unit?.diagram_image_url || "diagram")}>
+                Lihat Diagram <ArrowLeft size={14} style={{marginLeft: '8px', transform: 'rotate(180deg)'}}/>
+              </button>
             </div>
           </div>
         </div>
       </section>
+
+      {/* Media Modal */}
+      {selectedMedia && (
+        <div className={styles.modalOverlay} onClick={() => setSelectedMedia(null)}>
+          <div className={styles.modalContent} style={{ maxWidth: '900px', width: '90%', padding: '24px', background: 'rgba(6, 13, 33, 0.95)', border: '1px solid rgba(255,255,255,0.1)' }} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader} style={{ marginBottom: '20px' }}>
+              <h2>{selectedMedia === 'diagram' || selectedMedia === unit?.diagram_image_url ? 'Diagram Sirkulasi Udara' : 'Foto Test Run QC'}</h2>
+              <button className={styles.closeBtn} onClick={() => setSelectedMedia(null)}>×</button>
+            </div>
+            <div style={{ width: '100%', height: '70vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)', borderRadius: '8px', overflow: 'hidden' }}>
+              {selectedMedia === 'diagram' ? (
+                <div style={{ transform: 'scale(1.5)' }}>
+                  <AirflowDiagram />
+                </div>
+              ) : (
+                <img src={selectedMedia} alt="Media" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* SERVICE HISTORY SECTION (Temporarily Hidden via Feature Flag) */}
       {showServiceHistory && (
@@ -585,6 +746,7 @@ export default function QrPassportPage() {
                 setIssueMainCategory('');
                 setIssueSubCategory('');
                 setServiceNotes('');
+                setStoreName('');
               }} className={styles.closeBtn}>×</button>
             </div>
             
@@ -592,6 +754,17 @@ export default function QrPassportPage() {
               <form onSubmit={handleServiceRequest} className={styles.modalForm}>
                 <p className={styles.modalHint}>Permintaan akan diproses menggunakan sistem Smart Routing regional kami.</p>
                 
+                <div className={styles.formGroup}>
+                  <label>Nama/Kode Outlet (Toko)</label>
+                  <input 
+                    type="text" 
+                    value={storeName} 
+                    onChange={(e) => setStoreName(e.target.value)} 
+                    placeholder="Contoh: KFC Kemang / KFC-123" 
+                    required
+                  />
+                </div>
+
                 <div className={styles.formGroup}>
                   <label>Nama Kontak Penanggung Jawab Outlet</label>
                   <input 
@@ -812,7 +985,7 @@ export default function QrPassportPage() {
           </div>
         </div>
       )}
-
+    </div>
     </div>
   );
 }

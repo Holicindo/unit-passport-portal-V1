@@ -48,8 +48,13 @@ export default function UnitsPage() {
   const loadUnits = useCallback(async (page: number) => {
     setLoading(true);
     try {
-      const userData = localStorage.getItem('user');
-      const user = userData ? JSON.parse(userData) : null;
+      let user = null;
+      try {
+        const userData = localStorage.getItem('user');
+        if (userData && userData !== 'undefined' && userData !== 'null') {
+          user = JSON.parse(userData);
+        }
+      } catch { /* ignore */ }
       
       let response;
       if (user?.role === 'CLIENT') {
@@ -94,7 +99,7 @@ export default function UnitsPage() {
     (u.client?.company_name ?? '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const displayedUnits = searchTerm ? filteredUnits : units;
+  const displayedUnits = (searchTerm ? filteredUnits : units).slice(0, pageSize);
   const effectiveTotal = searchTerm ? filteredUnits.length : totalCount;
   const totalPages = Math.max(1, Math.ceil(effectiveTotal / pageSize));
   const startRow = (currentPage - 1) * pageSize + 1;

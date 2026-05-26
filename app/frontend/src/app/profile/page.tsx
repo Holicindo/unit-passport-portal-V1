@@ -10,10 +10,14 @@ export default function ProfilePage() {
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      setUser(JSON.parse(userData));
-    } else {
+    try {
+      const userData = localStorage.getItem('user');
+      if (userData && userData !== 'undefined' && userData !== 'null') {
+        setUser(JSON.parse(userData));
+      } else {
+        router.push('/login');
+      }
+    } catch {
       router.push('/login');
     }
   }, [router]);

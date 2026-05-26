@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import styles from './service.module.css';
+import StatsGrid from '@/components/dashboard/StatsGrid';
 
 const parseIssueDescription = (desc: string) => {
   if (!desc) return { issue: '-', contact: null };
@@ -316,37 +317,14 @@ export default function ServicePage() {
       </div>
 
       {/* Stats Summary Grid */}
-      <div className={styles.statsGrid}>
-        <div className={styles.statCard}>
-          <div className={styles.statIconWrapper} style={{ backgroundColor: 'rgba(113, 115, 120, 0.08)', color: 'var(--color-space-grey)' }}>
-            <FileText size={24} />
-          </div>
-          <div className={styles.statText}>
-            <span className={styles.statValue}>{totalRequests}</span>
-            <span className={styles.statLabel}>Total Permintaan</span>
-          </div>
-        </div>
-
-        <div className={styles.statCard}>
-          <div className={styles.statIconWrapper} style={{ backgroundColor: 'rgba(255, 107, 0, 0.08)', color: 'var(--color-safety-orange)' }}>
-            <AlertTriangle size={24} />
-          </div>
-          <div className={styles.statText}>
-            <span className={styles.statValue}>{pendingRequests}</span>
-            <span className={styles.statLabel}>Antrean Pending</span>
-          </div>
-        </div>
-
-        <div className={styles.statCard}>
-          <div className={styles.statIconWrapper} style={{ backgroundColor: 'rgba(0, 196, 140, 0.08)', color: 'var(--color-success)' }}>
-            <CheckCircle2 size={24} />
-          </div>
-          <div className={styles.statText}>
-            <span className={styles.statValue}>{completedRequests}</span>
-            <span className={styles.statLabel}>Selesai Ditangani</span>
-          </div>
-        </div>
-      </div>
+      <StatsGrid 
+        loading={loading}
+        items={[
+          { label: 'Total Permintaan', value: loading ? '...' : totalRequests, max: 1000, icon: FileText, accent: '#64748b' },
+          { label: 'Antrean Pending', value: loading ? '...' : pendingRequests, max: 100, icon: AlertTriangle, accent: '#FF6B00' },
+          { label: 'Selesai Ditangani', value: loading ? '...' : completedRequests, max: 1000, icon: CheckCircle2, accent: '#00C48C' }
+        ]} 
+      />
 
       {/* Enterprise Datatable Toolbar */}
       <div className="dtToolbar">

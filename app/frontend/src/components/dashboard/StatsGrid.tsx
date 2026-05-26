@@ -1,8 +1,18 @@
 'use client';
 
 import { Package, ShieldCheck, ClipboardList, AlertCircle, Users, Activity } from 'lucide-react';
+import React from 'react';
+
+export interface StatItem {
+  label: string;
+  value: string | number;
+  max: number;
+  icon: React.ElementType;
+  accent: string;
+}
 
 interface StatsGridProps {
+  items?: StatItem[];
   data?: {
     activeUnits: number;
     underWarranty: number;
@@ -14,8 +24,9 @@ interface StatsGridProps {
   loading?: boolean;
 }
 
-export default function StatsGrid({ data, loading }: StatsGridProps) {
-  const stats = [
+export default function StatsGrid({ items, data, loading }: StatsGridProps) {
+  // Use generic items if provided, otherwise fallback to legacy dashboard mapping
+  const stats = items || [
     { label: 'Active Units', value: loading ? '...' : String(data?.activeUnits ?? 514), max: 1000, icon: Package, accent: '#2E5BFF' },
     { label: 'Under Warranty', value: loading ? '...' : String(data?.underWarranty ?? 384), max: 1000, icon: ShieldCheck, accent: '#00C48C' },
     { label: 'Open Reports', value: loading ? '...' : String(data?.openReports ?? 12), max: 50, icon: ClipboardList, accent: '#FFB800' },
@@ -29,9 +40,10 @@ export default function StatsGrid({ data, loading }: StatsGridProps) {
       display: 'grid',
       gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
       gap: '24px',
-      width: '100%'
+      width: '100%',
+      marginBottom: '24px' // Add default spacing below grid
     }}>
-      {stats.map((stat) => {
+      {stats.map((stat, idx) => {
         const Icon = stat.icon;
         
         // Dynamic wave logic
@@ -47,30 +59,30 @@ export default function StatsGrid({ data, loading }: StatsGridProps) {
 
         return (
           <div
-            key={stat.label}
+            key={stat.label + idx}
             style={{
               position: 'relative',
               overflow: 'hidden',
-              background: 'var(--glass-bg)',
-              backdropFilter: 'var(--glass-blur)',
-              WebkitBackdropFilter: 'var(--glass-blur)',
+              background: 'var(--glass-bg, #ffffff)',
+              backdropFilter: 'var(--glass-blur, blur(20px))',
+              WebkitBackdropFilter: 'var(--glass-blur, blur(20px))',
               padding: '26px 20px',
-              borderRadius: 'var(--radius-lg)',
+              borderRadius: 'var(--radius-lg, 16px)',
               display: 'flex',
               alignItems: 'center',
               gap: '20px',
-              border: '1px solid var(--glass-border)',
-              boxShadow: 'var(--glass-shadow)',
+              border: '1px solid var(--glass-border, rgba(0,31,63,0.08))',
+              boxShadow: 'var(--glass-shadow, 0 8px 32px rgba(0,31,63,0.04))',
               transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
               cursor: 'default',
             }}
             onMouseEnter={e => {
               (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-4px)';
-              (e.currentTarget as HTMLDivElement).style.boxShadow = 'var(--glass-shadow-hover)';
+              (e.currentTarget as HTMLDivElement).style.boxShadow = 'var(--glass-shadow-hover, 0 12px 48px rgba(0,31,63,0.08))';
             }}
             onMouseLeave={e => {
               (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
-              (e.currentTarget as HTMLDivElement).style.boxShadow = 'var(--glass-shadow)';
+              (e.currentTarget as HTMLDivElement).style.boxShadow = 'var(--glass-shadow, 0 8px 32px rgba(0,31,63,0.04))';
             }}
           >
             <div style={{
@@ -91,9 +103,9 @@ export default function StatsGrid({ data, loading }: StatsGridProps) {
                 fontSize: '1.6rem',
                 margin: 0,
                 marginBottom: '2px',
-                color: 'var(--color-deep-navy)',
+                color: 'var(--color-deep-navy, #010412)',
                 fontWeight: 800,
-                fontFamily: 'var(--font-heading)',
+                fontFamily: 'var(--font-heading, "Montserrat", sans-serif)',
                 letterSpacing: '-0.03em',
                 lineHeight: 1,
                 position: 'relative',
@@ -104,7 +116,7 @@ export default function StatsGrid({ data, loading }: StatsGridProps) {
               <p style={{
                 fontSize: '0.78rem',
                 fontWeight: 600,
-                color: 'var(--color-space-grey)',
+                color: 'var(--color-space-grey, #64748b)',
                 margin: 0,
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em',
@@ -131,12 +143,12 @@ export default function StatsGrid({ data, loading }: StatsGridProps) {
               preserveAspectRatio="none"
             >
               <defs>
-                <linearGradient id={`grad-${stat.label.replace(/\s+/g, '')}`} x1="0" y1="0" x2="0" y2="1">
+                <linearGradient id={`grad-${stat.label.replace(/\s+/g, '')}-${idx}`} x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor={stat.accent} stopOpacity="1" />
                   <stop offset="100%" stopColor={stat.accent} stopOpacity="0.1" />
                 </linearGradient>
               </defs>
-              <path d={pathD} fill={`url(#grad-${stat.label.replace(/\s+/g, '')})`} style={{ transition: 'd 0.8s ease' }} />
+              <path d={pathD} fill={`url(#grad-${stat.label.replace(/\s+/g, '')}-${idx})`} style={{ transition: 'd 0.8s ease' }} />
             </svg>
           </div>
         );

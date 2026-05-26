@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import styles from './planning.module.css';
+import StatsGrid from '@/components/dashboard/StatsGrid';
 
 export default function ServicePlanningPage() {
   const router = useRouter();
@@ -226,37 +227,14 @@ export default function ServicePlanningPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className={styles.statsGrid}>
-        <div className={styles.statCard}>
-          <div className={styles.statIconWrapper} style={{ backgroundColor: 'rgba(46, 91, 255, 0.08)', color: 'var(--color-cobalt-blue)' }}>
-            <Calendar size={24} />
-          </div>
-          <div className={styles.statText}>
-            <span className={styles.statValue}>{totalScheduled}</span>
-            <span className={styles.statLabel}>Total Unit Dipantau</span>
-          </div>
-        </div>
-
-        <div className={styles.statCard}>
-          <div className={styles.statIconWrapper} style={{ backgroundColor: 'rgba(255, 107, 0, 0.08)', color: 'var(--color-safety-orange)' }}>
-            <Clock size={24} />
-          </div>
-          <div className={styles.statText}>
-            <span className={styles.statValue}>{dueThisMonth}</span>
-            <span className={styles.statLabel}>Jatuh Tempo Bulan Ini</span>
-          </div>
-        </div>
-
-        <div className={styles.statCard}>
-          <div className={styles.statIconWrapper} style={{ backgroundColor: 'rgba(255, 77, 77, 0.08)', color: '#FF4D4D' }}>
-            <AlertCircle size={24} />
-          </div>
-          <div className={styles.statText}>
-            <span className={styles.statValue}>{overdueCount}</span>
-            <span className={styles.statLabel}>Terlambat Penjadwalan</span>
-          </div>
-        </div>
-      </div>
+      <StatsGrid
+        loading={loading}
+        items={[
+          { label: 'Total Unit Dipantau', value: loading ? '...' : totalScheduled, max: 1000, icon: Calendar, accent: '#2E5BFF' },
+          { label: 'Jatuh Tempo Bulan Ini', value: loading ? '...' : dueThisMonth, max: 100, icon: Clock, accent: '#FF6B00' },
+          { label: 'Terlambat Penjadwalan', value: loading ? '...' : overdueCount, max: 50, icon: AlertCircle, accent: '#FF4D4D' }
+        ]}
+      />
 
       {/* Enterprise Datatable Toolbar */}
       <div className="dtToolbar">

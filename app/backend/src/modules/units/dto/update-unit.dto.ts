@@ -26,4 +26,14 @@ export class UpdateUnitDto {
   @IsString()
   @IsOptional()
   current_client_id?: string;
+
+  @ApiProperty({ example: 'https://example.com/test_run.jpg', required: false })
+  @IsString()
+  @IsOptional()
+  test_run_image_url?: string;
+
+  @ApiProperty({ example: 'https://example.com/diagram.jpg', required: false })
+  @IsString()
+  @IsOptional()
+  diagram_image_url?: string;
 }

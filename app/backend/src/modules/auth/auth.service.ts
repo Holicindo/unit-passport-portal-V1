@@ -13,7 +13,7 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async register(email: string, password: string, role: UserRole, clientId?: string, partnerId?: string): Promise<User> {
+  async register(email: string, password: string, name?: string, role?: UserRole, clientId?: string, partnerId?: string) {
     const existingUser = await this.userRepository.findOne({ where: { email } });
     if (existingUser) {
       throw new ConflictException('Email already exists');
@@ -23,12 +23,29 @@ export class AuthService {
     const user = this.userRepository.create({
       email,
       password: hashedPassword,
-      role,
+      name: name || 'Unknown User',
+      role: role || UserRole.CLIENT,
       client_id: clientId,
       partner_id: partnerId,
+      status: 'ACTIVE',
     });
 
-    return this.userRepository.save(user);
+    const savedUser = await this.userRepository.save(user);
+
+    const payload = { sub: savedUser.id, email: savedUser.email, role: savedUser.role, client_id: savedUser.client_id, partner_id: savedUser.partner_id };
+    return {
+      access_token: this.jwtService.sign(payload),
+      user: {
+        id: savedUser.id,
+        email: savedUser.email,
+        role: savedUser.role,
+        name: savedUser.name,
+      },
+    };
+  }
+
+  async findAll(): Promise<User[]> {
+    return this.userRepository.find({ order: { created_at: 'DESC' } });
   }
 
   async login(email: string, password: string) {
@@ -49,6 +66,8 @@ export class AuthService {
         id: user.id,
         email: user.email,
         role: user.role,
+        client_id: user.client_id,
+        partner_id: user.partner_id,
       },
     };
   }

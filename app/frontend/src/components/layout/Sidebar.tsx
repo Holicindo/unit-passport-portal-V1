@@ -81,8 +81,18 @@ export default function Sidebar({ isOpen }: SidebarProps) {
   useEffect(() => {
     const userData = localStorage.getItem('user');
     if (userData) {
-      const user = JSON.parse(userData);
-      setRole(user.role);
+      try {
+        const user = JSON.parse(userData);
+        setRole(user.role);
+      } catch (err) {
+        console.error('Failed to parse user data from local storage', err);
+        // Clear the corrupted data so it doesn't crash on reload
+        if (userData === 'undefined' || userData === 'null') {
+          localStorage.removeItem('user');
+          localStorage.removeItem('token');
+          // Optionally redirect to login, but just clearing it prevents crashes
+        }
+      }
     }
   }, []);
 

@@ -372,4 +372,139 @@
   box-shadow: 0 4px 16px rgba(46, 91, 255, 0.3);
 }
 
+/* ── Drag & Drop Upload Zone ── */
+.dropZoneGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
 
+.dropZoneWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dropZoneWrapper label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--color-space-grey);
+  letter-spacing: 0.05em;
+}
+
+.dropZone {
+  position: relative;
+  border: 2px dashed #CBD5E1;
+  border-radius: var(--radius-md);
+  background: #F8FAFC;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.dropZone:hover {
+  border-color: var(--color-cobalt-blue);
+  background: rgba(46, 91, 255, 0.03);
+}
+
+.dropZoneActive {
+  border-color: var(--color-cobalt-blue);
+  background: rgba(46, 91, 255, 0.06);
+  box-shadow: 0 0 0 4px rgba(46, 91, 255, 0.1);
+}
+
+.dropZoneIcon {
+  color: #94A3B8;
+  transition: color 0.2s;
+}
+
+.dropZone:hover .dropZoneIcon {
+  color: var(--color-cobalt-blue);
+}
+
+.dropZoneText {
+  font-size: 0.85rem;
+  color: #64748B;
+  text-align: center;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+.dropZoneText strong {
+  color: var(--color-cobalt-blue);
+  font-weight: 700;
+}
+
+.dropZonePreview {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #F1F5F9;
+}
+
+.dropZonePreview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dropZoneRemove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+  z-index: 5;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s;
+}
+
+.dropZoneRemove:hover {
+  transform: scale(1.1);
+}
+
+.uploadingOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  z-index: 10;
+}
+
+.uploadingOverlay span {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-cobalt-blue);
+}
+
+@media (max-width: 768px) {
+  .dropZoneGrid {
+    grid-template-columns: 1fr;
+  }
+  .dropZone {
+    min-height: 160px;
+  }
+}

@@ -41,9 +41,13 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
   };
 
   useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      setUser(JSON.parse(userData));
+    try {
+      const userData = localStorage.getItem('user');
+      if (userData && userData !== 'undefined' && userData !== 'null') {
+        setUser(JSON.parse(userData));
+      }
+    } catch (err) {
+      console.error('Failed to parse user data in TopBar', err);
     }
   }, []);
 
@@ -87,17 +91,16 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
 
   const getDisplayName = () => {
     if (!user) return 'Loading...';
-    if (user.role === 'ADMIN') return 'Admin Holicindo';
-    if (user.role === 'PARTNER') return 'Teknisi Holicindo';
-    if (user.role === 'CLIENT') return 'Client IPC Fleet';
-    return user.email;
+    if (user.name) return user.name;
+    return user.email?.split('@')[0] || 'User';
   };
 
   const getRoleLabel = () => {
     if (!user) return '';
-    if (user.role === 'ADMIN') return 'SUPER ADMIN';
+    if (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') return 'SUPER ADMIN';
     if (user.role === 'PARTNER') return 'TEKNISI MITRA';
-    if (user.role === 'CLIENT') return 'CLIENT OWNER';
+    if (user.role === 'CLIENT') return 'KLIEN';
+    if (user.role === 'MECHANIC') return 'MEKANIK';
     return user.role;
   };
 

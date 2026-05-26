@@ -32,10 +32,12 @@ export default function MessagesPage() {
   }, []);
 
   useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      setCurrentUser(JSON.parse(userData));
-    }
+    try {
+      const userData = localStorage.getItem('user');
+      if (userData && userData !== 'undefined' && userData !== 'null') {
+        setCurrentUser(JSON.parse(userData));
+      }
+    } catch { /* ignore */ }
   }, []);
 
   // Fetch conversations

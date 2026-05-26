@@ -81,8 +81,13 @@ export default function DashboardPage() {
 
     try {
       // 1. Fetch user role
-      const userData = localStorage.getItem('user');
-      const user = userData ? JSON.parse(userData) : null;
+      let user = null;
+      try {
+        const userData = localStorage.getItem('user');
+        if (userData && userData !== 'undefined' && userData !== 'null') {
+          user = JSON.parse(userData);
+        }
+      } catch { /* ignore parse errors */ }
       const isAdmin = user?.role === 'ADMIN';
 
       // 2. Fetch from APIs concurrently

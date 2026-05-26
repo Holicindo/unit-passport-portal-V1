@@ -51,14 +51,14 @@ export class ReportsController {
   }
 
   @Get('unit/:unitId')
-  @Roles(UserRole.ADMIN, UserRole.PARTNER)
+  @Roles(UserRole.ADMIN, UserRole.PARTNER, UserRole.CLIENT)
   @ApiOperation({ summary: 'Get report history for a specific unit' })
   findByUnit(@Param('unitId') unitId: string) {
     return this.reportsService.findByUnit(unitId);
   }
 
   @Get(':id')
-  @Roles(UserRole.ADMIN, UserRole.PARTNER)
+  @Roles(UserRole.ADMIN, UserRole.PARTNER, UserRole.CLIENT)
   @ApiOperation({ summary: 'Get specific report details' })
   findOne(@Param('id') id: string) {
     return this.reportsService.findOne(id);

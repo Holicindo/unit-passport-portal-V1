@@ -23,6 +23,10 @@ export class User {
     }
   }
 
+  @ApiProperty({ example: 'John Doe' })
+  @Column({ default: 'Unknown User' })
+  name!: string;
+
   @ApiProperty({ example: 'user@example.com' })
   @Column({ unique: true })
   email!: string;
@@ -33,6 +37,10 @@ export class User {
   @ApiProperty({ enum: UserRole, example: UserRole.CLIENT })
   @Column({ type: 'enum', enum: UserRole, default: UserRole.CLIENT })
   role!: UserRole;
+
+  @ApiProperty({ example: 'ACTIVE' })
+  @Column({ default: 'ACTIVE' })
+  status!: string;
 
   @ApiProperty({ required: false })
   @Column({ nullable: true })

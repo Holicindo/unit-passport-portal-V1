@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from './users.module.css';
-import { Plus, Search, ShieldAlert, CheckCircle2, XCircle, Edit3, Trash2, X, UserPlus, Eye, EyeOff } from 'lucide-react';
+import { Plus, Search, ShieldAlert, CheckCircle2, XCircle, Edit3, Trash2, X, UserPlus, Eye, EyeOff, Users, ShieldCheck } from 'lucide-react';
 import { CustomSelect } from '@/components/ui/CustomSelect';
+import StatsGrid from '@/components/dashboard/StatsGrid';
+import { userApi } from '@/lib/api';
 
 type UserRole = 'SUPER_ADMIN' | 'PARTNER' | 'MECHANIC' | 'CLIENT';
 type UserStatus = 'ACTIVE' | 'SUSPENDED';
@@ -14,16 +16,9 @@ interface User {
   email: string;
   role: UserRole;
   status: UserStatus;
-  lastLogin: string;
+  lastLogin?: string;
+  created_at?: string;
 }
-
-const initialUsers: User[] = [
-  { id: 'U001', name: 'Ahmad Faisal', email: 'ahmad@holicindo.com', role: 'SUPER_ADMIN', status: 'ACTIVE', lastLogin: 'Hari ini, 09:41' },
-  { id: 'U002', name: 'Budi Santoso', email: 'budi.santoso@mitra.com', role: 'PARTNER', status: 'ACTIVE', lastLogin: 'Kemarin, 14:20' },
-  { id: 'U003', name: 'Citra Kirana', email: 'citra@mitra.com', role: 'PARTNER', status: 'ACTIVE', lastLogin: '2 Hari lalu' },
-  { id: 'U004', name: 'Joko Anwar', email: 'joko@teknisi.id', role: 'MECHANIC', status: 'SUSPENDED', lastLogin: '12 Mei 2026' },
-  { id: 'U005', name: 'Lia Kusumawati', email: 'lia@client.com', role: 'CLIENT', status: 'ACTIVE', lastLogin: 'Hari ini, 10:15' },
-];
 
 const roleLabels: Record<UserRole, string> = {
   SUPER_ADMIN: 'Super Admin',
@@ -32,15 +27,30 @@ const roleLabels: Record<UserRole, string> = {
   CLIENT: 'Klien',
 };
 
-
-
 export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('');
-  const [users, setUsers] = useState<User[]>(initialUsers);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const res = await userApi.findAll();
+      setUsers(res.data || []);
+    } catch (err) {
+      console.error('Failed to fetch users', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
   const [showPassword, setShowPassword] = useState(false);
   const [pageSize, setPageSize] = useState(10);
 
@@ -128,6 +138,15 @@ export default function UsersPage() {
           </p>
         </div>
       </header>
+
+      {/* Stats Summary */}
+      <StatsGrid
+        items={[
+          { label: 'Total Pengguna', value: users.length, max: 100, icon: Users, accent: '#2E5BFF' },
+          { label: 'Akun Aktif', value: users.filter(u => u.status === 'ACTIVE').length, max: 100, icon: CheckCircle2, accent: '#00C48C' },
+          { label: 'Ditangguhkan', value: users.filter(u => u.status === 'SUSPENDED').length, max: 50, icon: ShieldCheck, accent: '#FF4D4D' },
+        ]}
+      />
 
       <div className={styles.card}>
         {/* Enterprise Datatable Toolbar */}
@@ -221,7 +240,7 @@ export default function UsersPage() {
                   </button>
                 </td>
                 <td className={styles.lastLoginCell}>
-                  {user.lastLogin}
+                  {user.lastLogin || 'Belum pernah'}
                 </td>
                 <td className={styles.tableThRight}>
                   <div className={styles.actionsContainer}>
@@ -235,7 +254,16 @@ export default function UsersPage() {
                 </td>
               </tr>
             ))}
-            {filteredUsers.length === 0 && (
+            {loading && (
+              <tr>
+                <td colSpan={5} className={styles.emptyCell}>
+                  <div className={styles.emptyWrapper}>
+                    Memuat data...
+                  </div>
+                </td>
+              </tr>
+            )}
+            {!loading && filteredUsers.length === 0 && (
               <tr>
                 <td colSpan={5} className={styles.emptyCell}>
                   <div className={styles.emptyWrapper}>

@@ -22,7 +22,7 @@ export class UnitsService {
   async findByQrTokenPublic(qr_token: string) {
     const unit = await this.unitRepo.findOne({
       where: { qr_token },
-      select: ['id', 'serial_number', 'model_name', 'specs', 'warranty_expiry', 'status'],
+      select: ['id', 'serial_number', 'model_name', 'specs', 'warranty_expiry', 'status', 'test_run_image_url', 'diagram_image_url'],
     });
     if (!unit) throw new NotFoundException('Unit tidak ditemukan');
     return unit;
@@ -147,6 +147,8 @@ export class UnitsService {
     if (dto.specs !== undefined) unit.specs = dto.specs;
     if (dto.warranty_expiry !== undefined) (unit as any).warranty_expiry = dto.warranty_expiry;
     if (dto.status !== undefined) (unit as any).status = dto.status;
+    if (dto.test_run_image_url !== undefined) unit.test_run_image_url = dto.test_run_image_url;
+    if (dto.diagram_image_url !== undefined) unit.diagram_image_url = dto.diagram_image_url;
 
     if (dto.current_client_id) {
       const newClient = await this.clientRepo.findOne({ where: { id: dto.current_client_id } });
@@ -195,7 +197,18 @@ export class UnitsService {
         message: `Permintaan servis berhasil diarahkan ke partner regional kami di ${partner.city} (${partner.partner_name}). Tembusan (CC) telah dikirim ke Holicindo HQ.`,
       };
     } else {
-      // Jika partner lokal belum siap / tidak aktif, fallback ke Holicindo HQ via WhatsApp
+      // Jika partner lokal belum siap / tidak aktif, simpan ke database untuk ditangani HQ
+      const logRepo = this.unitRepo.manager.getRepository(ServiceLog);
+      const newLog = logRepo.create({
+        unit,
+        service_date: new Date(),
+        technician_name: 'Pending HQ Assignment',
+        issue_description: `${body.notes || '-'} (Kontak: ${body.contact_name || 'Outlet'} - ${body.contact_phone || '-'})`,
+        action_taken: 'Menunggu penugasan teknisi dari Holicindo HQ.',
+        status: 'PENDING',
+      } as any);
+      await logRepo.save(newLog);
+
       const hqWaNumber = '6287808780006'; // Nomor WA Holicindo HQ
       const waText = `Halo Holicindo HQ, saya ingin meminta servis untuk:\n\n*Serial Number:* ${unit.serial_number}\n*Model:* ${unit.model_name}\n*Lokasi:* ${targetCity}\n*Catatan Kendala:* ${body.notes || '-'}\n\nMohon bantuannya untuk assign teknisi secara manual. Terima kasih!`;
       const waLink = `https://wa.me/${hqWaNumber}?text=${encodeURIComponent(waText)}`;
@@ -204,7 +217,7 @@ export class UnitsService {
         success: true,
         routed_to: 'HQ_FALLBACK',
         whatsapp_link: waLink,
-        message: `Layanan di kota ${targetCity} belum memiliki partner regional yang aktif. Permintaan Anda akan dikirimkan langsung ke Holicindo HQ untuk penugasan manual via WhatsApp.`,
+        message: `Layanan di kota ${targetCity} belum memiliki partner regional yang aktif. Permintaan Anda telah dicatat di sistem dan akan diteruskan ke Holicindo HQ via WhatsApp.`,
       };
     }
   }

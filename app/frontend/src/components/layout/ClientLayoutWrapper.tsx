@@ -10,7 +10,8 @@ export default function ClientLayoutWrapper({ children }: { children: React.Reac
   const pathname = usePathname();
   const isLoginPage = pathname === '/login';
   const isPassportPage = pathname?.startsWith('/id/');
-  const hideLayout = isLoginPage || isPassportPage;
+  const isClientPortal = pathname?.startsWith('/client-portal');
+  const hideLayout = isLoginPage || isPassportPage || isClientPortal;
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
@@ -45,7 +46,7 @@ export default function ClientLayoutWrapper({ children }: { children: React.Reac
             borderTop: '1px solid rgba(0, 31, 63, 0.05)',
             marginTop: 'auto'
           }}>
-            Copyright ©2026 CV. Gaya Beauty Utama | All Rights Reserved.
+            Copyright ©2026 PT. Holicindo Dasa Anugerah | All Rights Reserved.
           </footer>
         )}
         

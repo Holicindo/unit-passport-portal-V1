@@ -1,6 +1,8 @@
-import { Controller, Get, Post, Patch, Param, Body, UseGuards, Request, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import { Controller, Get, Post, Patch, Param, Body, UseGuards, Request, Query, UploadedFiles, UseInterceptors } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiConsumes } from '@nestjs/swagger';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { UnitsService } from './units.service';
+import { StorageService } from '../storage/storage.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -12,7 +14,10 @@ import { TransferOwnershipDto } from './dto/transfer-ownership.dto';
 @ApiTags('Units Management')
 @Controller('units')
 export class UnitsController {
-  constructor(private readonly unitsService: UnitsService) {}
+  constructor(
+    private readonly unitsService: UnitsService,
+    private readonly storageService: StorageService,
+  ) {}
 
   // --- LEVEL 1: PUBLIC ---
   @Get('scan/:qr_token')
@@ -107,5 +112,22 @@ export class UnitsController {
     @Body() transferDto: TransferOwnershipDto,
   ) {
     return this.unitsService.transferOwnership(id, transferDto);
+  }
+
+  // --- FILE UPLOAD: Unit Media ---
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @Post('upload-media')
+  @ApiOperation({ summary: 'Admin: Upload unit media (test run photo, diagram)' })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FilesInterceptor('files', 2, { limits: { fileSize: 10 * 1024 * 1024 } }))
+  async uploadMedia(@UploadedFiles() files: Express.Multer.File[]) {
+    const results: { url: string; key: string; originalName: string }[] = [];
+    for (const file of files) {
+      const result = await this.storageService.uploadFile(file, 'unit-media');
+      results.push({ ...result, originalName: file.originalname });
+    }
+    return results;
   }
 }

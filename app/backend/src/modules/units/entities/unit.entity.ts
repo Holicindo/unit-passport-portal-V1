@@ -40,6 +40,14 @@ export class Unit {
   @Column({ nullable: true })
   circuit_diagram_url?: string;
 
+  @ApiProperty({ example: 'https://example.com/test_run.jpg', required: false })
+  @Column({ nullable: true })
+  test_run_image_url?: string;
+
+  @ApiProperty({ example: 'https://example.com/diagram.jpg', required: false })
+  @Column({ nullable: true })
+  diagram_image_url?: string;
+
   @ManyToOne(() => Client, (client) => client.units)
   current_client!: Client;
 
