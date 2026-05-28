@@ -1018,3 +1018,521 @@
 .btnFinish:hover {
   background: var(--color-cobalt-blue);
 }
+
+/* ══════════════════════════════════════════════════════════
+   MOBILE OPTIMIZATIONS — Unit Passport (All Access Levels)
+   ══════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .container {
+    padding: 20px 16px 40px;
+    width: 100%;
+  }
+
+  /* Header — stack vertically */
+  .header {
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .headerRight {
+    align-items: flex-start;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* Serial number — scale down from 2.8rem */
+  .serialNumber {
+    font-size: 1.8rem;
+    letter-spacing: -0.02em;
+  }
+
+  .modelName {
+    font-size: 0.9rem;
+  }
+
+  .titleRow {
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .verifiedBadgeTop {
+    font-size: 0.7rem;
+    padding: 4px 10px;
+  }
+
+  .accessBadgeTop {
+    font-size: 0.65rem;
+    padding: 4px 10px;
+    letter-spacing: 0.02em;
+  }
+
+  .lastUpdated {
+    font-size: 0.7rem;
+  }
+
+  /* Status bar — 2 columns */
+  .statusBar {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .statusCard {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .statusIcon {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+  }
+
+  .statusText h3 {
+    font-size: 0.58rem;
+  }
+
+  .statusText p {
+    font-size: 0.82rem;
+  }
+
+  .statusText span {
+    font-size: 0.62rem;
+  }
+
+  /* Cards */
+  .cardContent {
+    padding: 14px;
+  }
+
+  .cardHeader {
+    padding: 12px 14px;
+  }
+
+  .cardHeader h2 {
+    font-size: 0.75rem;
+  }
+
+  .specItem {
+    padding: 9px 0;
+  }
+
+  .specLabel,
+  .specValue {
+    font-size: 0.8rem;
+  }
+
+  .btnViewAll {
+    font-size: 0.75rem;
+    padding: 10px;
+    margin-top: 12px;
+  }
+
+  /* Media grid — single column */
+  .mediaGrid {
+    grid-template-columns: 1fr;
+    padding: 14px;
+    gap: 14px;
+  }
+
+  .mediaImageWrapper {
+    height: 180px;
+  }
+
+  .mediaContent {
+    padding: 14px;
+  }
+
+  .mediaContent h3 {
+    font-size: 0.95rem;
+  }
+
+  .mediaContent p {
+    font-size: 0.8rem;
+  }
+
+  /* Modal — bottom sheet on mobile */
+  .modalOverlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .modalCard {
+    max-width: 100%;
+    border-radius: 20px 20px 0 0;
+    max-height: 92vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .modalHeader {
+    padding: 16px 18px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: rgba(6, 13, 33, 0.98);
+  }
+
+  .modalHeader h2 {
+    font-size: 0.95rem;
+  }
+
+  .modalForm {
+    padding: 18px;
+    gap: 14px;
+  }
+
+  /* Prevent iOS zoom on input focus */
+  .formGroup input,
+  .formGroup select,
+  .formGroup textarea {
+    font-size: 16px;
+    padding: 12px;
+  }
+
+  .formGroup textarea {
+    height: 88px;
+  }
+
+  .formGroup label {
+    font-size: 0.72rem;
+  }
+
+  .btnSubmit,
+  .btnPrimary,
+  .btnEmergency {
+    padding: 14px 16px;
+    font-size: 0.88rem;
+  }
+
+  /* Routing result */
+  .routingResult {
+    padding: 18px;
+  }
+
+  .resultCardSuccess h3,
+  .resultCardFallback h3 {
+    font-size: 1.05rem;
+  }
+
+  /* Section card */
+  .sectionCard {
+    margin-bottom: 16px;
+  }
+
+  /* Hide decorative dot grids on mobile */
+  .dotGrid,
+  .dotGridRight {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .serialNumber {
+    font-size: 1.5rem;
+  }
+
+  .statusBar {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .statusCard {
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .statusIcon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .statusText p {
+    font-size: 0.78rem;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   LIGHT MODE — Unit Passport (data-theme="light")
+   Default for public scan. Dark mode is opt-in via toggle.
+   ══════════════════════════════════════════════════════════ */
+[data-theme="light"].pageWrapper {
+  background-color: #F2F4F7;
+  background-image:
+    radial-gradient(ellipse at 10% 15%, rgba(46, 91, 255, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 90% 80%, rgba(0, 31, 63, 0.05) 0%, transparent 50%);
+}
+
+[data-theme="light"].pageWrapper::before,
+[data-theme="light"].pageWrapper::after {
+  display: none;
+}
+
+[data-theme="light"] .container {
+  color: #001F3F;
+}
+
+/* Header */
+[data-theme="light"] .backBtn {
+  color: #717378;
+}
+
+[data-theme="light"] .backBtn:hover {
+  color: #001F3F;
+}
+
+[data-theme="light"] .serialNumber {
+  color: #001F3F;
+}
+
+[data-theme="light"] .modelName {
+  color: #717378;
+}
+
+[data-theme="light"] .verifiedBadgeTop {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+[data-theme="light"] .accessBadgeTop {
+  background: rgba(46, 91, 255, 0.08);
+  color: #2E5BFF;
+  border-color: rgba(46, 91, 255, 0.2);
+}
+
+[data-theme="light"] .lastUpdated {
+  color: #717378;
+}
+
+/* Cards */
+[data-theme="light"] .card,
+[data-theme="light"] .sectionCard,
+[data-theme="light"] .actionCard {
+  background: #ffffff;
+  border: 1px solid rgba(0, 31, 63, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 31, 63, 0.06);
+  backdrop-filter: none;
+}
+
+[data-theme="light"] .cardHeader {
+  border-bottom-color: rgba(0, 31, 63, 0.06);
+  color: #001F3F;
+}
+
+[data-theme="light"] .cardHeader h2 {
+  color: #001F3F;
+}
+
+[data-theme="light"] .specItem {
+  border-bottom-color: rgba(0, 31, 63, 0.06);
+}
+
+[data-theme="light"] .specLabel {
+  color: #717378;
+}
+
+[data-theme="light"] .specValue {
+  color: #001F3F;
+}
+
+[data-theme="light"] .btnViewAll {
+  background: rgba(0, 31, 63, 0.03);
+  border-color: rgba(0, 31, 63, 0.1);
+  color: #001F3F;
+}
+
+[data-theme="light"] .btnViewAll:hover {
+  background: rgba(0, 31, 63, 0.06);
+}
+
+/* Status cards */
+[data-theme="light"] .statusCard {
+  background: #ffffff;
+  border-color: rgba(0, 31, 63, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 31, 63, 0.04);
+}
+
+[data-theme="light"] .statusText h3 {
+  color: #717378;
+}
+
+[data-theme="light"] .statusText span {
+  color: #717378;
+}
+
+/* Action card */
+[data-theme="light"] .actionCard {
+  border-color: rgba(46, 91, 255, 0.12);
+  box-shadow: 0 8px 24px rgba(0, 31, 63, 0.08);
+}
+
+[data-theme="light"] .actionCard::before {
+  display: none;
+}
+
+[data-theme="light"] .actionCard .cardHeader {
+  background: rgba(0, 31, 63, 0.02);
+  border-bottom-color: rgba(0, 31, 63, 0.06);
+  color: #001F3F;
+}
+
+[data-theme="light"] .restrictedText,
+[data-theme="light"] .sectionInfo,
+[data-theme="light"] .guestNote,
+[data-theme="light"] .modalHint {
+  color: #717378;
+}
+
+/* Media section */
+[data-theme="light"] .mediaItem {
+  background: #f8fafc;
+  border-color: rgba(0, 31, 63, 0.08);
+}
+
+[data-theme="light"] .mediaContent h3 {
+  color: #001F3F;
+}
+
+[data-theme="light"] .mediaContent p {
+  color: #717378;
+}
+
+/* Service history */
+[data-theme="light"] .emptyState {
+  color: #717378;
+}
+
+/* Dot grid — hide in light mode */
+[data-theme="light"] .dotGrid,
+[data-theme="light"] .dotGridRight {
+  display: none;
+}
+
+/* Modal */
+[data-theme="light"] .modalOverlay {
+  background: rgba(0, 31, 63, 0.4);
+  backdrop-filter: blur(12px);
+}
+
+[data-theme="light"] .modalCard {
+  background: #ffffff;
+  border-color: rgba(0, 31, 63, 0.1);
+  border-top-color: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 20px 60px rgba(0, 31, 63, 0.15);
+}
+
+[data-theme="light"] .modalHeader {
+  background: rgba(0, 31, 63, 0.02);
+  border-bottom-color: rgba(0, 31, 63, 0.08);
+}
+
+[data-theme="light"] .modalHeader h2 {
+  color: #001F3F;
+}
+
+[data-theme="light"] .closeBtn {
+  color: #717378;
+}
+
+[data-theme="light"] .closeBtn:hover {
+  color: #001F3F;
+}
+
+[data-theme="light"] .formGroup label {
+  color: #001F3F;
+}
+
+/* Loading & error in light mode */
+[data-theme="light"] .loadingContainer {
+  background: #F2F4F7;
+}
+
+/* ── Button colors: always orange & blue regardless of theme ── */
+/* These are brand identity buttons — never change color */
+.btnEmergency,
+[data-theme="light"] .btnEmergency,
+[data-theme="dark"] .btnEmergency {
+  background: linear-gradient(135deg, #FF6B00 0%, #e66000 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 15px rgba(255, 107, 0, 0.25) !important;
+}
+
+.btnEmergency:hover,
+[data-theme="light"] .btnEmergency:hover,
+[data-theme="dark"] .btnEmergency:hover {
+  background: linear-gradient(135deg, #ff7a1a 0%, #d45800 100%) !important;
+  box-shadow: 0 8px 25px rgba(255, 107, 0, 0.4) !important;
+}
+
+.btnPrimary,
+[data-theme="light"] .btnPrimary,
+[data-theme="dark"] .btnPrimary {
+  background: linear-gradient(135deg, #184cf4 0%, #0a2eb5 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(10, 46, 181, 0.35) !important;
+}
+
+.btnPrimary:hover,
+[data-theme="light"] .btnPrimary:hover,
+[data-theme="dark"] .btnPrimary:hover {
+  background: linear-gradient(135deg, #1f56ff 0%, #0c36cf 100%) !important;
+  box-shadow: 0 6px 16px rgba(10, 46, 181, 0.5) !important;
+}
+
+/* Partner close ticket button — green stays green */
+[data-theme="light"] .btnPrimary[style*="059669"],
+[data-theme="dark"] .btnPrimary[style*="059669"] {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3) !important;
+}
+
+/* ── Light mode: action card background stays clean white ── */
+[data-theme="light"] .publicPrompt h3 {
+  color: #001F3F;
+}
+
+[data-theme="light"] .clientActions h3,
+[data-theme="light"] .partnerActions h3,
+[data-theme="light"] .adminActions h3 {
+  color: #001F3F;
+}
+
+/* Light mode: modal form inputs stay light */
+[data-theme="light"] .formGroup input,
+[data-theme="light"] .formGroup select,
+[data-theme="light"] .formGroup textarea {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #0f172a;
+}
+
+[data-theme="light"] .formGroup input:focus,
+[data-theme="light"] .formGroup select:focus,
+[data-theme="light"] .formGroup textarea:focus {
+  background: #ffffff;
+  border-color: #2e5bff;
+}
+
+/* Light mode: modal card white */
+[data-theme="light"] .modalCard {
+  background: #ffffff;
+}
+
+[data-theme="light"] .modalHeader {
+  background: rgba(0, 31, 63, 0.02);
+}
+
+[data-theme="light"] .modalHeader h2 {
+  color: #001F3F;
+}
+
+[data-theme="light"] .formGroup label {
+  color: #001F3F;
+}
+
+[data-theme="light"] .modalHint {
+  color: #717378;
+}

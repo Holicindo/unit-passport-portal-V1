@@ -6,7 +6,8 @@ import { unitApi } from '@/lib/api';
 import { 
   ShieldAlert, Wrench, FileText, CheckCircle2, 
   ExternalLink, Phone, ArrowLeft, Loader2, RefreshCw, 
-  Lock, Check, UserCheck, Settings, BookOpen, Clock, Image as ImageIcon
+  Lock, Check, UserCheck, Settings, BookOpen, Clock, Image as ImageIcon,
+  Sun, Moon
 } from 'lucide-react';
 import styles from './id.module.css';
 
@@ -94,6 +95,8 @@ export default function QrPassportPage() {
   const [techName, setTechName] = useState('');
   const [logType, setLogType] = useState('CORRECTIVE');
   const [logNotes, setLogNotes] = useState('');
+  const [logStatus, setLogStatus] = useState('COMPLETED');
+  const [logComponents, setLogComponents] = useState('');
   const [logLoading, setLogLoading] = useState(false);
 
   // Admin Transfer state
@@ -105,7 +108,10 @@ export default function QrPassportPage() {
   const [transferLoading, setTransferLoading] = useState(false);
 
   // Feature Flags
-  const showServiceHistory = false; // TODO: Set to true to show Service History Panel
+  const showServiceHistory = true; // Verified Service History — visible to all access levels
+
+  // Theme toggle — default light for public scan
+  const [isDark, setIsDark] = useState(false);
 
   // Load user from localStorage (safe parse)
   useEffect(() => {
@@ -201,6 +207,13 @@ export default function QrPassportPage() {
     }
   }, [user, showTransferModal]);
 
+  // Pre-fill techName when log modal opens
+  useEffect(() => {
+    if (showLogModal && user?.name && !techName) {
+      setTechName(user.name);
+    }
+  }, [showLogModal]);
+
   // Smart Routing submit handler
   const handleServiceRequest = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -247,9 +260,11 @@ export default function QrPassportPage() {
           unitId: unit.id,
           service_date: new Date(),
           service_type: logType === 'PREVENTIVE' ? 'PREVENTIVE_MAINTENANCE' : 'CORRECTIVE_MAINTENANCE',
-          technician_name: techName,
+          technician_name: techName || user?.name,
+          action_taken: logNotes,
           notes: logNotes,
-          status: 'COMPLETED'
+          components_replaced: logComponents || undefined,
+          status: logStatus || 'COMPLETED'
         })
       });
       
@@ -258,6 +273,8 @@ export default function QrPassportPage() {
         setShowLogModal(false);
         setTechName('');
         setLogNotes('');
+        setLogComponents('');
+        setLogStatus('COMPLETED');
         loadUnitData();
       } else {
         alert('Gagal menyimpan log servis.');
@@ -346,7 +363,7 @@ export default function QrPassportPage() {
   const isWarrantyActive = expiryDate ? expiryDate > today : false;
 
   return (
-    <div className={styles.pageWrapper}>
+    <div className={styles.pageWrapper} data-theme={isDark ? 'dark' : 'light'}>
       {/* Background decorations */}
       <div className={styles.dotGrid} aria-hidden="true" />
       <div className={styles.dotGridRight} aria-hidden="true" />
@@ -373,6 +390,29 @@ export default function QrPassportPage() {
               {isPartner && 'LEVEL 3: TECHNICAL PARTNER'}
               {isAdmin && 'LEVEL 4: ADMINISTRATOR'}
             </div>
+            {/* Theme toggle — right-aligned, below level badge */}
+            <button
+              onClick={() => setIsDark(v => !v)}
+              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '5px',
+                background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,31,63,0.08)',
+                border: isDark ? '1px solid rgba(255,255,255,0.18)' : '1px solid rgba(0,31,63,0.15)',
+                borderRadius: '20px',
+                padding: '4px 10px',
+                cursor: 'pointer',
+                color: isDark ? '#e2e8f0' : '#001F3F',
+                fontSize: '0.7rem',
+                fontWeight: 700,
+                fontFamily: 'var(--font-heading)',
+                letterSpacing: '0.04em',
+                transition: 'all 0.2s ease',
+                alignSelf: 'flex-end',
+              }}
+            >
+              {isDark ? <Sun size={12} /> : <Moon size={12} />}
+              {isDark ? 'Light' : 'Dark'}
+            </button>
             <div className={styles.lastUpdated}>
               <Clock size={12} /> Terakhir diperbarui: {new Date(unit.updated_at || Date.now()).toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' })} WIB
             </div>
@@ -514,16 +554,62 @@ export default function QrPassportPage() {
               {/* PARTNER VIEW (Level 3) — Technical Partner */}
               {isPartner && (
                 <div className={styles.partnerActions} style={{ width: '100%', textAlign: 'left' }}>
-                  <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
+                  <div style={{ marginBottom: '12px', display: 'flex', justifyContent: 'center' }}>
                     <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
                       <Wrench size={20} color="#10b981" />
                     </div>
                   </div>
-                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '8px', textAlign: 'center' }}>Technical Partner Mode</h3>
-                  <p className={styles.sectionInfo} style={{ textAlign: 'center', marginBottom: '24px' }}>Anda terverifikasi sebagai teknisi untuk unit ini.</p>
-                  <button className={styles.btnPrimary} onClick={() => setShowLogModal(true)}>
-                    Tambah Log Servis
-                  </button>
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '4px', textAlign: 'center' }}>Technical Partner Mode</h3>
+                  <p className={styles.sectionInfo} style={{ textAlign: 'center', marginBottom: '16px', fontSize: '0.82rem' }}>Anda terverifikasi sebagai teknisi untuk unit ini.</p>
+
+                  {/* Active Ticket Info */}
+                  {unit.service_logs && unit.service_logs.filter((l: any) => l.status === 'PENDING').length > 0 && (
+                    <div style={{
+                      background: 'rgba(255,107,0,0.08)',
+                      border: '1px solid rgba(255,107,0,0.2)',
+                      borderRadius: '10px',
+                      padding: '12px 14px',
+                      marginBottom: '14px',
+                    }}>
+                      <div style={{ fontSize: '0.68rem', fontWeight: 800, color: '#FF6B00', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#FF6B00', display: 'inline-block', animation: 'pulse 1.5s infinite' }} />
+                        Tiket Aktif
+                      </div>
+                      {unit.service_logs.filter((l: any) => l.status === 'PENDING').slice(0, 1).map((log: any) => (
+                        <div key={log.id}>
+                          <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#ffffff', marginBottom: '4px', fontFamily: 'monospace' }}>
+                            Call ID: {log.id}
+                          </div>
+                          <div style={{ fontSize: '0.78rem', color: '#94a3b8', lineHeight: 1.4 }}>
+                            {(log.issue_description || '').slice(0, 80)}{(log.issue_description || '').length > 80 ? '…' : ''}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <button
+                      className={styles.btnPrimary}
+                      onClick={() => {
+                        setTechName(user?.name || '');
+                        setShowLogModal(true);
+                      }}
+                      style={{ background: 'linear-gradient(135deg, #059669 0%, #047857 100%)', boxShadow: '0 4px 12px rgba(5,150,105,0.3)' }}
+                    >
+                      <Check size={16} /> Selesaikan &amp; Tutup Tiket
+                    </button>
+                    <button
+                      className={styles.btnPrimary}
+                      onClick={() => {
+                        setTechName(user?.name || '');
+                        setLogStatus('PENDING');
+                        setShowLogModal(true);
+                      }}
+                    >
+                      <Wrench size={16} /> Tambah Catatan Servis
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -583,7 +669,7 @@ export default function QrPassportPage() {
             </div>
             <div className={styles.statusText}>
               <h3>Last Service</h3>
-              <p style={{ color: '#ffffff' }}>Belum Ada</p>
+              <p style={{ color: '#336bd9ff' }}>Belum Ada</p>
               <span>Belum pernah diservis</span>
             </div>
           </div>
@@ -612,6 +698,148 @@ export default function QrPassportPage() {
             </div>
           </div>
         </div>
+
+      {/* ── TECHNICAL DOCUMENTS — Level 3 Partner + Admin only ── */}
+      {(isPartner || isAdmin) && (
+        <section className={styles.sectionCard} style={{ marginBottom: '24px' }}>
+          <div className={styles.cardHeader}>
+            <div className={styles.cardHeaderLeft}>
+              <BookOpen size={16} color="#8bb2ff" />
+              <h2>Dokumen Teknis</h2>
+            </div>
+            <span style={{
+              fontSize: '0.72rem',
+              background: 'rgba(16,185,129,0.1)',
+              color: '#6ee7b7',
+              border: '1px solid rgba(16,185,129,0.2)',
+              padding: '4px 10px',
+              borderRadius: '20px',
+              fontWeight: 700,
+              letterSpacing: '0.04em',
+            }}>
+              LEVEL 3 ACCESS
+            </span>
+          </div>
+          <div style={{
+            padding: '20px',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '12px',
+          }}>
+            {/* Exploded View */}
+            <a
+              href={unit.exploded_view_url || '#'}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={!unit.exploded_view_url ? (e) => e.preventDefault() : undefined}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '12px', padding: '16px',
+                background: unit.exploded_view_url ? 'rgba(46,91,255,0.08)' : 'rgba(255,255,255,0.02)',
+                border: `1px solid ${unit.exploded_view_url ? 'rgba(46,91,255,0.3)' : 'rgba(255,255,255,0.06)'}`,
+                borderRadius: '10px', textDecoration: 'none', color: '#ffffff',
+                opacity: unit.exploded_view_url ? 1 : 0.45,
+                transition: 'all 0.2s',
+                cursor: unit.exploded_view_url ? 'pointer' : 'default',
+              }}
+            >
+              <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'rgba(46,91,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <FileText size={20} color="#8bb2ff" />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#ffffff' }}>Exploded View</div>
+                <div style={{ fontSize: '0.75rem', color: '#8f9bb3', marginTop: '2px' }}>
+                  {unit.exploded_view_url ? 'Tersedia — Klik untuk buka' : 'Belum diunggah'}
+                </div>
+              </div>
+              {unit.exploded_view_url && <ExternalLink size={14} color="#8bb2ff" style={{ flexShrink: 0 }} />}
+            </a>
+
+            {/* Circuit / Wiring Diagram */}
+            <a
+              href={unit.circuit_diagram_url || '#'}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={!unit.circuit_diagram_url ? (e) => e.preventDefault() : undefined}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '12px', padding: '16px',
+                background: unit.circuit_diagram_url ? 'rgba(16,185,129,0.08)' : 'rgba(255,255,255,0.02)',
+                border: `1px solid ${unit.circuit_diagram_url ? 'rgba(16,185,129,0.3)' : 'rgba(255,255,255,0.06)'}`,
+                borderRadius: '10px', textDecoration: 'none', color: '#ffffff',
+                opacity: unit.circuit_diagram_url ? 1 : 0.45,
+                transition: 'all 0.2s',
+                cursor: unit.circuit_diagram_url ? 'pointer' : 'default',
+              }}
+            >
+              <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'rgba(16,185,129,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Settings size={20} color="#6ee7b7" />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#ffffff' }}>Wiring / Circuit Diagram</div>
+                <div style={{ fontSize: '0.75rem', color: '#8f9bb3', marginTop: '2px' }}>
+                  {unit.circuit_diagram_url ? 'Tersedia — Klik untuk buka' : 'Belum diunggah'}
+                </div>
+              </div>
+              {unit.circuit_diagram_url && <ExternalLink size={14} color="#6ee7b7" style={{ flexShrink: 0 }} />}
+            </a>
+
+            {/* Service Manual */}
+            <a
+              href={unit.specs?.manual_url || '#'}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={!unit.specs?.manual_url ? (e) => e.preventDefault() : undefined}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '12px', padding: '16px',
+                background: unit.specs?.manual_url ? 'rgba(245,158,11,0.08)' : 'rgba(255,255,255,0.02)',
+                border: `1px solid ${unit.specs?.manual_url ? 'rgba(245,158,11,0.3)' : 'rgba(255,255,255,0.06)'}`,
+                borderRadius: '10px', textDecoration: 'none', color: '#ffffff',
+                opacity: unit.specs?.manual_url ? 1 : 0.45,
+                transition: 'all 0.2s',
+                cursor: unit.specs?.manual_url ? 'pointer' : 'default',
+              }}
+            >
+              <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'rgba(245,158,11,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <BookOpen size={20} color="#fcd34d" />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#ffffff' }}>Manual Servis</div>
+                <div style={{ fontSize: '0.75rem', color: '#8f9bb3', marginTop: '2px' }}>
+                  {unit.specs?.manual_url ? 'Tersedia — Klik untuk buka' : 'Belum diunggah'}
+                </div>
+              </div>
+              {unit.specs?.manual_url && <ExternalLink size={14} color="#fcd34d" style={{ flexShrink: 0 }} />}
+            </a>
+
+            {/* Tutorial Video */}
+            <a
+              href={unit.specs?.tutorial_url || '#'}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={!unit.specs?.tutorial_url ? (e) => e.preventDefault() : undefined}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '12px', padding: '16px',
+                background: unit.specs?.tutorial_url ? 'rgba(139,92,246,0.08)' : 'rgba(255,255,255,0.02)',
+                border: `1px solid ${unit.specs?.tutorial_url ? 'rgba(139,92,246,0.3)' : 'rgba(255,255,255,0.06)'}`,
+                borderRadius: '10px', textDecoration: 'none', color: '#ffffff',
+                opacity: unit.specs?.tutorial_url ? 1 : 0.45,
+                transition: 'all 0.2s',
+                cursor: unit.specs?.tutorial_url ? 'pointer' : 'default',
+              }}
+            >
+              <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'rgba(139,92,246,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <ExternalLink size={20} color="#c4b5fd" />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#ffffff' }}>Video Tutorial</div>
+                <div style={{ fontSize: '0.75rem', color: '#8f9bb3', marginTop: '2px' }}>
+                  {unit.specs?.tutorial_url ? 'Tersedia — Klik untuk tonton' : 'Belum tersedia'}
+                </div>
+              </div>
+              {unit.specs?.tutorial_url && <ExternalLink size={14} color="#c4b5fd" style={{ flexShrink: 0 }} />}
+            </a>
+          </div>
+        </section>
+      )}
 
       {/* MEDIA & VERIFICATION (PUBLIC VIEW) */}
       <section className={styles.sectionCard}>
@@ -694,36 +922,62 @@ export default function QrPassportPage() {
         </div>
       )}
 
-      {/* SERVICE HISTORY SECTION (Temporarily Hidden via Feature Flag) */}
+      {/* SERVICE HISTORY SECTION — Verified Service History (visible to all access levels) */}
       {showServiceHistory && (
         <section className={styles.sectionCard} style={{ marginTop: '40px', marginBottom: '40px' }}>
           <div className={styles.cardHeader}>
-            <Clock size={20} />
-            <h2>Riwayat Servis (Service History)</h2>
+            <div className={styles.cardHeaderLeft}>
+              <Wrench size={16} color="#8bb2ff" />
+              <h2>Riwayat Servis</h2>
+            </div>
           </div>
           <div className={styles.cardContent} style={{ padding: '24px' }}>
             {!unit.service_logs || unit.service_logs.length === 0 ? (
               <div className={styles.emptyState}>
-                <CheckCircle2 size={40} style={{ marginBottom: '16px', color: 'var(--color-success)', opacity: 0.8 }} />
-                <p>Belum ada riwayat kerusakan atau servis.<br/>Unit beroperasi dalam kondisi optimal.</p>
+                <Wrench size={40} style={{ marginBottom: '16px', color: '#8f9bb3', opacity: 0.6 }} />
+                <p style={{ color: '#8f9bb3', textAlign: 'center' }}>Belum ada riwayat servis</p>
               </div>
             ) : (
-              <div className={styles.timeline}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {unit.service_logs.map((log: any, idx: number) => (
-                  <div key={log.id || idx} className={styles.timelineItem}>
-                    <div className={styles.timelineDot}></div>
-                    <div className={styles.timelineContent}>
-                      <div className={styles.timelineHeader}>
-                        <span className={styles.timelineDate}>
-                          {new Date(log.service_date).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })}
-                        </span>
-                        <span className={`${styles.logTypeBadge} ${log.service_type === 'PREVENTIVE_MAINTENANCE' ? styles.badgePreventive : styles.badgeCorrective}`}>
-                          {log.service_type === 'PREVENTIVE_MAINTENANCE' ? 'Preventive' : 'Corrective'}
-                        </span>
-                      </div>
-                      <h4 className={styles.timelineTech}>Teknisi: {log.technician_name}</h4>
-                      <p className={styles.timelineNotes}>{log.notes}</p>
+                  <div key={log.id || idx} style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '6px',
+                    padding: '16px',
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: '8px',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                      <span style={{ fontSize: '0.85rem', color: '#8f9bb3' }}>
+                        {log.service_date
+                          ? new Date(log.service_date).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })
+                          : '—'}
+                      </span>
+                      <span style={{
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        padding: '3px 10px',
+                        borderRadius: '999px',
+                        background: log.status === 'COMPLETED'
+                          ? 'rgba(16, 185, 129, 0.15)'
+                          : 'rgba(245, 158, 11, 0.15)',
+                        color: log.status === 'COMPLETED' ? '#10b981' : '#f59e0b',
+                        border: `1px solid ${log.status === 'COMPLETED' ? 'rgba(16,185,129,0.3)' : 'rgba(245,158,11,0.3)'}`,
+                      }}>
+                        {log.status === 'COMPLETED' ? 'SELESAI' : 'PENDING'}
+                      </span>
                     </div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#e2e8f0' }}>
+                      Teknisi: {log.technician_name || '—'}
+                    </div>
+                    {(log.action_taken || log.notes) && (
+                      <div style={{ fontSize: '0.85rem', color: '#94a3b8', lineHeight: 1.5 }}>
+                        {(log.action_taken || log.notes || '').slice(0, 80)}
+                        {(log.action_taken || log.notes || '').length > 80 ? '…' : ''}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -881,51 +1135,89 @@ export default function QrPassportPage() {
         </div>
       )}
 
-      {/* Modal 2: Partner Log Servis (Level 3) */}
+      {/* Modal 2: Partner Log Servis (Level 3) — Enhanced Close Ticket */}
       {showLogModal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalCard}>
             <div className={styles.modalHeader}>
-              <h2>Record Service Log &amp; Close Ticket</h2>
-              <button onClick={() => setShowLogModal(false)} className={styles.closeBtn}>×</button>
+              <h2>{logStatus === 'COMPLETED' ? 'Selesaikan & Tutup Tiket' : 'Tambah Catatan Servis'}</h2>
+              <button onClick={() => { setShowLogModal(false); setLogStatus('COMPLETED'); setLogComponents(''); }} className={styles.closeBtn}>×</button>
             </div>
-            
+
             <form onSubmit={handleAddLog} className={styles.modalForm}>
+              {/* Unit info summary */}
+              <div style={{
+                background: 'rgba(255,255,255,0.04)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '10px',
+                padding: '12px 14px',
+                marginBottom: '4px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '4px',
+              }}>
+                <span style={{ fontSize: '0.72rem', color: '#8f9bb3', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>Unit yang Dikerjakan</span>
+                <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#ffffff' }}>{unit.model_name}</span>
+                <span style={{ fontSize: '0.78rem', color: '#8f9bb3', fontFamily: 'monospace' }}>SN: {unit.serial_number}</span>
+              </div>
+
               <div className={styles.formGroup}>
-                <label>Nama Teknisi Yang Mengerjakan</label>
-                <input 
-                  type="text" 
-                  value={techName} 
-                  onChange={(e) => setTechName(e.target.value)} 
-                  placeholder="Contoh: Andi Wijaya" 
+                <label>Nama Teknisi Yang Mengerjakan *</label>
+                <input
+                  type="text"
+                  value={techName}
+                  onChange={(e) => setTechName(e.target.value)}
+                  placeholder="Contoh: Andi Wijaya"
                   required
                 />
               </div>
 
               <div className={styles.formGroup}>
-                <label>Kategori Servis</label>
-                <select 
-                  value={logType} 
-                  onChange={(e) => setLogType(e.target.value)}
-                  required
-                >
-                  <option value="CORRECTIVE">Corrective Repair / Perbaikan Masalah</option>
-                  <option value="PREVENTIVE">Preventive Maintenance / Perawatan Rutin</option>
+                <label>Jenis Servis *</label>
+                <select value={logType} onChange={(e) => setLogType(e.target.value)} required>
+                  <option value="CORRECTIVE">Corrective — Perbaikan Masalah / Kerusakan</option>
+                  <option value="PREVENTIVE">Preventive — Perawatan Rutin (PM)</option>
                 </select>
               </div>
 
               <div className={styles.formGroup}>
-                <label>Catatan Tindakan / Masalah Selesai</label>
-                <textarea 
-                  value={logNotes} 
-                  onChange={(e) => setLogNotes(e.target.value)} 
-                  placeholder="Jelaskan tindakan (misal: penggantian door gasket, cleaning kondensor)..."
+                <label>Tindakan yang Dilakukan *</label>
+                <textarea
+                  value={logNotes}
+                  onChange={(e) => setLogNotes(e.target.value)}
+                  placeholder="Jelaskan tindakan yang dilakukan, misal: Penggantian door gasket, cleaning kondensor, isi freon R290..."
                   required
                 />
               </div>
 
-              <button type="submit" className={styles.btnSubmit} disabled={logLoading}>
-                {logLoading ? 'Menyimpan...' : 'Simpan Log & Selesaikan Tiket'}
+              <div className={styles.formGroup}>
+                <label>Komponen Diganti (opsional)</label>
+                <input
+                  type="text"
+                  value={logComponents}
+                  onChange={(e) => setLogComponents(e.target.value)}
+                  placeholder="Contoh: Door gasket, fan motor, kapasitor"
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label>Status Penyelesaian *</label>
+                <select value={logStatus} onChange={(e) => setLogStatus(e.target.value)} required>
+                  <option value="COMPLETED">SELESAI — Tiket ditutup, unit berfungsi normal</option>
+                  <option value="PENDING">MASIH PROSES — Perlu kunjungan lanjutan</option>
+                </select>
+              </div>
+
+              <button type="submit" className={styles.btnSubmit} disabled={logLoading} style={{
+                background: logStatus === 'COMPLETED'
+                  ? 'linear-gradient(135deg, #059669 0%, #047857 100%)'
+                  : 'linear-gradient(135deg, #184cf4 0%, #0a2eb5 100%)',
+              }}>
+                {logLoading
+                  ? 'Menyimpan...'
+                  : logStatus === 'COMPLETED'
+                    ? 'Simpan & Tutup Tiket'
+                    : 'Simpan Catatan Servis'}
               </button>
             </form>
           </div>

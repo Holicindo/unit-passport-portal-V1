@@ -90,6 +90,8 @@ export default function LoginPage() {
           router.push(redir);
         } else if (userRole === 'CLIENT') {
           router.push('/client-portal/dashboard');
+        } else if (userRole === 'PARTNER') {
+          router.push('/partner-portal');
         } else {
           router.push('/dashboard');
         }
@@ -110,6 +112,8 @@ export default function LoginPage() {
         router.push(redirectUrl);
       } else if (data.user.role === 'CLIENT') {
         router.push('/client-portal/dashboard');
+      } else if (data.user.role === 'PARTNER') {
+        router.push('/partner-portal');
       } else {
         router.push('/dashboard');
       }

@@ -437,7 +437,7 @@ export default function ServicePage() {
                             </span>
                             {contact && (
                               <span className={styles.issueContactSub}>
-                                👤 {contact.name} ({contact.phone})
+                                {contact.name} ({contact.phone})
                               </span>
                             )}
                           </div>

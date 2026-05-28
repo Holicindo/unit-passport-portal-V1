@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import styles from './ActionButtons.module.css';
+import { FileText, AlertTriangle } from 'lucide-react';
 
 interface ActionButtonsProps {
   serialNumber: string;
@@ -37,7 +38,7 @@ export default function ActionButtons({ serialNumber, outletName, city }: Action
             className={styles.btnPrimary}
             id="btn-download-manual"
           >
-            <span>📄</span> Download Manual
+            <FileText size={16} /> Download Manual
           </a>
           <button
             className={styles.btnEmergency}
@@ -48,7 +49,7 @@ export default function ActionButtons({ serialNumber, outletName, city }: Action
             {loading ? (
               <span className={styles.spinner} />
             ) : (
-              <><span>🚨</span> Emergency Service Request</>
+              <><AlertTriangle size={16} /> Emergency Service Request</>
             )}
           </button>
         </>

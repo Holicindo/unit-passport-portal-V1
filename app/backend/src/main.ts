@@ -4,6 +4,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
+import { migrateQrTokens } from './database/migrations/004_migrate_qr_tokens';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -48,6 +49,21 @@ async function bootstrap() {
 
   const port = process.env.PORT ?? 3001;
   await app.listen(port);
+
+  // Run one-time QR token migration on startup
+  try {
+    const dataSource = app.get('DataSource', { strict: false });
+    if (dataSource) {
+      await migrateQrTokens(dataSource);
+    }
+  } catch (e) {
+    // DataSource not directly injectable — use TypeORM connection manager
+    try {
+      const { getDataSourceByName } = await import('typeorm');
+      const ds = getDataSourceByName('default');
+      if (ds) await migrateQrTokens(ds);
+    } catch { /* migration will run via Swagger endpoint instead */ }
+  }
   console.log(`Backend is running on: http://localhost:${port}`);
   console.log(`Swagger documentation available at: http://localhost:${port}/api-docs`);
 }

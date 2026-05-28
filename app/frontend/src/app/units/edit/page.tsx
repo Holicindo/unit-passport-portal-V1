@@ -27,6 +27,10 @@ function EditUnitForm() {
   const [power, setPower] = useState('');
   const [capacity, setCapacity] = useState('');
 
+  // Technical Documents (Level 3 Partner Access)
+  const [explodedViewUrl, setExplodedViewUrl] = useState('');
+  const [circuitDiagramUrl, setCircuitDiagramUrl] = useState('');
+
   // Client & Warranty
   const [clients, setClients] = useState<any[]>([]);
   const [clientId, setClientId] = useState('');
@@ -88,6 +92,8 @@ function EditUnitForm() {
         if (unit.warranty_expiry) {
           setWarrantyExpiry(unit.warranty_expiry.substring(0, 10));
         }
+        setExplodedViewUrl(unit.exploded_view_url || '');
+        setCircuitDiagramUrl(unit.circuit_diagram_url || '');
       } catch (err: any) {
         setError('Gagal memuat data unit. Pastikan unit ini masih tersedia.');
       } finally {
@@ -136,6 +142,8 @@ function EditUnitForm() {
           warranty_status: warrantyStatus,
         },
         warranty_expiry: warrantyExpiry || undefined,
+        exploded_view_url: explodedViewUrl.trim() || undefined,
+        circuit_diagram_url: circuitDiagramUrl.trim() || undefined,
       });
       router.push('/units');
     } catch (err: any) {
@@ -278,6 +286,36 @@ function EditUnitForm() {
             <div className={styles.formGroup}>
               <label>Tanggal Habis Garansi</label>
               <input type="date" value={warrantyExpiry} onChange={(e) => setWarrantyExpiry(e.target.value)} />
+            </div>
+          </div>
+        </div>
+
+        {/* Section 4: Dokumen Teknis */}
+        <div className={styles.formSection}>
+          <h3 className={styles.sectionTitle}>4. Dokumen Teknis (Level 3 Partner Access)</h3>
+          <p style={{ fontSize: '0.8rem', color: 'var(--color-space-grey)', marginBottom: '16px', marginTop: '-8px' }}>
+            Dokumen berikut hanya dapat diakses oleh pengguna dengan level Partner dan Admin. Masukkan URL langsung ke file PDF atau gambar.
+          </p>
+          <div className={styles.grid}>
+            <div className={styles.formGroup}>
+              <label>URL Exploded View (PDF/Gambar)</label>
+              <input
+                type="url"
+                value={explodedViewUrl}
+                onChange={(e) => setExplodedViewUrl(e.target.value)}
+                placeholder="https://example.com/exploded-view.pdf"
+                autoComplete="off"
+              />
+            </div>
+            <div className={styles.formGroup}>
+              <label>URL Wiring / Circuit Diagram (PDF/Gambar)</label>
+              <input
+                type="url"
+                value={circuitDiagramUrl}
+                onChange={(e) => setCircuitDiagramUrl(e.target.value)}
+                placeholder="https://example.com/circuit-diagram.pdf"
+                autoComplete="off"
+              />
             </div>
           </div>
         </div>

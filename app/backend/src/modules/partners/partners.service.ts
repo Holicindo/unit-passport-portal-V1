@@ -22,4 +22,14 @@ export class PartnersService {
   async findOne(id: string) {
     return this.partnerRepo.findOne({ where: { id } });
   }
+
+  async update(id: string, data: any) {
+    await this.partnerRepo.update(id, data);
+    return this.partnerRepo.findOne({ where: { id } });
+  }
+
+  async remove(id: string) {
+    await this.partnerRepo.delete(id);
+    return { success: true };
+  }
 }

@@ -30,6 +30,10 @@ export default function RegisterUnitPage() {
   const [clientId, setClientId] = useState('');
   const [warrantyStatus, setWarrantyStatus] = useState('ACTIVE');
   const [warrantyExpiry, setWarrantyExpiry] = useState('');
+
+  // Technical Documents (Level 3 Partner Access)
+  const [explodedViewUrl, setExplodedViewUrl] = useState('');
+  const [circuitDiagramUrl, setCircuitDiagramUrl] = useState('');
   
   // Media upload states
   const [testRunFile, setTestRunFile] = useState<File | null>(null);

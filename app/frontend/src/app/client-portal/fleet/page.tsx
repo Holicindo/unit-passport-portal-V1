@@ -1,121 +1,300 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { unitApi } from '@/lib/api';
 import Link from 'next/link';
-import { Search, Eye } from 'lucide-react';
+import { Search, Eye, Package, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import styles from '../ClientPortal.module.css';
 
-export default function ClientFleet() {
-  const [fleet, setFleet] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+const PAGE_SIZE = 10;
+// Jumlah tombol halaman yang ditampilkan di tengah
+const WINDOW = 2;
 
-  useEffect(() => {
-    const fetchFleet = async () => {
-      try {
-        const { data } = await unitApi.findMyFleet();
-        setFleet(data);
-      } catch (err) {
-        console.error('Failed to fetch fleet:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchFleet();
+function StatusBadge({ status }: { status: string }) {
+  const s = status?.toUpperCase();
+  if (s === 'ACTIVE')      return <span className={styles.badgeActive}>Aktif</span>;
+  if (s === 'MAINTENANCE') return <span className={styles.badgeMaintenance}>Maintenance</span>;
+  return <span className={styles.badgeInactive}>{status || 'Tidak Aktif'}</span>;
+}
+
+// ── Komponen Pagination yang bersih tanpa bug key ──
+function Pagination({
+  page,
+  totalPages,
+  totalItems,
+  onPage,
+}: {
+  page: number;
+  totalPages: number;
+  totalItems: number;
+  onPage: (p: number) => void;
+}) {
+  if (totalPages <= 1) return null;
+
+  const start = (page - 1) * PAGE_SIZE + 1;
+  const end   = Math.min(page * PAGE_SIZE, totalItems);
+
+  // Bangun daftar halaman dengan ellipsis
+  const pages: (number | 'ellipsis-left' | 'ellipsis-right')[] = [];
+
+  if (totalPages <= 7) {
+    // Tampilkan semua jika sedikit
+    for (let i = 1; i <= totalPages; i++) pages.push(i);
+  } else {
+    pages.push(1);
+    if (page > WINDOW + 2) pages.push('ellipsis-left');
+    for (
+      let i = Math.max(2, page - WINDOW);
+      i <= Math.min(totalPages - 1, page + WINDOW);
+      i++
+    ) {
+      pages.push(i);
+    }
+    if (page < totalPages - WINDOW - 1) pages.push('ellipsis-right');
+    pages.push(totalPages);
+  }
+
+  return (
+    <div className={styles.pagination}>
+      <span className={styles.paginationInfo}>
+        {start}–{end} dari {totalItems} unit
+      </span>
+      <div className={styles.paginationBtns}>
+        {/* Tombol Prev */}
+        <button
+          className={styles.pageBtn}
+          onClick={() => onPage(page - 1)}
+          disabled={page === 1}
+          aria-label="Halaman sebelumnya"
+        >
+          <ChevronLeft size={14} />
+        </button>
+
+        {/* Nomor halaman */}
+        {pages.map((p, idx) => {
+          if (p === 'ellipsis-left' || p === 'ellipsis-right') {
+            return (
+              <span
+                key={p}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '0 4px',
+                  color: 'var(--brand-space-grey)',
+                  fontSize: '0.85rem',
+                }}
+              >
+                ...
+              </span>
+            );
+          }
+          return (
+            <button
+              key={`page-${p}`}
+              className={`${styles.pageBtn} ${p === page ? styles.pageBtnActive : ''}`}
+              onClick={() => onPage(p)}
+              aria-label={`Halaman ${p}`}
+              aria-current={p === page ? 'page' : undefined}
+            >
+              {p}
+            </button>
+          );
+        })}
+
+        {/* Tombol Next */}
+        <button
+          className={styles.pageBtn}
+          onClick={() => onPage(page + 1)}
+          disabled={page === totalPages}
+          aria-label="Halaman berikutnya"
+        >
+          <ChevronRight size={14} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default function ClientFleet() {
+  const [fleet, setFleet]     = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState('');
+  const [search, setSearch]   = useState('');
+  const [page, setPage]       = useState(1);
+
+  const fetchFleet = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const { data } = await unitApi.findMyFleet();
+      setFleet(data || []);
+    } catch {
+      setError('Gagal memuat data fleet. Silakan coba lagi.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const filteredFleet = fleet.filter(u => 
-    u.serial_number?.toLowerCase().includes(search.toLowerCase()) || 
-    u.model_name?.toLowerCase().includes(search.toLowerCase()) ||
-    u.specs?.city?.toLowerCase().includes(search.toLowerCase())
-  );
+  useEffect(() => { fetchFleet(); }, [fetchFleet]);
+
+  // Filter client-side
+  const filtered = fleet.filter(u => {
+    const q = search.toLowerCase();
+    return (
+      u.serial_number?.toLowerCase().includes(q) ||
+      u.model_name?.toLowerCase().includes(q) ||
+      u.current_client?.city?.toLowerCase().includes(q) ||
+      u.specs?.city?.toLowerCase().includes(q)
+    );
+  });
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  // Pastikan page tidak melebihi totalPages setelah filter berubah
+  const safePage   = Math.min(page, totalPages);
+  const paginated  = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  const handleSearch = (val: string) => {
+    setSearch(val);
+    setPage(1);
+  };
 
   return (
     <div>
       <div className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>My Fleet</h1>
-        <p className={styles.pageDescription}>Kelola dan pantau seluruh unit mesin di semua lokasi Anda.</p>
+        <p className={styles.pageDescription}>
+          Kelola dan pantau seluruh unit mesin di semua lokasi Anda.
+        </p>
       </div>
 
-      <div className={styles.card}>
-        <div style={{ padding: '24px', borderBottom: '1px solid #e2e8f0', display: 'flex', gap: '16px', alignItems: 'center' }}>
-          <div style={{ position: 'relative', flex: 1, maxWidth: '400px' }}>
-            <Search size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-            <input 
-              type="text" 
-              placeholder="Cari serial number, model, atau kota..." 
+      {/* Card utama — full width */}
+      <div className={styles.card} style={{ width: '100%' }}>
+
+        {/* Search Bar */}
+        <div className={styles.searchBar}>
+          <div className={styles.searchInputWrapper} style={{ maxWidth: 420 }}>
+            <Search size={15} className={styles.searchIcon} />
+            <input
+              type="text"
+              className={styles.searchInput}
+              placeholder="Cari serial number, model, atau kota..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              style={{ width: '100%', padding: '12px 16px 12px 42px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.95rem', outline: 'none' }}
+              onChange={e => handleSearch(e.target.value)}
             />
+          </div>
+          <div className={styles.filterChips}>
+            <button
+              className={`${styles.filterChip} ${search === '' ? styles.filterChipActive : ''}`}
+              onClick={() => handleSearch('')}
+            >
+              Semua ({fleet.length})
+            </button>
           </div>
         </div>
 
-        {loading ? (
-          <div style={{ padding: '48px', textAlign: 'center', color: '#64748b' }}>Memuat data fleet...</div>
-        ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-              <thead>
-                <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
-                  <th style={{ padding: '16px 24px', color: '#64748b', fontSize: '0.85rem', fontWeight: 600 }}>SERIAL NUMBER</th>
-                  <th style={{ padding: '16px 24px', color: '#64748b', fontSize: '0.85rem', fontWeight: 600 }}>MODEL</th>
-                  <th style={{ padding: '16px 24px', color: '#64748b', fontSize: '0.85rem', fontWeight: 600 }}>LOKASI / KOTA</th>
-                  <th style={{ padding: '16px 24px', color: '#64748b', fontSize: '0.85rem', fontWeight: 600 }}>TANGGAL INSTALL</th>
-                  <th style={{ padding: '16px 24px', color: '#64748b', fontSize: '0.85rem', fontWeight: 600 }}>STATUS</th>
-                  <th style={{ padding: '16px 24px', color: '#64748b', fontSize: '0.85rem', fontWeight: 600, textAlign: 'right' }}>AKSI</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredFleet.map(unit => (
-                  <tr key={unit.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '16px 24px', fontWeight: 700, color: '#0f172a' }}>{unit.serial_number}</td>
-                    <td style={{ padding: '16px 24px', color: '#475569' }}>{unit.model_name}</td>
-                    <td style={{ padding: '16px 24px', color: '#475569' }}>{unit.specs?.city || '-'}</td>
-                    <td style={{ padding: '16px 24px', color: '#475569' }}>
-                      {unit.manufacturing_date ? new Date(unit.manufacturing_date).toLocaleDateString('id-ID') : '-'}
-                    </td>
-                    <td style={{ padding: '16px 24px' }}>
-                      <span style={{ 
-                        padding: '6px 12px', 
-                        borderRadius: '20px', 
-                        fontSize: '0.75rem', 
-                        fontWeight: 700,
-                        background: unit.status === 'ACTIVE' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)',
-                        color: unit.status === 'ACTIVE' ? '#10b981' : '#f59e0b'
-                      }}>
-                        {unit.status}
-                      </span>
-                    </td>
-                    <td style={{ padding: '16px 24px', textAlign: 'right' }}>
-                      <Link href={`/client-portal/units/${unit.id}`} style={{ 
-                        display: 'inline-flex', 
-                        alignItems: 'center', 
-                        gap: '6px', 
-                        padding: '8px 16px', 
-                        background: '#f1f5f9', 
-                        color: '#3b82f6', 
-                        borderRadius: '6px', 
-                        textDecoration: 'none',
-                        fontWeight: 600,
-                        fontSize: '0.85rem'
-                      }}>
-                        <Eye size={16} /> Detail
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-                {filteredFleet.length === 0 && !loading && (
-                  <tr>
-                    <td colSpan={6} style={{ padding: '48px', textAlign: 'center', color: '#64748b' }}>
-                      Tidak ada data unit yang sesuai.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+        {/* Error */}
+        {error && (
+          <div style={{ padding: '32px', textAlign: 'center' }}>
+            <p style={{ color: 'var(--brand-safety-orange)', marginBottom: 12, fontFamily: 'var(--font-body)' }}>
+              {error}
+            </p>
+            <button className={styles.btnSecondary} onClick={fetchFleet}>
+              <RefreshCw size={14} /> Coba Lagi
+            </button>
           </div>
+        )}
+
+        {/* Loading */}
+        {loading && !error && (
+          <div style={{ padding: '48px', textAlign: 'center', color: 'var(--brand-space-grey)', fontFamily: 'var(--font-body)' }}>
+            Memuat data fleet...
+          </div>
+        )}
+
+        {/* Tabel */}
+        {!loading && !error && (
+          <>
+            {paginated.length === 0 ? (
+              <div className={styles.emptyState}>
+                <div className={styles.emptyStateIcon}><Package size={28} /></div>
+                <div className={styles.emptyStateTitle}>Tidak ada unit ditemukan</div>
+                <div className={styles.emptyStateDesc}>
+                  {search
+                    ? 'Coba kata kunci yang berbeda.'
+                    : 'Belum ada unit terdaftar atas nama perusahaan Anda.'}
+                </div>
+              </div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table className={styles.dataTable}>
+                  <thead>
+                    <tr>
+                      <th>Serial Number</th>
+                      <th>Model</th>
+                      <th>Lokasi / Kota</th>
+                      <th>Tgl. Produksi</th>
+                      <th>Garansi Habis</th>
+                      <th>Status</th>
+                      <th style={{ textAlign: 'right' }}>Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginated.map(unit => (
+                      <tr key={unit.id}>
+                        <td data-label="Serial Number">
+                          <span style={{
+                            fontWeight: 700,
+                            color: 'var(--brand-deep-navy)',
+                            fontFamily: 'var(--font-heading)',
+                          }}>
+                            {unit.serial_number}
+                          </span>
+                        </td>
+                        <td data-label="Model">{unit.model_name || '-'}</td>
+                        <td data-label="Lokasi" style={{ color: 'var(--brand-space-grey)' }}>
+                          {unit.current_client?.city || unit.specs?.city || '-'}
+                        </td>
+                        <td data-label="Tgl. Produksi" style={{ color: 'var(--brand-space-grey)' }}>
+                          {unit.production_date
+                            ? new Date(unit.production_date).toLocaleDateString('id-ID', {
+                                day: 'numeric', month: 'short', year: 'numeric',
+                              })
+                            : '-'}
+                        </td>
+                        <td data-label="Garansi Habis" style={{ color: 'var(--brand-space-grey)' }}>
+                          {unit.warranty_expiry
+                            ? new Date(unit.warranty_expiry).toLocaleDateString('id-ID', {
+                                day: 'numeric', month: 'short', year: 'numeric',
+                              })
+                            : '-'}
+                        </td>
+                        <td data-label="Status">
+                          <StatusBadge status={unit.status} />
+                        </td>
+                        <td data-label="Aksi" style={{ textAlign: 'right' }}>
+                          <Link
+                            href={`/client-portal/units/${unit.id}`}
+                            className={styles.cardAction}
+                            style={{ gap: 4 }}
+                          >
+                            Lihat <Eye size={13} />
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Pagination — komponen terpisah, bebas bug key */}
+            <Pagination
+              page={safePage}
+              totalPages={totalPages}
+              totalItems={filtered.length}
+              onPage={setPage}
+            />
+          </>
         )}
       </div>
     </div>

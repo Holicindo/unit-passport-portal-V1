@@ -85,25 +85,44 @@ export default function UsersPage() {
     setShowModal(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formName || !formEmail) return;
 
-    if (editingUser) {
-      setUsers(prev => prev.map(u => u.id === editingUser.id ? {
-        ...u, name: formName, email: formEmail, role: formRole, status: formStatus
-      } : u));
-    } else {
-      const newUser: User = {
-        id: `U${String(users.length + 1).padStart(3, '0')}`,
-        name: formName,
-        email: formEmail,
-        role: formRole,
-        status: formStatus,
-        lastLogin: 'Belum pernah',
-      };
-      setUsers(prev => [...prev, newUser]);
+    try {
+      if (editingUser) {
+        // For edit: just update local state (no edit endpoint yet)
+        setUsers(prev => prev.map(u => u.id === editingUser.id ? {
+          ...u, name: formName, email: formEmail, role: formRole, status: formStatus
+        } : u));
+      } else {
+        // For create: hit real API
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3001';
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${API_URL}/auth/register`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({
+            name: formName,
+            email: formEmail,
+            password: formPassword || 'password123',
+            role: formRole,
+          }),
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          alert(`Gagal membuat user: ${err.message || 'Unknown error'}`);
+          return;
+        }
+        // Refresh list
+        await fetchUsers();
+      }
+      setShowModal(false);
+    } catch (e) {
+      alert('Gagal menyimpan. Periksa koneksi ke server.');
     }
-    setShowModal(false);
   };
 
   const handleDelete = (id: string) => {
@@ -267,7 +286,9 @@ export default function UsersPage() {
               <tr>
                 <td colSpan={5} className={styles.emptyCell}>
                   <div className={styles.emptyWrapper}>
-                    <span className={styles.emptyIcon}>🔍</span>
+                    <span className={styles.emptyIcon}>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    </span>
                     Tidak ada pengguna ditemukan.
                   </div>
                 </td>

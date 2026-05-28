@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { reportApi } from '@/lib/api';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, FileText, CheckCircle, Clock } from 'lucide-react';
+import { ArrowLeft, FileText, CheckCircle } from 'lucide-react';
 import styles from '../../ClientPortal.module.css';
 
 export default function ClientReportDetail() {
@@ -27,15 +27,24 @@ export default function ClientReportDetail() {
   }, [id]);
 
   if (loading) {
-    return <div style={{ padding: '48px', textAlign: 'center', color: '#64748b' }}>Memuat laporan servis...</div>;
+    return (
+      <div style={{ padding: '48px', textAlign: 'center', color: 'var(--brand-space-grey)', fontFamily: 'var(--font-body)' }}>
+        Memuat laporan servis...
+      </div>
+    );
   }
 
   if (!report) {
     return (
       <div style={{ padding: '48px', textAlign: 'center' }}>
-        <h2 style={{ color: '#0f172a' }}>Laporan Tidak Ditemukan</h2>
-        <button onClick={() => router.back()} style={{ marginTop: '16px', padding: '8px 16px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
-          Kembali
+        <h2 style={{ color: 'var(--brand-deep-navy)', fontFamily: 'var(--font-heading)', marginBottom: '16px' }}>
+          Laporan Tidak Ditemukan
+        </h2>
+        <button
+          onClick={() => router.back()}
+          className={styles.btnSecondary}
+        >
+          <ArrowLeft size={16} /> Kembali
         </button>
       </div>
     );
@@ -43,64 +52,110 @@ export default function ClientReportDetail() {
 
   return (
     <div>
-      <div style={{ marginBottom: '24px' }}>
-        <button 
+      {/* Back button */}
+      <div style={{ marginBottom: '20px' }}>
+        <button
           onClick={() => router.back()}
-          style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontWeight: 600 }}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '8px',
+            background: 'none', border: 'none',
+            color: 'var(--brand-space-grey)',
+            cursor: 'pointer', fontWeight: 600,
+            fontFamily: 'var(--font-body)', fontSize: '0.875rem',
+            padding: '4px 0',
+          }}
         >
-          <ArrowLeft size={18} /> Kembali
+          <ArrowLeft size={16} /> Kembali
         </button>
       </div>
 
+      {/* Page header */}
       <div className={styles.pageHeader}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
           <div>
-            <h1 className={styles.pageTitle}>Laporan Servis: {report.report_number || report.id}</h1>
-            <p className={styles.pageDescription}>Unit: {report.unit?.serial_number} | Model: {report.unit?.model_name}</p>
+            <h1 className={styles.pageTitle}>
+              Laporan Servis: {report.report_number || report.id}
+            </h1>
+            <p className={styles.pageDescription}>
+              Unit: {report.unit?.serial_number} | Model: {report.unit?.model_name}
+            </p>
           </div>
-          <span style={{ 
-            display: 'flex', alignItems: 'center', gap: '6px',
-            padding: '6px 16px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 700,
-            background: 'rgba(16, 185, 129, 0.1)', color: '#10b981'
-          }}>
-            <CheckCircle size={16} /> SELESAI
+          <span className={styles.badgeActive} style={{ alignSelf: 'flex-start' }}>
+            <CheckCircle size={13} /> SELESAI
           </span>
         </div>
       </div>
 
-      <div className={styles.card} style={{ padding: '32px', marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <FileText size={24} color="#3b82f6" /> Detail Pekerjaan
+      {/* Detail card */}
+      <div className={styles.card} style={{ padding: '24px', marginBottom: '20px' }}>
+        <h2 style={{
+          fontSize: '1rem', fontWeight: 700,
+          color: 'var(--brand-deep-navy)',
+          fontFamily: 'var(--font-heading)',
+          marginBottom: '20px',
+          display: 'flex', alignItems: 'center', gap: '8px',
+        }}>
+          <FileText size={20} color="var(--brand-cobalt-blue)" /> Detail Pekerjaan
         </h2>
-        
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
-          <div>
-            <div style={{ marginBottom: '16px' }}>
-              <span style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', fontWeight: 600, marginBottom: '4px' }}>Tanggal Servis</span>
-              <span style={{ fontSize: '1rem', color: '#0f172a', fontWeight: 600 }}>
-                {report.created_at ? new Date(report.created_at).toLocaleDateString('id-ID') : '-'}
+
+        {/* Info grid — responsive */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '20px',
+          marginBottom: '20px',
+        }}>
+          {[
+            { label: 'Tanggal Servis', value: report.created_at ? new Date(report.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-' },
+            { label: 'Teknisi', value: report.technician_name || '-' },
+            { label: 'Jenis Laporan', value: report.report_type || '-' },
+            { label: 'Lokasi / Outlet', value: report.unit?.specs?.city || '-' },
+          ].map(({ label, value }) => (
+            <div key={label}>
+              <span style={{
+                display: 'block', fontSize: '0.72rem',
+                color: 'var(--brand-space-grey)',
+                fontWeight: 700, textTransform: 'uppercase',
+                letterSpacing: '0.05em', marginBottom: '4px',
+                fontFamily: 'var(--font-heading)',
+              }}>
+                {label}
+              </span>
+              <span style={{
+                fontSize: '0.9rem',
+                color: 'var(--brand-deep-navy)',
+                fontWeight: 600,
+                fontFamily: 'var(--font-body)',
+              }}>
+                {value}
               </span>
             </div>
-            <div style={{ marginBottom: '16px' }}>
-              <span style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', fontWeight: 600, marginBottom: '4px' }}>Teknisi</span>
-              <span style={{ fontSize: '1rem', color: '#0f172a', fontWeight: 600 }}>{report.technician_name || '-'}</span>
-            </div>
-          </div>
-          <div>
-            <div style={{ marginBottom: '16px' }}>
-              <span style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', fontWeight: 600, marginBottom: '4px' }}>Jenis Laporan</span>
-              <span style={{ fontSize: '1rem', color: '#0f172a', fontWeight: 600 }}>{report.report_type}</span>
-            </div>
-            <div style={{ marginBottom: '16px' }}>
-              <span style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', fontWeight: 600, marginBottom: '4px' }}>Lokasi / Outlet</span>
-              <span style={{ fontSize: '1rem', color: '#0f172a', fontWeight: 600 }}>{report.unit?.specs?.city || '-'}</span>
-            </div>
-          </div>
+          ))}
         </div>
 
-        <div style={{ marginTop: '32px', padding: '24px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-          <span style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', fontWeight: 600, marginBottom: '8px' }}>Tindakan / Hasil Pemeriksaan</span>
-          <p style={{ margin: 0, color: '#334155', lineHeight: 1.6 }}>
+        {/* Notes section */}
+        <div style={{
+          padding: '18px 20px',
+          background: 'var(--brand-light-grey)',
+          borderRadius: '10px',
+          border: '1px solid var(--brand-border)',
+        }}>
+          <span style={{
+            display: 'block', fontSize: '0.72rem',
+            color: 'var(--brand-space-grey)',
+            fontWeight: 700, textTransform: 'uppercase',
+            letterSpacing: '0.05em', marginBottom: '8px',
+            fontFamily: 'var(--font-heading)',
+          }}>
+            Tindakan / Hasil Pemeriksaan
+          </span>
+          <p style={{
+            margin: 0,
+            color: 'var(--brand-deep-navy)',
+            lineHeight: 1.6,
+            fontSize: '0.875rem',
+            fontFamily: 'var(--font-body)',
+          }}>
             {report.general_notes || 'Tidak ada catatan tambahan untuk laporan ini.'}
           </p>
         </div>

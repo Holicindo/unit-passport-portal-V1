@@ -112,8 +112,20 @@ export class UnitsService {
     const client = await this.clientRepo.findOne({ where: { id: current_client_id } });
     if (!client) throw new BadRequestException('Client tidak ditemukan');
 
-    // Generate beautiful unique QR token matching our custom format
-    const qr_token = `holi-cp-${Math.random().toString(36).substring(2, 10)}`;
+    // Generate QR token based on serial number for readable, branded URLs
+    // Format: holi-cp-[serial_number_slug] e.g. holi-cp-HOLI-SBX-2024-001
+    const serialSlug = (unitData.serial_number || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '-')   // replace non-alphanumeric with dash
+      .replace(/-+/g, '-')           // collapse multiple dashes
+      .replace(/^-|-$/g, '');        // trim leading/trailing dashes
+
+    // Ensure uniqueness — append short random suffix if token already exists
+    let qr_token = `holi-cp-${serialSlug}`;
+    const existing = await this.unitRepo.findOne({ where: { qr_token } });
+    if (existing) {
+      qr_token = `holi-cp-${serialSlug}-${Math.random().toString(36).substring(2, 6)}`;
+    }
 
     const unit = this.unitRepo.create({
       ...unitData,
@@ -157,6 +169,53 @@ export class UnitsService {
     }
 
     return this.unitRepo.save(unit);
+  }
+
+  // Admin: Regenerate QR tokens for all units to use serial-number-based format
+  async regenerateAllQrTokens() {
+    const units = await this.unitRepo.find();
+    const results: { id: string; serial_number: string; old_token: string; new_token: string }[] = [];
+
+    for (const unit of units) {
+      const oldToken = unit.qr_token;
+
+      // Skip if already in correct format
+      if (oldToken && oldToken.startsWith('holi-cp-') && oldToken.length > 12) {
+        const tokenSuffix = oldToken.replace('holi-cp-', '');
+        // Check if it looks like a serial number slug (not pure random)
+        if (tokenSuffix.includes('-') && tokenSuffix.length > 8) {
+          results.push({ id: unit.id, serial_number: unit.serial_number, old_token: oldToken, new_token: oldToken });
+          continue;
+        }
+      }
+
+      // Generate new token from serial number
+      const serialSlug = (unit.serial_number || unit.id)
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+
+      let newToken = `holi-cp-${serialSlug}`;
+
+      // Check for collision with other units
+      const collision = await this.unitRepo.findOne({ where: { qr_token: newToken } });
+      if (collision && collision.id !== unit.id) {
+        newToken = `holi-cp-${serialSlug}-${Math.random().toString(36).substring(2, 5)}`;
+      }
+
+      unit.qr_token = newToken;
+      await this.unitRepo.save(unit);
+
+      results.push({ id: unit.id, serial_number: unit.serial_number, old_token: oldToken, new_token: newToken });
+    }
+
+    return {
+      success: true,
+      total: units.length,
+      updated: results.filter(r => r.old_token !== r.new_token).length,
+      results,
+    };
   }
 
   async requestServiceSmartRouting(unitId: string, body: { city?: string; notes?: string; contact_phone?: string; contact_name?: string }) {

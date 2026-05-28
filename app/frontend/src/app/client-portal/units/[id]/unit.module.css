@@ -1,0 +1,334 @@
+/* ============================================================
+   CLIENT PORTAL — Unit Detail Page
+   Brand Identity Holicindo
+   ============================================================ */
+
+/* Tombol kembali */
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  color: var(--brand-space-grey);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 0;
+  margin-bottom: 20px;
+  transition: color 0.15s;
+  font-family: var(--font-body);
+}
+
+.backBtn:hover {
+  color: var(--brand-cobalt-blue);
+}
+
+/* Header unit */
+.unitHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.unitHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Kotak ikon unit — Deep Navy */
+.unitIconBox {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: var(--brand-deep-navy);
+  color: var(--brand-optic-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Serial number — Montserrat Bold */
+.unitSerial {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--brand-deep-navy);
+  margin: 0 0 4px 0;
+  font-family: var(--font-heading);
+  letter-spacing: -0.3px;
+}
+
+.unitModel {
+  font-size: 0.9rem;
+  color: var(--brand-space-grey);
+  margin: 0;
+  font-family: var(--font-body);
+}
+
+.unitHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Badge jumlah catatan */
+.countBadge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--brand-space-grey);
+  background: var(--brand-light-grey);
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-family: var(--font-heading);
+}
+
+/* ── Log Servis ── */
+.logList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.logItem {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--brand-light-grey);
+}
+
+.logItem:last-child {
+  border-bottom: none;
+}
+
+/* Aksen kiri — Cobalt Blue */
+.logAccent {
+  width: 4px;
+  background: var(--brand-cobalt-blue);
+  flex-shrink: 0;
+  border-radius: 0;
+}
+
+.logContent {
+  flex: 1;
+  padding: 16px 20px;
+}
+
+.logTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.logTitle {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--brand-deep-navy);
+  font-family: var(--font-heading);
+}
+
+.logDate {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  color: var(--brand-space-grey);
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-family: var(--font-body);
+}
+
+.logDesc {
+  font-size: 0.85rem;
+  color: var(--brand-space-grey);
+  margin: 0 0 10px 0;
+  line-height: 1.5;
+  font-family: var(--font-body);
+}
+
+.logMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.logMetaItem {
+  font-size: 0.78rem;
+  color: var(--brand-space-grey);
+  font-family: var(--font-body);
+}
+
+/* Lampiran */
+.attachments {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.attachLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--brand-cobalt-blue);
+  text-decoration: none;
+  padding: 3px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(46, 91, 255, 0.2);
+  background: rgba(46, 91, 255, 0.05);
+  transition: all 0.15s;
+  font-family: var(--font-body);
+}
+
+.attachLink:hover {
+  background: rgba(46, 91, 255, 0.1);
+  border-color: var(--brand-cobalt-blue);
+}
+
+/* ── Modal Request Servis ── */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 31, 63, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modal {
+  background: var(--brand-optic-white);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 20px 60px rgba(0, 31, 63, 0.2);
+  overflow: hidden;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--brand-border);
+}
+
+.modalTitle {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--brand-deep-navy);
+  margin: 0;
+  font-family: var(--font-heading);
+}
+
+.modalClose {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--brand-border);
+  background: var(--brand-optic-white);
+  color: var(--brand-space-grey);
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  line-height: 1;
+}
+
+.modalClose:hover {
+  background: var(--brand-light-grey);
+  color: var(--brand-deep-navy);
+}
+
+.modalForm {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formLabel {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--brand-deep-navy);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-family: var(--font-heading);
+}
+
+.formInput,
+.formTextarea {
+  border: 1px solid var(--brand-border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.875rem;
+  color: var(--brand-deep-navy);
+  background: var(--brand-light-grey);
+  outline: none;
+  transition: all 0.15s;
+  font-family: var(--font-body);
+  width: 100%;
+}
+
+.formInput:focus,
+.formTextarea:focus {
+  border-color: var(--brand-cobalt-blue);
+  background: var(--brand-optic-white);
+  box-shadow: 0 0 0 3px rgba(46, 91, 255, 0.1);
+}
+
+.formTextarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.formError {
+  font-size: 0.8rem;
+  color: var(--brand-safety-orange);
+  margin: 0;
+  font-family: var(--font-body);
+}
+
+.modalActions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding-top: 4px;
+}
+
+.modalSuccess {
+  padding: 40px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+  color: var(--brand-deep-navy);
+  font-family: var(--font-body);
+}
+
+.modalSuccess p {
+  font-size: 0.9rem;
+  color: var(--brand-space-grey);
+  max-width: 320px;
+  line-height: 1.6;
+}

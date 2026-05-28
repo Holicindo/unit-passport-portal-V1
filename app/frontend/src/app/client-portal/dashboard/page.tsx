@@ -1,141 +1,390 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { unitApi } from '@/lib/api';
-import { Truck, AlertTriangle, ShieldCheck, Activity } from 'lucide-react';
+import { unitApi, serviceLogApi } from '@/lib/api';
+import {
+  TrendingUp,
+  AlertTriangle,
+  ChevronRight,
+  ChevronLeft,
+  Wrench,
+  Package,
+} from 'lucide-react';
 import styles from '../ClientPortal.module.css';
 import Link from 'next/link';
 
-export default function ClientDashboard() {
-  const [fleet, setFleet] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
+// ── Greeting real-time berdasarkan jam ──
+function useGreeting() {
+  const [greeting, setGreeting] = useState('');
   useEffect(() => {
-    const fetchFleet = async () => {
+    const update = () => {
+      const h = new Date().getHours();
+      if (h >= 5  && h < 12) setGreeting('Selamat Pagi');
+      else if (h >= 12 && h < 15) setGreeting('Selamat Siang');
+      else if (h >= 15 && h < 18) setGreeting('Selamat Sore');
+      else setGreeting('Selamat Malam');
+    };
+    update();
+    // Update setiap menit agar tetap akurat
+    const interval = setInterval(update, 60_000);
+    return () => clearInterval(interval);
+  }, []);
+  return greeting;
+}
+
+// ── Mini Calendar ──
+function MiniCalendar() {
+  const today = new Date();
+  const [current, setCurrent] = useState({
+    year: today.getFullYear(),
+    month: today.getMonth(),
+  });
+
+  const MONTH_NAMES = [
+    'Januari','Februari','Maret','April','Mei','Juni',
+    'Juli','Agustus','September','Oktober','November','Desember',
+  ];
+  const DAY_NAMES = ['Sen','Sel','Rab','Kam','Jum','Sab','Min'];
+
+  const firstDayOfWeek = new Date(current.year, current.month, 1).getDay();
+  const offset = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
+  const daysInMonth = new Date(current.year, current.month + 1, 0).getDate();
+
+  const cells: (number | null)[] = [
+    ...Array(offset).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  ];
+
+  const prev = () => setCurrent(c => ({
+    year:  c.month === 0 ? c.year - 1 : c.year,
+    month: c.month === 0 ? 11 : c.month - 1,
+  }));
+  const next = () => setCurrent(c => ({
+    year:  c.month === 11 ? c.year + 1 : c.year,
+    month: c.month === 11 ? 0 : c.month + 1,
+  }));
+
+  const isToday = (d: number) =>
+    d === today.getDate() &&
+    current.month === today.getMonth() &&
+    current.year === today.getFullYear();
+
+  return (
+    <div className={styles.calendarWidget}>
+      <div className={styles.calendarHeader}>
+        <button className={styles.calendarNavBtn} onClick={prev} aria-label="Bulan sebelumnya">
+          <ChevronLeft size={14} />
+        </button>
+        <span className={styles.calendarMonth}>
+          {MONTH_NAMES[current.month]} {current.year}
+        </span>
+        <button className={styles.calendarNavBtn} onClick={next} aria-label="Bulan berikutnya">
+          <ChevronRight size={14} />
+        </button>
+      </div>
+      <div className={styles.calendarGrid}>
+        {DAY_NAMES.map(d => (
+          <div key={d} className={styles.calendarDayName}>{d}</div>
+        ))}
+        {cells.map((d, i) => (
+          <div
+            key={i}
+            className={
+              d === null
+                ? styles.calendarDayEmpty
+                : isToday(d)
+                ? `${styles.calendarDay} ${styles.calendarDayToday}`
+                : styles.calendarDay
+            }
+          >
+            {d ?? ''}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Status Badge ──
+function StatusBadge({ status }: { status: string }) {
+  const s = status?.toUpperCase();
+  if (s === 'ACTIVE')      return <span className={styles.badgeActive}>Aktif</span>;
+  if (s === 'MAINTENANCE') return <span className={styles.badgeMaintenance}>Maintenance</span>;
+  if (s === 'INACTIVE')    return <span className={styles.badgeInactive}>Tidak Aktif</span>;
+  return <span className={styles.badgeInactive}>{status}</span>;
+}
+
+// ── Skeleton Card ──
+function SkeletonCard() {
+  return (
+    <div className={styles.statCard}>
+      <div className={styles.skeleton} style={{ height: 12, width: '55%', marginBottom: 14 }} />
+      <div className={styles.skeleton} style={{ height: 30, width: '35%', marginBottom: 10 }} />
+      <div className={styles.skeleton} style={{ height: 11, width: '45%' }} />
+    </div>
+  );
+}
+
+export default function ClientDashboard() {
+  const [fleet, setFleet]           = useState<any[]>([]);
+  const [recentLogs, setRecentLogs] = useState<any[]>([]);
+  const [loading, setLoading]       = useState(true);
+  const [user, setUser]             = useState<any>(null);
+  const greeting = useGreeting();
+
+  // Baca user dari localStorage
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('user');
+      if (raw) setUser(JSON.parse(raw));
+    } catch {}
+  }, []);
+
+  // Fetch data fleet & log servis
+  useEffect(() => {
+    const fetchData = async () => {
       try {
-        const { data } = await unitApi.findMyFleet();
-        setFleet(data);
+        const { data: fleetData } = await unitApi.findMyFleet();
+        setFleet(fleetData || []);
+        try {
+          const { data: logsData } = await serviceLogApi.findAll(1, 5);
+          setRecentLogs(logsData?.data || logsData || []);
+        } catch { /* log servis opsional */ }
       } catch (err) {
-        console.error('Failed to fetch fleet:', err);
+        console.error('Gagal memuat data fleet:', err);
       } finally {
         setLoading(false);
       }
     };
-    fetchFleet();
+    fetchData();
   }, []);
 
-  const totalUnits = fleet.length;
-  const activeUnits = fleet.filter(u => u.status === 'ACTIVE').length;
-  const needsMaintenance = fleet.filter(u => u.status === 'MAINTENANCE').length;
-  // In a real scenario, warranty logic would check the date.
-  const activeWarranty = fleet.length; // placeholder
+  // Statistik
+  const today        = new Date();
+  const in30Days     = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+  const totalUnits   = fleet.length;
+  const activeUnits  = fleet.filter(u => u.status === 'ACTIVE').length;
+  const maintUnits   = fleet.filter(u => u.status === 'MAINTENANCE').length;
+  const activeWarr   = fleet.filter(u => u.warranty_expiry && new Date(u.warranty_expiry) > today).length;
+  const expiringWarr = fleet.filter(u => {
+    if (!u.warranty_expiry) return false;
+    const e = new Date(u.warranty_expiry);
+    return e > today && e <= in30Days;
+  }).length;
+
+  // Nama depan user yang terdaftar (bukan hardcode "Client")
+  const firstName    = user?.name?.split(' ')[0] || '';
+  const companyName  = user?.company_name || '';
 
   return (
     <div>
+      {/* ── Page Header — nama & greeting real-time, tanpa emoji ── */}
       <div className={styles.pageHeader}>
-        <h1 className={styles.pageTitle}>Dashboard Fleet</h1>
-        <p className={styles.pageDescription}>Ringkasan status seluruh aset mesin Anda di seluruh Indonesia.</p>
+        <h1 className={styles.pageTitle}>
+          {greeting}{firstName ? `, ${firstName}` : ''}
+        </h1>
+        <p className={styles.pageDescription}>
+          {companyName
+            ? `Ringkasan status fleet ${companyName}.`
+            : 'Ringkasan status fleet Anda.'}
+        </p>
       </div>
 
-      {loading ? (
-        <p>Memuat data fleet...</p>
-      ) : (
-        <>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px', marginBottom: '32px' }}>
-            <div className={styles.card} style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <div style={{ width: '56px', height: '56px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Truck size={28} />
-              </div>
-              <div>
-                <p style={{ margin: 0, color: '#64748b', fontSize: '0.85rem', fontWeight: 600 }}>TOTAL UNIT</p>
-                <h3 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 800, color: '#0f172a' }}>{totalUnits}</h3>
-              </div>
-            </div>
-
-            <div className={styles.card} style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <div style={{ width: '56px', height: '56px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Activity size={28} />
-              </div>
-              <div>
-                <p style={{ margin: 0, color: '#64748b', fontSize: '0.85rem', fontWeight: 600 }}>UNIT AKTIF</p>
-                <h3 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 800, color: '#0f172a' }}>{activeUnits}</h3>
+      {/* ── Stat Cards ── */}
+      <div className={styles.statsGrid}>
+        {loading ? (
+          <><SkeletonCard /><SkeletonCard /><SkeletonCard /><SkeletonCard /></>
+        ) : (
+          <>
+            <div className={styles.statCard}>
+              <div className={styles.statCardLabel}>Total Unit</div>
+              <div className={styles.statCardValue}>{totalUnits}</div>
+              <div className={styles.statCardFooter}>
+                <span className={styles.statCardSub}>Seluruh aset terdaftar</span>
               </div>
             </div>
 
-            <div className={styles.card} style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <div style={{ width: '56px', height: '56px', borderRadius: '12px', background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <AlertTriangle size={28} />
-              </div>
-              <div>
-                <p style={{ margin: 0, color: '#64748b', fontSize: '0.85rem', fontWeight: 600 }}>PERLU SERVIS</p>
-                <h3 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 800, color: '#0f172a' }}>{needsMaintenance}</h3>
+            <div className={styles.statCard}>
+              <div className={styles.statCardLabel}>Unit Aktif</div>
+              <div className={styles.statCardValue}>{activeUnits}</div>
+              <div className={styles.statCardFooter}>
+                {totalUnits > 0 && (
+                  <span className={styles.statBadgeUp}>
+                    <TrendingUp size={11} />
+                    {Math.round((activeUnits / totalUnits) * 100)}%
+                  </span>
+                )}
+                <span className={styles.statCardSub}>dari total unit</span>
               </div>
             </div>
 
-            <div className={styles.card} style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <div style={{ width: '56px', height: '56px', borderRadius: '12px', background: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <ShieldCheck size={28} />
-              </div>
-              <div>
-                <p style={{ margin: 0, color: '#64748b', fontSize: '0.85rem', fontWeight: 600 }}>GARANSI AKTIF</p>
-                <h3 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 800, color: '#0f172a' }}>{activeWarranty}</h3>
+            <div className={styles.statCard}>
+              <div className={styles.statCardLabel}>Perlu Servis</div>
+              <div className={styles.statCardValue}>{maintUnits}</div>
+              <div className={styles.statCardFooter}>
+                {maintUnits > 0 ? (
+                  <span className={styles.statBadgeWarn}>
+                    <AlertTriangle size={11} /> Perhatian
+                  </span>
+                ) : (
+                  <span className={styles.statBadgeUp}>Semua OK</span>
+                )}
               </div>
             </div>
+
+            <div className={styles.statCard}>
+              <div className={styles.statCardLabel}>Garansi Aktif</div>
+              <div className={styles.statCardValue}>{activeWarr}</div>
+              <div className={styles.statCardFooter}>
+                {expiringWarr > 0 ? (
+                  <span className={styles.statBadgeWarn}>
+                    <AlertTriangle size={11} /> {expiringWarr} segera habis
+                  </span>
+                ) : (
+                  <span className={styles.statCardSub}>Tidak ada yang akan habis</span>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* ── Two Column Layout ── */}
+      <div className={styles.twoCol}>
+
+        {/* Kiri: Tabel Unit */}
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <h2 className={styles.cardTitle}>Unit Terdaftar</h2>
+            <Link href="/client-portal/fleet" className={styles.cardAction}>
+              Lihat Semua <ChevronRight size={14} />
+            </Link>
           </div>
 
-          <div className={styles.card} style={{ padding: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700 }}>Unit Terbaru</h2>
-              <Link href="/client-portal/fleet" style={{ color: '#3b82f6', textDecoration: 'none', fontWeight: 600, fontSize: '0.9rem' }}>Lihat Semua →</Link>
+          {loading ? (
+            <div style={{ padding: '24px' }}>
+              {[1,2,3,4].map(i => (
+                <div key={i} style={{ marginBottom: 16 }}>
+                  <div className={styles.skeleton} style={{ height: 13, width: '75%', marginBottom: 6 }} />
+                  <div className={styles.skeleton} style={{ height: 11, width: '45%' }} />
+                </div>
+              ))}
             </div>
-            
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          ) : fleet.length === 0 ? (
+            <div className={styles.emptyState}>
+              <div className={styles.emptyStateIcon}><Package size={28} /></div>
+              <div className={styles.emptyStateTitle}>Belum ada unit terdaftar</div>
+              <div className={styles.emptyStateDesc}>
+                Unit yang terdaftar atas nama perusahaan Anda akan muncul di sini.
+              </div>
+            </div>
+          ) : (
+            <>
+              <table className={styles.dataTable}>
                 <thead>
-                  <tr style={{ borderBottom: '2px solid #f1f5f9' }}>
-                    <th style={{ padding: '12px 16px', color: '#64748b', fontSize: '0.85rem' }}>SERIAL NUMBER</th>
-                    <th style={{ padding: '12px 16px', color: '#64748b', fontSize: '0.85rem' }}>MODEL</th>
-                    <th style={{ padding: '12px 16px', color: '#64748b', fontSize: '0.85rem' }}>LOKASI</th>
-                    <th style={{ padding: '12px 16px', color: '#64748b', fontSize: '0.85rem' }}>STATUS</th>
+                  <tr>
+                    <th>Serial Number</th>
+                    <th>Model</th>
+                    <th>Lokasi</th>
+                    <th>Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {fleet.slice(0, 5).map(unit => (
-                    <tr key={unit.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                      <td style={{ padding: '16px', fontWeight: 600 }}>
-                        <Link href={`/client-portal/units/${unit.id}`} style={{ color: '#0f172a', textDecoration: 'none' }}>
+                  {fleet.slice(0, 8).map(unit => (
+                    <tr key={unit.id}>
+                      <td data-label="Serial Number">
+                        <Link
+                          href={`/client-portal/units/${unit.id}`}
+                          style={{
+                            color: 'var(--brand-cobalt-blue)',
+                            fontWeight: 700,
+                            textDecoration: 'none',
+                            fontFamily: 'var(--font-heading)',
+                          }}
+                        >
                           {unit.serial_number}
                         </Link>
                       </td>
-                      <td style={{ padding: '16px', color: '#475569' }}>{unit.model_name}</td>
-                      <td style={{ padding: '16px', color: '#475569' }}>{unit.specs?.city || '-'}</td>
-                      <td style={{ padding: '16px' }}>
-                        <span style={{ 
-                          padding: '4px 12px', 
-                          borderRadius: '20px', 
-                          fontSize: '0.75rem', 
-                          fontWeight: 700,
-                          background: unit.status === 'ACTIVE' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)',
-                          color: unit.status === 'ACTIVE' ? '#10b981' : '#f59e0b'
-                        }}>
-                          {unit.status}
-                        </span>
+                      <td data-label="Model">{unit.model_name || '-'}</td>
+                      <td data-label="Lokasi" style={{ color: 'var(--brand-space-grey)' }}>
+                        {unit.current_client?.city || unit.specs?.city || '-'}
+                      </td>
+                      <td data-label="Status">
+                        <StatusBadge status={unit.status} />
                       </td>
                     </tr>
                   ))}
-                  {fleet.length === 0 && (
-                    <tr>
-                      <td colSpan={4} style={{ padding: '32px', textAlign: 'center', color: '#64748b' }}>
-                        Belum ada unit yang terdaftar atas nama perusahaan Anda.
-                      </td>
-                    </tr>
-                  )}
                 </tbody>
               </table>
+              {fleet.length > 8 && (
+                <div className={styles.pagination}>
+                  <span className={styles.paginationInfo}>
+                    Menampilkan 8 dari {fleet.length} unit
+                  </span>
+                  <Link href="/client-portal/fleet" className={styles.cardAction}>
+                    Lihat semua
+                  </Link>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Kanan: Kalender + Servis Terbaru */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <MiniCalendar />
+
+          <div className={styles.card}>
+            <div className={styles.cardHeader}>
+              <h2 className={styles.cardTitle}>Servis Terbaru</h2>
             </div>
+            {recentLogs.length === 0 ? (
+              <div className={styles.emptyState} style={{ padding: '32px' }}>
+                <div className={styles.emptyStateIcon}><Wrench size={22} /></div>
+                <div className={styles.emptyStateTitle} style={{ fontSize: '0.875rem' }}>
+                  Belum ada riwayat servis
+                </div>
+              </div>
+            ) : (
+              <div className={styles.upcomingList}>
+                {recentLogs.slice(0, 4).map((log: any) => (
+                  <div key={log.id} className={styles.upcomingItem}>
+                    <div
+                      className={styles.upcomingIcon}
+                      style={{
+                        background: log.status === 'COMPLETED'
+                          ? 'rgba(16,185,129,0.1)'
+                          : 'rgba(255,107,0,0.1)',
+                        color: log.status === 'COMPLETED'
+                          ? '#10b981'
+                          : 'var(--brand-safety-orange)',
+                      }}
+                    >
+                      <Wrench size={18} />
+                    </div>
+                    <div className={styles.upcomingContent}>
+                      <div className={styles.upcomingTitle}>
+                        {log.unit?.model_name || log.unit?.serial_number || 'Unit'}
+                      </div>
+                      <div className={styles.upcomingMeta}>
+                        {(log.issue_description || 'Servis rutin').slice(0, 42)}
+                        {(log.issue_description?.length || 0) > 42 ? '...' : ''}
+                      </div>
+                    </div>
+                    <div className={styles.upcomingDate}>
+                      {log.service_date
+                        ? new Date(log.service_date).toLocaleDateString('id-ID', {
+                            day: 'numeric', month: 'short',
+                          })
+                        : '-'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        </>
-      )}
+        </div>
+      </div>
     </div>
   );
 }

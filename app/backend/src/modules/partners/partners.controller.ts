@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { PartnersService } from './partners.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -32,5 +32,19 @@ export class PartnersController {
   @ApiOperation({ summary: 'Admin: Get partner by ID' })
   findOne(@Param('id') id: string) {
     return this.partnersService.findOne(id);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Admin: Update a partner' })
+  @ApiResponse({ status: 200, description: 'Partner updated' })
+  update(@Param('id') id: string, @Body() body: any) {
+    return this.partnersService.update(id, body);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Admin: Delete a partner' })
+  @ApiResponse({ status: 200, description: 'Partner deleted' })
+  remove(@Param('id') id: string) {
+    return this.partnersService.remove(id);
   }
 }

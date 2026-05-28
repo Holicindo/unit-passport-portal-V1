@@ -67,6 +67,10 @@ export const serviceLogApi = {
 
 export const partnerApi = {
   findAll: () => api.get('/partners'),
+  create: (data: any) => api.post('/partners', data),
+  update: (id: string, data: any) => api.patch(`/partners/${id}`, data),
+  delete: (id: string) => api.delete(`/partners/${id}`),
+  toggleActive: (id: string, is_active: boolean) => api.patch(`/partners/${id}`, { is_active }),
 };
 
 export const notificationApi = {

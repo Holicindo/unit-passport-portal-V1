@@ -164,7 +164,7 @@ export default function RolesPage() {
           style={saved ? { background: '#00C48C', boxShadow: '0 4px 14px rgba(0,196,140,0.3)' } : {}}
         >
           <Save size={18} strokeWidth={2.5} />
-          {saved ? 'Tersimpan ✓' : 'Simpan Perubahan'}
+          {saved ? 'Tersimpan' : 'Simpan Perubahan'}
         </button>
       </header>
 

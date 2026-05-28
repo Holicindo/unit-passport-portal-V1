@@ -118,6 +118,16 @@ export class UnitsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
+  @Post('regenerate-qr-tokens')
+  @ApiOperation({ summary: 'Admin: Regenerate all QR tokens to use serial-number-based format (holi-cp-[serial])' })
+  regenerateQrTokens() {
+    return this.unitsService.regenerateAllQrTokens();
+  }
+
+  // --- FILE UPLOAD: Unit Media ---
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
   @Post('upload-media')
   @ApiOperation({ summary: 'Admin: Upload unit media (test run photo, diagram)' })
   @ApiConsumes('multipart/form-data')

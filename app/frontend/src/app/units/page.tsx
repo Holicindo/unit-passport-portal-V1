@@ -55,11 +55,18 @@ export default function UnitsPage() {
           user = JSON.parse(userData);
         }
       } catch { /* ignore */ }
-      
+
+      // Route-level access control: only ADMIN can see all units
+      // CLIENT → my-fleet, PARTNER → redirect to partner portal
       let response;
       if (user?.role === 'CLIENT') {
         response = await unitApi.findMyFleet();
+      } else if (user?.role === 'PARTNER') {
+        // Partners should not access this admin page — redirect
+        router.push('/partner-portal');
+        return;
       } else {
+        // ADMIN
         response = await unitApi.findAll(page, pageSize);
       }
       
@@ -80,8 +87,16 @@ export default function UnitsPage() {
 
       setUnits(unitsArray);
       setTotalCount(countValue);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to load units', err);
+      // Handle 403 specifically — token expired or insufficient role
+      if (err?.response?.status === 403 || err?.response?.status === 401) {
+        // Token expired or invalid — redirect to login
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        router.push('/login');
+        return;
+      }
       setUnits([]);
     } finally {
       setLoading(false);

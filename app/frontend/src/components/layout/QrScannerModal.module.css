@@ -238,3 +238,57 @@
 .retryBtn:hover {
   background: #1e4bd6;
 }
+
+/* ── Camera Flip Button ── */
+.flipBtn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(46, 91, 255, 0.08);
+  border: 1px solid rgba(46, 91, 255, 0.2);
+  color: var(--color-cobalt-blue);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-heading);
+}
+
+.flipBtn:hover:not(:disabled) {
+  background: rgba(46, 91, 255, 0.15);
+  border-color: rgba(46, 91, 255, 0.4);
+  transform: scale(1.03);
+}
+
+.flipBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.flipLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+/* ── Camera Mode Indicator (overlay on scanner) ── */
+.cameraIndicator {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  color: rgba(255, 255, 255, 0.85);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  z-index: 20;
+  pointer-events: none;
+  white-space: nowrap;
+}
