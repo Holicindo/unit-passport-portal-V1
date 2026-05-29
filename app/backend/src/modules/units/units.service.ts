@@ -19,10 +19,13 @@ export class UnitsService {
   ) {}
 
   // L1 Public — Limited view for guest scan
-  async findByQrTokenPublic(qr_token: string) {
+  async findByQrTokenPublic(token_or_serial: string) {
     const unit = await this.unitRepo.findOne({
-      where: { qr_token },
-      select: ['id', 'serial_number', 'model_name', 'specs', 'warranty_expiry', 'status', 'test_run_image_url', 'diagram_image_url'],
+      where: [
+        { qr_token: token_or_serial },
+        { serial_number: token_or_serial }
+      ],
+      select: ['id', 'serial_number', 'model_name', 'specs', 'warranty_expiry', 'status', 'test_run_image_url', 'diagram_image_url', 'qr_token'],
     });
     if (!unit) throw new NotFoundException('Unit tidak ditemukan');
     return unit;
@@ -268,7 +271,7 @@ export class UnitsService {
       } as any);
       await logRepo.save(newLog);
 
-      const hqWaNumber = '6287808780006'; // Nomor WA Holicindo HQ
+      const hqWaNumber = '+6281-2871-20358'; // Nomor WA Holicindo HQ
       const waText = `Halo Holicindo HQ, saya ingin meminta servis untuk:\n\n*Serial Number:* ${unit.serial_number}\n*Model:* ${unit.model_name}\n*Lokasi:* ${targetCity}\n*Catatan Kendala:* ${body.notes || '-'}\n\nMohon bantuannya untuk assign teknisi secara manual. Terima kasih!`;
       const waLink = `https://wa.me/${hqWaNumber}?text=${encodeURIComponent(waText)}`;
 

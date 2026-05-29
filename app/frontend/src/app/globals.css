@@ -474,16 +474,49 @@ a {
 }
 
 /* Card overrides for all pages (Dashboard, Units, Reports) */
-[data-theme="dark"] [class*="Card_"], 
-[data-theme="dark"] [class*="card_"],
-[data-theme="dark"] [class*="Card"],
-[data-theme="dark"] [class*="card"] {
+/* Excludes modalCard/modalOverlay so the service form can be a clean white page on mobile */
+[data-theme="dark"] [class*="Card_"]:not([class*="modal"]):not([class*="Modal"]), 
+[data-theme="dark"] [class*="card_"]:not([class*="modal"]):not([class*="Modal"]),
+[data-theme="dark"] [class*="Card"]:not([class*="modal"]):not([class*="Modal"]),
+[data-theme="dark"] [class*="card"]:not([class*="modal"]):not([class*="Modal"]) {
   background: rgba(10, 25, 47, 0.6) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.03) !important;
   backdrop-filter: blur(24px) saturate(160%) !important;
   -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
   color: #ffffff !important;
+}
+
+/* Mobile service modal — always clean white full-screen regardless of theme */
+@media (max-width: 768px) {
+  [class*="modalOverlay"] {
+    background: #ffffff !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    padding: 0 !important;
+    align-items: flex-start !important;
+  }
+  [class*="modalCard"] {
+    background: #ffffff !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    width: 100% !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    color: #0f172a !important;
+    animation: none !important;
+  }
+  [class*="modalHeader"] {
+    background: #ffffff !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important;
+  }
+  [class*="modalHeader"] h2 {
+    color: #001F3F !important;
+  }
 }
 
 /* Header & Typography overrides */
@@ -665,13 +698,13 @@ a {
 }
 
 /* Theme switch & standard button backgrounds */
-[data-theme="dark"] button:not([class*="activePage"]):not([class*="assignBtn"]):not([class*="scanBtn"]) {
+[data-theme="dark"] button:not([class*="activePage"]):not([class*="assignBtn"]):not([class*="scanBtn"]):not([class*="btnEmergency"]):not([class*="btnPrimary"]) {
   background: rgba(255, 255, 255, 0.06) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
   color: #ffffff !important;
 }
 
-[data-theme="dark"] button:hover:not([class*="activePage"]):not([class*="assignBtn"]):not([class*="scanBtn"]):not([disabled]) {
+[data-theme="dark"] button:hover:not([class*="activePage"]):not([class*="assignBtn"]):not([class*="scanBtn"]):not([disabled]):not([class*="btnEmergency"]):not([class*="btnPrimary"]) {
   background: rgba(255, 255, 255, 0.1) !important;
   color: #ffffff !important;
 }

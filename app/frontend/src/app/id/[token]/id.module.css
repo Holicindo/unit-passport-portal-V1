@@ -10,6 +10,20 @@
     radial-gradient(ellipse at bottom right, rgba(20, 80, 255, 0.3) 0%, transparent 45%);
 }
 
+.desktopOnly {
+  display: inline-block;
+}
+
+.desktopOnlyBlock {
+  display: block;
+}
+
+.mobileOnly,
+.mobileOnlyFlex,
+.mobileOnlyBlock {
+  display: none !important;
+}
+
 .pageWrapper::before,
 .pageWrapper::after {
   content: '';
@@ -225,16 +239,17 @@
 }
 
 .verifiedBadgeTop {
-  background: rgba(16, 185, 129, 0.1);
-  color: #6ee7b7;
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(52, 211, 153, 0.4);
   padding: 6px 12px;
   border-radius: 50px;
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
   display: flex;
   align-items: center;
   gap: 6px;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
 }
 
 .headerRight {
@@ -847,6 +862,14 @@
   line-height: 0.8;
 }
 
+.headerLeftMobile {
+  display: contents;
+}
+
+.mobileBackBtn {
+  display: none;
+}
+
 .closeBtn:hover {
   color: #ffffff;
   transform: scale(1.1);
@@ -915,7 +938,7 @@
 
 .formGroup textarea {
   height: 110px;
-  resize: vertical;
+  resize: horizontal;
 }
 
 .btnSubmit {
@@ -1153,58 +1176,157 @@
     font-size: 0.8rem;
   }
 
-  /* Modal — bottom sheet on mobile */
+  .desktopOnly {
+    display: none !important;
+  }
+
+  .mobileOnly {
+    display: inline-block !important;
+  }
+  
+  .mobileOnlyFlex {
+    display: flex !important;
+  }
+
+  .mobileOnlyBlock {
+    display: block !important;
+  }
+
+  /* Modal — full-screen page on mobile (like mockup image 1) */
   .modalOverlay {
     padding: 0;
-    align-items: flex-end;
+    align-items: flex-start;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: #ffffff;
   }
 
   .modalCard {
     max-width: 100%;
-    border-radius: 20px 20px 0 0;
-    max-height: 92vh;
+    width: 100%;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+    background: #ffffff;
+    border: none;
+    box-shadow: none;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    animation: none;
+    display: flex;
+    flex-direction: column;
   }
 
   .modalHeader {
-    padding: 16px 18px;
+    padding: 16px 20px;
     position: sticky;
     top: 0;
     z-index: 10;
-    background: rgba(6, 13, 33, 0.98);
+    background: #ffffff;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  }
+
+  .headerLeftMobile {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .mobileBackBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    color: #001F3F;
+    cursor: pointer;
+    flex-shrink: 0;
   }
 
   .modalHeader h2 {
-    font-size: 0.95rem;
+    font-size: 1.00rem;
+    color: #001F3F;
+    font-weight: 700;
+  }
+
+  .closeBtn {
+    display: none;
   }
 
   .modalForm {
-    padding: 18px;
-    gap: 14px;
+    padding: 20px 16px 100px;
+    gap: 20px;
+    flex: 1;
   }
 
-  /* Prevent iOS zoom on input focus */
+  .modalHint {
+    background: rgba(46, 91, 255, 0.06);
+    border: 1px solid rgba(46, 91, 255, 0.15);
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: #2E5BFF;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    margin-bottom: 4px;
+  }
+
+  /* Labels: normal case, dark navy, with asterisk visible */
+  .formGroup label {
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: none;
+    letter-spacing: 0;
+    color: #001F3F;
+  }
+
+  /* Inputs: white card style with visible border */
   .formGroup input,
   .formGroup select,
   .formGroup textarea {
-    font-size: 16px;
-    padding: 12px;
+    font-size: 16px; /* prevent iOS zoom */
+    padding: 14px 16px;
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    color: #0f172a;
+    box-shadow: none;
+  }
+
+  .formGroup input:focus,
+  .formGroup select:focus,
+  .formGroup textarea:focus {
+    border-color: #2E5BFF;
+    box-shadow: 0 0 0 3px rgba(46, 91, 255, 0.12);
   }
 
   .formGroup textarea {
-    height: 88px;
+    height: 110px;
+    resize: none;
   }
 
-  .formGroup label {
-    font-size: 0.72rem;
-  }
-
-  .btnSubmit,
-  .btnPrimary,
-  .btnEmergency {
-    padding: 14px 16px;
-    font-size: 0.88rem;
+  /* Submit button — sticky at bottom */
+  .btnSubmit {
+    background: linear-gradient(135deg, #184cf4 0%, #0a2eb5 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    padding: 17px 20px !important;
+    border-radius: 14px !important;
+    font-size: 1rem !important;
+    font-weight: 800 !important;
+    box-shadow: 0 6px 20px rgba(24, 76, 244, 0.35) !important;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
   }
 
   /* Routing result */
@@ -1228,6 +1350,7 @@
     display: none;
   }
 }
+
 
 @media (max-width: 480px) {
   .serialNumber {
@@ -1295,6 +1418,7 @@
   background: rgba(16, 185, 129, 0.1);
   color: #059669;
   border-color: rgba(16, 185, 129, 0.25);
+  box-shadow: none;
 }
 
 [data-theme="light"] .accessBadgeTop {
@@ -1535,4 +1659,236 @@
 
 [data-theme="light"] .modalHint {
   color: #717378;
+}
+
+/* ==========================================================================
+   CAROUSEL MOBILE FIRST
+   ========================================================================== */
+
+.carouselWrapper {
+  position: relative;
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.carouselContainer {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  gap: 16px;
+  padding-bottom: 8px; /* Room for shadow/scrollbar */
+}
+
+/* Hide scrollbar for cleaner look */
+.carouselContainer::-webkit-scrollbar {
+  display: none;
+}
+.carouselContainer {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.carouselSlide {
+  flex: 0 0 100%;
+  scroll-snap-align: center;
+  min-width: 100%;
+  margin-bottom: 0; /* Override any bottom margin for cards inside carousel */
+}
+
+.carouselNavBtn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 1.5rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transition: all 0.2s;
+}
+
+[data-theme="light"] .carouselNavBtn {
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.carouselNavBtn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+[data-theme="light"] .carouselNavBtn:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.prevBtn {
+  left: 4px;
+}
+
+.nextBtn {
+  right: 4px;
+}
+
+/* Hide arrows on small mobile if desired, or keep them small */
+@media (max-width: 480px) {
+  .carouselNavBtn {
+    width: 30px;
+    height: 30px;
+    font-size: 1.2rem;
+  }
+  .prevBtn { left: 0px; }
+  .nextBtn { right: 0px; }
+}
+
+/* ==========================================================================
+   STATS CARD GRID — Mobile: 2 col, last card full width
+   ========================================================================== */
+.statsCardGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 20px;
+}
+
+.statsCardGrid .statusCard {
+  box-shadow: none;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 12px;
+  margin: 0;
+}
+
+[data-theme="light"] .statsCardGrid .statusCard {
+  background: #f8fafc;
+  box-shadow: none;
+}
+
+/* 5th card (Verifikasi) spans full width on mobile */
+.statsCardGrid .statusCard:nth-child(5) {
+  grid-column: 1 / -1;
+}
+
+/* ==========================================================================
+   MEDIA SINGLE ITEM for Carousel Slides
+   ========================================================================== */
+.mediaSingleItem {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* ==========================================================================
+   MOBILE HEADER — solid background for top bar on mobile
+   ========================================================================== */
+@media (max-width: 768px) {
+  .header {
+    margin: -20px -16px 16px -16px;
+    padding: 20px 16px;
+    background: #060d21;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  [data-theme="light"] .header {
+    background-color: #ffffff;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+  }
+}
+
+/* ==========================================================================
+   DESKTOP OVERRIDES — Carousel reverts to grid layout on wide screens
+   ========================================================================== */
+@media (min-width: 769px) {
+  /* Hide swipe nav arrows */
+  .carouselNavBtn {
+    display: none;
+  }
+  .carouselWrapper {
+    margin-bottom: 0;
+  }
+  /* Convert flex carousel → CSS Grid */
+  .carouselContainer {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    grid-auto-rows: auto;
+    gap: 24px;
+    overflow: visible;
+    padding-bottom: 0;
+    scroll-snap-type: none;
+  }
+  /* Reset slide flex properties */
+  .carouselSlide {
+    flex: none;
+    scroll-snap-align: none;
+    min-width: 0;
+    margin-bottom: 0;
+  }
+  /* Explicitly position each slide in the grid */
+  .carouselSlide:nth-child(1) { grid-column: 1 / 2; }
+  .carouselSlide:nth-child(2) { grid-column: 2 / 3; }
+  .carouselSlide:nth-child(3) { grid-column: 1 / -1; }
+  .carouselSlide:nth-child(4) { grid-column: 1 / 2; }
+  .carouselSlide:nth-child(5) { grid-column: 2 / 3; }
+
+  /* Slide 3: transparent shell — renders as original statusBar */
+  .carouselSlide:nth-child(3) {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    backdrop-filter: none;
+  }
+  .carouselSlide:nth-child(3) .cardHeader {
+    display: none;
+  }
+  /* Stats grid: 5 equal columns on desktop */
+  .statsCardGrid {
+    padding: 0;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+  }
+  /* Cancel mobile full-width rule for card 5 */
+  .statsCardGrid .statusCard:nth-child(5) {
+    grid-column: auto;
+  }
+  /* Restore original statusCard box styling */
+  .statsCardGrid .statusCard {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    padding: 12px;
+    margin: 0;
+    border-radius: 16px;
+  }
+  [data-theme="light"] .statsCardGrid .statusCard {
+    background: #ffffff;
+    border: 1px solid rgba(0, 31, 63, 0.08);
+    box-shadow: 0 2px 8px rgba(0, 31, 63, 0.04);
+  }
+}
+
+/* ==========================================================================
+   FOOTER
+   ========================================================================== */
+.footerCopyright {
+  text-align: center;
+  padding: 24px 16px;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="light"] .footerCopyright {
+  color: rgba(0, 31, 63, 0.5);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
 }

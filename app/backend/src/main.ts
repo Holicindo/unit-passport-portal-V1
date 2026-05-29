@@ -52,17 +52,13 @@ async function bootstrap() {
 
   // Run one-time QR token migration on startup
   try {
-    const dataSource = app.get('DataSource', { strict: false });
+    const { DataSource } = await import('typeorm');
+    const dataSource = app.get(DataSource, { strict: false });
     if (dataSource) {
       await migrateQrTokens(dataSource);
     }
   } catch (e) {
-    // DataSource not directly injectable — use TypeORM connection manager
-    try {
-      const { getDataSourceByName } = await import('typeorm');
-      const ds = getDataSourceByName('default');
-      if (ds) await migrateQrTokens(ds);
-    } catch { /* migration will run via Swagger endpoint instead */ }
+    // Migration will run via Swagger endpoint instead if this fails
   }
   console.log(`Backend is running on: http://localhost:${port}`);
   console.log(`Swagger documentation available at: http://localhost:${port}/api-docs`);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { unitApi } from '@/lib/api';
 import { 
@@ -112,6 +112,7 @@ export default function QrPassportPage() {
 
   // Theme toggle — default light for public scan
   const [isDark, setIsDark] = useState(false);
+  const carouselRef = useRef<HTMLDivElement>(null);
 
   // Load user from localStorage (safe parse)
   useEffect(() => {
@@ -419,11 +420,13 @@ export default function QrPassportPage() {
           </div>
         </header>
 
-        {/* 2-Column Top Grid Layout */}
-        <div className={styles.topGrid}>
+        {/* Mobile-First Carousel Container */}
+        <div className={styles.carouselWrapper}>
+          <button className={`${styles.carouselNavBtn} ${styles.prevBtn}`} onClick={() => { if (carouselRef.current) carouselRef.current.scrollBy({ left: -carouselRef.current.clientWidth, behavior: 'smooth' }); }}>&lsaquo;</button>
+          <div className={styles.carouselContainer} ref={carouselRef}>
 
-          {/* Column 2: Spesifikasi Utama */}
-          <section className={styles.card}>
+          {/* Slide 1: Spesifikasi Utama */}
+          <section className={`${styles.card} ${styles.carouselSlide}`}>
             <div className={styles.cardHeader}>
               <div className={styles.cardHeaderLeft}>
                 <FileText size={16} color="#8bb2ff" />
@@ -489,8 +492,8 @@ export default function QrPassportPage() {
             </div>
           </section>
 
-          {/* Column 3: Layanan & Dukungan */}
-          <section className={`${styles.card} ${styles.actionCard}`}>
+          {/* Slide 2: Layanan & Dukungan */}
+          <section className={`${styles.card} ${styles.actionCard} ${styles.carouselSlide}`}>
             <div className={styles.cardHeader}>
               <div className={styles.cardHeaderLeft}>
                 <Phone size={16} color="#8bb2ff" />
@@ -634,10 +637,16 @@ export default function QrPassportPage() {
               )}
             </div>
           </section>
-        </div>
 
-        {/* 5-Column Status Bar (Middle Row) */}
-        <div className={styles.statusBar}>
+          {/* Slide 3: Stats Card */}
+          <section className={`${styles.card} ${styles.carouselSlide}`}>
+            <div className={styles.cardHeader}>
+              <div className={styles.cardHeaderLeft}>
+                <Settings size={16} color="#8bb2ff" />
+                <h2>Stats Card</h2>
+              </div>
+            </div>
+            <div className={styles.statsCardGrid}>
           {/* Status Unit */}
           <div className={styles.statusCard}>
             <div className={`${styles.statusIcon} ${styles.success}`}>
@@ -697,7 +706,81 @@ export default function QrPassportPage() {
               <span>Unit terverifikasi Holicindo</span>
             </div>
           </div>
+          </div>
+          </section>
+
+          {/* Slide 4: Media - Foto Test Run */}
+          <section className={`${styles.card} ${styles.carouselSlide}`}>
+            <div className={styles.cardHeader}>
+              <div className={styles.cardHeaderLeft}>
+                <ImageIcon size={16} color="#8bb2ff" />
+                <h2>Foto Test Run &amp; QC</h2>
+              </div>
+            </div>
+            <div className={styles.mediaSingleItem}>
+              <div className={styles.mediaItem} style={{ border: 'none', boxShadow: 'none', borderRadius: '0 0 12px 12px' }}>
+            <div className={styles.mediaImageWrapper}>
+              <img 
+                src={unit.test_run_image_url || '/test_run.png?v=2'} 
+                alt="Test Run QC" 
+                className={styles.mediaImage}
+                style={{ cursor: 'pointer', objectPosition: 'center 40%' }}
+                onClick={() => setSelectedMedia(unit.test_run_image_url || '/test_run.png?v=2')}
+              />
+              <div className={styles.mediaOverlay}>
+                <span className={styles.verifiedBadge}><CheckCircle2 size={14} /> Terverifikasi</span>
+              </div>
+            </div>
+            <div className={styles.mediaContent}>
+              <h3>Foto Test Run &amp; Quality Control</h3>
+              <p>Dokumentasi pengujian performa kompresor dan suhu ruang sebelum unit didistribusikan ke klien.</p>
+              <button className={styles.btnViewAll} style={{ width: 'fit-content', padding: '8px 16px', marginTop: '16px' }} onClick={() => setSelectedMedia(unit.test_run_image_url || '/test_run.png?v=2')}>
+                Lihat Foto <ImageIcon size={14} style={{marginLeft: '8px'}}/>
+              </button>
+            </div>
+          </div>
         </div>
+      </section>
+
+          {/* Slide 5: Media - Diagram Sirkulasi */}
+          <section className={`${styles.card} ${styles.carouselSlide}`}>
+            <div className={styles.cardHeader}>
+              <div className={styles.cardHeaderLeft}>
+                <ImageIcon size={16} color="#8bb2ff" />
+                <h2>Diagram Sirkulasi Udara</h2>
+              </div>
+            </div>
+            <div className={styles.mediaSingleItem}>
+              <div className={styles.mediaItem} style={{ border: 'none', boxShadow: 'none', borderRadius: '0 0 12px 12px' }}>
+            <div className={styles.mediaImageWrapper} style={{ cursor: 'pointer' }} onClick={() => setSelectedMedia(unit.diagram_image_url || 'diagram')}>
+              {unit.diagram_image_url ? (
+                <img 
+                  src={unit.diagram_image_url} 
+                  alt="Diagram" 
+                  className={styles.mediaImage}
+                  style={{ objectFit: 'cover' }}
+                />
+              ) : (
+                <AirflowDiagram />
+              )}
+              <div className={styles.mediaOverlay}>
+                <span className={styles.verifiedBadge}><CheckCircle2 size={14} /> Cetak Biru Digital</span>
+              </div>
+            </div>
+            <div className={styles.mediaContent}>
+              <h3>Diagram Sirkulasi Udara &amp; Dimensi Fisik</h3>
+              <p>Representasi visual sirkulasi pendinginan udara yang merata dan ukuran presisi unit untuk referensi penempatan outlet pelanggan.</p>
+              <button className={styles.btnViewAll} style={{ width: 'fit-content', padding: '8px 16px', marginTop: '16px' }} onClick={() => setSelectedMedia(unit?.diagram_image_url || "diagram")}>
+                Lihat Diagram <ArrowLeft size={14} style={{marginLeft: '8px', transform: 'rotate(180deg)'}}/>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      </div>
+      <button className={`${styles.carouselNavBtn} ${styles.nextBtn}`} onClick={() => { if (carouselRef.current) carouselRef.current.scrollBy({ left: carouselRef.current.clientWidth, behavior: 'smooth' }); }}>&rsaquo;</button>
+    </div>
 
       {/* ── TECHNICAL DOCUMENTS — Level 3 Partner + Admin only ── */}
       {(isPartner || isAdmin) && (
@@ -841,66 +924,6 @@ export default function QrPassportPage() {
         </section>
       )}
 
-      {/* MEDIA & VERIFICATION (PUBLIC VIEW) */}
-      <section className={styles.sectionCard}>
-        <div className={styles.cardHeader}>
-          <div className={styles.cardHeaderLeft}>
-            <ImageIcon size={16} color="#8bb2ff" />
-            <h2>Media &amp; Verifikasi Pabrik</h2>
-          </div>
-        </div>
-        <div className={styles.mediaGrid}>
-          {/* Test Run Quality Control */}
-          <div className={styles.mediaItem}>
-            <div className={styles.mediaImageWrapper}>
-              <img 
-                src={unit.test_run_image_url || '/test_run.png?v=2'} 
-                alt="Test Run QC" 
-                className={styles.mediaImage}
-                style={{ cursor: 'pointer', objectPosition: 'center 40%' }}
-                onClick={() => setSelectedMedia(unit.test_run_image_url || '/test_run.png?v=2')}
-              />
-              <div className={styles.mediaOverlay}>
-                <span className={styles.verifiedBadge}><CheckCircle2 size={14} /> Terverifikasi</span>
-              </div>
-            </div>
-            <div className={styles.mediaContent}>
-              <h3>Foto Test Run &amp; Quality Control</h3>
-              <p>Dokumentasi pengujian performa kompresor dan suhu ruang sebelum unit didistribusikan ke klien.</p>
-              <button className={styles.btnViewAll} style={{ width: 'fit-content', padding: '8px 16px', marginTop: '16px' }} onClick={() => setSelectedMedia(unit.test_run_image_url || '/test_run.png?v=2')}>
-                Lihat Foto <ImageIcon size={14} style={{marginLeft: '8px'}}/>
-              </button>
-            </div>
-          </div>
-
-          {/* Diagram / Schematic */}
-          <div className={styles.mediaItem}>
-            <div className={styles.mediaImageWrapper} style={{ cursor: 'pointer' }} onClick={() => setSelectedMedia(unit.diagram_image_url || 'diagram')}>
-              {unit.diagram_image_url ? (
-                <img 
-                  src={unit.diagram_image_url} 
-                  alt="Diagram" 
-                  className={styles.mediaImage}
-                  style={{ objectFit: 'cover' }}
-                />
-              ) : (
-                <AirflowDiagram />
-              )}
-              <div className={styles.mediaOverlay}>
-                <span className={styles.verifiedBadge}><CheckCircle2 size={14} /> Cetak Biru Digital</span>
-              </div>
-            </div>
-            <div className={styles.mediaContent}>
-              <h3>Diagram Sirkulasi Udara &amp; Dimensi Fisik</h3>
-              <p>Representasi visual sirkulasi pendinginan udara yang merata dan ukuran presisi unit untuk referensi penempatan outlet pelanggan.</p>
-              <button className={styles.btnViewAll} style={{ width: 'fit-content', padding: '8px 16px', marginTop: '16px' }} onClick={() => setSelectedMedia(unit?.diagram_image_url || "diagram")}>
-                Lihat Diagram <ArrowLeft size={14} style={{marginLeft: '8px', transform: 'rotate(180deg)'}}/>
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Media Modal */}
       {selectedMedia && (
         <div className={styles.modalOverlay} onClick={() => setSelectedMedia(null)}>
@@ -993,7 +1016,19 @@ export default function QrPassportPage() {
         <div className={styles.modalOverlay}>
           <div className={styles.modalCard}>
             <div className={styles.modalHeader}>
-              <h2>Request Service &amp; Smart Routing</h2>
+              <div className={styles.headerLeftMobile}>
+                <button onClick={() => { 
+                  setShowServiceModal(false); 
+                  setRoutingResult(null); 
+                  setIssueMainCategory('');
+                  setIssueSubCategory('');
+                  setServiceNotes('');
+                  setStoreName('');
+                }} className={styles.mobileBackBtn}>
+                  <ArrowLeft size={18} strokeWidth={2.5} />
+                </button>
+                <h2>Request Service &amp; Smart Routing</h2>
+              </div>
               <button onClick={() => { 
                 setShowServiceModal(false); 
                 setRoutingResult(null); 
@@ -1009,7 +1044,7 @@ export default function QrPassportPage() {
                 <p className={styles.modalHint}>Permintaan akan diproses menggunakan sistem Smart Routing regional kami.</p>
                 
                 <div className={styles.formGroup}>
-                  <label>Nama/Kode Outlet (Toko)</label>
+                  <label>Nama/Kode Outlet (Toko) <span className={styles.mobileOnly} style={{ color: '#ef4444' }}>*</span></label>
                   <input 
                     type="text" 
                     value={storeName} 
@@ -1020,7 +1055,7 @@ export default function QrPassportPage() {
                 </div>
 
                 <div className={styles.formGroup}>
-                  <label>Nama Kontak Penanggung Jawab Outlet</label>
+                  <label>Nama Kontak Penanggung Jawab Outlet <span className={styles.mobileOnly} style={{ color: '#ef4444' }}>*</span></label>
                   <input 
                     type="text" 
                     value={serviceName} 
@@ -1031,7 +1066,7 @@ export default function QrPassportPage() {
                 </div>
 
                 <div className={styles.formGroup}>
-                  <label>No. HP Kontak Outlet</label>
+                  <label>No. HP Kontak Outlet <span className={styles.mobileOnly} style={{ color: '#ef4444' }}>*</span></label>
                   <input 
                     type="text" 
                     value={servicePhone} 
@@ -1042,7 +1077,7 @@ export default function QrPassportPage() {
                 </div>
 
                 <div className={styles.formGroup}>
-                  <label>Pilih Kategori Kendala Utama</label>
+                  <label>Pilih Kategori Kendala Utama <span className={styles.mobileOnly} style={{ color: '#ef4444' }}>*</span></label>
                   <select 
                     value={issueMainCategory}
                     onChange={(e) => {
@@ -1059,7 +1094,7 @@ export default function QrPassportPage() {
 
                 {issueMainCategory === 'Kendala Showcase' && (
                   <div className={styles.formGroup}>
-                    <label>Sub-Kategori Kendala Showcase</label>
+                    <label>Sub-Kategori Kendala Showcase <span className={styles.mobileOnly} style={{ color: '#ef4444' }}>*</span></label>
                     <select 
                       value={issueSubCategory}
                       onChange={(e) => setIssueSubCategory(e.target.value)}
@@ -1075,19 +1110,33 @@ export default function QrPassportPage() {
                 )}
 
                 <div className={styles.formGroup}>
-                  <label>Catatan Tambahan (Remark)</label>
-                  <textarea 
-                    value={serviceNotes} 
-                    onChange={(e) => setServiceNotes(e.target.value)} 
-                    placeholder="Jelaskan detail spesifik kendala di sini..."
-                    required
-                  />
+                  <label>Catatan Tambahan <span className={styles.desktopOnly}>(Remark)</span><span className={styles.mobileOnly}>(Opsional)</span></label>
+                  <div style={{ position: 'relative' }}>
+                    <textarea 
+                      value={serviceNotes} 
+                      onChange={(e) => setServiceNotes(e.target.value.slice(0, 500))} 
+                      placeholder="Jelaskan detail spesifik kendala di sini..."
+                      maxLength={500}
+                    />
+                    <span className={styles.mobileOnly} style={{ position: 'absolute', bottom: '10px', right: '12px', fontSize: '0.72rem', color: '#94a3b8', pointerEvents: 'none' }}>
+                      {serviceNotes.length}/500
+                    </span>
+                  </div>
                 </div>
 
-                <button type="submit" className={styles.btnSubmit} disabled={routingLoading}>
-                  {routingLoading ? 'Melakukan Smart Routing...' : 'Kirim Permintaan Servis'}
-                </button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <button type="submit" className={styles.btnSubmit} disabled={routingLoading}>
+                    {routingLoading ? 'Melakukan Smart Routing...' : (
+                      <>Kirim Permintaan Servis <span className={styles.mobileOnly} style={{ fontSize: '1.1rem', marginLeft: '6px' }}>→</span></>
+                    )}
+                  </button>
+                  <p className={styles.mobileOnlyFlex} style={{ textAlign: 'center', fontSize: '0.75rem', color: '#94a3b8', alignItems: 'center', justifyContent: 'center', gap: '5px', marginTop: '10px' }}>
+                    <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 17v-1m0-4V7m-7 10a7 7 0 1114 0H5z"/><rect x="8" y="11" width="8" height="6" rx="1"/></svg>
+                    Data Anda aman dan terenkripsi
+                  </p>
+                </div>
               </form>
+
             ) : (
               <div className={styles.routingResult}>
                 {routingResult.routed_to === 'PARTNER' ? (
@@ -1277,6 +1326,11 @@ export default function QrPassportPage() {
           </div>
         </div>
       )}
+      
+      {/* Footer Copyright */}
+      <footer className={styles.footerCopyright}>
+        Copyright &copy; 2026 PT. Holicindo Dasa Anugerah. All rights reserved.
+      </footer>
     </div>
     </div>
   );

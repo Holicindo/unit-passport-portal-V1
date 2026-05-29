@@ -40,9 +40,13 @@ function HolicLogo({ size = 20 }: { size?: number }) {
 const navItems = [
   { href: '/client-portal/dashboard', label: 'Dashboard',  icon: LayoutDashboard },
   { href: '/client-portal/fleet',     label: 'Fleet',      icon: Truck },
-  { href: '/client-portal/warranty',  label: 'Garansi',    icon: ShieldCheck },
+  { href: '/client-portal/warranty',  label: 'Garansi',    icon: ShieldCheck, isCenter: true },
   { href: '/client-portal/messages',  label: 'Pesan',      icon: MessageSquare },
 ];
+
+const leftNavItems  = navItems.filter(i => !i.isCenter).slice(0, 2);
+const centerNavItem = navItems.find(i => i.isCenter)!;
+const rightNavItems = navItems.filter(i => !i.isCenter).slice(2);
 
 // ── Avatar: foto profil jika ada, inisial jika tidak ──
 function UserAvatar({
@@ -238,10 +242,12 @@ export default function ClientPortalLayout({ children }: { children: React.React
         {children}
       </main>
 
-      {/* ── MOBILE BOTTOM NAV — Premium style ── */}
+      {/* ── MOBILE BOTTOM NAV — Premium style with center FAB ── */}
       <nav className={styles.mobileNav}>
         <div className={styles.mobileNavInner}>
-          {navItems.map(({ href, label, icon: Icon }) => {
+
+          {/* Left items: Dashboard + Fleet */}
+          {leftNavItems.map(({ href, label, icon: Icon }) => {
             const isActive = pathname === href || pathname.startsWith(href + '/');
             return (
               <Link
@@ -250,21 +256,58 @@ export default function ClientPortalLayout({ children }: { children: React.React
                 className={`${styles.mobileNavItem} ${isActive ? styles.mobileNavItemActive : ''}`}
               >
                 <div className={styles.mobileNavIconWrap}>
-                  <Icon size={22} />
+                  <Icon size={20} />
                 </div>
                 {label}
               </Link>
             );
           })}
+
+          {/* Center FAB: Garansi */}
+          {(() => {
+            const { href, label, icon: Icon } = centerNavItem;
+            const isActive = pathname === href || pathname.startsWith(href + '/');
+            return (
+              <Link
+                href={href}
+                className={`${styles.mobileNavCenter} ${isActive ? styles.mobileNavCenterActive : ''}`}
+              >
+                <div className={styles.mobileNavCenterFab}>
+                  <Icon size={24} />
+                </div>
+                <span className={styles.mobileNavCenterLabel}>{label}</span>
+              </Link>
+            );
+          })()}
+
+          {/* Right items: Pesan */}
+          {rightNavItems.map(({ href, label, icon: Icon }) => {
+            const isActive = pathname === href || pathname.startsWith(href + '/');
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={`${styles.mobileNavItem} ${isActive ? styles.mobileNavItemActive : ''}`}
+              >
+                <div className={styles.mobileNavIconWrap}>
+                  <Icon size={20} />
+                </div>
+                {label}
+              </Link>
+            );
+          })}
+
+          {/* Keluar */}
           <button
             className={`${styles.mobileNavItem} ${styles.mobileNavItemDanger}`}
             onClick={handleLogout}
           >
             <div className={styles.mobileNavIconWrap}>
-              <LogOut size={22} />
+              <LogOut size={20} />
             </div>
             Keluar
           </button>
+
         </div>
       </nav>
 

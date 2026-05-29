@@ -1032,82 +1032,134 @@
   left: 0;
   right: 0;
   z-index: 1000;
-  padding: 0 8px env(safe-area-inset-bottom, 8px);
   background: var(--brand-optic-white);
   border-top: 1px solid var(--brand-border);
-  box-shadow: 0 -4px 20px rgba(0, 31, 63, 0.08);
+  box-shadow: 0 -4px 24px rgba(0, 31, 63, 0.10);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .mobileNavInner {
   display: flex;
   align-items: flex-end;
-  justify-content: space-around;
+  justify-content: space-evenly;
+  width: 100%;
   height: 68px;
-  padding-bottom: 4px;
+  padding: 0 0 4px;
+  position: relative;
 }
 
+/* Regular nav item */
 .mobileNavItem {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 6px 14px;
-  border-radius: 14px;
+  justify-content: flex-end;
+  gap: 3px;
+  padding: 8px 0;
   color: var(--brand-space-grey);
   text-decoration: none;
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   font-weight: 600;
-  transition: all 0.2s ease;
   cursor: pointer;
   border: none;
   background: transparent;
-  min-width: 56px;
   font-family: var(--font-heading);
   letter-spacing: 0.2px;
-  position: relative;
+  transition: color 0.2s;
+  flex: 1;
+  text-align: center;
 }
 
-/* Wrapper ikon agar bisa diberi background pill */
+/* Icon wrap inside regular items */
 .mobileNavIconWrap {
-  width: 44px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
+  border-radius: 8px;
   transition: background 0.2s;
 }
 
-.mobileNavItem:hover .mobileNavIconWrap {
-  background: var(--brand-light-grey);
-}
-
-/* Item aktif — pill Deep Navy di belakang ikon */
+/* Active state for regular items */
 .mobileNavItemActive {
   color: var(--brand-deep-navy);
 }
 
 .mobileNavItemActive .mobileNavIconWrap {
-  background: var(--brand-deep-navy);
-  color: var(--brand-optic-white);
+  color: var(--brand-deep-navy);
 }
 
 .mobileNavItemActive svg {
-  color: var(--brand-optic-white);
+  color: var(--brand-deep-navy);
 }
 
-/* Tombol keluar — Safety Orange */
+/* CENTER FAB — Garansi elevated button */
+.mobileNavCenter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+  padding: 0 0 8px;
+  flex: 1;
+  position: relative;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  font-family: var(--font-heading);
+  text-align: center;
+}
+
+.mobileNavCenterFab {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--brand-deep-navy);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brand-optic-white);
+  box-shadow: 0 6px 24px rgba(0, 31, 63, 0.35);
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 3px solid var(--brand-optic-white);
+}
+
+.mobileNavCenter:hover .mobileNavCenterFab,
+.mobileNavCenterActive .mobileNavCenterFab {
+  transform: translateX(-50%) translateY(-3px);
+  box-shadow: 0 10px 30px rgba(0, 31, 63, 0.4);
+}
+
+.mobileNavCenterActive .mobileNavCenterFab {
+  background: linear-gradient(135deg, #001F3F 0%, #003870 100%);
+}
+
+.mobileNavCenterLabel {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--brand-space-grey);
+  letter-spacing: 0.2px;
+  padding-top: 38px;
+  font-family: var(--font-heading);
+}
+
+.mobileNavCenterActive .mobileNavCenterLabel {
+  color: var(--brand-deep-navy);
+}
+
+/* Keluar button */
 .mobileNavItemDanger {
   color: var(--brand-safety-orange);
 }
 
-.mobileNavItemDanger .mobileNavIconWrap {
-  background: transparent;
-}
-
-.mobileNavItemDanger:hover .mobileNavIconWrap {
-  background: rgba(255, 107, 0, 0.08);
+.mobileNavItemDanger svg {
+  color: var(--brand-safety-orange);
 }
 
 /* ── RESPONSIVE ── */

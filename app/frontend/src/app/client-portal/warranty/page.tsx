@@ -197,13 +197,17 @@ export default function ClientWarranty() {
                   {paginated.map(unit => (
                     <tr key={unit.id}>
                       <td data-label="Serial Number">
-                        <span style={{
-                          fontWeight: 700,
-                          color: 'var(--brand-deep-navy)',
-                          fontFamily: 'var(--font-heading)',
-                        }}>
+                        <Link 
+                          href={`/id/${unit.qr_token || unit.id}`}
+                          style={{
+                            fontWeight: 700,
+                            color: 'var(--brand-ocean-blue)',
+                            fontFamily: 'var(--font-heading)',
+                            textDecoration: 'underline',
+                            textUnderlineOffset: '2px',
+                          }}>
                           {unit.serial_number}
-                        </span>
+                        </Link>
                       </td>
                       <td data-label="Model">{unit.model_name || '-'}</td>
                       <td data-label="Lokasi" style={{ color: 'var(--brand-space-grey)' }}>
