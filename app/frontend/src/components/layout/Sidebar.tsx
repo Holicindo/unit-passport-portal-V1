@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import styles from './Sidebar.module.css';
 import { 
@@ -7,6 +6,28 @@ import {
   List, PlusCircle, ClipboardCheck, History, Wrench as Tool, Calendar, FileText,
   Users, Shield, Briefcase, Building2, Activity, Database
 } from 'lucide-react';
+
+/* ── Holic Logo SVG — matching Login Page ── */
+function HolicIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 140 120"
+      fill="none"
+      stroke="#ffffff"
+      strokeWidth="5"
+      strokeLinecap="square"
+      strokeLinejoin="miter"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <polygon points="60,5 10,95 20,110 60,110" />
+      <line x1="70" y1="15" x2="70" y2="110" />
+      <polyline points="70,15 110,90 100,110 70,110" />
+      <polyline points="80,110 80,55 125,45" />
+      <polyline points="90,110 90,85 135,75" />
+    </svg>
+  );
+}
 
 const menuItems = [
   { id: 'dashboard', label: 'Ringkasan Armada', icon: <LayoutDashboard size={20} />, href: '/dashboard' },
@@ -107,7 +128,7 @@ export default function Sidebar({ isOpen }: SidebarProps) {
     <aside className={`${styles.sidebar} ${!isOpen ? styles.hidden : ''}`}>
       <div className={styles.logoSection}>
         <div className={styles.logoWrapper}>
-          <Image src="/holic-logo-gold.png" alt="Holicindo Logo" width={65} height={65} priority className={styles.logoImg} />
+          <HolicIcon className={styles.logoImg} />
         </div>
         <span className={styles.logoText}>HOLICINDO</span>
       </div>
