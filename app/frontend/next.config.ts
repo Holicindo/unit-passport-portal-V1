@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'http',
-        hostname: '15.135.91.243',
+        hostname: '54.206.113.217',
         port: '3001',
         pathname: '/**',
       },
@@ -23,7 +23,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://15.135.91.243:3001/:path*',
+        destination: 'http://54.206.113.217:3001/:path*',
       },
     ];
   },
