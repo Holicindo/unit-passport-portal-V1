@@ -7,6 +7,16 @@ import { ArrowLeft, Loader2, Save, Wrench, HelpCircle, ShieldAlert, Upload, Imag
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import styles from './new.module.css';
 
+// Helper: Auto-categorize unit type based on model name keywords
+function categorizeUnitType(name: string): string {
+  const lower = name.toLowerCase();
+  const showcaseKeywords = ['chiller', 'showcase', 'cooler', 'freezer', 'refrigerator', 'display', 'kulkas', 'pendingin'];
+  if (showcaseKeywords.some(k => lower.includes(k))) return 'SHOWCASE';
+  const mesinKeywords = ['mesin', 'machine', 'generator', 'compressor', 'pump', 'motor', 'mixer', 'grinder', 'oven'];
+  if (mesinKeywords.some(k => lower.includes(k))) return 'MESIN';
+  return 'SHOWCASE'; // Default
+}
+
 export default function RegisterUnitPage() {
   const router = useRouter();
   
