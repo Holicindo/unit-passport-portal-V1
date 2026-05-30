@@ -17,6 +17,16 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  
+  // Proxy /api requests to the backend to bypass HTTPS -> HTTP Mixed Content Block
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'http://15.135.91.243:3001/:path*',
+      },
+    ];
+  },
 };
 
 export default nextConfig;
