@@ -1,9 +1,6 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  // Required for AWS Amplify SSR deployment
-  output: 'standalone',
-  
   // Suppress the turbopack workspace root warning
   turbopack: {
     root: __dirname,
