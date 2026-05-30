@@ -14,7 +14,7 @@ function HolicIcon({ className }: { className?: string }) {
       className={className}
       viewBox="0 0 140 120"
       fill="none"
-      stroke="#ffffff"
+      stroke="#0f172a"
       strokeWidth="5"
       strokeLinecap="square"
       strokeLinejoin="miter"
