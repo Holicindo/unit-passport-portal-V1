@@ -189,7 +189,7 @@ export default function QrPassportPage() {
         try {
           const storedToken = localStorage.getItem('token');
           if (storedToken) {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3001'}/clients`, {
+            const res = await fetch(`/api/clients`, {
               headers: { Authorization: `Bearer ${storedToken}` }
             });
             const data = await res.json();
@@ -252,7 +252,7 @@ export default function QrPassportPage() {
     setLogLoading(true);
     try {
       const storedToken = localStorage.getItem('token');
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3001'}/service-logs`, {
+      const res = await fetch(`/api/service-logs`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -294,7 +294,7 @@ export default function QrPassportPage() {
     setTransferLoading(true);
     try {
       const storedToken = localStorage.getItem('token');
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3001'}/units/${unit.id}/transfer`, {
+      const res = await fetch(`/api/units/${unit.id}/transfer`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

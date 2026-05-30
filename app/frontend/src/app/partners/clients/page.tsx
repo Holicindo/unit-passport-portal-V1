@@ -16,9 +16,8 @@ export default function ClientsPage() {
       setLoading(true);
       setError('');
       try {
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3001';
         const token = localStorage.getItem('token');
-        const res = await fetch(`${API_URL}/clients?limit=200`, {
+        const res = await fetch(`/api/clients?limit=200`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         if (!res.ok) throw new Error('Gagal memuat data');

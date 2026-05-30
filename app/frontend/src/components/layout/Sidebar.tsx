@@ -107,7 +107,7 @@ export default function Sidebar({ isOpen }: SidebarProps) {
     <aside className={`${styles.sidebar} ${!isOpen ? styles.hidden : ''}`}>
       <div className={styles.logoSection}>
         <div className={styles.logoWrapper}>
-          <Image src="/logo-icon.png" alt="Holicindo Logo" width={65} height={65} priority className={styles.logoImg} />
+          <Image src="/holic-logo-gold.png" alt="Holicindo Logo" width={65} height={65} priority className={styles.logoImg} />
         </div>
         <span className={styles.logoText}>HOLICINDO</span>
       </div>

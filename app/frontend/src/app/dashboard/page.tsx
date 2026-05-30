@@ -45,12 +45,12 @@ export default function DashboardPage() {
   const [syncing, setSyncing] = useState(false);
   const [liveTime, setLiveTime] = useState<string>('');
   const [statsData, setStatsData] = useState({
-    activeUnits: 514,
-    underWarranty: 384,
-    openReports: 12,
-    issuesDetected: 3,
-    activePartners: 5,
-    fleetHealth: 99.4,
+    activeUnits: 0,
+    underWarranty: 0,
+    openReports: 0,
+    issuesDetected: 0,
+    activePartners: 0,
+    fleetHealth: 0,
   });
   
   const [chartData, setChartData] = useState<any[]>([]);
@@ -160,16 +160,7 @@ export default function DashboardPage() {
         }
       });
 
-      // If all months are zero, fill with premium representative curve data
-      const allZero = last6Months.every(m => m.count === 0);
-      if (allZero) {
-        const mockCounts = [4, 2, 8, 12, 6, 9];
-        last6Months.forEach((m, idx) => {
-          m.count = mockCounts[idx];
-          m.completed = Math.floor(mockCounts[idx] * 0.8);
-          m.pending = mockCounts[idx] - m.completed;
-        });
-      }
+      // Note: Removed mock fallbacks for allZero state to ensure strict staging mode.
 
       setChartData(last6Months);
 
@@ -184,15 +175,7 @@ export default function DashboardPage() {
         .sort((a, b) => b.count - a.count)
         .slice(0, 3);
 
-      if (activeClientsList.length === 0) {
-        setActiveClients([
-          { name: 'PT Indah Putih', count: 14 },
-          { name: 'CV Mega Logistik', count: 9 },
-          { name: 'Mitra Abadi', count: 5 }
-        ]);
-      } else {
-        setActiveClients(activeClientsList);
-      }
+      setActiveClients(activeClientsList);
 
       // 6. Compute Sering Servis (top 3)
       const unitServiceCounts: Record<string, { model: string, count: number }> = {};
@@ -209,14 +192,7 @@ export default function DashboardPage() {
         .sort((a, b) => b.count - a.count)
         .slice(0, 3);
 
-      if (frequentUnitsList.length === 0) {
-        setFrequentUnits([
-          { sn: 'HOLI-CP-001', name: 'Jasa Rekondisi Cold Case', count: 3 },
-          { sn: 'HOLI-CP-042', name: 'Compressor Unit V2', count: 2 }
-        ]);
-      } else {
-        setFrequentUnits(frequentUnitsList);
-      }
+      setFrequentUnits(frequentUnitsList);
 
       // 7. Compute real-time Recent Activities Timeline
       const activities: any[] = [];
@@ -248,15 +224,7 @@ export default function DashboardPage() {
         .sort((a, b) => b.time.getTime() - a.time.getTime())
         .slice(0, 3);
 
-      if (sortedActivities.length === 0) {
-        setRecentActivities([
-          { id: 'act-1', type: 'success', title: 'Servis Selesai', description: 'UNIT TESTING (UNTEST190909) selesai dipelihara', timeStr: '2 jam yang lalu' },
-          { id: 'act-2', type: 'warning', title: 'Inspeksi Baru', description: 'Kendala terdeteksi untuk CUMAN TEST', timeStr: '5 jam yang lalu' },
-          { id: 'act-3', type: 'info', title: 'Registrasi Unit', description: 'Unit baru HOLI-CP-054 berhasil didaftarkan', timeStr: '1 hari yang lalu' }
-        ]);
-      } else {
-        setRecentActivities(sortedActivities);
-      }
+      setRecentActivities(sortedActivities);
 
       // 8. Compute Scheduled PMs (Upcoming)
       const pms = rawLogs
@@ -281,51 +249,16 @@ export default function DashboardPage() {
         })
         .slice(0, 4);
 
-      if (pms.length < 4) {
-        // Supplement with premium mocks up to 4 items
-        const defaultPMs = [
-          { id: 'pm-1', day: 24, month: 'Mei', model: 'Jasa Rekondisi Cold Case', sn: 'HOLI-CP-001', partner: 'Partner Jakarta Official', relative: '4 hari lagi' },
-          { id: 'pm-2', day: 28, month: 'Mei', model: 'Compressor Unit V2', sn: 'HOLI-CP-042', partner: 'Partner Surabaya Official', relative: '8 hari lagi' },
-          { id: 'pm-3', day: 2, month: 'Jun', model: 'Evaporator Premium Case', sn: 'HOLI-CP-015', partner: 'Partner Bandung Official', relative: '13 hari lagi' },
-          { id: 'pm-4', day: 5, month: 'Jun', model: 'Condenser Fan System', sn: 'HOLI-CP-099', partner: 'Partner Medan Official', relative: '16 hari lagi' }
-        ];
-        // Combine real ones with mocks to always have exactly 4 items
-        const combined = [...pms, ...defaultPMs.slice(pms.length)].slice(0, 4);
-        setUpcomingPMs(combined);
-      } else {
-        setUpcomingPMs(pms);
-      }
+      setUpcomingPMs(pms);
 
     } catch (error) {
       console.warn('Dashboard real-time sync loaded fallbacks:', error);
-      setChartData([
-        { label: 'Des', fullName: 'Desember 2025', count: 4, completed: 3, pending: 1 },
-        { label: 'Jan', fullName: 'Januari 2026', count: 2, completed: 2, pending: 0 },
-        { label: 'Feb', fullName: 'Februari 2026', count: 8, completed: 6, pending: 2 },
-        { label: 'Mar', fullName: 'Maret 2026', count: 12, completed: 10, pending: 2 },
-        { label: 'Apr', fullName: 'April 2026', count: 6, completed: 5, pending: 1 },
-        { label: 'Mei', fullName: 'Mei 2026', count: 9, completed: 8, pending: 1 }
-      ]);
-      setActiveClients([
-        { name: 'PT Indah Putih', count: 14 },
-        { name: 'CV Mega Logistik', count: 9 },
-        { name: 'Mitra Abadi', count: 5 }
-      ]);
-      setFrequentUnits([
-        { sn: 'HOLI-CP-001', name: 'Jasa Rekondisi Cold Case', count: 3 },
-        { sn: 'HOLI-CP-042', name: 'Compressor Unit V2', count: 2 }
-      ]);
-      setRecentActivities([
-        { id: 'act-1', type: 'success', title: 'Servis Selesai', description: 'UNIT TESTING (UNTEST190909) selesai dipelihara', timeStr: '2 jam yang lalu' },
-        { id: 'act-2', type: 'warning', title: 'Inspeksi Baru', description: 'Kendala terdeteksi untuk CUMAN TEST', timeStr: '5 jam yang lalu' },
-        { id: 'act-3', type: 'info', title: 'Registrasi Unit', description: 'Unit baru HOLI-CP-054 berhasil didaftarkan', timeStr: '1 hari yang lalu' }
-      ]);
-      setUpcomingPMs([
-        { id: 'pm-1', day: 24, month: 'Mei', model: 'Jasa Rekondisi Cold Case', sn: 'HOLI-CP-001', partner: 'Partner Jakarta Official', relative: '4 hari lagi' },
-        { id: 'pm-2', day: 28, month: 'Mei', model: 'Compressor Unit V2', sn: 'HOLI-CP-042', partner: 'Partner Surabaya Official', relative: '8 hari lagi' },
-        { id: 'pm-3', day: 2, month: 'Jun', model: 'Evaporator Premium Case', sn: 'HOLI-CP-015', partner: 'Partner Bandung Official', relative: '13 hari lagi' },
-        { id: 'pm-4', day: 5, month: 'Jun', model: 'Condenser Fan System', sn: 'HOLI-CP-099', partner: 'Partner Medan Official', relative: '16 hari lagi' }
-      ]);
+      // Note: Removed catch block fallbacks to ensure strict staging mode.
+      setChartData([]);
+      setActiveClients([]);
+      setFrequentUnits([]);
+      setRecentActivities([]);
+      setUpcomingPMs([]);
     } finally {
       setLoading(false);
       setSyncing(false);

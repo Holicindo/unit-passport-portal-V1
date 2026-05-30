@@ -96,9 +96,8 @@ export default function UsersPage() {
         } : u));
       } else {
         // For create: hit real API
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3001';
         const token = localStorage.getItem('token');
-        const res = await fetch(`${API_URL}/auth/register`, {
+        const res = await fetch(`/api/auth/register`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

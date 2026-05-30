@@ -50,7 +50,7 @@ function EditUnitForm() {
       try {
         const storedToken = localStorage.getItem('token');
         if (storedToken) {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3001'}/clients`, {
+          const res = await fetch(`/api/clients`, {
             headers: { Authorization: `Bearer ${storedToken}` }
           });
           const data = await res.json();

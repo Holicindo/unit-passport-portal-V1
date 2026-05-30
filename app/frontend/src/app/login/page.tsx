@@ -1,41 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { authApi } from '@/lib/api';
 import { Eye, EyeOff, Mail, Lock, ShieldCheck, ChevronLeft, Unlock, User } from 'lucide-react';
 import styles from './login.module.css';
-
-/* ── Holic Logo SVG — matching Image 2 ── */
-function HolicIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 140 120"
-      fill="none"
-      stroke="#ffffff"
-      strokeWidth="5"
-      strokeLinecap="square"
-      strokeLinejoin="miter"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      {/* Left triangle half (chamfered bottom left) */}
-      <polygon points="60,5 10,95 20,110 60,110" />
-      
-      {/* Right vertical line */}
-      <line x1="70" y1="15" x2="70" y2="110" />
-
-      {/* Outer right diagonal (chamfered bottom right) */}
-      <polyline points="70,15 110,90 100,110 70,110" />
-
-      {/* Bent line 1 (Top) - extends outside */}
-      <polyline points="80,110 80,55 125,45" />
-
-      {/* Bent line 2 (Bottom) - extends outside */}
-      <polyline points="90,110 90,85 135,75" />
-    </svg>
-  );
-}
 
 /* ── Google G icon ── */
 function GoogleIcon() {
@@ -147,7 +117,7 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = () => {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3001';
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
     // Redirect to backend Google OAuth — backend will redirect back with token
     const callbackUrl = encodeURIComponent(`${window.location.origin}/login`);
     window.location.href = `${API_URL}/auth/google?redirect=${callbackUrl}`;
@@ -168,7 +138,7 @@ export default function LoginPage() {
 
         {/* ── Brand header ── */}
         <div className={styles.brandHeader}>
-          <HolicIcon className={styles.logoMark} />
+          <Image src="/holic-logo-gold.png" alt="Holicindo Logo" width={80} height={80} priority className={styles.logoMark} />
           <div className={styles.brandName}>HOLICINDO</div>
           <div className={styles.brandTagline}>Unit Passport Portal</div>
         </div>
