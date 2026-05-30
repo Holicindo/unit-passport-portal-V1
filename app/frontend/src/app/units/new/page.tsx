@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, DragEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { unitApi } from '@/lib/api';
 import { ArrowLeft, Loader2, Save, Wrench, HelpCircle, ShieldAlert, Upload, ImageIcon, X } from 'lucide-react';
-import { categorizeUnitType } from '@/lib/utils';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 import styles from './new.module.css';
 
 export default function RegisterUnitPage() {
@@ -304,14 +304,14 @@ export default function RegisterUnitPage() {
           
           <div className={styles.formGroup} style={{ marginBottom: '20px', maxWidth: '300px' }}>
             <label>Kategori / Jenis Unit *</label>
-            <select 
+            <CustomSelect 
               value={unitType} 
-              onChange={(e) => setUnitType(e.target.value)}
-              style={{ background: '#FFF', border: '1.5px solid var(--color-cobalt-blue)', fontWeight: 700 }}
-            >
-              <option value="SHOWCASE">SHOWCASE / REFRIGERATOR</option>
-              <option value="MESIN">MESIN / MACHINERY & EQUIPMENT</option>
-            </select>
+              onChange={(val) => setUnitType(val)}
+              options={[
+                { value: 'SHOWCASE', label: 'SHOWCASE / REFRIGERATOR' },
+                { value: 'MESIN', label: 'MESIN / MACHINERY & EQUIPMENT' }
+              ]}
+            />
           </div>
 
           {unitType === 'SHOWCASE' ? (
@@ -392,19 +392,29 @@ export default function RegisterUnitPage() {
           <div className={styles.grid3}>
             <div className={styles.formGroup}>
               <label>Klien / Pemilik Resmi *</label>
-              <select value={clientId} onChange={(e) => setClientId(e.target.value)} required>
-                <option value="">— Pilih Klien —</option>
-                {Array.isArray(clients) && clients.map((c: any) => (
-                  <option key={c.id} value={c.id}>{c.company_name} ({c.bp_code})</option>
-                ))}
-              </select>
+              <CustomSelect 
+                value={clientId} 
+                onChange={(val) => setClientId(val)}
+                options={[
+                  { value: '', label: '— Pilih Klien —' },
+                  ...(Array.isArray(clients) ? clients.map((c: any) => ({
+                    value: c.id,
+                    label: `${c.company_name} (${c.bp_code})`
+                  })) : [])
+                ]}
+                placeholder="— Pilih Klien —"
+              />
             </div>
             <div className={styles.formGroup}>
               <label>Status Garansi</label>
-              <select value={warrantyStatus} onChange={(e) => setWarrantyStatus(e.target.value)}>
-                <option value="ACTIVE">ACTIVE (Garansi Berlaku)</option>
-                <option value="EXPIRED">EXPIRED (Garansi Habis)</option>
-              </select>
+              <CustomSelect 
+                value={warrantyStatus} 
+                onChange={(val) => setWarrantyStatus(val)}
+                options={[
+                  { value: 'ACTIVE', label: 'ACTIVE (Garansi Berlaku)' },
+                  { value: 'EXPIRED', label: 'EXPIRED (Garansi Habis)' }
+                ]}
+              />
             </div>
             <div className={styles.formGroup}>
               <label>Tanggal Habis Garansi</label>

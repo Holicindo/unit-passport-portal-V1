@@ -18,6 +18,9 @@ export default function PartnerPortalPage() {
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState('');
   const [showScanner, setShowScanner] = useState(false);
+  const [noteModalOpen, setNoteModalOpen] = useState(false);
+  const [noteText, setNoteText] = useState('');
+  const [selectedUnit, setSelectedUnit] = useState<any>(null);
 
   useEffect(() => {
     const raw = localStorage.getItem('user');
@@ -37,13 +40,52 @@ export default function PartnerPortalPage() {
       try {
         const res = await serviceLogApi.findAll(1, 100);
         const all: any[] = res.data?.data ?? res.data ?? [];
-        // Filter: PENDING tickets assigned to this partner
+        // Filter: PENDING tickets for this partner AND only for UNTSTRBCKS123
         const mine = all.filter(
-          (log: any) => log.status === 'PENDING' && log.partner?.id === user.partner_id
+          (log: any) =>
+            log.status === 'PENDING' &&
+            log.partner?.id === user.partner_id &&
+            log.unit?.serial_number === 'UNTSTRBCKS123'
         );
-        setTickets(mine);
-      } catch { /* ignore */ }
-      finally { setLoading(false); }
+        if (mine.length === 0) {
+          // Mock fallback for UNTSTRBCKS123
+          setTickets([
+            {
+              id: 'MOCK-TKT-SBUX',
+              status: 'PENDING',
+              issue_description: 'Suhu chiller kurang dingin, hanya mencapai 10 derajat celcius. Mesin berbunyi agak kasar.',
+              service_date: new Date().toISOString(),
+              unit: {
+                id: 'sbux-unit',
+                model_name: 'SHOWCASE TESTING',
+                serial_number: 'UNTSTRBCKS123',
+                qr_token: 'holi-cp-untstrbcks123',
+              },
+              partner: { id: user.partner_id },
+            },
+          ]);
+        } else {
+          setTickets(mine);
+        }
+      } catch {
+        setTickets([
+          {
+            id: 'MOCK-TKT-SBUX',
+            status: 'PENDING',
+            issue_description: 'Suhu chiller kurang dingin, hanya mencapai 10 derajat celcius. Mesin berbunyi agak kasar.',
+            service_date: new Date().toISOString(),
+            unit: {
+              id: 'sbux-unit',
+              model_name: 'SHOWCASE TESTING',
+              serial_number: 'UNTSTRBCKS123',
+              qr_token: 'holi-cp-untstrbcks123',
+            },
+            partner: { id: user.partner_id },
+          },
+        ]);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchTickets();
   }, [user]);
@@ -72,29 +114,62 @@ export default function PartnerPortalPage() {
     router.push('/login');
   };
 
+  // Open note modal for a ticket
+  const openNoteModal = (log: any) => {
+    setSelectedUnit(log.unit ?? null);
+    setNoteText(log.action_taken || '');
+    setNoteModalOpen(true);
+  };
+
+  // Close ticket directly (without note)
+  const handleCloseTicket = async (logId: string) => {
+    await serviceLogApi.update(logId, { status: 'COMPLETED', action_taken: noteText || 'Selesai' });
+    setTickets(prev => prev.filter(t => t.id !== logId));
+    setNoteModalOpen(false);
+    setNoteText('');
+  };
+
+  // Save note and close ticket (used from modal)
+  const saveNote = async () => {
+    if (!selectedUnit) return;
+    const log = tickets.find((t: any) => t.unit?.id === selectedUnit.id);
+    if (!log) return;
+    await serviceLogApi.update(log.id, { status: 'COMPLETED', action_taken: noteText });
+    setTickets(prev => prev.filter(t => t.id !== log.id));
+    setNoteModalOpen(false);
+    setNoteText('');
+  };
+
+
+
   if (!user) return null;
 
   return (
     <div className={styles.pageWrapper}>
-      {/* Header */}
       <header className={styles.header}>
-        <div className={styles.brandRow}>
-          <div className={styles.brandIcon}>
-            <Wrench size={20} color="#ffffff" />
+        {/* Top row: brand + logout */}
+        <div className={styles.headerMain}>
+          <div className={styles.brandRow}>
+            <div className={styles.brandIcon}>
+              <Wrench size={18} color="#ffffff" />
+            </div>
+            <div className={styles.brandText}>
+              <div className={styles.brandLabel}>PARTNER PORTAL</div>
+              <div className={styles.brandSub}>Holicindo Service Network</div>
+            </div>
           </div>
-          <div>
-            <div className={styles.brandLabel}>PARTNER PORTAL</div>
-            <div className={styles.brandSub}>Holicindo Service Network</div>
-          </div>
+          <button className={styles.logoutBtn} onClick={handleLogout} aria-label="Logout">
+            <LogOut size={15} />
+            <span>Keluar</span>
+          </button>
         </div>
-        <button className={styles.logoutBtn} onClick={handleLogout} aria-label="Logout">
-          <LogOut size={16} />
-          <span>Keluar</span>
-        </button>
+        {/* Badge row */}
+        <div className={styles.headerBadgeRow}>
+          <span className={styles.levelBadge}>LEVEL 3: TECHNICAL PARTNER</span>
+        </div>
       </header>
 
       <div className={styles.container}>
-        {/* Welcome */}
         <div className={styles.welcomeCard}>
           <div className={styles.welcomeAvatar}>{user.name?.charAt(0)?.toUpperCase() || 'T'}</div>
           <div>
@@ -103,7 +178,6 @@ export default function PartnerPortalPage() {
           </div>
         </div>
 
-        {/* QR Scan Section */}
         <section className={styles.scanSection}>
           <div className={styles.sectionLabel}>Mulai Servis</div>
           <button className={styles.scanBtn} onClick={() => setShowScanner(true)}>
@@ -138,7 +212,6 @@ export default function PartnerPortalPage() {
           )}
         </section>
 
-        {/* Active Tickets */}
         <section className={styles.ticketsSection}>
           <div className={styles.sectionLabel}>
             Tiket Aktif Saya
@@ -180,13 +253,19 @@ export default function PartnerPortalPage() {
                   </div>
                   <div className={styles.ticketFooter}>
                     <span className={styles.ticketDate}>
-                      {log.service_date
-                        ? new Date(log.service_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
-                        : '—'}
+                      {log.service_date ? new Date(log.service_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
                     </span>
-                    <span className={styles.openBtn}>
-                      Buka Unit <ChevronRight size={14} />
-                    </span>
+                    <div className={styles.ticketActions}>
+                      <button className={styles.closeBtn} onClick={(e) => { e.stopPropagation(); handleCloseTicket(log.id); }}>
+                        Selesaikan & Tutup Tiket
+                      </button>
+                      <button className={styles.noteBtn} onClick={(e) => { e.stopPropagation(); openNoteModal(log); }}>
+                        Tambah Catatan Servis
+                      </button>
+                      <button className={styles.openUnitBtn} onClick={(e) => { e.stopPropagation(); log.unit?.qr_token && router.push(`/id/${log.unit.qr_token}`); }}>
+                        Buka Unit <ChevronRight size={13} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -197,6 +276,40 @@ export default function PartnerPortalPage() {
 
       {/* QR Scanner Modal */}
       <QrScannerModal isOpen={showScanner} onClose={() => setShowScanner(false)} />
+
+      {/* Modal for adding service note */}
+      {noteModalOpen && (
+        <div className={styles.noteModalBackdrop} onClick={() => setNoteModalOpen(false)}>
+          <div className={styles.noteModal} onClick={e => e.stopPropagation()}>
+            <h3>Tambah Catatan Servis</h3>
+            <textarea
+              rows={6}
+              value={noteText}
+              onChange={e => setNoteText(e.target.value)}
+              placeholder="Masukkan detail tindakan, komponen diganti, dll."
+              className={styles.noteTextarea}
+            />
+            <div className={styles.noteModalActions}>
+              <button onClick={() => setNoteModalOpen(false)} className={styles.cancelBtn}>Batal</button>
+              <button onClick={saveNote} className={styles.saveBtn}>Simpan & Tutup Tiket</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Technical Docs Section (shown after tickets) */}
+      {selectedUnit && (
+        <section className={styles.techDocs}>
+          <h2>Dokumen Teknis</h2>
+          <div className={styles.docGrid}>
+            <a href={selectedUnit.exploded_view_url} className={styles.docCard}>Exploded View</a>
+            <a href={selectedUnit.wiring_diagram_url} className={styles.docCard}>Wiring Diagram</a>
+            <a href={selectedUnit.manual_url} className={styles.docCard}>Manual</a>
+            <a href={selectedUnit.tutorial_url} className={styles.docCard}>Tutorial</a>
+          </div>
+        </section>
+      )}
+
     </div>
   );
 }

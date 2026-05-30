@@ -9,6 +9,7 @@ import {
   Lock, Check, UserCheck, Settings, BookOpen, Clock, Image as ImageIcon,
   Sun, Moon
 } from 'lucide-react';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 import styles from './id.module.css';
 
 // SVG Blueprint Component for Airflow & Dimensions
@@ -259,12 +260,10 @@ export default function QrPassportPage() {
         },
         body: JSON.stringify({
           unitId: unit.id,
-          service_date: new Date(),
-          service_type: logType === 'PREVENTIVE' ? 'PREVENTIVE_MAINTENANCE' : 'CORRECTIVE_MAINTENANCE',
+          service_date: new Date().toISOString(),
           technician_name: techName || user?.name,
+          issue_description: logType === 'PREVENTIVE' ? 'Perawatan Rutin (PM)' : 'Perbaikan Masalah / Kerusakan',
           action_taken: logNotes,
-          notes: logNotes,
-          components_replaced: logComponents || undefined,
           status: logStatus || 'COMPLETED'
         })
       });
@@ -782,147 +781,6 @@ export default function QrPassportPage() {
       <button className={`${styles.carouselNavBtn} ${styles.nextBtn}`} onClick={() => { if (carouselRef.current) carouselRef.current.scrollBy({ left: carouselRef.current.clientWidth, behavior: 'smooth' }); }}>&rsaquo;</button>
     </div>
 
-      {/* ── TECHNICAL DOCUMENTS — Level 3 Partner + Admin only ── */}
-      {(isPartner || isAdmin) && (
-        <section className={styles.sectionCard} style={{ marginBottom: '24px' }}>
-          <div className={styles.cardHeader}>
-            <div className={styles.cardHeaderLeft}>
-              <BookOpen size={16} color="#8bb2ff" />
-              <h2>Dokumen Teknis</h2>
-            </div>
-            <span style={{
-              fontSize: '0.72rem',
-              background: 'rgba(16,185,129,0.1)',
-              color: '#6ee7b7',
-              border: '1px solid rgba(16,185,129,0.2)',
-              padding: '4px 10px',
-              borderRadius: '20px',
-              fontWeight: 700,
-              letterSpacing: '0.04em',
-            }}>
-              LEVEL 3 ACCESS
-            </span>
-          </div>
-          <div style={{
-            padding: '20px',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '12px',
-          }}>
-            {/* Exploded View */}
-            <a
-              href={unit.exploded_view_url || '#'}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={!unit.exploded_view_url ? (e) => e.preventDefault() : undefined}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '12px', padding: '16px',
-                background: unit.exploded_view_url ? 'rgba(46,91,255,0.08)' : 'rgba(255,255,255,0.02)',
-                border: `1px solid ${unit.exploded_view_url ? 'rgba(46,91,255,0.3)' : 'rgba(255,255,255,0.06)'}`,
-                borderRadius: '10px', textDecoration: 'none', color: '#ffffff',
-                opacity: unit.exploded_view_url ? 1 : 0.45,
-                transition: 'all 0.2s',
-                cursor: unit.exploded_view_url ? 'pointer' : 'default',
-              }}
-            >
-              <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'rgba(46,91,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <FileText size={20} color="#8bb2ff" />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#ffffff' }}>Exploded View</div>
-                <div style={{ fontSize: '0.75rem', color: '#8f9bb3', marginTop: '2px' }}>
-                  {unit.exploded_view_url ? 'Tersedia — Klik untuk buka' : 'Belum diunggah'}
-                </div>
-              </div>
-              {unit.exploded_view_url && <ExternalLink size={14} color="#8bb2ff" style={{ flexShrink: 0 }} />}
-            </a>
-
-            {/* Circuit / Wiring Diagram */}
-            <a
-              href={unit.circuit_diagram_url || '#'}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={!unit.circuit_diagram_url ? (e) => e.preventDefault() : undefined}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '12px', padding: '16px',
-                background: unit.circuit_diagram_url ? 'rgba(16,185,129,0.08)' : 'rgba(255,255,255,0.02)',
-                border: `1px solid ${unit.circuit_diagram_url ? 'rgba(16,185,129,0.3)' : 'rgba(255,255,255,0.06)'}`,
-                borderRadius: '10px', textDecoration: 'none', color: '#ffffff',
-                opacity: unit.circuit_diagram_url ? 1 : 0.45,
-                transition: 'all 0.2s',
-                cursor: unit.circuit_diagram_url ? 'pointer' : 'default',
-              }}
-            >
-              <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'rgba(16,185,129,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <Settings size={20} color="#6ee7b7" />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#ffffff' }}>Wiring / Circuit Diagram</div>
-                <div style={{ fontSize: '0.75rem', color: '#8f9bb3', marginTop: '2px' }}>
-                  {unit.circuit_diagram_url ? 'Tersedia — Klik untuk buka' : 'Belum diunggah'}
-                </div>
-              </div>
-              {unit.circuit_diagram_url && <ExternalLink size={14} color="#6ee7b7" style={{ flexShrink: 0 }} />}
-            </a>
-
-            {/* Service Manual */}
-            <a
-              href={unit.specs?.manual_url || '#'}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={!unit.specs?.manual_url ? (e) => e.preventDefault() : undefined}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '12px', padding: '16px',
-                background: unit.specs?.manual_url ? 'rgba(245,158,11,0.08)' : 'rgba(255,255,255,0.02)',
-                border: `1px solid ${unit.specs?.manual_url ? 'rgba(245,158,11,0.3)' : 'rgba(255,255,255,0.06)'}`,
-                borderRadius: '10px', textDecoration: 'none', color: '#ffffff',
-                opacity: unit.specs?.manual_url ? 1 : 0.45,
-                transition: 'all 0.2s',
-                cursor: unit.specs?.manual_url ? 'pointer' : 'default',
-              }}
-            >
-              <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'rgba(245,158,11,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <BookOpen size={20} color="#fcd34d" />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#ffffff' }}>Manual Servis</div>
-                <div style={{ fontSize: '0.75rem', color: '#8f9bb3', marginTop: '2px' }}>
-                  {unit.specs?.manual_url ? 'Tersedia — Klik untuk buka' : 'Belum diunggah'}
-                </div>
-              </div>
-              {unit.specs?.manual_url && <ExternalLink size={14} color="#fcd34d" style={{ flexShrink: 0 }} />}
-            </a>
-
-            {/* Tutorial Video */}
-            <a
-              href={unit.specs?.tutorial_url || '#'}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={!unit.specs?.tutorial_url ? (e) => e.preventDefault() : undefined}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '12px', padding: '16px',
-                background: unit.specs?.tutorial_url ? 'rgba(139,92,246,0.08)' : 'rgba(255,255,255,0.02)',
-                border: `1px solid ${unit.specs?.tutorial_url ? 'rgba(139,92,246,0.3)' : 'rgba(255,255,255,0.06)'}`,
-                borderRadius: '10px', textDecoration: 'none', color: '#ffffff',
-                opacity: unit.specs?.tutorial_url ? 1 : 0.45,
-                transition: 'all 0.2s',
-                cursor: unit.specs?.tutorial_url ? 'pointer' : 'default',
-              }}
-            >
-              <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'rgba(139,92,246,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <ExternalLink size={20} color="#c4b5fd" />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#ffffff' }}>Video Tutorial</div>
-                <div style={{ fontSize: '0.75rem', color: '#8f9bb3', marginTop: '2px' }}>
-                  {unit.specs?.tutorial_url ? 'Tersedia — Klik untuk tonton' : 'Belum tersedia'}
-                </div>
-              </div>
-              {unit.specs?.tutorial_url && <ExternalLink size={14} color="#c4b5fd" style={{ flexShrink: 0 }} />}
-            </a>
-          </div>
-        </section>
-      )}
 
       {/* Media Modal */}
       {selectedMedia && (
@@ -973,7 +831,7 @@ export default function QrPassportPage() {
                     borderRadius: '8px',
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
-                      <span style={{ fontSize: '0.85rem', color: '#8f9bb3' }}>
+                      <span className={styles.historyDate}>
                         {log.service_date
                           ? new Date(log.service_date).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })
                           : '—'}
@@ -992,11 +850,11 @@ export default function QrPassportPage() {
                         {log.status === 'COMPLETED' ? 'SELESAI' : 'PENDING'}
                       </span>
                     </div>
-                    <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#e2e8f0' }}>
+                    <div className={styles.historyTech}>
                       Teknisi: {log.technician_name || '—'}
                     </div>
                     {(log.action_taken || log.notes) && (
-                      <div style={{ fontSize: '0.85rem', color: '#94a3b8', lineHeight: 1.5 }}>
+                      <div className={styles.historyNotes}>
                         {(log.action_taken || log.notes || '').slice(0, 80)}
                         {(log.action_taken || log.notes || '').length > 80 ? '…' : ''}
                       </div>
@@ -1078,34 +936,36 @@ export default function QrPassportPage() {
 
                 <div className={styles.formGroup}>
                   <label>Pilih Kategori Kendala Utama <span className={styles.mobileOnly} style={{ color: '#ef4444' }}>*</span></label>
-                  <select 
+                  <CustomSelect 
                     value={issueMainCategory}
-                    onChange={(e) => {
-                      setIssueMainCategory(e.target.value);
-                      if (e.target.value !== 'Kendala Showcase') setIssueSubCategory('');
+                    onChange={(val) => {
+                      setIssueMainCategory(val);
+                      if (val !== 'Kendala Showcase') setIssueSubCategory('');
                     }}
-                    required
-                  >
-                    <option value="">— Pilih Kategori —</option>
-                    <option value="Kendala Mesin">Kendala Mesin (Kompresor, dsb)</option>
-                    <option value="Kendala Showcase">Kendala Showcase (Fisik/Kabinet)</option>
-                  </select>
+                    options={[
+                      { value: '', label: '— Pilih Kategori —' },
+                      { value: 'Kendala Mesin', label: 'Kendala Mesin (Kompresor, dsb)' },
+                      { value: 'Kendala Showcase', label: 'Kendala Showcase (Fisik/Kabinet)' }
+                    ]}
+                    placeholder="— Pilih Kategori —"
+                  />
                 </div>
 
                 {issueMainCategory === 'Kendala Showcase' && (
                   <div className={styles.formGroup}>
                     <label>Sub-Kategori Kendala Showcase <span className={styles.mobileOnly} style={{ color: '#ef4444' }}>*</span></label>
-                    <select 
+                    <CustomSelect 
                       value={issueSubCategory}
-                      onChange={(e) => setIssueSubCategory(e.target.value)}
-                      required
-                    >
-                      <option value="">— Pilih Sub-Kategori —</option>
-                      <option value="Kaca">Kaca (Pecah/Berembun)</option>
-                      <option value="Lampu">Lampu (Mati/Redup)</option>
-                      <option value="Pendingin">Pendingin (Kurang Dingin/Bocor)</option>
-                      <option value="Kelistrikan">Kelistrikan (Korslet/Tidak Menyala)</option>
-                    </select>
+                      onChange={(val) => setIssueSubCategory(val)}
+                      options={[
+                        { value: '', label: '— Pilih Sub-Kategori —' },
+                        { value: 'Kaca', label: 'Kaca (Pecah/Berembun)' },
+                        { value: 'Lampu', label: 'Lampu (Mati/Redup)' },
+                        { value: 'Pendingin', label: 'Pendingin (Kurang Dingin/Bocor)' },
+                        { value: 'Kelistrikan', label: 'Kelistrikan (Korslet/Tidak Menyala)' }
+                      ]}
+                      placeholder="— Pilih Sub-Kategori —"
+                    />
                   </div>
                 )}
 
@@ -1189,7 +1049,12 @@ export default function QrPassportPage() {
         <div className={styles.modalOverlay}>
           <div className={styles.modalCard}>
             <div className={styles.modalHeader}>
-              <h2>{logStatus === 'COMPLETED' ? 'Selesaikan & Tutup Tiket' : 'Tambah Catatan Servis'}</h2>
+              <div className={styles.headerLeftMobile}>
+                <button onClick={() => { setShowLogModal(false); setLogStatus('COMPLETED'); setLogComponents(''); }} className={styles.mobileBackBtn}>
+                  <ArrowLeft size={18} strokeWidth={2.5} />
+                </button>
+                <h2>{logStatus === 'COMPLETED' ? 'Selesaikan & Tutup Tiket' : 'Tambah Catatan Servis'}</h2>
+              </div>
               <button onClick={() => { setShowLogModal(false); setLogStatus('COMPLETED'); setLogComponents(''); }} className={styles.closeBtn}>×</button>
             </div>
 
@@ -1223,10 +1088,14 @@ export default function QrPassportPage() {
 
               <div className={styles.formGroup}>
                 <label>Jenis Servis *</label>
-                <select value={logType} onChange={(e) => setLogType(e.target.value)} required>
-                  <option value="CORRECTIVE">Corrective — Perbaikan Masalah / Kerusakan</option>
-                  <option value="PREVENTIVE">Preventive — Perawatan Rutin (PM)</option>
-                </select>
+                <CustomSelect 
+                  value={logType} 
+                  onChange={(val) => setLogType(val)} 
+                  options={[
+                    { value: 'CORRECTIVE', label: 'Corrective — Perbaikan Masalah / Kerusakan' },
+                    { value: 'PREVENTIVE', label: 'Preventive — Perawatan Rutin (PM)' }
+                  ]}
+                />
               </div>
 
               <div className={styles.formGroup}>
@@ -1251,10 +1120,14 @@ export default function QrPassportPage() {
 
               <div className={styles.formGroup}>
                 <label>Status Penyelesaian *</label>
-                <select value={logStatus} onChange={(e) => setLogStatus(e.target.value)} required>
-                  <option value="COMPLETED">SELESAI — Tiket ditutup, unit berfungsi normal</option>
-                  <option value="PENDING">MASIH PROSES — Perlu kunjungan lanjutan</option>
-                </select>
+                <CustomSelect 
+                  value={logStatus} 
+                  onChange={(val) => setLogStatus(val)} 
+                  options={[
+                    { value: 'COMPLETED', label: 'SELESAI — Tiket ditutup, unit berfungsi normal' },
+                    { value: 'PENDING', label: 'MASIH PROSES — Perlu kunjungan lanjutan' }
+                  ]}
+                />
               </div>
 
               <button type="submit" className={styles.btnSubmit} disabled={logLoading} style={{
@@ -1278,7 +1151,12 @@ export default function QrPassportPage() {
         <div className={styles.modalOverlay}>
           <div className={styles.modalCard}>
             <div className={styles.modalHeader}>
-              <h2>Transfer Ownership (Pindahkan Aset)</h2>
+              <div className={styles.headerLeftMobile}>
+                <button onClick={() => setShowTransferModal(false)} className={styles.mobileBackBtn}>
+                  <ArrowLeft size={18} strokeWidth={2.5} />
+                </button>
+                <h2>Transfer Ownership (Pindahkan Aset)</h2>
+              </div>
               <button onClick={() => setShowTransferModal(false)} className={styles.closeBtn}>×</button>
             </div>
             
@@ -1297,16 +1175,15 @@ export default function QrPassportPage() {
 
               <div className={styles.formGroup}>
                 <label>Pilih Klien Tujuan Baru</label>
-                <select 
+                <CustomSelect 
                   value={targetClientId} 
-                  onChange={(e) => setTargetClientId(e.target.value)}
-                  required
-                >
-                  <option value="">— Pilih Klien —</option>
-                  {Array.isArray(clients) && clients.map((c: any) => (
-                    <option key={c.id} value={c.id}>{c.company_name} ({c.bp_code})</option>
-                  ))}
-                </select>
+                  onChange={(val) => setTargetClientId(val)}
+                  options={[
+                    { value: '', label: '— Pilih Klien —' },
+                    ...(Array.isArray(clients) ? clients.map((c: any) => ({ value: c.id, label: `${c.company_name} (${c.bp_code})` })) : [])
+                  ]}
+                  placeholder="— Pilih Klien —"
+                />
               </div>
 
               <div className={styles.formGroup}>

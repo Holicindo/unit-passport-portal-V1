@@ -1,6 +1,7 @@
 import React from 'react';
 import styles from './template.module.css';
 import rStyles from './ReworkReportTemplate.module.css';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 
 export default function ReworkReportTemplate({ mode = 'view', data = {}, unit = {}, onChange }: any) {
   const isEdit = mode === 'edit';
@@ -143,16 +144,16 @@ export default function ReworkReportTemplate({ mode = 'view', data = {}, unit = 
               <td><CellInput value={row.yang_memperbaiki} onChange={(v: string) => setRow(i, 'yang_memperbaiki', v)} /></td>
               <td style={{ textAlign: 'center' }}>
                 {isEdit ? (
-                  <select
+                  <CustomSelect
                     className={styles.cellSelect}
                     value={row.status || ''}
-                    onChange={(e) => setRow(i, 'status', e.target.value)}
-                    style={{ fontSize: '8px' }}
-                  >
-                    <option value=""></option>
-                    <option value="OK">OK</option>
-                    <option value="NG">NG</option>
-                  </select>
+                    onChange={(val) => setRow(i, 'status', val)}
+                    options={[
+                      { value: '', label: '' },
+                      { value: 'OK', label: 'OK' },
+                      { value: 'NG', label: 'NG' }
+                    ]}
+                  />
                 ) : (
                   <span style={{ fontSize: '8px', fontWeight: 'bold', color: row.status === 'OK' ? '#16a34a' : row.status === 'NG' ? '#dc2626' : '#000' }}>
                     {row.status || ''}

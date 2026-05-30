@@ -360,28 +360,28 @@ export default function UsersPage() {
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
                   <label className={styles.formLabel}>Role</label>
-                  <select
-                    className={styles.formSelect}
+                  <CustomSelect
                     value={formRole}
-                    onChange={(e) => setFormRole(e.target.value as UserRole)}
-                  >
-                    <option value="SUPER_ADMIN">Super Admin</option>
-                    <option value="PARTNER">Partner</option>
-                    <option value="MECHANIC">Mekanik</option>
-                    <option value="CLIENT">Klien</option>
-                  </select>
+                    onChange={(val) => setFormRole(val as UserRole)}
+                    options={[
+                      { value: 'SUPER_ADMIN', label: 'Super Admin' },
+                      { value: 'PARTNER', label: 'Partner' },
+                      { value: 'MECHANIC', label: 'Mekanik' },
+                      { value: 'CLIENT', label: 'Klien' }
+                    ]}
+                  />
                 </div>
 
                 <div className={styles.formGroup}>
                   <label className={styles.formLabel}>Status</label>
-                  <select
-                    className={styles.formSelect}
+                  <CustomSelect
                     value={formStatus}
-                    onChange={(e) => setFormStatus(e.target.value as UserStatus)}
-                  >
-                    <option value="ACTIVE">Aktif</option>
-                    <option value="SUSPENDED">Ditangguhkan</option>
-                  </select>
+                    onChange={(val) => setFormStatus(val as UserStatus)}
+                    options={[
+                      { value: 'ACTIVE', label: 'Aktif' },
+                      { value: 'SUSPENDED', label: 'Ditangguhkan' }
+                    ]}
+                  />
                 </div>
               </div>
             </div>

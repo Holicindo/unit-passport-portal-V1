@@ -367,18 +367,18 @@ export default function ServicePlanningPage() {
               {/* Partner Dropdown */}
               <div className={styles.formGroup}>
                 <label>Pilih Mitra Regional Penanggungjawab *</label>
-                <select 
+                <CustomSelect 
                   value={selectedPartnerId} 
-                  onChange={(e) => setSelectedPartnerId(e.target.value)}
-                  required
-                >
-                  <option value="">— Pilih Partner Regional —</option>
-                  {partners.map(p => (
-                    <option key={p.id} value={p.id}>
-                      {p.partner_name} ({p.city})
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setSelectedPartnerId(val)}
+                  options={[
+                    { value: '', label: '— Pilih Partner Regional —' },
+                    ...partners.map(p => ({
+                      value: p.id,
+                      label: `${p.partner_name} (${p.city})`
+                    }))
+                  ]}
+                  placeholder="— Pilih Partner Regional —"
+                />
               </div>
 
               {/* Scheduled Date */}

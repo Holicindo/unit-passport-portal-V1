@@ -1,5 +1,6 @@
 import React from 'react';
 import styles from './template.module.css';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 
 interface InspectionReportTemplateProps {
   data: any;
@@ -604,15 +605,16 @@ export default function InspectionReportTemplate({
                 </td>
                 <td className={styles.centerCell}>
                   {isEdit ? (
-                    <select
+                    <CustomSelect
                       className={styles.cellSelect}
                       value={currentVal.result || ''}
-                      onChange={(e) => setPerf(spec.key, 'result', e.target.value)}
-                    >
-                      <option value="">-</option>
-                      <option value="V">V</option>
-                      <option value="X">X</option>
-                    </select>
+                      onChange={(val) => setPerf(spec.key, 'result', val)}
+                      options={[
+                        { value: '', label: '-' },
+                        { value: 'V', label: 'V' },
+                        { value: 'X', label: 'X' }
+                      ]}
+                    />
                   ) : currentVal.result ? (
                     <span
                       className={`${styles.statusBadge} ${

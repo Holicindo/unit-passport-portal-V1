@@ -12,28 +12,46 @@
 /* Header */
 .header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
+  flex-direction: column;
+  padding: 12px 16px 10px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(6, 13, 33, 0.9);
+  background: rgba(6, 13, 33, 0.95);
   backdrop-filter: blur(12px);
   position: sticky;
   top: 0;
   z-index: 100;
+  gap: 8px;
+}
+
+/* Top row: brand icon+text + logout button */
+.headerMain {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Badge row: sits below the main row on mobile */
+.headerBadgeRow {
+  display: flex;
+  align-items: center;
 }
 
 .brandRow {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+}
+
+.brandText {
+  display: flex;
+  flex-direction: column;
 }
 
 .brandIcon {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   background: var(--color-cobalt-blue, #2E5BFF);
-  border-radius: 10px;
+  border-radius: 9px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -42,14 +60,15 @@
 
 .brandLabel {
   font-family: var(--font-heading);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   color: #ffffff;
+  line-height: 1.2;
 }
 
 .brandSub {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   color: #8f9bb3;
   margin-top: 1px;
 }
@@ -57,20 +76,42 @@
 .logoutBtn {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   background: rgba(255, 107, 0, 0.1);
   border: 1px solid rgba(255, 107, 0, 0.25);
   color: #FF6B00;
-  padding: 8px 14px;
+  padding: 6px 12px;
   border-radius: 8px;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
+  flex-shrink: 0;
 }
 
 .logoutBtn:hover {
   background: rgba(255, 107, 0, 0.2);
+}
+
+/* Desktop: put badge inline in header top row */
+@media (min-width: 640px) {
+  .header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    gap: 0;
+  }
+
+  .headerMain {
+    flex: 1;
+    gap: 16px;
+  }
+
+  .headerBadgeRow {
+    margin-left: auto;
+    margin-right: 16px;
+  }
 }
 
 /* Container */
@@ -382,6 +423,7 @@
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -397,15 +439,246 @@
 .ticketDate {
   font-size: 0.75rem;
   color: #64748b;
+  margin-bottom: 4px;
 }
 
-.openBtn {
+/* Action buttons container */
+.ticketActions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.openUnitBtn {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
   font-size: 0.8rem;
   font-weight: 700;
   color: #8bb2ff;
+  background: none;
+  border: 1px solid rgba(139, 178, 255, 0.2);
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.openUnitBtn:hover {
+  background: rgba(139, 178, 255, 0.08);
+}
+
+/* Level Badge */
+.levelBadge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #00d68f;
+  background: rgba(0, 214, 143, 0.1);
+  border: 1px solid rgba(0, 214, 143, 0.3);
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Ticket action buttons */
+.ticketFooter {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.ticketFooterRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ticketDate {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.closeBtn {
+  width: 100%;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #FF6B00, #FF6B00);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.02em;
+}
+
+.closeBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 214, 143, 0.35);
+}
+
+.noteBtn {
+  width: 100%;
+  padding: 10px 16px;
+  background: rgba(46, 91, 255, 0.12);
+  border: 1px solid rgba(46, 91, 255, 0.3);
+  border-radius: 10px;
+  color: #f0f1f5;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.noteBtn:hover {
+  background: rgba(46, 91, 255, 0.2);
+}
+
+/* Note Modal */
+.noteModalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.noteModal {
+  background: #0d1529;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  padding: 24px;
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.noteModal h3 {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0;
+}
+
+.noteTextarea {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-family: var(--font-body);
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s;
+  line-height: 1.6;
+}
+
+.noteTextarea:focus {
+  border-color: rgba(46, 91, 255, 0.5);
+}
+
+.noteTextarea::placeholder {
+  color: #4a5568;
+}
+
+.noteModalActions {
+  display: flex;
+  gap: 10px;
+}
+
+.cancelBtn {
+  flex: 1;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: #8f9bb3;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancelBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.saveBtn {
+  flex: 2;
+  padding: 10px;
+  background: linear-gradient(135deg, #00d68f, #00b377);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.saveBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 214, 143, 0.3);
+}
+
+/* Technical Docs */
+.techDocs {
+  padding: 0 20px 48px;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.techDocs h2 {
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #8f9bb3;
+  margin-bottom: 14px;
+}
+
+.docGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.docCard {
+  background: rgba(46, 91, 255, 0.08);
+  border: 1px solid rgba(46, 91, 255, 0.2);
+  border-radius: 12px;
+  padding: 16px;
+  color: #8bb2ff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-align: center;
+  text-decoration: none;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60px;
+}
+
+.docCard:hover {
+  background: rgba(46, 91, 255, 0.15);
+  transform: translateY(-2px);
 }
 
 /* Spinner */

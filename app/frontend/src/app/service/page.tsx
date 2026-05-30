@@ -536,34 +536,35 @@ export default function ServicePage() {
                 {/* Unit Selector */}
                 <div className={`${styles.formGroup} ${styles.formGroupFull}`}>
                   <label>Pilih Unit / Mesin Bermasalah *</label>
-                  <select 
+                  <CustomSelect 
                     value={selectedUnitId} 
-                    onChange={(e) => setSelectedUnitId(e.target.value)}
-                    required
-                  >
-                    <option value="">— Cari &amp; Pilih Unit —</option>
-                    {units.map((u) => (
-                      <option key={u.id} value={u.id}>
-                        {u.model_name} (SN: {u.serial_number}) - {u.current_client?.company_name}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(val) => setSelectedUnitId(val)}
+                    options={[
+                      { value: '', label: '— Cari & Pilih Unit —' },
+                      ...units.map((u) => ({
+                        value: u.id,
+                        label: `${u.model_name} (SN: ${u.serial_number}) - ${u.current_client?.company_name}`
+                      }))
+                    ]}
+                    placeholder="— Cari & Pilih Unit —"
+                  />
                 </div>
 
                 {/* Partner Selector */}
                 <div className={`${styles.formGroup} ${styles.formGroupFull}`}>
                   <label>Mitra Regional / Teknisi Penanggungjawab</label>
-                  <select 
+                  <CustomSelect 
                     value={selectedPartnerId} 
-                    onChange={(e) => setSelectedPartnerId(e.target.value)}
-                  >
-                    <option value="">— Gunakan HQ (Manual Routing) —</option>
-                    {partners.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.partner_name} ({p.city})
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(val) => setSelectedPartnerId(val)}
+                    options={[
+                      { value: '', label: '— Gunakan HQ (Manual Routing) —' },
+                      ...partners.map((p) => ({
+                        value: p.id,
+                        label: `${p.partner_name} (${p.city})`
+                      }))
+                    ]}
+                    placeholder="— Gunakan HQ (Manual Routing) —"
+                  />
                 </div>
 
                 {/* Issue Description */}
@@ -605,11 +606,16 @@ export default function ServicePage() {
                 {/* Status */}
                 <div className={styles.formGroup}>
                   <label>Status Awal</label>
-                  <select value={status} onChange={(e) => setStatus(e.target.value)}>
-                    <option value="PENDING">PENDING (Antrean)</option>
-                    <option value="COMPLETED">COMPLETED (Selesai)</option>
-                    <option value="CANCELLED">CANCELLED (Batal)</option>
-                  </select>
+                  <CustomSelect 
+                    value={status} 
+                    onChange={(val) => setStatus(val)}
+                    options={[
+                      { value: 'PENDING', label: 'PENDING (Antrean)' },
+                      { value: 'COMPLETED', label: 'COMPLETED (Selesai)' },
+                      { value: 'CANCELLED', label: 'CANCELLED (Batal)' }
+                    ]}
+                    placeholder="Status Awal"
+                  />
                 </div>
               </div>
             </div>
@@ -752,18 +758,18 @@ export default function ServicePage() {
                     <>
                       <div className={styles.detailItemFull}>
                         <span className={styles.detailLabel}>Mitra Regional Terpilih</span>
-                        <select 
+                        <CustomSelect 
                           value={editPartnerId} 
-                          onChange={(e) => setEditPartnerId(e.target.value)}
-                          style={{ width: '100%', marginTop: '4px', padding: '10px 14px', borderRadius: '10px', border: '1px solid #E2E8F0', fontSize: '0.9rem', color: 'var(--color-deep-navy)', outline: 'none' }}
-                        >
-                          <option value="">HQ (Manual Routing)</option>
-                          {partners.map((p) => (
-                            <option key={p.id} value={p.id}>
-                              {p.partner_name} ({p.city})
-                            </option>
-                          ))}
-                        </select>
+                          onChange={(val) => setEditPartnerId(val)}
+                          options={[
+                            { value: '', label: 'HQ (Manual Routing)' },
+                            ...partners.map((p) => ({
+                              value: p.id,
+                              label: `${p.partner_name} (${p.city})`
+                            }))
+                          ]}
+                          placeholder="Pilih Mitra"
+                        />
                       </div>
                       <div className={styles.detailItem}>
                         <span className={styles.detailLabel}>Nama Teknisi</span>
@@ -786,15 +792,16 @@ export default function ServicePage() {
                       </div>
                       <div className={styles.detailItemFull}>
                         <span className={styles.detailLabel}>Status Servis</span>
-                        <select 
+                        <CustomSelect 
                           value={editStatus} 
-                          onChange={(e) => setEditStatus(e.target.value)}
-                          style={{ width: '100%', marginTop: '4px', padding: '10px 14px', borderRadius: '10px', border: '1px solid #E2E8F0', fontSize: '0.9rem', color: 'var(--color-deep-navy)', outline: 'none' }}
-                        >
-                          <option value="PENDING">PENDING (Antrean)</option>
-                          <option value="COMPLETED">COMPLETED (Selesai)</option>
-                          <option value="CANCELLED">CANCELLED (Batal)</option>
-                        </select>
+                          onChange={(val) => setEditStatus(val)}
+                          options={[
+                            { value: 'PENDING', label: 'PENDING (Antrean)' },
+                            { value: 'COMPLETED', label: 'COMPLETED (Selesai)' },
+                            { value: 'CANCELLED', label: 'CANCELLED (Batal)' }
+                          ]}
+                          placeholder="Pilih Status"
+                        />
                       </div>
                       <div className={styles.detailItemFull}>
                         <span className={styles.detailLabel}>Tindakan / Hasil Servis</span>

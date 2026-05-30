@@ -16,8 +16,8 @@ export class ServiceLogsController {
   constructor(private readonly serviceLogsService: ServiceLogsService) {}
 
   @Get()
-  @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Admin: Get all service logs with pagination' })
+  @Roles(UserRole.ADMIN, UserRole.PARTNER)
+  @ApiOperation({ summary: 'Admin/Partner: Get all service logs with pagination' })
   findAll(
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10,

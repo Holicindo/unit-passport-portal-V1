@@ -795,6 +795,38 @@
   font-size: 0.95rem;
 }
 
+/* History Card Colors for Dark Mode (Default) */
+.historyDate {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.historyTech {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.historyNotes {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #94a3b8;
+}
+
+/* History Card Colors for Light Mode */
+[data-theme="light"] .historyDate {
+  color: #1e293b;
+}
+
+[data-theme="light"] .historyTech {
+  color: #334155;
+}
+
+[data-theme="light"] .historyNotes {
+  color: #475569;
+}
+
 
 /* Modals Overlay & Card - Hyper-Realistic "Real Glass" Glassmorphism */
 .modalOverlay {
@@ -1262,8 +1294,8 @@
   }
 
   .modalForm {
-    padding: 20px 16px 100px;
-    gap: 20px;
+    padding: 16px 16px 100px;
+    gap: 16px;
     flex: 1;
   }
 
@@ -1280,7 +1312,7 @@
 
   /* Labels: normal case, dark navy, with asterisk visible */
   .formGroup label {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: 700;
     text-transform: none;
     letter-spacing: 0;
@@ -1292,10 +1324,10 @@
   .formGroup select,
   .formGroup textarea {
     font-size: 16px; /* prevent iOS zoom */
-    padding: 14px 16px;
+    padding: 12px 14px;
     background: #f8fafc;
     border: 1.5px solid #e2e8f0;
-    border-radius: 12px;
+    border-radius: 10px;
     color: #0f172a;
     box-shadow: none;
   }
@@ -1308,7 +1340,7 @@
   }
 
   .formGroup textarea {
-    height: 110px;
+    height: 90px;
     resize: none;
   }
 

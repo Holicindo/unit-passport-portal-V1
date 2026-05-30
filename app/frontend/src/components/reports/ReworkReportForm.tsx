@@ -3,6 +3,7 @@
 import React from 'react';
 import styles from './CoolingReportForm.module.css';
 import reworkStyles from './ReworkReportForm.module.css';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 
 interface Props {
   data: any;
@@ -230,15 +231,15 @@ export default function ReworkReportForm({ data, onChange }: Props) {
                     />
                   </td>
                   <td>
-                    <select
-                      className={reworkStyles.tableSelect}
+                    <CustomSelect
                       value={row.status || ''}
-                      onChange={(e) => setRow(i, 'status', e.target.value)}
-                    >
-                      <option value="">— Pilih —</option>
-                      <option value="OK">OK</option>
-                      <option value="NG">NG</option>
-                    </select>
+                      onChange={(val) => setRow(i, 'status', val)}
+                      options={[
+                        { value: '', label: '— Pilih —' },
+                        { value: 'OK', label: 'OK' },
+                        { value: 'NG', label: 'NG' }
+                      ]}
+                    />
                   </td>
                   <td>
                     <input

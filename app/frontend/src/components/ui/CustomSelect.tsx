@@ -15,15 +15,20 @@ interface CustomSelectProps {
   options: SelectOption[];
   placeholder?: string;
   className?: string;
+  /** Show search box. Defaults to auto: only shown when options > 5 */
+  showSearch?: boolean;
 }
 
-export function CustomSelect({ value, onChange, options, placeholder = 'Select...', className = '' }: CustomSelectProps) {
+const SEARCH_THRESHOLD = 5;
+
+export function CustomSelect({ value, onChange, options, placeholder = 'Select...', className = '', showSearch }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const selectedOption = options.find(opt => opt.value === value);
+  const searchVisible = showSearch !== undefined ? showSearch : options.length > SEARCH_THRESHOLD;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -35,10 +40,13 @@ export function CustomSelect({ value, onChange, options, placeholder = 'Select..
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps — searchVisible is derived, checked inside body
   useEffect(() => {
     if (isOpen) {
       setSearch('');
-      setTimeout(() => inputRef.current?.focus(), 10);
+      if (searchVisible) {
+        setTimeout(() => inputRef.current?.focus(), 10);
+      }
     }
   }, [isOpen]);
 
@@ -63,18 +71,20 @@ export function CustomSelect({ value, onChange, options, placeholder = 'Select..
 
       {isOpen && (
         <div className={styles.dropdownMenu}>
-          <div className={styles.searchBox}>
-            <Search size={14} className={styles.searchIcon} />
-            <input
-              ref={inputRef}
-              type="text"
-              className={styles.searchInput}
-              placeholder="Search..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              onClick={e => e.stopPropagation()}
-            />
-          </div>
+          {searchVisible && (
+            <div className={styles.searchBox}>
+              <Search size={14} className={styles.searchIcon} />
+              <input
+                ref={inputRef}
+                type="text"
+                className={styles.searchInput}
+                placeholder="Search..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                onClick={e => e.stopPropagation()}
+              />
+            </div>
+          )}
           <div className={styles.optionsList}>
             {filteredOptions.length > 0 ? (
               filteredOptions.map((option) => (
