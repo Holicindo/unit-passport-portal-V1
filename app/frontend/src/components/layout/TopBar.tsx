@@ -131,12 +131,14 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
           </button>
         </div>
 
+        {/* Inbox disabled for phase 1
         <div className={styles.iconContainer}>
           <button className={styles.actionBtn} onClick={() => router.push('/messages')} title="Buka Live Chat (Inbox)">
             <Mail size={20} />
             {unreadMessagesCount > 0 && <span className={styles.badge}>{unreadMessagesCount}</span>}
           </button>
         </div>
+        */}
 
         <div className={styles.iconContainer}>
           <button className={styles.actionBtn} onClick={() => { setBellOpen(!bellOpen); setMailOpen(false); setDropdownOpen(false); }}>

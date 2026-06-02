@@ -7,10 +7,74 @@ import {
   ShieldAlert, Wrench, FileText, CheckCircle2, 
   ExternalLink, Phone, ArrowLeft, Loader2, RefreshCw, 
   Lock, Check, UserCheck, Settings, BookOpen, Clock, Image as ImageIcon,
-  Sun, Moon
+  Sun, Moon, QrCode, HelpCircle
 } from 'lucide-react';
 import { CustomSelect } from '@/components/ui/CustomSelect';
+import DatePicker from '@/components/ui/DatePicker';
 import styles from './id.module.css';
+
+// ─── Top-level reusable components (MUST be outside QrPassportPage) ───────────
+
+// Styled input with glassmorphism look
+const StyledInput = ({
+  value,
+  onChange,
+  placeholder,
+  type = 'text',
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  type?: string;
+}) => {
+  const [focused, setFocused] = useState(false);
+  return (
+    <input
+      type={type}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
+      onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
+      style={{
+        background: 'rgba(255,255,255,0.06)',
+        border: focused ? '1px solid rgba(139,178,255,0.55)' : '1px solid rgba(255,255,255,0.15)',
+        borderRadius: '8px',
+        padding: '10px 14px',
+        color: 'inherit',
+        fontSize: '0.88rem',
+        width: '100%',
+        outline: 'none',
+        fontFamily: 'inherit',
+        transition: 'border-color 0.2s',
+        boxSizing: 'border-box',
+      }}
+    />
+  );
+};
+
+// EditField — standalone, top-level (never recreated on parent re-render)
+export const EditField = ({
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = 'text',
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  type?: string;
+}) => (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '10px' }}>
+    <label style={{ fontSize: '0.8rem', color: 'var(--color-space-grey)', fontWeight: 600 }}>{label}</label>
+    <StyledInput value={value} onChange={onChange} placeholder={placeholder} type={type} />
+  </div>
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 // SVG Blueprint Component for Airflow & Dimensions
 const AirflowDiagram = () => (
@@ -114,6 +178,140 @@ export default function QrPassportPage() {
   // Theme toggle — default light for public scan
   const [isDark, setIsDark] = useState(false);
   const carouselRef = useRef<HTMLDivElement>(null);
+
+  // Edit states for Admin Revisions
+  const [editBlocks, setEditBlocks] = useState({
+    spesifikasi: false,
+    qc: false,
+    manuals: false,
+    ownership: false
+  });
+  const [editData, setEditData] = useState<any>({});
+  const [isSaving, setIsSaving] = useState(false);
+  const [qcUploading, setQcUploading] = useState<Record<string, boolean>>({});
+  const [photoGalleryUploading, setPhotoGalleryUploading] = useState(false);
+
+  // Toast notification state
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  // "Lihat Semua Spesifikasi" modal
+  const [showAllSpecsModal, setShowAllSpecsModal] = useState(false);
+  
+  const toggleEdit = (block: keyof typeof editBlocks) => {
+    if (!editBlocks[block]) {
+      // Entering edit mode — initialise editData with current unit values
+      setEditData((prev: any) => ({
+        ...prev,
+        model_name: unit?.model_name || '',
+        serial_number: unit?.serial_number || '',
+        specs: { ...unit?.specs },
+        current_client: { ...unit?.current_client },
+        diagram_image_url: unit?.diagram_image_url || '',
+        warranty_expiry: unit?.warranty_expiry || '',
+      }));
+    } else {
+      // Saving mode
+      handleSave(block);
+    }
+    setEditBlocks(prev => ({ ...prev, [block]: !prev[block] }));
+  };
+
+  const cancelEdit = (block: keyof typeof editBlocks) => {
+    setEditBlocks(prev => ({ ...prev, [block]: false }));
+  };
+
+  const handleSave = async (block: keyof typeof editBlocks) => {
+    // Check whether anything changed
+    const noChange =
+      editData.model_name === (unit?.model_name || '') &&
+      editData.serial_number === (unit?.serial_number || '') &&
+      editData.warranty_expiry === (unit?.warranty_expiry || '') &&
+      editData.diagram_image_url === (unit?.diagram_image_url || '') &&
+      JSON.stringify(editData.specs) === JSON.stringify(unit?.specs);
+
+    if (noChange) {
+      showToast('Tidak ada perubahan', 'info');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      if (unit && unit.id) {
+        // Build payload with only valid backend fields
+        const payload: any = {};
+        if (editData.model_name !== undefined) payload.model_name = editData.model_name;
+        if (editData.specs !== undefined) payload.specs = editData.specs;
+        if (editData.diagram_image_url !== undefined) payload.diagram_image_url = editData.diagram_image_url;
+        if (editData.warranty_expiry !== undefined) payload.warranty_expiry = editData.warranty_expiry;
+        // current_client is read-only via unit update; skip it to avoid 400 errors
+
+        await unitApi.update(unit.id, payload);
+        showToast('Perubahan berhasil disimpan!', 'success');
+        loadUnitData();
+      }
+    } catch (err: any) {
+      console.error('Failed to save edit', err);
+      const msg = err?.response?.data?.message || err?.message || 'Gagal menyimpan perubahan. Silakan coba lagi.';
+      showToast(msg, 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleEditChange = (fieldPath: string, value: string) => {
+    setEditData((prev: any) => {
+      const parts = fieldPath.split('.');
+      if (parts.length === 1) {
+        return { ...prev, [fieldPath]: value };
+      } else if (parts.length === 2) {
+        return { 
+          ...prev, 
+          [parts[0]]: { ...prev[parts[0]], [parts[1]]: value } 
+        };
+      }
+      return prev;
+    });
+  };
+
+  const handleQcFileUpload = async (fieldKey: string, file: File) => {
+    setQcUploading(prev => ({ ...prev, [fieldKey]: true }));
+    try {
+      const { data } = await unitApi.uploadMedia([file]);
+      const uploadedUrl = data?.urls?.[0] || data?.[0] || '';
+      if (uploadedUrl) {
+        handleEditChange(`specs.${fieldKey}`, uploadedUrl);
+      } else {
+        showToast('Upload berhasil tapi URL tidak ditemukan.', 'info');
+      }
+    } catch (err) {
+      console.error('Upload failed', err);
+      showToast('Gagal mengupload file. Coba lagi.', 'error');
+    } finally {
+      setQcUploading(prev => ({ ...prev, [fieldKey]: false }));
+    }
+  };
+
+  const handlePhotoGalleryUpload = async (files: FileList) => {
+    setPhotoGalleryUploading(true);
+    try {
+      const fileArray = Array.from(files);
+      const { data } = await unitApi.uploadMedia(fileArray);
+      const urls: string[] = data?.urls || data || [];
+      const existing = editData.specs?.photo_gallery
+        ? editData.specs.photo_gallery.split(',').filter(Boolean)
+        : [];
+      const merged = [...existing, ...urls].join(',');
+      handleEditChange('specs.photo_gallery', merged);
+    } catch (err) {
+      showToast('Gagal mengupload foto. Coba lagi.', 'error');
+    } finally {
+      setPhotoGalleryUploading(false);
+    }
+  };
 
   // Load user from localStorage (safe parse)
   useEffect(() => {
@@ -240,7 +438,7 @@ export default function QrPassportPage() {
       }
     } catch (err: any) {
       console.error(err);
-      alert('Gagal mengirim permintaan servis.');
+      showToast('Gagal mengirim permintaan servis.', 'error');
     } finally {
       setRoutingLoading(false);
     }
@@ -269,7 +467,7 @@ export default function QrPassportPage() {
       });
       
       if (res.ok) {
-        alert('Log servis berhasil ditambahkan! Tiket berhasil diselesaikan.');
+        showToast('Log servis berhasil ditambahkan! Tiket berhasil diselesaikan.', 'success');
         setShowLogModal(false);
         setTechName('');
         setLogNotes('');
@@ -277,11 +475,11 @@ export default function QrPassportPage() {
         setLogStatus('COMPLETED');
         loadUnitData();
       } else {
-        alert('Gagal menyimpan log servis.');
+        showToast('Gagal menyimpan log servis.', 'error');
       }
     } catch (err) {
       console.error(err);
-      alert('Gagal menghubungi server.');
+      showToast('Gagal menghubungi server.', 'error');
     } finally {
       setLogLoading(false);
     }
@@ -290,7 +488,7 @@ export default function QrPassportPage() {
   // Admin Transfer submit handler
   const handleTransfer = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!targetClientId) return alert('Pilih klien tujuan terlebih dahulu!');
+    if (!targetClientId) { showToast('Pilih klien tujuan terlebih dahulu!', 'info'); return; }
     setTransferLoading(true);
     try {
       const storedToken = localStorage.getItem('token');
@@ -308,16 +506,16 @@ export default function QrPassportPage() {
       });
 
       if (res.ok) {
-        alert('Kepemilikan unit berhasil dipindahkan!');
+        showToast('Kepemilikan unit berhasil dipindahkan!', 'success');
         setShowTransferModal(false);
         setTransferReason('');
         loadUnitData();
       } else {
-        alert('Gagal melakukan transfer kepemilikan.');
+        showToast('Gagal melakukan transfer kepemilikan.', 'error');
       }
     } catch (err) {
       console.error(err);
-      alert('Gagal menghubungi server.');
+      showToast('Gagal menghubungi server.', 'error');
     } finally {
       setTransferLoading(false);
     }
@@ -364,6 +562,57 @@ export default function QrPassportPage() {
 
   return (
     <div className={styles.pageWrapper} data-theme={isDark ? 'dark' : 'light'}>
+      {/* ── Toast Notification ── */}
+      {toast && (
+        <div
+          role="alert"
+          aria-live="polite"
+          style={{
+            position: 'fixed',
+            top: '20px',
+            right: '20px',
+            zIndex: 9999,
+            padding: '12px 20px',
+            borderRadius: '10px',
+            fontSize: '0.88rem',
+            fontWeight: 600,
+            maxWidth: '340px',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            color: '#fff',
+            background:
+              toast.type === 'success'
+                ? 'linear-gradient(135deg, #059669, #047857)'
+                : toast.type === 'error'
+                ? 'linear-gradient(135deg, #dc2626, #b91c1c)'
+                : 'linear-gradient(135deg, #2563eb, #1d4ed8)',
+            animation: 'slideIn 0.25s ease',
+          }}
+        >
+          <span style={{ fontSize: '1.1rem' }}>
+            {toast.type === 'success' ? '✓' : toast.type === 'error' ? '✕' : 'ℹ'}
+          </span>
+          {toast.message}
+          <button
+            onClick={() => setToast(null)}
+            aria-label="Tutup notifikasi"
+            style={{
+              marginLeft: 'auto',
+              background: 'none',
+              border: 'none',
+              color: 'rgba(255,255,255,0.8)',
+              cursor: 'pointer',
+              fontSize: '1rem',
+              lineHeight: 1,
+              padding: 0,
+            }}
+          >
+            ×
+          </button>
+        </div>
+      )}
       {/* Background decorations */}
       <div className={styles.dotGrid} aria-hidden="true" />
       <div className={styles.dotGridRight} aria-hidden="true" />
@@ -390,29 +639,67 @@ export default function QrPassportPage() {
               {isPartner && 'LEVEL 3: TECHNICAL PARTNER'}
               {isAdmin && 'LEVEL 4: ADMINISTRATOR'}
             </div>
-            {/* Theme toggle — right-aligned, below level badge */}
-            <button
-              onClick={() => setIsDark(v => !v)}
-              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: '5px',
-                background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,31,63,0.08)',
-                border: isDark ? '1px solid rgba(255,255,255,0.18)' : '1px solid rgba(0,31,63,0.15)',
-                borderRadius: '20px',
-                padding: '4px 10px',
-                cursor: 'pointer',
-                color: isDark ? '#e2e8f0' : '#001F3F',
-                fontSize: '0.7rem',
-                fontWeight: 700,
-                fontFamily: 'var(--font-heading)',
-                letterSpacing: '0.04em',
-                transition: 'all 0.2s ease',
-                alignSelf: 'flex-end',
-              }}
-            >
-              {isDark ? <Sun size={12} /> : <Moon size={12} />}
-              {isDark ? 'Light' : 'Dark'}
-            </button>
+            {/* Action buttons — right-aligned, below level badge */}
+            <div style={{ display: 'flex', gap: '8px', alignSelf: 'flex-end', marginTop: '4px' }}>
+              {isAdmin && (
+                <button
+                  onClick={() => {
+                    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(window.location.origin + '/id/' + token)}`;
+                    const printWindow = window.open('', '_blank');
+                    if (printWindow) {
+                      printWindow.document.write(`
+                        <html>
+                          <head>
+                            <title>Print QR Code - ${unit.serial_number}</title>
+                            <style>
+                              @page { margin: 0; size: auto; }
+                              html, body { margin: 0; padding: 0; width: 100%; height: 100vh; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif; }
+                            </style>
+                          </head>
+                          <body>
+                            <h2 style="margin-bottom:20px; font-size:2rem;">${unit.serial_number}</h2>
+                            <img src="${qrApiUrl}" alt="QR Code" style="width:400px;height:400px;" onload="window.print();window.close();" />
+                            <p style="margin-top:20px;color:#666; font-size:1.2rem;">${unit.model_name}</p>
+                          </body>
+                        </html>
+                      `);
+                      printWindow.document.close();
+                    }
+                  }}
+                  aria-label="Print QR"
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '5px',
+                    background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)',
+                    borderRadius: '20px', padding: '4px 10px', cursor: 'pointer',
+                    color: '#3b82f6', fontSize: '0.7rem', fontWeight: 700,
+                    fontFamily: 'var(--font-heading)'
+                  }}
+                >
+                  <QrCode size={12} /> QR
+                </button>
+              )}
+              <button
+                onClick={() => setIsDark(v => !v)}
+                aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '5px',
+                  background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,31,63,0.08)',
+                  border: isDark ? '1px solid rgba(255,255,255,0.18)' : '1px solid rgba(0,31,63,0.15)',
+                  borderRadius: '20px',
+                  padding: '4px 10px',
+                  cursor: 'pointer',
+                  color: isDark ? '#e2e8f0' : '#001F3F',
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  fontFamily: 'var(--font-heading)',
+                  letterSpacing: '0.04em',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                {isDark ? <Sun size={12} /> : <Moon size={12} />}
+                {isDark ? 'Light' : 'Dark'}
+              </button>
+            </div>
             <div className={styles.lastUpdated}>
               <Clock size={12} /> Terakhir diperbarui: {new Date(unit.updated_at || Date.now()).toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' })} WIB
             </div>
@@ -431,63 +718,137 @@ export default function QrPassportPage() {
                 <FileText size={16} color="#8bb2ff" />
                 <h2>Spesifikasi Utama</h2>
               </div>
+              {isAdmin && (
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {editBlocks.spesifikasi && (
+                    <button
+                      className={styles.btnRevise}
+                      onClick={() => cancelEdit('spesifikasi')}
+                      style={{ background: '#64748b' }}
+                    >
+                      Cancel
+                    </button>
+                  )}
+                  <button 
+                    className={styles.btnRevise} 
+                    onClick={() => toggleEdit('spesifikasi')}
+                    style={editBlocks.spesifikasi ? { background: '#10b981' } : {}}
+                  >
+                    {editBlocks.spesifikasi ? (isSaving ? 'Saving…' : 'Save') : 'Revise'}
+                  </button>
+                </div>
+              )}
             </div>
             <div className={styles.cardContent}>
-              <div className={styles.specItem}>
-                <span className={styles.specLabel}>Model</span>
-                <span className={styles.specValue}>{unit.model_name}</span>
-              </div>
-              <div className={styles.specItem}>
-                <span className={styles.specLabel}>Serial Number</span>
-                <span className={styles.specValue}>{unit.serial_number}</span>
-              </div>
-              
-              {unit.specs?.type === 'MESIN' || (!unit.specs?.type && unit.specs?.dimension) ? (
-                <>
-                  <div className={styles.specItem}>
-                    <span className={styles.specLabel}>Dimensi / Dimension</span>
-                    <span className={styles.specValue}>{unit.specs?.dimension || '—'}</span>
+              {editBlocks.spesifikasi ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <EditField label="Model" value={editData.model_name || ''} onChange={(v) => handleEditChange('model_name', v)} />
+                  <EditField label="Serial Number" value={editData.serial_number || ''} onChange={(v) => handleEditChange('serial_number', v)} />
+
+                  {/* Tipe / Type dropdown */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '10px' }}>
+                    <label style={{ fontSize: '0.8rem', color: 'var(--color-space-grey)', fontWeight: 600 }}>Tipe / Type</label>
+                    <CustomSelect
+                      value={editData.specs?.type || ''}
+                      onChange={(v) => handleEditChange('specs.type', v)}
+                      options={[
+                        { value: '', label: '— Pilih Tipe Unit —' },
+                        { value: 'SHOWCASE', label: 'Showcase' },
+                        { value: 'MESIN', label: 'Mesin' },
+                      ]}
+                      placeholder="— Pilih Tipe Unit —"
+                    />
                   </div>
-                  <div className={styles.specItem}>
-                    <span className={styles.specLabel}>Daya Listrik / Power</span>
-                    <span className={styles.specValue}>{unit.specs?.power || '—'}</span>
+
+                  {/* Dynamic fields based on type */}
+                  {(editData.specs?.type === 'MESIN') ? (
+                    <>
+                      <EditField label="Dimensi / Dimension" value={editData.specs?.dimension || ''} onChange={(v) => handleEditChange('specs.dimension', v)} placeholder="Contoh: 60x70x185 cm" />
+                      <EditField label="Daya / Power (Watt)" value={editData.specs?.power || editData.specs?.wattage || ''} onChange={(v) => { handleEditChange('specs.power', v); handleEditChange('specs.wattage', v); }} placeholder="Contoh: 450W" />
+                      <EditField label="Kapasitas / Capacity" value={editData.specs?.capacity || ''} onChange={(v) => handleEditChange('specs.capacity', v)} placeholder="Contoh: 500L" />
+                      <EditField label="Kompresor / Compressor" value={editData.specs?.compressor || ''} onChange={(v) => handleEditChange('specs.compressor', v)} placeholder="Contoh: 1 HP" />
+                      <EditField label="Refrigerant" value={editData.specs?.refrigerant || ''} onChange={(v) => handleEditChange('specs.refrigerant', v)} placeholder="Contoh: R290" />
+                    </>
+                  ) : (
+                    <>
+                      <EditField label="Kompresor / Compressor" value={editData.specs?.compressor || ''} onChange={(v) => handleEditChange('specs.compressor', v)} placeholder="Contoh: 1 HP" />
+                      <EditField label="Refrigerant" value={editData.specs?.refrigerant || ''} onChange={(v) => handleEditChange('specs.refrigerant', v)} placeholder="Contoh: R290" />
+                      <EditField label="Daya / Wattage" value={editData.specs?.wattage || editData.specs?.power || ''} onChange={(v) => { handleEditChange('specs.wattage', v); handleEditChange('specs.power', v); }} placeholder="Contoh: 450W" />
+                      <EditField label="Dimensi / Dimension" value={editData.specs?.dimension || ''} onChange={(v) => handleEditChange('specs.dimension', v)} placeholder="Contoh: 60x70x185 cm" />
+                      <EditField label="Kapasitas / Capacity" value={editData.specs?.capacity || ''} onChange={(v) => handleEditChange('specs.capacity', v)} placeholder="Contoh: 500L" />
+                    </>
+                  )}
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '10px' }}>
+                    <DatePicker
+                      label="Garansi Berakhir (Warranty Expiry)"
+                      value={editData.warranty_expiry ? editData.warranty_expiry.slice(0, 10) : ''}
+                      onChange={(v) => handleEditChange('warranty_expiry', v)}
+                      theme="dark"
+                    />
                   </div>
-                  <div className={styles.specItem}>
-                    <span className={styles.specLabel}>Kapasitas / Capacity</span>
-                    <span className={styles.specValue}>{unit.specs?.capacity || '—'}</span>
-                  </div>
-                </>
+                </div>
               ) : (
                 <>
                   <div className={styles.specItem}>
-                    <span className={styles.specLabel}>Kompresor / Compressor</span>
-                    <span className={styles.specValue}>{unit.specs?.compressor || '—'}</span>
+                    <span className={styles.specLabel}>Model</span>
+                    <span className={styles.specValue}>{unit.model_name}</span>
                   </div>
                   <div className={styles.specItem}>
-                    <span className={styles.specLabel}>Refrigeran / Refrigerant</span>
-                    <span className={styles.specValue}>{unit.specs?.refrigerant || '—'}</span>
+                    <span className={styles.specLabel}>Serial Number</span>
+                    <span className={styles.specValue}>{unit.serial_number}</span>
                   </div>
+                  
+                  {unit.specs?.type === 'MESIN' || (!unit.specs?.type && unit.specs?.dimension) ? (
+                    <>
+                      <div className={styles.specItem}>
+                        <span className={styles.specLabel}>Dimensi / Dimension</span>
+                        <span className={styles.specValue}>{unit.specs?.dimension || '—'}</span>
+                      </div>
+                      <div className={styles.specItem}>
+                        <span className={styles.specLabel}>Daya Listrik / Power</span>
+                        <span className={styles.specValue}>{unit.specs?.power || '—'}</span>
+                      </div>
+                      <div className={styles.specItem}>
+                        <span className={styles.specLabel}>Kapasitas / Capacity</span>
+                        <span className={styles.specValue}>{unit.specs?.capacity || '—'}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className={styles.specItem}>
+                        <span className={styles.specLabel}>Kompresor / Compressor</span>
+                        <span className={styles.specValue}>{unit.specs?.compressor || '—'}</span>
+                      </div>
+                      <div className={styles.specItem}>
+                        <span className={styles.specLabel}>Refrigeran / Refrigerant</span>
+                        <span className={styles.specValue}>{unit.specs?.refrigerant || '—'}</span>
+                      </div>
+                      <div className={styles.specItem}>
+                        <span className={styles.specLabel}>Daya / Wattage</span>
+                        <span className={styles.specValue}>{unit.specs?.wattage || '—'}</span>
+                      </div>
+                    </>
+                  )}
+                  
                   <div className={styles.specItem}>
-                    <span className={styles.specLabel}>Daya / Wattage</span>
-                    <span className={styles.specValue}>{unit.specs?.wattage || '—'}</span>
+                    <span className={styles.specLabel}>Dibuat Pada</span>
+                    <span className={styles.specValue}>
+                      {unit.created_at ? new Date(unit.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }) : '—'}
+                    </span>
+                  </div>
+                  <div className={styles.specItem} style={{ borderBottom: 'none' }}>
+                    <span className={styles.specLabel}>Lokasi Pembuatan</span>
+                    <span className={styles.specValue}>Tangerang, Indonesia</span>
                   </div>
                 </>
               )}
               
-              <div className={styles.specItem}>
-                <span className={styles.specLabel}>Dibuat Pada</span>
-                <span className={styles.specValue}>
-                  {unit.created_at ? new Date(unit.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }) : '—'}
-                </span>
-              </div>
-              <div className={styles.specItem} style={{ borderBottom: 'none' }}>
-                <span className={styles.specLabel}>Lokasi Pembuatan</span>
-                <span className={styles.specValue}>Tangerang, Indonesia</span>
-              </div>
-              
-              <button className={styles.btnViewAll}>
-                Lihat Semua Spesifikasi <span>›</span>
-              </button>
+              {!editBlocks.spesifikasi && (
+                <button className={styles.btnViewAll} onClick={() => setShowAllSpecsModal(true)}>
+                  Lihat Semua Spesifikasi <span>›</span>
+                </button>
+              )}
             </div>
           </section>
 
@@ -708,74 +1069,585 @@ export default function QrPassportPage() {
           </div>
           </section>
 
-          {/* Slide 4: Media - Foto Test Run */}
+          {/* Slide 4: QC Reports */}
           <section className={`${styles.card} ${styles.carouselSlide}`}>
             <div className={styles.cardHeader}>
               <div className={styles.cardHeaderLeft}>
-                <ImageIcon size={16} color="#8bb2ff" />
-                <h2>Foto Test Run &amp; QC</h2>
+                <FileText size={16} color="#8bb2ff" />
+                <h2>QC Reports</h2>
               </div>
-            </div>
-            <div className={styles.mediaSingleItem}>
-              <div className={styles.mediaItem} style={{ border: 'none', boxShadow: 'none', borderRadius: '0 0 12px 12px' }}>
-            <div className={styles.mediaImageWrapper}>
-              <img 
-                src={unit.test_run_image_url || '/test_run.png?v=2'} 
-                alt="Test Run QC" 
-                className={styles.mediaImage}
-                style={{ cursor: 'pointer', objectPosition: 'center 40%' }}
-                onClick={() => setSelectedMedia(unit.test_run_image_url || '/test_run.png?v=2')}
-              />
-              <div className={styles.mediaOverlay}>
-                <span className={styles.verifiedBadge}><CheckCircle2 size={14} /> Terverifikasi</span>
-              </div>
-            </div>
-            <div className={styles.mediaContent}>
-              <h3>Foto Test Run &amp; Quality Control</h3>
-              <p>Dokumentasi pengujian performa kompresor dan suhu ruang sebelum unit didistribusikan ke klien.</p>
-              <button className={styles.btnViewAll} style={{ width: 'fit-content', padding: '8px 16px', marginTop: '16px' }} onClick={() => setSelectedMedia(unit.test_run_image_url || '/test_run.png?v=2')}>
-                Lihat Foto <ImageIcon size={14} style={{marginLeft: '8px'}}/>
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-          {/* Slide 5: Media - Diagram Sirkulasi */}
-          <section className={`${styles.card} ${styles.carouselSlide}`}>
-            <div className={styles.cardHeader}>
-              <div className={styles.cardHeaderLeft}>
-                <ImageIcon size={16} color="#8bb2ff" />
-                <h2>Diagram Sirkulasi Udara</h2>
-              </div>
-            </div>
-            <div className={styles.mediaSingleItem}>
-              <div className={styles.mediaItem} style={{ border: 'none', boxShadow: 'none', borderRadius: '0 0 12px 12px' }}>
-            <div className={styles.mediaImageWrapper} style={{ cursor: 'pointer' }} onClick={() => setSelectedMedia(unit.diagram_image_url || 'diagram')}>
-              {unit.diagram_image_url ? (
-                <img 
-                  src={unit.diagram_image_url} 
-                  alt="Diagram" 
-                  className={styles.mediaImage}
-                  style={{ objectFit: 'cover' }}
-                />
-              ) : (
-                <AirflowDiagram />
+              {isAdmin && (
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {editBlocks.qc && (
+                    <button className={styles.btnRevise} onClick={() => cancelEdit('qc')} style={{ background: '#64748b' }}>Cancel</button>
+                  )}
+                  <button 
+                    className={styles.btnRevise} 
+                    onClick={() => toggleEdit('qc')}
+                    style={editBlocks.qc ? { background: '#10b981' } : {}}
+                  >
+                    {editBlocks.qc ? (isSaving ? 'Saving…' : 'Save') : 'Revise'}
+                  </button>
+                </div>
               )}
-              <div className={styles.mediaOverlay}>
-                <span className={styles.verifiedBadge}><CheckCircle2 size={14} /> Cetak Biru Digital</span>
+            </div>
+            <div className={styles.mediaSingleItem} style={{ padding: '16px' }}>
+              {editBlocks.qc ? (
+                /* ── EDIT MODE ── */
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+                  {/* Section A: File uploads */}
+                  <div>
+                    <p style={{ fontSize: '0.72rem', fontWeight: 700, color: '#8f9bb3', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '10px' }}>
+                      Dokumen Laporan
+                    </p>
+                    <p style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '12px', lineHeight: 1.5 }}>
+                      Laporan Test Run, Sistem Pendingin, dan Inspeksi dibuat melalui modul laporan. ITR adalah attachment email dari Jakarta yang di-upload oleh tim Bandung.
+                    </p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {/* Test Run Results — link ke history filter INSPECTION */}
+                      <div>
+                        <p style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-space-grey)', marginBottom: '4px' }}>
+                          Laporan Test Run
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => router.push(`/reports/inspection?unit=${unit?.id || ''}`)}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: '8px',
+                            background: 'rgba(46,91,255,0.1)', border: '1px solid rgba(46,91,255,0.3)',
+                            borderRadius: '8px', padding: '10px 14px', cursor: 'pointer',
+                            color: '#8bb2ff', fontSize: '0.82rem', fontFamily: 'inherit', width: '100%',
+                          }}
+                        >
+                          <FileText size={15} />
+                          Buka Form Inspection Report (QC)
+                          <ExternalLink size={13} style={{ marginLeft: 'auto', flexShrink: 0 }} />
+                        </button>
+                      </div>
+
+                      {/* Cooling System Report — link ke halaman pilih tipe cooling */}
+                      <div>
+                        <p style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-space-grey)', marginBottom: '4px' }}>
+                          Laporan Sistem Pendingin
+                        </p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          {[
+                            { label: 'Cooling System Report 1 Suhu', path: '/reports/cooling' },
+                            { label: 'Cooling System Report 2 Suhu', path: '/reports/cooling2' },
+                            { label: 'Cooling System Report 3 Suhu', path: '/reports/cooling3' },
+                            { label: 'Cooling System Report Warm', path: '/reports/reportwarm' },
+                          ].map(({ label, path }) => (
+                            <button
+                              key={path}
+                              type="button"
+                              onClick={() => router.push(`${path}?unit=${unit?.id || ''}`)}
+                              style={{
+                                display: 'flex', alignItems: 'center', gap: '8px',
+                                background: 'rgba(46,91,255,0.1)', border: '1px solid rgba(46,91,255,0.3)',
+                                borderRadius: '8px', padding: '10px 14px', cursor: 'pointer',
+                                color: '#8bb2ff', fontSize: '0.82rem', fontFamily: 'inherit', width: '100%',
+                              }}
+                            >
+                              <FileText size={15} />
+                              {label}
+                              <ExternalLink size={13} style={{ marginLeft: 'auto', flexShrink: 0 }} />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Inspection Report — link ke issue-analysis */}
+                      <div>
+                        <p style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-space-grey)', marginBottom: '4px' }}>
+                          Laporan Inspeksi
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => router.push(`/reports/issue-analysis?unit=${unit?.id || ''}`)}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: '8px',
+                            background: 'rgba(46,91,255,0.1)', border: '1px solid rgba(46,91,255,0.3)',
+                            borderRadius: '8px', padding: '10px 14px', cursor: 'pointer',
+                            color: '#8bb2ff', fontSize: '0.82rem', fontFamily: 'inherit', width: '100%',
+                          }}
+                        >
+                          <FileText size={15} />
+                          Buka Form Inspeksi & Analisis Masalah
+                          <ExternalLink size={13} style={{ marginLeft: 'auto', flexShrink: 0 }} />
+                        </button>
+                      </div>
+
+                      {/* ITR — tetap upload file */}
+                      {[{ label: 'ITR — Inventory Transfer Request', key: 'itr_url' }].map(({ label, key }) => (
+                        <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <label style={{ fontSize: '0.8rem', color: 'var(--color-space-grey)', fontWeight: 600 }}>{label}</label>
+                          {editData.specs?.[key] ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', color: '#10b981' }}>
+                              <CheckCircle2 size={14} /> File terupload
+                              <button
+                                type="button"
+                                onClick={() => handleEditChange(`specs.${key}`, '')}
+                                style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.75rem' }}
+                              >
+                                Hapus
+                              </button>
+                            </div>
+                          ) : (
+                            <label style={{
+                              display: 'flex', alignItems: 'center', gap: '8px',
+                              border: '1px dashed rgba(255,255,255,0.2)', borderRadius: '8px',
+                              padding: '10px 14px', cursor: 'pointer',
+                              color: '#8f9bb3', fontSize: '0.82rem',
+                              background: 'rgba(255,255,255,0.02)',
+                              opacity: qcUploading[key] ? 0.6 : 1,
+                            }}>
+                              <ImageIcon size={16} />
+                              {qcUploading[key] ? 'Mengupload...' : 'Klik untuk upload file (PDF/JPG/PNG)'}
+                              <input
+                                type="file"
+                                accept=".pdf,.jpg,.jpeg,.png"
+                                style={{ display: 'none' }}
+                                disabled={qcUploading[key]}
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) handleQcFileUpload(key, file);
+                                }}
+                              />
+                            </label>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Divider */}
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }} />
+
+                  {/* Section B: Glass Dimension */}
+                  <div>
+                    <p style={{ fontSize: '0.72rem', fontWeight: 700, color: '#8f9bb3', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '10px' }}>
+                      Dimensi Kaca
+                    </p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <EditField label="Lebar (cm)" value={editData.specs?.glass_width || ''} onChange={(v) => handleEditChange('specs.glass_width', v)} placeholder="contoh: 120" />
+                      <EditField label="Tinggi (cm)" value={editData.specs?.glass_height || ''} onChange={(v) => handleEditChange('specs.glass_height', v)} placeholder="contoh: 200" />
+                      <EditField label="Ketebalan (mm)" value={editData.specs?.glass_thickness || ''} onChange={(v) => handleEditChange('specs.glass_thickness', v)} placeholder="contoh: 6" />
+                    </div>
+                  </div>
+
+                  {/* Divider */}
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }} />
+
+                  {/* Section C: Production PIC */}
+                  <div>
+                    <p style={{ fontSize: '0.72rem', fontWeight: 700, color: '#8f9bb3', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '10px' }}>
+                      PIC Produksi
+                    </p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <EditField label="Nama PIC" value={editData.specs?.pic_name || ''} onChange={(v) => handleEditChange('specs.pic_name', v)} placeholder="contoh: Budi Santoso" />
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <DatePicker
+                          label="Tanggal"
+                          value={editData.specs?.pic_date || ''}
+                          onChange={(v) => handleEditChange('specs.pic_date', v)}
+                          theme="dark"
+                        />
+                      </div>
+                      <EditField label="Catatan" value={editData.specs?.pic_notes || ''} onChange={(v) => handleEditChange('specs.pic_notes', v)} placeholder="catatan tambahan..." />
+                    </div>
+                  </div>
+
+                  {/* Divider */}
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }} />
+
+                  {/* Section D: Photo Gallery */}
+                  <div>
+                    <p style={{ fontSize: '0.72rem', fontWeight: 700, color: '#8f9bb3', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '10px' }}>
+                      Galeri Foto
+                    </p>
+                    {/* Existing thumbnails */}
+                    {editData.specs?.photo_gallery && (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', marginBottom: '10px' }}>
+                        {editData.specs.photo_gallery.split(',').filter(Boolean).map((url: string, idx: number) => (
+                          <div key={idx} style={{ position: 'relative' }}>
+                            <img
+                              src={url}
+                              alt={`Foto ${idx + 1}`}
+                              style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: '6px', display: 'block' }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const current = editData.specs.photo_gallery.split(',').filter(Boolean);
+                                current.splice(idx, 1);
+                                handleEditChange('specs.photo_gallery', current.join(','));
+                              }}
+                              style={{
+                                position: 'absolute', top: '3px', right: '3px',
+                                background: 'rgba(239,68,68,0.85)', border: 'none',
+                                borderRadius: '50%', width: '18px', height: '18px',
+                                cursor: 'pointer', color: '#fff', fontSize: '10px',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1,
+                              }}
+                              aria-label="Hapus foto"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {/* Upload trigger */}
+                    <label style={{
+                      display: 'flex', alignItems: 'center', gap: '8px',
+                      border: '1px dashed rgba(255,255,255,0.2)', borderRadius: '8px',
+                      padding: '10px 14px', cursor: 'pointer',
+                      color: '#8f9bb3', fontSize: '0.82rem',
+                      background: 'rgba(255,255,255,0.02)',
+                      opacity: photoGalleryUploading ? 0.6 : 1,
+                    }}>
+                      <ImageIcon size={16} />
+                      {photoGalleryUploading ? 'Mengupload...' : 'Klik untuk upload foto (bisa pilih banyak)'}
+                      <input
+                        type="file"
+                        accept=".jpg,.jpeg,.png,.webp"
+                        multiple
+                        style={{ display: 'none' }}
+                        disabled={photoGalleryUploading}
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files.length > 0) {
+                            handlePhotoGalleryUpload(e.target.files);
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+
+                </div>
+              ) : (
+                /* ── VIEW MODE ── */
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+
+                  {/* File-based items */}
+                  {[
+                    { label: 'Test Run Results', urlKey: 'test_run_url', desc: null, routePath: '/reports/inspection' },
+                    { label: 'Cooling System Report', urlKey: 'cooling_report_url', desc: null, routePath: '/reports/cooling' },
+                    { label: 'Inspection Report', urlKey: 'inspection_url', desc: null, routePath: '/reports/issue-analysis' },
+                    { label: 'ITR', urlKey: 'itr_url', desc: 'Inventory Transfer Request — surat pesanan produksi dari Jakarta. Di-upload oleh tim Bandung setelah menerima attachment email.', routePath: null },
+                  ].map(({ label, urlKey, desc, routePath }) => {
+                    const url = unit?.specs?.[urlKey];
+                    // For report-linked items: always clickable (go to form), show history count if has data
+                    // For ITR: only clickable if URL exists
+                    const isReportLink = routePath !== null;
+                    const isClickable = isReportLink ? true : !!url;
+                    const unitParam = unit?.id ? `?unit=${unit.id}` : '';
+
+                    return (
+                      <button
+                        key={urlKey}
+                        type="button"
+                        onClick={() => {
+                          if (isReportLink) {
+                            router.push(`${routePath}${unitParam}`);
+                          } else if (url) {
+                            window.open(url, '_blank');
+                          }
+                        }}
+                        disabled={!isClickable}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '12px',
+                          padding: '12px 16px',
+                          background: isClickable
+                            ? 'linear-gradient(135deg, #2E5BFF 0%, #1a3fd4 100%)'
+                            : 'rgba(255,255,255,0.05)',
+                          borderRadius: '10px',
+                          cursor: isClickable ? 'pointer' : 'not-allowed',
+                          border: isClickable ? 'none' : '1px solid rgba(255,255,255,0.08)',
+                          width: '100%',
+                          textAlign: 'left',
+                          color: isClickable ? '#ffffff' : '#64748b',
+                          fontFamily: 'inherit',
+                          fontWeight: isClickable ? 700 : 500,
+                          fontSize: '0.88rem',
+                          transition: 'opacity 0.15s, transform 0.15s',
+                          opacity: isClickable ? 1 : 0.6,
+                          position: 'relative',
+                          boxShadow: isClickable ? '0 4px 12px rgba(46,91,255,0.3)' : 'none',
+                        }}
+                        onMouseEnter={e => { if (isClickable) { (e.currentTarget as HTMLButtonElement).style.opacity = '0.88'; (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)'; } }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '1'; (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'; }}
+                      >
+                        <FileText size={16} color={isClickable ? '#ffffff' : '#64748b'} style={{ flexShrink: 0 }} />
+                        <span style={{ flex: 1 }}>{label}</span>
+                        {/* Tooltip for ITR */}
+                        {desc && (
+                          <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}
+                            onMouseEnter={e => {
+                              e.stopPropagation();
+                              const tip = (e.currentTarget as HTMLElement).querySelector('.itr-tip') as HTMLElement;
+                              if (tip) tip.style.display = 'block';
+                            }}
+                            onMouseLeave={e => {
+                              const tip = (e.currentTarget as HTMLElement).querySelector('.itr-tip') as HTMLElement;
+                              if (tip) tip.style.display = 'none';
+                            }}
+                          >
+                            <HelpCircle size={14} color={isClickable ? 'rgba(255,255,255,0.7)' : '#64748b'} style={{ cursor: 'help' }} />
+                            <span className="itr-tip" style={{
+                              display: 'none',
+                              position: 'absolute',
+                              bottom: 'calc(100% + 8px)',
+                              right: 0,
+                              width: '240px',
+                              background: '#1e293b',
+                              color: '#e2e8f0',
+                              fontSize: '0.72rem',
+                              lineHeight: 1.5,
+                              padding: '8px 10px',
+                              borderRadius: '8px',
+                              boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+                              zIndex: 9999,
+                              pointerEvents: 'none',
+                              textAlign: 'left',
+                              fontWeight: 400,
+                              border: '1px solid rgba(255,255,255,0.1)',
+                            }}>
+                              {desc}
+                            </span>
+                          </span>
+                        )}
+                        {/* Report link items: always show arrow */}
+                        {isReportLink && (
+                          <ExternalLink size={15} color="rgba(255,255,255,0.8)" style={{ flexShrink: 0 }} />
+                        )}
+                        {/* ITR: show status */}
+                        {!isReportLink && url && <ExternalLink size={15} color="rgba(255,255,255,0.8)" style={{ flexShrink: 0 }} />}
+                        {!isReportLink && !url && <span style={{ fontSize: '0.72rem', flexShrink: 0 }}>Belum ada</span>}
+                      </button>
+                    );
+                  })}
+
+                  {/* Divider */}
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', margin: '4px 0' }} />
+
+                  {/* Glass Dimension */}
+                  {(() => {
+                    const gw = unit?.specs?.glass_width;
+                    const gh = unit?.specs?.glass_height;
+                    const gt = unit?.specs?.glass_thickness;
+                    const hasData = gw || gh || gt;
+                    return (
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: hasData ? '8px 8px 0 0' : '8px' }}>
+                          <FileText size={15} color="#8bb2ff" style={{ flexShrink: 0 }} />
+                          <span style={{ flex: 1, fontSize: '0.85rem' }}>Glass Dimension</span>
+                          {hasData ? (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(16,185,129,0.12)', color: '#10b981', borderRadius: '20px', padding: '2px 8px', fontSize: '0.72rem', fontWeight: 700 }}>
+                              <Check size={11} /> Ada
+                            </span>
+                          ) : (
+                            <span style={{ background: 'rgba(255,255,255,0.06)', color: '#64748b', borderRadius: '20px', padding: '2px 8px', fontSize: '0.72rem', fontWeight: 600 }}>
+                              Belum ada data
+                            </span>
+                          )}
+                        </div>
+                        {hasData && (
+                          <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '0 0 8px 8px', padding: '8px 12px', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                            {gw && <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Lebar: <strong style={{ color: '#e2e8f0' }}>{gw} cm</strong></span>}
+                            {gh && <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Tinggi: <strong style={{ color: '#e2e8f0' }}>{gh} cm</strong></span>}
+                            {gt && <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Tebal: <strong style={{ color: '#e2e8f0' }}>{gt} mm</strong></span>}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                  {/* Production PIC */}
+                  {(() => {
+                    const pn = unit?.specs?.pic_name;
+                    const pd = unit?.specs?.pic_date;
+                    const pnt = unit?.specs?.pic_notes;
+                    const hasData = pn || pd || pnt;
+                    return (
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: hasData ? '8px 8px 0 0' : '8px' }}>
+                          <FileText size={15} color="#8bb2ff" style={{ flexShrink: 0 }} />
+                          <span style={{ flex: 1, fontSize: '0.85rem' }}>Production PIC</span>
+                          {hasData ? (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(16,185,129,0.12)', color: '#10b981', borderRadius: '20px', padding: '2px 8px', fontSize: '0.72rem', fontWeight: 700 }}>
+                              <Check size={11} /> Ada
+                            </span>
+                          ) : (
+                            <span style={{ background: 'rgba(255,255,255,0.06)', color: '#64748b', borderRadius: '20px', padding: '2px 8px', fontSize: '0.72rem', fontWeight: 600 }}>
+                              Belum ada data
+                            </span>
+                          )}
+                        </div>
+                        {hasData && (
+                          <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '0 0 8px 8px', padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            {pn && <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Nama: <strong style={{ color: '#e2e8f0' }}>{pn}</strong></span>}
+                            {pd && <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Tanggal: <strong style={{ color: '#e2e8f0' }}>{new Date(pd + 'T00:00:00').toLocaleDateString('id-ID', { dateStyle: 'long' })}</strong></span>}
+                            {pnt && <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Catatan: <strong style={{ color: '#e2e8f0' }}>{pnt}</strong></span>}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                  {/* Divider */}
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', margin: '4px 0' }} />
+
+                  {/* Photo Gallery */}
+                  {(() => {
+                    const photos = unit?.specs?.photo_gallery
+                      ? String(unit.specs.photo_gallery).split(',').filter(Boolean)
+                      : [];
+                    return (
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: photos.length > 0 ? '8px 8px 0 0' : '8px' }}>
+                          <ImageIcon size={15} color="#8bb2ff" style={{ flexShrink: 0 }} />
+                          <span style={{ flex: 1, fontSize: '0.85rem' }}>Photo Gallery</span>
+                          {photos.length > 0 ? (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(16,185,129,0.12)', color: '#10b981', borderRadius: '20px', padding: '2px 8px', fontSize: '0.72rem', fontWeight: 700 }}>
+                              <Check size={11} /> {photos.length} foto
+                            </span>
+                          ) : (
+                            <span style={{ background: 'rgba(255,255,255,0.06)', color: '#64748b', borderRadius: '20px', padding: '2px 8px', fontSize: '0.72rem', fontWeight: 600 }}>
+                              Belum ada foto
+                            </span>
+                          )}
+                        </div>
+                        {photos.length > 0 && (
+                          <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '0 0 8px 8px', padding: '8px 10px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
+                              {photos.map((url: string, idx: number) => (
+                                <img
+                                  key={idx}
+                                  src={url}
+                                  alt={`Foto unit ${idx + 1}`}
+                                  onClick={() => window.open(url, '_blank')}
+                                  style={{
+                                    width: '100%', aspectRatio: '1', objectFit: 'cover',
+                                    borderRadius: '6px', cursor: 'pointer', display: 'block',
+                                  }}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* Slide 5: Manuals */}
+          <section className={`${styles.card} ${styles.carouselSlide}`}>
+            <div className={styles.cardHeader}>
+              <div className={styles.cardHeaderLeft}>
+                <BookOpen size={16} color="#8bb2ff" />
+                <h2>Manuals</h2>
               </div>
+              {isAdmin && (
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {editBlocks.manuals && (
+                    <button className={styles.btnRevise} onClick={() => cancelEdit('manuals')} style={{ background: '#64748b' }}>Cancel</button>
+                  )}
+                  <button 
+                    className={styles.btnRevise} 
+                    onClick={() => toggleEdit('manuals')}
+                    style={editBlocks.manuals ? { background: '#10b981' } : {}}
+                  >
+                    {editBlocks.manuals ? (isSaving ? 'Saving…' : 'Save') : 'Revise'}
+                  </button>
+                </div>
+              )}
             </div>
-            <div className={styles.mediaContent}>
-              <h3>Diagram Sirkulasi Udara &amp; Dimensi Fisik</h3>
-              <p>Representasi visual sirkulasi pendinginan udara yang merata dan ukuran presisi unit untuk referensi penempatan outlet pelanggan.</p>
-              <button className={styles.btnViewAll} style={{ width: 'fit-content', padding: '8px 16px', marginTop: '16px' }} onClick={() => setSelectedMedia(unit?.diagram_image_url || "diagram")}>
-                Lihat Diagram <ArrowLeft size={14} style={{marginLeft: '8px', transform: 'rotate(180deg)'}}/>
-              </button>
+            <div className={styles.mediaSingleItem} style={{ padding: '16px' }}>
+              {editBlocks.manuals ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <EditField label="URL Diagram Sirkulasi Udara (Gambar/PDF)" value={editData.diagram_image_url || ''} onChange={(v) => handleEditChange('diagram_image_url', v)} placeholder="https://..." />
+                  <EditField label="URL User Manual PDF" value={editData.specs?.manual_url || ''} onChange={(v) => handleEditChange('specs.manual_url', v)} placeholder="https://..." />
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <button className={styles.btnPrimary} style={{ justifyContent: 'space-between', padding: '12px 16px', background: 'rgba(255,255,255,0.05)', color: 'var(--color-primary-text)' }} onClick={() => setSelectedMedia('diagram')}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><BookOpen size={16}/> Diagram Sirkulasi Udara</span>
+                    <ExternalLink size={16} color="#8f9bb3" />
+                  </button>
+                  <button className={styles.btnPrimary} style={{ justifyContent: 'space-between', padding: '12px 16px', background: 'rgba(255,255,255,0.05)', color: 'var(--color-primary-text)' }} onClick={() => showToast('Membuka Buku Panduan Pengguna', 'info')}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><BookOpen size={16}/> User Manual</span>
+                    <ExternalLink size={16} color="#8f9bb3" />
+                  </button>
+                </div>
+              )}
             </div>
-          </div>
-        </div>
-      </section>
+          </section>
+
+          {/* Slide 6: Ownership */}
+          <section className={`${styles.card} ${styles.carouselSlide}`}>
+            <div className={styles.cardHeader}>
+              <div className={styles.cardHeaderLeft}>
+                <UserCheck size={16} color="#8bb2ff" />
+                <h2>Ownership</h2>
+              </div>
+              {isAdmin && (
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {editBlocks.ownership && (
+                    <button className={styles.btnRevise} onClick={() => cancelEdit('ownership')} style={{ background: '#64748b' }}>Cancel</button>
+                  )}
+                  <button 
+                    className={styles.btnRevise} 
+                    onClick={() => toggleEdit('ownership')}
+                    style={editBlocks.ownership ? { background: '#10b981' } : {}}
+                  >
+                    {editBlocks.ownership ? (isSaving ? 'Saving…' : 'Save') : 'Revise'}
+                  </button>
+                </div>
+              )}
+            </div>
+            <div className={styles.cardContent}>
+              {editBlocks.ownership ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingBottom: '16px' }}>
+                  <EditField label="Customer Name" value={editData.current_client?.company_name || ''} onChange={(v) => handleEditChange('current_client.company_name', v)} />
+                  <EditField label="SO Number" value={editData.specs?.so_number || ''} onChange={(v) => handleEditChange('specs.so_number', v)} />
+                  <EditField label="DO Number" value={editData.specs?.do_number || ''} onChange={(v) => handleEditChange('specs.do_number', v)} />
+                  <EditField label="Outlet Branch" value={editData.current_client?.outlet_branch || ''} onChange={(v) => handleEditChange('current_client.outlet_branch', v)} />
+                  <EditField label="City" value={editData.current_client?.city || ''} onChange={(v) => handleEditChange('current_client.city', v)} />
+                  <EditField label="Province" value={editData.current_client?.province || ''} onChange={(v) => handleEditChange('current_client.province', v)} />
+                </div>
+              ) : (
+                <>
+                  <div className={styles.specItem}>
+                    <span className={styles.specLabel}>Customer Name</span>
+                    <span className={styles.specValue}>{unit.current_client?.company_name || '—'}</span>
+                  </div>
+                  <div className={styles.specItem}>
+                    <span className={styles.specLabel}>SO Number</span>
+                    <span className={styles.specValue}>{unit.specs?.so_number || '—'}</span>
+                  </div>
+                  <div className={styles.specItem}>
+                    <span className={styles.specLabel}>DO Number</span>
+                    <span className={styles.specValue}>{unit.specs?.do_number || '—'}</span>
+                  </div>
+                  <div className={styles.specItem}>
+                    <span className={styles.specLabel}>Outlet Branch</span>
+                    <span className={styles.specValue}>{unit.current_client?.outlet_branch || '—'}</span>
+                  </div>
+                  <div className={styles.specItem} style={{ borderBottom: 'none' }}>
+                    <span className={styles.specLabel}>Outlet Address</span>
+                    <span className={styles.specValue}>
+                      {unit.current_client?.city ? `${unit.current_client.city}, ${unit.current_client.province || ''}` : '—'}
+                    </span>
+                  </div>
+                </>
+              )}
+            </div>
+          </section>
 
       </div>
       <button className={`${styles.carouselNavBtn} ${styles.nextBtn}`} onClick={() => { if (carouselRef.current) carouselRef.current.scrollBy({ left: carouselRef.current.clientWidth, behavior: 'smooth' }); }}>&rsaquo;</button>
@@ -820,7 +1692,7 @@ export default function QrPassportPage() {
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {unit.service_logs.map((log: any, idx: number) => (
+                {[...unit.service_logs].sort((a: any, b: any) => new Date(b.service_date || 0).getTime() - new Date(a.service_date || 0).getTime()).map((log: any, idx: number) => (
                   <div key={log.id || idx} style={{
                     display: 'flex',
                     flexDirection: 'column',
@@ -1204,6 +2076,101 @@ export default function QrPassportPage() {
         </div>
       )}
       
+      {/* ── Lihat Semua Spesifikasi Modal ── */}
+      {showAllSpecsModal && unit && (
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setShowAllSpecsModal(false)}
+        >
+          <div
+            className={styles.modalContent}
+            style={{
+              maxWidth: '560px',
+              width: '92%',
+              padding: '28px 24px',
+              background: '#ffffff',
+              border: '1px solid #e2e8f0',
+              borderRadius: '16px',
+              maxHeight: '85vh',
+              overflowY: 'auto',
+              color: '#0f172a',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.modalHeader} style={{ marginBottom: '20px' }}>
+              <h2 style={{ fontSize: '1rem', fontWeight: 800, color: '#0f172a' }}>Semua Spesifikasi Unit</h2>
+              <button
+                className={styles.closeBtn}
+                onClick={() => setShowAllSpecsModal(false)}
+                style={{ color: '#64748b' }}
+              >×</button>
+            </div>
+
+            {/* Basic unit fields */}
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.84rem' }}>
+              <tbody>
+                {[
+                  { label: 'Model', value: unit.model_name },
+                  { label: 'Serial Number', value: unit.serial_number },
+                  { label: 'Garansi Berakhir', value: unit.warranty_expiry ? new Date(unit.warranty_expiry).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }) : '—' },
+                  { label: 'Dibuat Pada', value: unit.created_at ? new Date(unit.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }) : '—' },
+                  ...(unit.specs
+                    ? Object.entries(unit.specs as Record<string, unknown>)
+                        .filter(([, v]) => v !== null && v !== undefined && v !== '' && typeof v !== 'object')
+                        .map(([k, v]) => ({
+                          label: k.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+                          value: String(v),
+                        }))
+                    : []),
+                ].map(({ label, value }, idx) => (
+                  <tr
+                    key={label}
+                    style={{
+                      borderBottom: '1px solid #e2e8f0',
+                      background: idx % 2 === 0 ? '#f8fafc' : '#ffffff',
+                    }}
+                  >
+                    <td
+                      style={{
+                        padding: '10px 12px',
+                        color: '#64748b',
+                        fontWeight: 600,
+                        whiteSpace: 'nowrap',
+                        width: '40%',
+                      }}
+                    >
+                      {label}
+                    </td>
+                    <td style={{ padding: '10px 12px', color: '#0f172a', wordBreak: 'break-word' }}>
+                      {value || '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <button
+              onClick={() => setShowAllSpecsModal(false)}
+              style={{
+                marginTop: '20px',
+                width: '100%',
+                padding: '10px 16px',
+                background: '#2563eb',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '0.88rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+              }}
+            >
+              Tutup
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Footer Copyright */}
       <footer className={styles.footerCopyright}>
         Copyright &copy; 2026 PT. Holicindo Dasa Anugerah. All rights reserved.

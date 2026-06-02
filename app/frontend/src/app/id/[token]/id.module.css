@@ -1924,3 +1924,21 @@
   color: rgba(0, 31, 63, 0.5);
   border-top: 1px solid rgba(0, 0, 0, 0.05);
 }
+
+.btnRevise {
+  background: var(--color-cobalt-blue);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(46, 91, 255, 0.2);
+}
+
+.btnRevise:hover {
+  background: #1a47e5;
+  transform: translateY(-1px);
+}

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 210" fill="none">
+  <!-- Outer triangle with chamfered bottom corners -->
+  <polyline points="100,8 8,182 20,198 180,198 192,182 100,8" stroke="currentColor" stroke-width="10" stroke-linejoin="miter" stroke-linecap="square" fill="none"/>
+
+  <!-- Center vertical double line (left) -->
+  <line x1="93" y1="20" x2="93" y2="198" stroke="currentColor" stroke-width="8" stroke-linecap="square"/>
+  <!-- Center vertical double line (right) -->
+  <line x1="107" y1="20" x2="107" y2="198" stroke="currentColor" stroke-width="8" stroke-linecap="square"/>
+
+  <!-- Right bracket element 1 (top L-shape, outer) -->
+  <polyline points="107,75 150,75 150,128" stroke="currentColor" stroke-width="8" stroke-linecap="square" stroke-linejoin="miter" fill="none"/>
+  <!-- Right bracket element 1 (top L-shape, inner) -->
+  <polyline points="107,87 138,87 138,128" stroke="currentColor" stroke-width="8" stroke-linecap="square" stroke-linejoin="miter" fill="none"/>
+
+  <!-- Right bracket element 2 (bottom L-shape, outer) -->
+  <polyline points="107,128 168,128 168,175" stroke="currentColor" stroke-width="8" stroke-linecap="square" stroke-linejoin="miter" fill="none"/>
+  <!-- Right bracket element 2 (bottom L-shape, inner) -->
+  <polyline points="107,140 156,140 156,175" stroke="currentColor" stroke-width="8" stroke-linecap="square" stroke-linejoin="miter" fill="none"/>
+</svg>

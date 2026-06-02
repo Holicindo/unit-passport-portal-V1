@@ -169,8 +169,8 @@ export default function LoginPage() {
         {/* ── Brand header ── */}
         <div className={styles.brandHeader}>
           <HolicIcon className={styles.logoMark} />
-          <div className={styles.brandName}>HOLICINDO</div>
-          <div className={styles.brandTagline}>Unit Passport Portal</div>
+          <div className={styles.brandName}>HOLIC</div>
+          <div className={styles.brandTagline}>Service Portal</div>
         </div>
 
         {/* ── Form Area (White bottom sheet on mobile, transparent on desktop) ── */}

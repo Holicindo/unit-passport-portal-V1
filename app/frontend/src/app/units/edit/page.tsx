@@ -6,6 +6,7 @@ import { unitApi } from '@/lib/api';
 import { ArrowLeft, Loader2, Save, HelpCircle } from 'lucide-react';
 import { categorizeUnitType } from '@/lib/utils';
 import { CustomSelect } from '@/components/ui/CustomSelect';
+import DatePicker from '@/components/ui/DatePicker';
 import styles from '../../units/new/new.module.css';
 
 function EditUnitForm() {
@@ -296,7 +297,11 @@ function EditUnitForm() {
             </div>
             <div className={styles.formGroup}>
               <label>Tanggal Habis Garansi</label>
-              <input type="date" value={warrantyExpiry} onChange={(e) => setWarrantyExpiry(e.target.value)} />
+              <DatePicker
+                value={warrantyExpiry}
+                onChange={(v) => setWarrantyExpiry(v)}
+                theme="light"
+              />
             </div>
           </div>
         </div>

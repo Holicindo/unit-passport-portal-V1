@@ -160,6 +160,14 @@
   border-bottom: none;
 }
 
+.table th:last-child,
+.table td:last-child {
+  width: 60px;
+  min-width: 60px;
+  white-space: nowrap;
+  text-align: center;
+}
+
 .dataRow {
   transition: background 0.2s ease;
 }
@@ -209,7 +217,7 @@
 
 .actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 16px;
   color: var(--color-space-grey);
 }

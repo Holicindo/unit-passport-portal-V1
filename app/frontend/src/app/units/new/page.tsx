@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { unitApi } from '@/lib/api';
 import { ArrowLeft, Loader2, Save, Wrench, HelpCircle, ShieldAlert, Upload, ImageIcon, X } from 'lucide-react';
 import { CustomSelect } from '@/components/ui/CustomSelect';
+import DatePicker from '@/components/ui/DatePicker';
 import styles from './new.module.css';
 
 // Helper: Auto-categorize unit type based on model name keywords
@@ -428,11 +429,10 @@ export default function RegisterUnitPage() {
             </div>
             <div className={styles.formGroup}>
               <label>Tanggal Habis Garansi</label>
-              <input 
-                type="date" 
-                value={warrantyExpiry} 
-                onChange={(e) => setWarrantyExpiry(e.target.value)}
-                autoComplete="new-password"
+              <DatePicker
+                value={warrantyExpiry}
+                onChange={(v) => setWarrantyExpiry(v)}
+                theme="light"
               />
             </div>
           </div>

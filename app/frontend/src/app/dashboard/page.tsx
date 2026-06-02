@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { unitApi, serviceLogApi, reportApi, partnerApi } from '@/lib/api';
-import { Calendar, Users, TrendingUp, Cpu, RefreshCw, BarChart2, Activity, ShieldCheck, Clock, Sun, Moon } from 'lucide-react';
+import { Calendar, Users, TrendingUp, Cpu, RefreshCw, BarChart2, Activity, ShieldAlert, ChevronRight } from 'lucide-react';
 import styles from './dashboard.module.css';
 
 const StatsGrid = dynamic(() => import('@/components/dashboard/StatsGrid'), {
@@ -37,6 +37,8 @@ const formatRelativeTime = (date: Date) => {
   if (diffMins < 1) return 'Baru saja';
   if (diffMins < 60) return `${diffMins} menit yang lalu`;
   if (diffHours < 24) return `${diffHours} jam yang lalu`;
+  if (diffDays === 1) return 'Kemarin';
+  if (diffDays < 0) return 'Akan datang';
   return `${diffDays} hari yang lalu`;
 };
 
@@ -58,9 +60,9 @@ export default function DashboardPage() {
   const [frequentUnits, setFrequentUnits] = useState<any[]>([]);
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
   const [upcomingPMs, setUpcomingPMs] = useState<any[]>([]);
+  const [warrantyIssues, setWarrantyIssues] = useState<any[]>([]);
   const [hoveredPoint, setHoveredPoint] = useState<any>(null);
 
-  // Live ticking clock effect updating every second
   useEffect(() => {
     const updateClock = () => {
       const now = new Date();
@@ -80,17 +82,15 @@ export default function DashboardPage() {
     else setLoading(true);
 
     try {
-      // 1. Fetch user role
       let user = null;
       try {
         const userData = localStorage.getItem('user');
         if (userData && userData !== 'undefined' && userData !== 'null') {
           user = JSON.parse(userData);
         }
-      } catch { /* ignore parse errors */ }
+      } catch { }
       const isAdmin = user?.role === 'ADMIN';
 
-      // 2. Fetch from APIs concurrently
       const [unitsRes, serviceLogsRes, reportsRes, partnersRes] = await Promise.all([
         isAdmin ? unitApi.findAll(1, 1000) : unitApi.findMyFleet(),
         serviceLogApi.findAll(1, 1000),
@@ -103,25 +103,20 @@ export default function DashboardPage() {
       const rawReports = reportsRes.data?.data || reportsRes.data || [];
       const rawPartners = partnersRes.data?.data || partnersRes.data || [];
 
-      // 3. Compute stats
-      const activeUnitsCount = rawUnits.length || 514;
-      
+      // 1. Compute stats
+      const activeUnitsCount = rawUnits.length;
       const underWarrantyCount = rawUnits.filter((u: any) => {
-        if (!u.warranty_end) return false;
-        return new Date(u.warranty_end) > new Date();
-      }).length || 384;
+        if (!u.warranty_expiry) return false;
+        return new Date(u.warranty_expiry) > new Date();
+      }).length;
+      // Open Service Reports = total semua laporan yang tersimpan di sistem
+      const openReportsCount = rawReports.length;
+      // Critical Issues = laporan tipe Inspeksi & Analisis Masalah (unit bermasalah)
+      const issuesDetectedCount = rawReports.filter((r: any) =>
+        r.form_type === 'ISSUE_ANALYSIS' || r.type === 'ISSUE_ANALYSIS'
+      ).length;
+      const activePartnersCount = rawPartners.length;
 
-      const openReportsCount = rawReports.filter((r: any) => 
-        r.status === 'PENDING' || r.status === 'OPEN'
-      ).length || 12;
-
-      const issuesDetectedCount = rawReports.filter((r: any) => 
-        r.severity === 'HIGH' || r.status === 'PENDING'
-      ).length || 3;
-
-      const activePartnersCount = rawPartners.length || 5;
-
-      // Fleet health formula: active vs issues detected
       const computedHealth = activeUnitsCount > 0 
         ? Math.round((1 - (issuesDetectedCount / activeUnitsCount)) * 1000) / 10 
         : 99.4;
@@ -135,10 +130,18 @@ export default function DashboardPage() {
         fleetHealth: computedHealth
       });
 
-      // 4. Group service activity by month (last 6 months relative to now)
-      const last6Months = Array.from({ length: 6 }).map((_, i) => {
+      // Filter logs to 1 year
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+      const oneYearLogs = rawLogs.filter((log: any) => {
+        const d = new Date(log.created_at || log.date || new Date());
+        return d >= oneYearAgo;
+      });
+
+      // 2. Chart (12 Months)
+      const last12Months = Array.from({ length: 12 }).map((_, i) => {
         const d = new Date();
-        d.setMonth(d.getMonth() - (5 - i));
+        d.setMonth(d.getMonth() - (11 - i));
         return {
           key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
           label: d.toLocaleDateString('id-ID', { month: 'short' }),
@@ -149,37 +152,34 @@ export default function DashboardPage() {
         };
       });
 
-      rawLogs.forEach((log: any) => {
+      oneYearLogs.forEach((log: any) => {
         const logDate = new Date(log.created_at || log.date || new Date());
         const logKey = `${logDate.getFullYear()}-${String(logDate.getMonth() + 1).padStart(2, '0')}`;
-        const monthMatch = last6Months.find(m => m.key === logKey);
+        const monthMatch = last12Months.find(m => m.key === logKey);
         if (monthMatch) {
           monthMatch.count++;
           if (log.status === 'COMPLETED') monthMatch.completed++;
           else monthMatch.pending++;
         }
       });
+      setChartData(last12Months);
 
-      // Note: Removed mock fallbacks for allZero state to ensure strict staging mode.
-
-      setChartData(last6Months);
-
-      // 5. Compute Active Clients (top 3)
+      // 3. Klien Teraktif (1 year)
       const clientCounts: Record<string, number> = {};
-      rawUnits.forEach((u: any) => {
-        const clientName = u.current_client?.company_name || 'Umum / Stock HQ';
-        clientCounts[clientName] = (clientCounts[clientName] || 0) + 1;
+      oneYearLogs.forEach((log: any) => {
+         const clientName = log.unit?.current_client?.company_name || log.client?.company_name || 'Umum / Stock HQ';
+         clientCounts[clientName] = (clientCounts[clientName] || 0) + 1;
       });
       const activeClientsList = Object.entries(clientCounts)
         .map(([name, count]) => ({ name, count }))
         .sort((a, b) => b.count - a.count)
         .slice(0, 3);
-
+      if (activeClientsList.length === 0) activeClientsList.push({ name: 'Umum / Stock HQ', count: 0 });
       setActiveClients(activeClientsList);
 
-      // 6. Compute Sering Servis (top 3)
+      // 4. Unit Sering Servis (1 year, top 5)
       const unitServiceCounts: Record<string, { model: string, count: number }> = {};
-      rawLogs.forEach((log: any) => {
+      oneYearLogs.forEach((log: any) => {
         const sn = log.unit?.serial_number || '-';
         const model = log.unit?.model_name || 'Unknown Model';
         if (!unitServiceCounts[sn]) {
@@ -190,43 +190,67 @@ export default function DashboardPage() {
       const frequentUnitsList = Object.entries(unitServiceCounts)
         .map(([sn, val]) => ({ sn, name: val.model, count: val.count }))
         .sort((a, b) => b.count - a.count)
-        .slice(0, 3);
-
+        .slice(0, 5);
       setFrequentUnits(frequentUnitsList);
 
-      // 7. Compute real-time Recent Activities Timeline
-      const activities: any[] = [];
+      // 5. Schedules (Today & Tomorrow)
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const schedulesToday: any[] = [];
+      const schedulesTomorrow: any[] = [];
+      
       rawLogs.forEach((log: any) => {
-        const dateObj = new Date(log.updated_at || log.created_at || log.date || new Date());
-        activities.push({
-          id: `log-${log.id}`,
-          type: log.status === 'COMPLETED' ? 'success' : 'info',
-          title: log.status === 'COMPLETED' ? 'Servis Selesai' : 'Servis Terjadwal',
-          description: `${log.unit?.model_name || 'Unit'} (${log.unit?.serial_number || '-'}) diservis oleh ${log.partner?.name || 'Partner'}`,
-          time: dateObj,
-          timeStr: formatRelativeTime(dateObj),
-        });
+        if (log.status !== 'COMPLETED') {
+           const sDate = new Date(log.scheduled_date || log.date || new Date());
+           sDate.setHours(0,0,0,0);
+           const act = {
+              id: `log-${log.id}`,
+              type: 'info',
+              title: 'Servis Terjadwal',
+              description: `${log.unit?.model_name || 'Unit'} (${log.unit?.serial_number || '-'}) diservis oleh ${log.partner?.name || 'Partner'}`,
+              timeStr: '', // We use section headers instead
+              section: sDate.getTime() === today.getTime() ? 'Hari Ini' : 'Besok'
+           };
+           if (sDate.getTime() === today.getTime()) {
+             schedulesToday.push(act);
+           } else if (sDate.getTime() === tomorrow.getTime()) {
+             schedulesTomorrow.push(act);
+           }
+        }
       });
+      
+      // If none, provide empty state hint
+      const combinedSchedules = [
+        ...(schedulesToday.length > 0 ? schedulesToday : [{ id: 'empty-today', type: 'empty', section: 'Hari Ini', title: 'Tidak ada jadwal hari ini', description: 'Semua aman terkendali.' }]),
+        ...(schedulesTomorrow.length > 0 ? schedulesTomorrow : [{ id: 'empty-tomorrow', type: 'empty', section: 'Besok', title: 'Tidak ada jadwal besok', description: 'Semua aman terkendali.' }])
+      ];
+      setRecentActivities(combinedSchedules);
 
-      rawReports.forEach((rep: any) => {
-        const dateObj = new Date(rep.created_at || new Date());
-        activities.push({
-          id: `rep-${rep.id}`,
-          type: rep.severity === 'HIGH' ? 'danger' : 'warning',
-          title: rep.severity === 'HIGH' ? 'Kendala Kritis' : 'Inspeksi Baru',
-          description: `Kendala terdeteksi pada ${rep.unit?.model_name || 'Unit'}: ${rep.issue_description || 'Inspeksi rutin'}`,
-          time: dateObj,
-          timeStr: formatRelativeTime(dateObj),
-        });
+      // 6. Warranty Issues (New Block)
+      const warrantyIssuesCount: Record<string, { model: string, count: number }> = {};
+      rawLogs.forEach((log: any) => {
+         const logDate = new Date(log.created_at || log.date || new Date());
+         if (log.unit && log.unit.warranty_end) {
+            const wEnd = new Date(log.unit.warranty_end);
+            if (logDate <= wEnd) {
+               const sn = log.unit.serial_number;
+               if (!warrantyIssuesCount[sn]) {
+                  warrantyIssuesCount[sn] = { model: log.unit.model_name, count: 0 };
+               }
+               warrantyIssuesCount[sn].count++;
+            }
+         }
       });
+      const wIssuesList = Object.entries(warrantyIssuesCount)
+        .map(([sn, val]) => ({ sn, name: val.model, count: val.count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+      setWarrantyIssues(wIssuesList);
 
-      const sortedActivities = activities
-        .sort((a, b) => b.time.getTime() - a.time.getTime())
-        .slice(0, 3);
-
-      setRecentActivities(sortedActivities);
-
-      // 8. Compute Scheduled PMs (Upcoming)
+      // 7. Scheduled PMs (Upcoming)
       const pms = rawLogs
         .filter((log: any) => log.status === 'PENDING')
         .map((log: any) => {
@@ -253,12 +277,12 @@ export default function DashboardPage() {
 
     } catch (error) {
       console.warn('Dashboard real-time sync loaded fallbacks:', error);
-      // Note: Removed catch block fallbacks to ensure strict staging mode.
       setChartData([]);
       setActiveClients([]);
       setFrequentUnits([]);
       setRecentActivities([]);
       setUpcomingPMs([]);
+      setWarrantyIssues([]);
     } finally {
       setLoading(false);
       setSyncing(false);
@@ -319,8 +343,6 @@ export default function DashboardPage() {
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-
-          {/* Sync Button */}
           <button 
             className={styles.syncBtn} 
             onClick={() => fetchDashboardData(true)} 
@@ -349,19 +371,19 @@ export default function DashboardPage() {
       
       <StatsGrid data={statsData} loading={loading} />
       
-      {/* Dashboard Bottom Section */}
       <div className={styles.bottomSection}>
-        {/* Left Column containing Spline Chart and Scheduled PM List */}
+        {/* LEFT COLUMN */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          {/* Spline Area Chart Section */}
+          
+          {/* Spline Area Chart Section (12 Months) */}
           <div className={styles.chartCard}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <h3 className={styles.chartTitle} style={{ margin: 0 }}>
                   <TrendingUp size={18} style={{ color: '#E11D48' }} />
-                  Tren Aktivitas Servis (6 Bulan Terakhir)
+                  Tren Aktivitas Servis (12 Bulan Terakhir)
                 </h3>
-                <p style={{ margin: 0, fontSize: '0.74rem', color: 'var(--color-space-grey)' }}>Membandingkan jumlah servis selesai vs yang masih pending/terjadwal secara bulanan.</p>
+                <p style={{ margin: 0, fontSize: '0.74rem', color: 'var(--color-space-grey)' }}>Membandingkan jumlah servis selesai vs yang masih pending secara bulanan.</p>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
                 <span style={{
@@ -491,7 +513,113 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* New Preventive Maintenance Schedule Calendar Card */}
+          {/* Aktivitas Terkini (Hari Ini & Besok) - MOVED HERE */}
+          <div className={styles.listCard} style={{ background: 'var(--color-optic-white)' }}>
+            <h3 className={styles.listTitle} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '12px', marginBottom: '16px' }}>
+              <Activity size={16} style={{ color: '#00C48C', marginRight: '6px', verticalAlign: 'middle' }} />
+              Aktivitas Terkini
+            </h3>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
+              {/* KOLOM HARI INI */}
+              <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '20px', paddingLeft: '8px' }}>
+                <div style={{
+                  position: 'absolute',
+                  top: '8px',
+                  bottom: '8px',
+                  left: '15px',
+                  width: '2px',
+                  background: 'rgba(0, 31, 63, 0.06)'
+                }} />
+                
+                <div style={{ marginLeft: '28px', fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-space-grey)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Hari Ini
+                </div>
+
+                {loading ? (
+                  [1,2].map(i => (
+                    <div key={i} style={{ height: '40px', background: '#F1F5F9', borderRadius: '6px', animation: 'pulse 1.5s infinite', marginLeft: '24px' }}></div>
+                  ))
+                ) : (
+                  recentActivities.filter(a => a.section === 'Hari Ini').map(act => (
+                    <div key={act.id} style={{ display: 'flex', alignItems: 'flex-start', position: 'relative' }}>
+                      <div style={{
+                        position: 'absolute',
+                        left: '8px',
+                        top: '4px',
+                        width: '16px',
+                        height: '16px',
+                        borderRadius: '50%',
+                        background: 'white',
+                        border: `3px solid ${act.type === 'empty' ? 'var(--color-space-grey)' : 'var(--color-cobalt-blue)'}`,
+                        boxShadow: `0 0 8px rgba(46,91,255,0.2)`,
+                        zIndex: 2,
+                      }} />
+
+                      <div style={{ marginLeft: '32px', display: 'flex', flexDirection: 'column', gap: '2px', width: '100%' }}>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 800, color: act.type === 'empty' ? 'var(--color-space-grey)' : 'var(--color-deep-navy)' }}>
+                          {act.title}
+                        </span>
+                        <span style={{ fontSize: '0.74rem', color: 'var(--color-space-grey)', lineHeight: 1.35 }}>
+                          {act.description}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* KOLOM BESOK */}
+              <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '20px', paddingLeft: '8px' }}>
+                <div style={{
+                  position: 'absolute',
+                  top: '8px',
+                  bottom: '8px',
+                  left: '15px',
+                  width: '2px',
+                  background: 'rgba(0, 31, 63, 0.06)'
+                }} />
+                
+                <div style={{ marginLeft: '28px', fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-space-grey)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Besok
+                </div>
+
+                {loading ? (
+                  [1,2].map(i => (
+                    <div key={i} style={{ height: '40px', background: '#F1F5F9', borderRadius: '6px', animation: 'pulse 1.5s infinite', marginLeft: '24px' }}></div>
+                  ))
+                ) : (
+                  recentActivities.filter(a => a.section === 'Besok').map(act => (
+                    <div key={act.id} style={{ display: 'flex', alignItems: 'flex-start', position: 'relative' }}>
+                      <div style={{
+                        position: 'absolute',
+                        left: '8px',
+                        top: '4px',
+                        width: '16px',
+                        height: '16px',
+                        borderRadius: '50%',
+                        background: 'white',
+                        border: `3px solid ${act.type === 'empty' ? 'var(--color-space-grey)' : 'var(--color-cobalt-blue)'}`,
+                        boxShadow: `0 0 8px rgba(46,91,255,0.2)`,
+                        zIndex: 2,
+                      }} />
+
+                      <div style={{ marginLeft: '32px', display: 'flex', flexDirection: 'column', gap: '2px', width: '100%' }}>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 800, color: act.type === 'empty' ? 'var(--color-space-grey)' : 'var(--color-deep-navy)' }}>
+                          {act.title}
+                        </span>
+                        <span style={{ fontSize: '0.74rem', color: 'var(--color-space-grey)', lineHeight: 1.35 }}>
+                          {act.description}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Jadwal Pemeliharaan Preventif (PM) Terdekat - MOVED HERE */}
           <div className={styles.listCard} style={{ background: 'var(--color-optic-white)', flex: 1, display: 'flex', flexDirection: 'column', margin: 0 }}>
             <h3 className={styles.listTitle} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '12px', marginBottom: '16px' }}>
               <Calendar size={16} style={{ color: 'var(--color-cobalt-blue)', marginRight: '6px', verticalAlign: 'middle' }} />
@@ -519,7 +647,6 @@ export default function DashboardPage() {
                       height: '100%',
                     }}
                   >
-                    {/* Visual date block icon */}
                     <div style={{
                       width: '44px',
                       height: '44px',
@@ -537,7 +664,6 @@ export default function DashboardPage() {
                       <span style={{ fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', marginTop: '2px' }}>{pm.month}</span>
                     </div>
 
-                    {/* Meta info */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', overflow: 'hidden', width: '100%' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px' }}>
                         <span style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--color-deep-navy)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -569,14 +695,19 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Lists & Activity Timeline Section */}
+        {/* RIGHT COLUMN */}
         <div className={styles.listsSection}>
           
           <div className={styles.listCard}>
-            <h3 className={styles.listTitle}>
-              <Users size={16} style={{ color: 'var(--color-cobalt-blue)', marginRight: '6px', verticalAlign: 'middle' }} />
-              Klien Teraktif
-            </h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+              <h3 className={styles.listTitle} style={{ marginBottom: 0 }}>
+                <Users size={16} style={{ color: 'var(--color-cobalt-blue)', marginRight: '6px', verticalAlign: 'middle' }} />
+                Klien Teraktif
+              </h3>
+            </div>
+            <p style={{ fontSize: '0.7rem', color: 'var(--color-space-grey)', marginBottom: '16px' }}>
+              Berdasarkan servis dalam 12 bulan terakhir.
+            </p>
             
             <div className={styles.listItems}>
               {loading ? (
@@ -587,7 +718,7 @@ export default function DashboardPage() {
                 activeClients.map((client, idx) => (
                   <div key={idx} className={styles.listItem}>
                     <span className={styles.clientName} style={{ fontWeight: 600 }}>{client.name}</span>
-                    <span className={styles.clientCount} style={{ background: 'rgba(46,91,255,0.06)', color: 'var(--color-cobalt-blue)', padding: '2px 8px', borderRadius: '12px', fontSize: '0.78rem' }}>{client.count} Unit</span>
+                    <span className={styles.clientCount} style={{ background: 'rgba(46,91,255,0.06)', color: 'var(--color-cobalt-blue)', padding: '2px 8px', borderRadius: '12px', fontSize: '0.78rem' }}>{client.count} Servis</span>
                   </div>
                 ))
               )}
@@ -595,89 +726,91 @@ export default function DashboardPage() {
           </div>
 
           <div className={styles.listCard}>
-            <h3 className={styles.listTitle}>
-              <BarChart2 size={16} style={{ color: 'var(--color-safety-orange)', marginRight: '6px', verticalAlign: 'middle' }} />
-              Unit Sering Servis
-            </h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+              <h3 className={styles.listTitle} style={{ marginBottom: 0 }}>
+                <BarChart2 size={16} style={{ color: 'var(--color-safety-orange)', marginRight: '6px', verticalAlign: 'middle' }} />
+                Unit Sering Servis
+              </h3>
+            </div>
+            <p style={{ fontSize: '0.7rem', color: 'var(--color-space-grey)', marginBottom: '16px' }}>
+              Unit dengan laporan servis terbanyak dalam 12 bulan.
+            </p>
             
             <div className={styles.listItems}>
               {loading ? (
-                [1,2].map(i => (
-                  <div key={i} style={{ height: '30px', background: '#F1F5F9', borderRadius: '6px', animation: 'pulse 1.5s infinite' }}></div>
+                [1,2,3,4,5].map(i => (
+                  <div key={i} style={{ height: '40px', background: '#F1F5F9', borderRadius: '6px', animation: 'pulse 1.5s infinite' }}></div>
                 ))
               ) : (
-                frequentUnits.map((unit, idx) => (
-                  <div key={idx} className={styles.listItem} style={{ flexDirection: 'column', gap: '2px', alignItems: 'stretch' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span className={styles.unitName} style={{ fontWeight: 700, color: 'var(--color-deep-navy)' }}>{unit.sn}</span>
-                      <span className={styles.unitCount} style={{ fontSize: '0.8rem', fontWeight: 800 }}>{unit.count}x Servis</span>
+                <>
+                  {frequentUnits.map((unit, idx) => (
+                    <div key={idx} className={styles.listItem} style={{ flexDirection: 'column', gap: '2px', alignItems: 'stretch' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span className={styles.unitName} style={{ fontWeight: 700, color: 'var(--color-deep-navy)' }}>{unit.sn}</span>
+                        <span className={styles.unitCount} style={{ fontSize: '0.8rem', fontWeight: 800 }}>{unit.count}x Servis</span>
+                      </div>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--color-space-grey)' }}>{unit.name}</span>
                     </div>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--color-space-grey)' }}>{unit.name}</span>
-                  </div>
-                ))
+                  ))}
+                  {frequentUnits.length > 0 && (
+                    <button style={{
+                      marginTop: '8px',
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'var(--color-cobalt-blue)',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '4px',
+                      padding: '8px',
+                      borderRadius: '8px',
+                    }}>
+                      Lihat Selengkapnya... <ChevronRight size={14} />
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>
 
-          {/* Premium Recent Activities Timeline Widget */}
+          {/* NEW BLOCK: Warranty Issues */}
           <div className={styles.listCard}>
-            <h3 className={styles.listTitle}>
-              <Activity size={16} style={{ color: '#00C48C', marginRight: '6px', verticalAlign: 'middle' }} />
-              Aktivitas Terkini
-            </h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+              <h3 className={styles.listTitle} style={{ marginBottom: 0 }}>
+                <ShieldAlert size={16} style={{ color: '#E11D48', marginRight: '6px', verticalAlign: 'middle' }} />
+                Warranty Issues
+              </h3>
+            </div>
+            <p style={{ fontSize: '0.7rem', color: 'var(--color-space-grey)', marginBottom: '16px' }}>
+              Unit yang diservis padahal masih dalam masa garansi.
+            </p>
             
-            <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '16px', paddingLeft: '8px' }}>
-              <div style={{
-                position: 'absolute',
-                top: '8px',
-                bottom: '8px',
-                left: '15px',
-                width: '2px',
-                background: 'rgba(0, 31, 63, 0.06)'
-              }} />
-
+            <div className={styles.listItems}>
               {loading ? (
                 [1,2,3].map(i => (
-                  <div key={i} style={{ height: '40px', background: '#F1F5F9', borderRadius: '6px', animation: 'pulse 1.5s infinite', marginLeft: '24px' }}></div>
+                  <div key={i} style={{ height: '40px', background: '#F1F5F9', borderRadius: '6px', animation: 'pulse 1.5s infinite' }}></div>
                 ))
               ) : (
-                recentActivities.map((act) => (
-                  <div key={act.id} style={{ display: 'flex', alignItems: 'flex-start', position: 'relative' }}>
-                    <div style={{
-                      position: 'absolute',
-                      left: '8px',
-                      top: '4px',
-                      width: '16px',
-                      height: '16px',
-                      borderRadius: '50%',
-                      background: 'white',
-                      border: `3px solid ${
-                        act.type === 'success' ? '#00C48C' :
-                        act.type === 'info' ? 'var(--color-cobalt-blue)' :
-                        act.type === 'danger' ? '#FF4D4D' : '#FF6B00'
-                      }`,
-                      boxShadow: `0 0 8px ${
-                        act.type === 'success' ? 'rgba(0,196,140,0.3)' :
-                        act.type === 'info' ? 'rgba(46,91,255,0.3)' : 'rgba(255,77,77,0.3)'
-                      }`,
-                      zIndex: 2,
-                    }} />
-
-                    <div style={{ marginLeft: '32px', display: 'flex', flexDirection: 'column', gap: '2px', width: '100%' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '8px' }}>
-                        <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--color-deep-navy)' }}>
-                          {act.title}
-                        </span>
-                        <span style={{ fontSize: '0.68rem', fontWeight: 650, color: 'var(--color-space-grey)', whiteSpace: 'nowrap' }}>
-                          {act.timeStr}
+                warrantyIssues.length === 0 ? (
+                  <div style={{ fontSize: '0.75rem', color: 'var(--color-space-grey)', textAlign: 'center', padding: '16px 0' }}>
+                    Tidak ada masalah garansi tercatat.
+                  </div>
+                ) : (
+                  warrantyIssues.map((unit, idx) => (
+                    <div key={idx} className={styles.listItem} style={{ flexDirection: 'column', gap: '2px', alignItems: 'stretch' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span className={styles.unitName} style={{ fontWeight: 700, color: 'var(--color-deep-navy)' }}>{unit.sn}</span>
+                        <span className={styles.unitCount} style={{ fontSize: '0.75rem', fontWeight: 800, color: '#E11D48', background: 'rgba(225, 29, 72, 0.08)', padding: '2px 6px', borderRadius: '6px' }}>
+                          {unit.count} Kasus
                         </span>
                       </div>
-                      <span style={{ fontSize: '0.74rem', color: 'var(--color-space-grey)', lineHeight: 1.35 }}>
-                        {act.description}
-                      </span>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--color-space-grey)' }}>{unit.name}</span>
                     </div>
-                  </div>
-                ))
+                  ))
+                )
               )}
             </div>
           </div>

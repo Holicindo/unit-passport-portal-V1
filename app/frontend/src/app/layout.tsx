@@ -18,6 +18,9 @@ const montserrat = Montserrat({
 export const metadata = {
   title: 'Holicindo Unit Passport Portal',
   description: 'Sistem Pemantauan Unit & Diagnostik Pemeliharaan Terpadu',
+  icons: {
+    icon: '/holic-icon.svg',
+  },
 }
 
 export default function RootLayout({

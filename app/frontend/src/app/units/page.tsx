@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, useCallback, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { unitApi } from '@/lib/api';
-import { Search, QrCode, ChevronRight, ChevronLeft, FileEdit, Eye, Plus } from 'lucide-react';
+import { Search, QrCode, ChevronRight, ChevronLeft, FileEdit, Eye, Plus, ShieldCheck } from 'lucide-react';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import Link from 'next/link';
 import styles from './units.module.css';
@@ -14,27 +14,30 @@ function TableSkeleton({ pageSize }: { pageSize: number }) {
     <tbody>
       {Array.from({ length: pageSize }).map((_, i) => (
         <tr key={i} className={styles.skeletonRow}>
-          <td><div className={styles.skeletonCell} style={{ width: '24px' }} /></td>
           <td><div className={styles.skeletonCell} style={{ width: '110px' }} /></td>
           <td><div className={styles.skeletonCell} style={{ width: '150px' }} /></td>
-          <td><div className={styles.skeletonCell} style={{ width: '80px', borderRadius: '20px' }} /></td>
           <td><div className={styles.skeletonCell} style={{ width: '130px' }} /></td>
-          <td><div className={styles.skeletonCell} style={{ width: '64px', borderRadius: '20px' }} /></td>
-          <td><div className={styles.skeletonCell} style={{ width: '54px' }} /></td>
+          <td><div className={styles.skeletonCell} style={{ width: '150px' }} /></td>
+          <td><div className={styles.skeletonCell} style={{ width: '40px' }} /></td>
         </tr>
       ))}
     </tbody>
   );
 }
 
-export default function UnitsPage() {
+function UnitsPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [units, setUnits] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(15);
   const [totalCount, setTotalCount] = useState(0);
+
+  // Read ?filter=warranty from URL
+  const filterParam = searchParams.get('filter');
+  const isWarrantyFilter = filterParam === 'warranty';
 
   const handleDownloadQR = (serialNumber: string, qrToken: string) => {
     // Generate the URL for the QR code
@@ -108,14 +111,21 @@ export default function UnitsPage() {
   }, [currentPage, loadUnits]);
 
   // Client-side filter on the current page's data
-  const filteredUnits = units.filter(u =>
-    (u.serial_number ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (u.model_name ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (u.client?.company_name ?? '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const today = new Date();
+  const filteredUnits = units.filter(u => {
+    const matchesSearch =
+      (u.serial_number ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (u.model_name ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (u.current_client?.company_name ?? '').toLowerCase().includes(searchTerm.toLowerCase());
 
-  const displayedUnits = (searchTerm ? filteredUnits : units).slice(0, pageSize);
-  const effectiveTotal = searchTerm ? filteredUnits.length : totalCount;
+    const matchesWarranty = !isWarrantyFilter ||
+      (u.warranty_expiry && new Date(u.warranty_expiry) >= today);
+
+    return matchesSearch && matchesWarranty;
+  });
+
+  const displayedUnits = (searchTerm || isWarrantyFilter ? filteredUnits : units).slice(0, pageSize);
+  const effectiveTotal = (searchTerm || isWarrantyFilter) ? filteredUnits.length : totalCount;
   const totalPages = Math.max(1, Math.ceil(effectiveTotal / pageSize));
   const startRow = (currentPage - 1) * pageSize + 1;
   const endRow = Math.min(currentPage * pageSize, effectiveTotal);
@@ -147,9 +157,38 @@ export default function UnitsPage() {
     <div className={styles.container}>
       <header className={styles.pageHeader}>
         <div>
-          <h2 className={styles.title}>Unit Digital Passport</h2>
-          <p className={styles.subtitle}>Manage and track all registered units in the system.</p>
+          <h2 className={styles.title}>
+            Unit Digital Passport
+            {isWarrantyFilter && (
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: '4px',
+                marginLeft: '12px', fontSize: '0.75rem', fontWeight: 600,
+                background: '#00C48C20', color: '#00C48C',
+                border: '1px solid #00C48C40', borderRadius: '20px',
+                padding: '3px 10px', verticalAlign: 'middle',
+              }}>
+                <ShieldCheck size={13} /> Under Warranty
+              </span>
+            )}
+          </h2>
+          <p className={styles.subtitle}>
+            {isWarrantyFilter
+              ? 'Menampilkan unit yang masih dalam masa garansi.'
+              : 'Manage and track all registered units in the system.'}
+          </p>
         </div>
+        {isWarrantyFilter && (
+          <button
+            onClick={() => router.push('/units')}
+            style={{
+              background: 'none', border: '1px solid #cbd5e1', borderRadius: '8px',
+              padding: '6px 14px', fontSize: '0.8rem', color: '#64748b',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
+            }}
+          >
+            Hapus Filter
+          </button>
+        )}
       </header>
 
       {/* Mobile Submenu Pill Tabs */}
@@ -192,14 +231,33 @@ export default function UnitsPage() {
 
             <CustomSelect
               options={[
-                { value: '', label: 'Filter Status...' },
-                { value: 'ACTIVE', label: 'Active' },
-                { value: 'MAINTENANCE', label: 'Maintenance' },
-                { value: 'RETIRED', label: 'Retired' }
+                { value: '', label: 'Category' },
+                { value: 'showcase', label: 'Showcase' },
+                { value: 'mesin', label: 'Mesin' }
               ]}
               value=""
               onChange={() => {}}
-              placeholder="Filter Status..."
+              placeholder="Category"
+            />
+            <CustomSelect
+              options={[
+                { value: '', label: 'Customer' },
+                { value: 'starbucks', label: 'Starbucks Indonesia' },
+                { value: 'maxvalu', label: 'Max Valu' }
+              ]}
+              value=""
+              onChange={() => {}}
+              placeholder="Customer"
+            />
+            <CustomSelect
+              options={[
+                { value: '', label: 'City' },
+                { value: 'jakarta', label: 'Jakarta' },
+                { value: 'tangerang', label: 'Tangerang' }
+              ]}
+              value=""
+              onChange={() => {}}
+              placeholder="City"
             />
           </div>
 
@@ -227,12 +285,10 @@ export default function UnitsPage() {
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>#</th>
                   <th>Serial Number</th>
                   <th>Model</th>
-                  <th>Kategori</th>
+                  <th>Outlet Branch</th>
                   <th>Customer</th>
-                  <th>Status</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -242,7 +298,7 @@ export default function UnitsPage() {
               ) : displayedUnits.length === 0 ? (
                 <tbody>
                   <tr>
-                    <td colSpan={7} className={styles.emptyState}>
+                    <td colSpan={5} className={styles.emptyState}>
                       No units found.
                     </td>
                   </tr>
@@ -255,36 +311,20 @@ export default function UnitsPage() {
                     
                     return (
                       <tr key={unit.id} className={styles.dataRow}>
-                        <td className={styles.numCol}>{startRow + idx}</td>
                         <td>
                           <span style={{ fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--color-deep-navy)' }}>{unit.serial_number}</span>
                         </td>
                         <td className={styles.modelCell}>{unit.model_name}</td>
                         <td>
-                          <span className={`${styles.typeBadge} ${isMachine ? styles.type_mesin : styles.type_showcase}`}>
-                            {isMachine ? 'MESIN' : 'SHOWCASE'}
+                          <span style={{ color: 'var(--color-space-grey)', fontSize: '0.85rem' }}>
+                            {unit.current_client?.outlet_branch || '—'}
                           </span>
                         </td>
                         <td className={styles.customerCell}>
                           {unit.current_client?.company_name || <span className={styles.noOwner}>—</span>}
                         </td>
                         <td>
-                          <span className={`${styles.statusBadge} ${styles[statusKey] ?? styles.status_active}`}>
-                            {unit.status ?? 'Active'}
-                          </span>
-                        </td>
-                        <td style={{ textAlign: 'right' }}>
                           <div className={styles.actions}>
-                            <button 
-                              onClick={() => handleDownloadQR(unit.serial_number, unit.qr_token)}
-                              className={styles.actionIconBtn}
-                              title="Generate QR Code"
-                            >
-                              <QrCode size={18} />
-                            </button>
-                            <Link href={`/units/edit?id=${unit.id}`} title="Edit Unit" className={styles.actionIconBtn}>
-                              <FileEdit size={18} />
-                            </Link>
                             <Link href={`/id/${unit.qr_token}`} title="Lihat Detail" className={styles.actionIconBtn}>
                               <Eye size={18} />
                             </Link>
@@ -460,5 +500,13 @@ export default function UnitsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function UnitsPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>Memuat data unit...</div>}>
+      <UnitsPageInner />
+    </Suspense>
   );
 }

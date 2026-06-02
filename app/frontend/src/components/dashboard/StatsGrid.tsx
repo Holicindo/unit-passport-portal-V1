@@ -9,6 +9,8 @@ export interface StatItem {
   max: number;
   icon: React.ElementType;
   accent: string;
+  onClick?: () => void;
+  tooltip?: string;
 }
 
 interface StatsGridProps {
@@ -25,14 +27,45 @@ interface StatsGridProps {
 }
 
 export default function StatsGrid({ items, data, loading }: StatsGridProps) {
-  // Use generic items if provided, otherwise fallback to legacy dashboard mapping
   const stats = items || [
-    { label: 'Active Units', value: loading ? '...' : String(data?.activeUnits ?? 514), max: 1000, icon: Package, accent: '#2E5BFF' },
-    { label: 'Under Warranty', value: loading ? '...' : String(data?.underWarranty ?? 384), max: 1000, icon: ShieldCheck, accent: '#00C48C' },
-    { label: 'Open Reports', value: loading ? '...' : String(data?.openReports ?? 12), max: 50, icon: ClipboardList, accent: '#FFB800' },
-    { label: 'Issues Detected', value: loading ? '...' : String(data?.issuesDetected ?? 3), max: 20, icon: AlertCircle, accent: '#FF6B00' },
-    { label: 'Mitra Resmi', value: loading ? '...' : String(data?.activePartners ?? 5), max: 20, icon: Users, accent: '#9D4EDD' },
-    { label: 'Kesehatan Armada', value: loading ? '...' : `${data?.fleetHealth ?? 99.4}%`, max: 100, icon: Activity, accent: '#00B4D8' },
+    {
+      label: 'Active Units',
+      value: loading ? '...' : String(data?.activeUnits ?? 0),
+      max: 1000, icon: Package, accent: '#2E5BFF',
+      onClick: () => window.location.href = '/units',
+    },
+    {
+      label: 'Under Warranty',
+      value: loading ? '...' : String(data?.underWarranty ?? 0),
+      max: 1000, icon: ShieldCheck, accent: '#00C48C',
+      onClick: () => window.location.href = '/units?filter=warranty',
+    },
+    {
+      label: 'Open Service Reports',
+      value: loading ? '...' : String(data?.openReports ?? 0),
+      max: 50, icon: ClipboardList, accent: '#FFB800',
+      tooltip: 'Total laporan servis yang tercatat di sistem (semua jenis form teknis: Inspection, Cooling, Rework, dll)',
+      onClick: () => window.location.href = '/reports/history',
+    },
+    {
+      label: 'Critical Issues',
+      value: loading ? '...' : String(data?.issuesDetected ?? 0),
+      max: 20, icon: AlertCircle, accent: '#FF6B00',
+      tooltip: 'Laporan Inspeksi & Analisis Masalah — unit yang dilaporkan mengalami kerusakan atau perlu tindak lanjut',
+      onClick: () => window.location.href = '/reports/history?type=ISSUE_ANALYSIS',
+    },
+    {
+      label: 'Mitra Resmi',
+      value: loading ? '...' : String(data?.activePartners ?? 0),
+      max: 20, icon: Users, accent: '#9D4EDD',
+      onClick: () => window.location.href = '/partners',
+    },
+    {
+      label: 'Kesehatan Armada',
+      value: loading ? '...' : `${data?.fleetHealth ?? 0}%`,
+      max: 100, icon: Activity, accent: '#00B4D8',
+      tooltip: `Skor kesehatan armada: 100% = semua unit aktif tanpa isu kritis. Dihitung dari: (1 - Critical Issues / Total Unit) × 100. Skor di bawah 90% perlu perhatian.`,
+    },
   ];
 
   return (
@@ -74,8 +107,10 @@ export default function StatsGrid({ items, data, loading }: StatsGridProps) {
               border: '1px solid var(--glass-border, rgba(0,31,63,0.08))',
               boxShadow: 'var(--glass-shadow, 0 8px 32px rgba(0,31,63,0.04))',
               transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-              cursor: 'default',
+              cursor: stat.onClick ? 'pointer' : 'default',
             }}
+            onClick={stat.onClick}
+            title={stat.tooltip}
             onMouseEnter={e => {
               (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-4px)';
               (e.currentTarget as HTMLDivElement).style.boxShadow = 'var(--glass-shadow-hover, 0 12px 48px rgba(0,31,63,0.08))';

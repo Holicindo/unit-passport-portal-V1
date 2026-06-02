@@ -1,11 +1,6 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  // Suppress the turbopack workspace root warning
-  turbopack: {
-    root: __dirname,
-  },
-
   // Allow images from external sources (backend)
   images: {
     remotePatterns: [

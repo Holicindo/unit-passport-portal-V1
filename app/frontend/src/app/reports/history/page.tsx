@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { reportApi } from '@/lib/api';
 import { Search, Filter, Eye, Printer, FileEdit, Trash2, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import styles from './history.module.css';
 
 const formTypes = [
@@ -21,13 +21,24 @@ const formTypes = [
 ];
 
 export default function ReportHistory() {
+  return (
+    <Suspense fallback={<div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>Memuat riwayat laporan...</div>}>
+      <ReportHistoryInner />
+    </Suspense>
+  );
+}
+
+function ReportHistoryInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [reports, setReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
-  const [typeFilter, setTypeFilter] = useState('');
+  
+  // Initialize typeFilter directly from URL query param
+  const [typeFilter, setTypeFilter] = useState(() => searchParams.get('type') || '');
   const [searchQuery, setSearchQuery] = useState('');
   
   const [selectedReports, setSelectedReports] = useState<string[]>([]);
@@ -99,6 +110,27 @@ export default function ReportHistory() {
           <h2 className={styles.title}>Riwayat Laporan</h2>
           <p className={styles.subtitle}>Daftar seluruh laporan digital yang telah diserahkan.</p>
         </div>
+        {typeFilter && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: '6px',
+              background: '#FF6B0015', color: '#FF6B00',
+              border: '1px solid #FF6B0040', borderRadius: '20px',
+              padding: '4px 12px', fontSize: '0.78rem', fontWeight: 600,
+            }}>
+              Filter: {formTypes.find(f => f.id === typeFilter)?.label || typeFilter}
+            </span>
+            <button
+              onClick={() => { setTypeFilter(''); router.push('/reports/history'); }}
+              style={{
+                background: 'none', border: '1px solid #cbd5e1', borderRadius: '8px',
+                padding: '4px 12px', fontSize: '0.78rem', color: '#64748b', cursor: 'pointer',
+              }}
+            >
+              Hapus Filter
+            </button>
+          </div>
+        )}
       </header>
 
       {/* Mobile Submenu Pill Tabs */}
