@@ -34,6 +34,8 @@ function UnitsPageInner() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(15);
   const [totalCount, setTotalCount] = useState(0);
+  const [cityFilter, setCityFilter] = useState('');
+  const [availableCities, setAvailableCities] = useState<string[]>([]);
 
   // Read ?filter=warranty from URL
   const filterParam = searchParams.get('filter');
@@ -110,6 +112,21 @@ function UnitsPageInner() {
     loadUnits(currentPage);
   }, [currentPage, loadUnits]);
 
+  // Extract available cities from loaded units
+  useEffect(() => {
+    if (units.length > 0) {
+      const cities = [...new Set(
+        units
+          .map((u: any) => u.current_client?.city)
+          .filter(Boolean)
+      )].sort() as string[];
+      setAvailableCities(prev => {
+        const merged = [...new Set([...prev, ...cities])].sort();
+        return merged;
+      });
+    }
+  }, [units]);
+
   // Client-side filter on the current page's data
   const today = new Date();
   const filteredUnits = units.filter(u => {
@@ -121,11 +138,14 @@ function UnitsPageInner() {
     const matchesWarranty = !isWarrantyFilter ||
       (u.warranty_expiry && new Date(u.warranty_expiry) >= today);
 
-    return matchesSearch && matchesWarranty;
+    const matchesCity = !cityFilter ||
+      (u.current_client?.city ?? '').toLowerCase() === cityFilter.toLowerCase();
+
+    return matchesSearch && matchesWarranty && matchesCity;
   });
 
-  const displayedUnits = (searchTerm || isWarrantyFilter ? filteredUnits : units).slice(0, pageSize);
-  const effectiveTotal = (searchTerm || isWarrantyFilter) ? filteredUnits.length : totalCount;
+  const displayedUnits = (searchTerm || isWarrantyFilter || cityFilter ? filteredUnits : units).slice(0, pageSize);
+  const effectiveTotal = (searchTerm || isWarrantyFilter || cityFilter) ? filteredUnits.length : totalCount;
   const totalPages = Math.max(1, Math.ceil(effectiveTotal / pageSize));
   const startRow = (currentPage - 1) * pageSize + 1;
   const endRow = Math.min(currentPage * pageSize, effectiveTotal);
@@ -177,17 +197,33 @@ function UnitsPageInner() {
               : 'Manage and track all registered units in the system.'}
           </p>
         </div>
-        {isWarrantyFilter && (
-          <button
-            onClick={() => router.push('/units')}
-            style={{
-              background: 'none', border: '1px solid #cbd5e1', borderRadius: '8px',
-              padding: '6px 14px', fontSize: '0.8rem', color: '#64748b',
-              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
-            }}
-          >
-            Hapus Filter
-          </button>
+        {(isWarrantyFilter || cityFilter) && (
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            {isWarrantyFilter && (
+              <button
+                onClick={() => router.push('/units')}
+                style={{
+                  background: 'none', border: '1px solid #cbd5e1', borderRadius: '8px',
+                  padding: '6px 14px', fontSize: '0.8rem', color: '#64748b',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
+                }}
+              >
+                Hapus Filter Garansi
+              </button>
+            )}
+            {cityFilter && (
+              <button
+                onClick={() => setCityFilter('')}
+                style={{
+                  background: 'none', border: '1px solid #cbd5e1', borderRadius: '8px',
+                  padding: '6px 14px', fontSize: '0.8rem', color: '#64748b',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
+                }}
+              >
+                Hapus Filter Kota: {cityFilter}
+              </button>
+            )}
+          </div>
         )}
       </header>
 
@@ -252,11 +288,10 @@ function UnitsPageInner() {
             <CustomSelect
               options={[
                 { value: '', label: 'City' },
-                { value: 'jakarta', label: 'Jakarta' },
-                { value: 'tangerang', label: 'Tangerang' }
+                ...availableCities.map(c => ({ value: c, label: c }))
               ]}
-              value=""
-              onChange={() => {}}
+              value={cityFilter}
+              onChange={(val) => { setCityFilter(val); setCurrentPage(1); }}
               placeholder="City"
             />
           </div>
@@ -289,6 +324,7 @@ function UnitsPageInner() {
                   <th>Model</th>
                   <th>Outlet Branch</th>
                   <th>Customer</th>
+                  <th>City</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -298,7 +334,7 @@ function UnitsPageInner() {
               ) : displayedUnits.length === 0 ? (
                 <tbody>
                   <tr>
-                    <td colSpan={5} className={styles.emptyState}>
+                    <td colSpan={6} className={styles.emptyState}>
                       No units found.
                     </td>
                   </tr>
@@ -322,6 +358,11 @@ function UnitsPageInner() {
                         </td>
                         <td className={styles.customerCell}>
                           {unit.current_client?.company_name || <span className={styles.noOwner}>—</span>}
+                        </td>
+                        <td>
+                          <span style={{ color: 'var(--color-space-grey)', fontSize: '0.85rem' }}>
+                            {unit.current_client?.city || '—'}
+                          </span>
                         </td>
                         <td>
                           <div className={styles.actions}>
