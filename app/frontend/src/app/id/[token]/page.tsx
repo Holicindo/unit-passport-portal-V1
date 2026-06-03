@@ -1431,119 +1431,197 @@ export default function QrPassportPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
 
                   {/* File-based items */}
-                  {[
-                    { label: 'Test Run Results', urlKey: 'test_run_url', desc: null, routePath: null, formType: null },
-                    { label: 'Cooling System Report', urlKey: 'cooling_report_url', desc: null, routePath: '/reports/cooling', formType: 'COOLING_1' },
-                    { label: 'Inspection Report', urlKey: 'inspection_url', desc: null, routePath: '/reports/inspection', formType: 'INSPECTION' },
-                    { label: 'ITR', urlKey: 'itr_url', desc: 'Inventory Transfer Request — surat pesanan produksi dari Jakarta. Di-upload oleh tim Bandung setelah menerima attachment email.', routePath: null, formType: null },
-                  ].map(({ label, urlKey, desc, routePath, formType }) => {
-                    const url = unit?.specs?.[urlKey];
-                    const isReportLink = routePath !== null;
-                    const isClickable = isReportLink ? true : !!url;
-                    const unitParam = unit?.id ? `?unit=${unit.id}` : '';
-                    // Count existing reports of this type
-                    const reportCount = formType ? unitReports.filter((r: any) => r.form_type === formType).length : 0;
+                  {(() => {
+                    // Cooling: count all 4 subtypes combined
+                    const coolingTypes = ['COOLING_1', 'COOLING_2', 'COOLING_3', 'COOLING_WARM'];
+                    const coolingLabels: Record<string, string> = {
+                      COOLING_1: '1 Suhu', COOLING_2: '2 Suhu (Cake & RTD)',
+                      COOLING_3: '3 Suhu (Cake, Ambient & RTD)', COOLING_WARM: 'Warm',
+                    };
+                    const coolingCountByType = coolingTypes.reduce((acc, t) => {
+                      acc[t] = unitReports.filter((r: any) => r.form_type === t).length;
+                      return acc;
+                    }, {} as Record<string, number>);
+                    const coolingTotal = Object.values(coolingCountByType).reduce((a, b) => a + b, 0);
+                    const coolingTooltip = coolingTotal > 0
+                      ? coolingTypes.filter(t => coolingCountByType[t] > 0)
+                          .map(t => `${coolingLabels[t]}: ${coolingCountByType[t]} laporan`)
+                          .join('\n')
+                      : 'Laporan belum dibuat';
 
-                    return (
-                      <button
-                        key={urlKey}
-                        type="button"
-                        onClick={() => {
-                          if (isReportLink) {
-                            if (reportCount === 1) {
-                              // Exactly 1 report — open directly
-                              const report = unitReports.find((r: any) => r.form_type === formType);
-                              if (report) router.push(`/reports/view/${report.id}`);
-                            } else if (reportCount > 1) {
-                              // Multiple reports — open filtered history
-                              router.push(`/reports/history?unit=${unit?.id || ''}&type=${formType}`);
-                            } else {
-                              // No reports — open new form
-                              router.push(`${routePath}${unitParam}`);
-                            }
-                          } else if (url) {
-                            window.open(typeof url === 'string' ? url : String(url), '_blank');
-                          }
-                        }}
-                        disabled={!isClickable}
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: '12px',
-                          padding: '12px 16px',
-                          background: isClickable
-                            ? 'linear-gradient(135deg, #2E5BFF 0%, #1a3fd4 100%)'
-                            : 'rgba(255,255,255,0.05)',
-                          borderRadius: '10px',
-                          cursor: isClickable ? 'pointer' : 'not-allowed',
-                          border: isClickable ? 'none' : '1px solid rgba(255,255,255,0.08)',
-                          width: '100%',
-                          textAlign: 'left',
-                          color: isClickable ? '#ffffff' : '#64748b',
-                          fontFamily: 'inherit',
-                          fontWeight: isClickable ? 700 : 500,
-                          fontSize: '0.88rem',
-                          transition: 'opacity 0.15s, transform 0.15s',
-                          opacity: isClickable ? 1 : 0.6,
-                          position: 'relative',
-                          boxShadow: isClickable ? '0 4px 12px rgba(46,91,255,0.3)' : 'none',
-                        }}
-                        onMouseEnter={e => { if (isClickable) { (e.currentTarget as HTMLButtonElement).style.opacity = '0.88'; (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)'; } }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '1'; (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'; }}
-                      >
-                        <FileText size={16} color={isClickable ? '#ffffff' : '#64748b'} style={{ flexShrink: 0 }} />
-                        <span style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1px' }}>
-                          <span>{label}</span>
-                          {/* Show file type hint for attachment items */}
-                          {!isReportLink && url && (() => {
-                            const urlStr = typeof url === 'string' ? url : String(url);
-                            const isPdf = /\.pdf(\?|$)/i.test(urlStr) || urlStr.toLowerCase().includes('pdf');
-                            return (
-                              <span style={{ fontSize: '0.68rem', fontWeight: 400, opacity: 0.75 }}>
-                                {isPdf ? 'PDF — klik untuk buka' : 'File gambar — klik untuk buka'}
-                              </span>
-                            );
-                          })()}
-                        </span>
-                        {/* Tooltip for ITR */}
-                        {desc && (
-                          <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}
-                            onMouseEnter={e => {
-                              e.stopPropagation();
-                              const tip = (e.currentTarget as HTMLElement).querySelector('.itr-tip') as HTMLElement;
-                              if (tip) tip.style.display = 'block';
+                    const items = [
+                      { label: 'Test Run Results', urlKey: 'test_run_url', desc: null, routePath: null, formType: null },
+                      { label: 'Cooling System Report', urlKey: 'cooling_report_url', desc: coolingTooltip, routePath: '/reports/cooling', formType: '__COOLING__' },
+                      { label: 'Inspection Report', urlKey: 'inspection_url', desc: null, routePath: '/reports/inspection', formType: 'INSPECTION' },
+                      { label: 'ITR', urlKey: 'itr_url', desc: 'Inventory Transfer Request — surat pesanan produksi dari Jakarta. Di-upload oleh tim Bandung setelah menerima attachment email.', routePath: null, formType: null },
+                    ];
+
+                    return items.map(({ label, urlKey, desc, routePath, formType }) => {
+                      const url = unit?.specs?.[urlKey];
+                      const isReportLink = routePath !== null;
+                      const isCooling = formType === '__COOLING__';
+                      const isClickable = isReportLink ? true : !!url;
+                      const unitParam = unit?.id ? `?unit=${unit.id}` : '';
+
+                      // Determine report count for badge
+                      const reportCount = isCooling
+                        ? coolingTotal
+                        : (formType ? unitReports.filter((r: any) => r.form_type === formType).length : 0);
+
+                      // Tooltip text for report-linked items
+                      const reportTooltip = isReportLink
+                        ? (isCooling ? coolingTooltip
+                          : reportCount > 0
+                            ? `${reportCount} laporan tersedia — klik untuk lihat`
+                            : 'Laporan belum dibuat — klik untuk buat baru')
+                        : null;
+
+                      return (
+                        <div key={urlKey} style={{ position: 'relative' }}
+                          title={reportTooltip || undefined}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (isReportLink) {
+                                if (isCooling) {
+                                  // For cooling: find first type that has reports, or open form
+                                  const firstType = coolingTypes.find(t => coolingCountByType[t] === 1);
+                                  const multiType = coolingTypes.find(t => coolingCountByType[t] > 1);
+                                  if (coolingTotal === 1 && firstType) {
+                                    const report = unitReports.find((r: any) => coolingTypes.includes(r.form_type));
+                                    if (report) router.push(`/reports/view/${report.id}`);
+                                  } else if (coolingTotal > 1) {
+                                    router.push(`/reports/history?unit=${unit?.id || ''}&type=COOLING_1`);
+                                  } else {
+                                    router.push(`/reports/cooling${unitParam}`);
+                                  }
+                                } else {
+                                  if (reportCount === 1) {
+                                    const report = unitReports.find((r: any) => r.form_type === formType);
+                                    if (report) router.push(`/reports/view/${report.id}`);
+                                  } else if (reportCount > 1) {
+                                    router.push(`/reports/history?unit=${unit?.id || ''}&type=${formType}`);
+                                  } else {
+                                    router.push(`${routePath}${unitParam}`);
+                                  }
+                                }
+                              } else if (url) {
+                                window.open(typeof url === 'string' ? url : String(url), '_blank');
+                              }
                             }}
-                            onMouseLeave={e => {
-                              const tip = (e.currentTarget as HTMLElement).querySelector('.itr-tip') as HTMLElement;
-                              if (tip) tip.style.display = 'none';
-                            }}
-                          >
-                            <HelpCircle size={14} color={isClickable ? 'rgba(255,255,255,0.7)' : '#64748b'} style={{ cursor: 'help' }} />
-                            <span className="itr-tip" style={{
-                              display: 'none',
-                              position: 'absolute',
-                              bottom: 'calc(100% + 8px)',
-                              right: 0,
-                              width: '240px',
-                              background: '#1e293b',
-                              color: '#e2e8f0',
-                              fontSize: '0.72rem',
-                              lineHeight: 1.5,
-                              padding: '8px 10px',
-                              borderRadius: '8px',
-                              boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
-                              zIndex: 9999,
-                              pointerEvents: 'none',
+                            disabled={!isClickable}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: '12px',
+                              padding: '12px 16px',
+                              background: isClickable
+                                ? 'linear-gradient(135deg, #2E5BFF 0%, #1a3fd4 100%)'
+                                : 'rgba(255,255,255,0.05)',
+                              borderRadius: '10px',
+                              cursor: isClickable ? 'pointer' : 'not-allowed',
+                              border: isClickable ? 'none' : '1px solid rgba(255,255,255,0.08)',
+                              width: '100%',
                               textAlign: 'left',
-                              fontWeight: 400,
-                              border: '1px solid rgba(255,255,255,0.1)',
-                            }}>
-                              {desc}
+                              color: isClickable ? '#ffffff' : '#64748b',
+                              fontFamily: 'inherit',
+                              fontWeight: isClickable ? 700 : 500,
+                              fontSize: '0.88rem',
+                              transition: 'opacity 0.15s, transform 0.15s',
+                              opacity: isClickable ? 1 : 0.6,
+                              position: 'relative',
+                              boxShadow: isClickable ? '0 4px 12px rgba(46,91,255,0.3)' : 'none',
+                            }}
+                            onMouseEnter={e => { if (isClickable) { (e.currentTarget as HTMLButtonElement).style.opacity = '0.88'; (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)'; } }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '1'; (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'; }}
+                          >
+                            <FileText size={16} color={isClickable ? '#ffffff' : '#64748b'} style={{ flexShrink: 0 }} />
+                            <span style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1px' }}>
+                              <span>{label}</span>
+                              {/* Subtitle */}
+                              {isReportLink && (
+                                <span style={{ fontSize: '0.68rem', fontWeight: 400, opacity: 0.8 }}>
+                                  {reportCount > 0
+                                    ? `${reportCount} laporan tersedia`
+                                    : 'Belum ada laporan — klik untuk buat baru'}
+                                </span>
+                              )}
+                              {/* File type hint for attachment items */}
+                              {!isReportLink && url && (() => {
+                                const urlStr = typeof url === 'string' ? url : String(url);
+                                const isPdf = /\.pdf(\?|$)/i.test(urlStr) || urlStr.toLowerCase().includes('pdf');
+                                return (
+                                  <span style={{ fontSize: '0.68rem', fontWeight: 400, opacity: 0.75 }}>
+                                    {isPdf ? 'PDF — klik untuk buka' : 'File gambar — klik untuk buka'}
+                                  </span>
+                                );
+                              })()}
+                              {!isReportLink && !url && (
+                                <span style={{ fontSize: '0.68rem', fontWeight: 400, opacity: 0.7 }}>
+                                  File belum diupload
+                                </span>
+                              )}
                             </span>
-                          </span>
-                        )}
-                        {/* Report link items: show count badge + arrow */}
-                        {isReportLink && (
-                          <>
-                            {reportCount > 0 && (
+
+                            {/* Cooling tooltip icon */}
+                            {isCooling && (
+                              <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}
+                                onMouseEnter={e => {
+                                  e.stopPropagation();
+                                  const tip = (e.currentTarget as HTMLElement).querySelector('.cooling-tip') as HTMLElement;
+                                  if (tip) tip.style.display = 'block';
+                                }}
+                                onMouseLeave={e => {
+                                  const tip = (e.currentTarget as HTMLElement).querySelector('.cooling-tip') as HTMLElement;
+                                  if (tip) tip.style.display = 'none';
+                                }}
+                              >
+                                <HelpCircle size={14} color="rgba(255,255,255,0.7)" style={{ cursor: 'help' }} />
+                                <span className="cooling-tip" style={{
+                                  display: 'none', position: 'absolute',
+                                  bottom: 'calc(100% + 8px)', right: 0, width: '220px',
+                                  background: '#1e293b', color: '#e2e8f0', fontSize: '0.72rem',
+                                  lineHeight: 1.6, padding: '8px 10px', borderRadius: '8px',
+                                  boxShadow: '0 4px 16px rgba(0,0,0,0.4)', zIndex: 9999,
+                                  pointerEvents: 'none', textAlign: 'left', fontWeight: 400,
+                                  border: '1px solid rgba(255,255,255,0.1)', whiteSpace: 'pre-line',
+                                }}>
+                                  {coolingTotal > 0
+                                    ? `Laporan tersedia:\n${coolingTypes.filter(t => coolingCountByType[t] > 0).map(t => `• ${coolingLabels[t]}: ${coolingCountByType[t]}`).join('\n')}`
+                                    : 'Belum ada laporan cooling.\nKlik untuk membuat baru.'}
+                                </span>
+                              </span>
+                            )}
+
+                            {/* ITR help tooltip */}
+                            {urlKey === 'itr_url' && (
+                              <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}
+                                onMouseEnter={e => {
+                                  e.stopPropagation();
+                                  const tip = (e.currentTarget as HTMLElement).querySelector('.itr-tip') as HTMLElement;
+                                  if (tip) tip.style.display = 'block';
+                                }}
+                                onMouseLeave={e => {
+                                  const tip = (e.currentTarget as HTMLElement).querySelector('.itr-tip') as HTMLElement;
+                                  if (tip) tip.style.display = 'none';
+                                }}
+                              >
+                                <HelpCircle size={14} color={isClickable ? 'rgba(255,255,255,0.7)' : '#64748b'} style={{ cursor: 'help' }} />
+                                <span className="itr-tip" style={{
+                                  display: 'none', position: 'absolute',
+                                  bottom: 'calc(100% + 8px)', right: 0, width: '240px',
+                                  background: '#1e293b', color: '#e2e8f0', fontSize: '0.72rem',
+                                  lineHeight: 1.5, padding: '8px 10px', borderRadius: '8px',
+                                  boxShadow: '0 4px 16px rgba(0,0,0,0.4)', zIndex: 9999,
+                                  pointerEvents: 'none', textAlign: 'left', fontWeight: 400,
+                                  border: '1px solid rgba(255,255,255,0.1)',
+                                }}>
+                                  {desc}
+                                </span>
+                              </span>
+                            )}
+
+                            {/* Badge count for report links */}
+                            {isReportLink && reportCount > 0 && (
                               <span style={{
                                 background: 'rgba(16,185,129,0.2)', color: '#10b981',
                                 borderRadius: '10px', padding: '1px 7px',
@@ -1552,15 +1630,13 @@ export default function QrPassportPage() {
                                 {reportCount}
                               </span>
                             )}
-                            <ExternalLink size={15} color="rgba(255,255,255,0.8)" style={{ flexShrink: 0 }} />
-                          </>
-                        )}
-                        {/* ITR: show status */}
-                        {!isReportLink && url && <ExternalLink size={15} color="rgba(255,255,255,0.8)" style={{ flexShrink: 0 }} />}
-                        {!isReportLink && !url && <span style={{ fontSize: '0.72rem', flexShrink: 0 }}>Belum ada</span>}
-                      </button>
-                    );
-                  })}
+                            {isReportLink && <ExternalLink size={15} color="rgba(255,255,255,0.8)" style={{ flexShrink: 0 }} />}
+                            {!isReportLink && url && <ExternalLink size={15} color="rgba(255,255,255,0.8)" style={{ flexShrink: 0 }} />}
+                          </button>
+                        </div>
+                      );
+                    });
+                  })()}
 
                   {/* Divider */}
                   <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', margin: '4px 0' }} />

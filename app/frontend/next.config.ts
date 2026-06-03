@@ -1,8 +1,5 @@
 import type { NextConfig } from 'next';
 
-const isLocal = process.env.NODE_ENV === 'development' && !process.env.NEXT_PUBLIC_USE_PROD_API;
-const backendUrl = isLocal ? 'http://localhost:3001' : 'http://54.206.113.217:3001';
-
 const nextConfig: NextConfig = {
   // Allow images from external sources (backend)
   images: {
@@ -22,12 +19,12 @@ const nextConfig: NextConfig = {
     ],
   },
   
-  // Proxy /api requests to the backend
+  // Proxy /api requests to the backend to bypass HTTPS -> HTTP Mixed Content Block
   async rewrites() {
     return [
       {
         source: '/api/:path*',
-        destination: `${backendUrl}/:path*`,
+        destination: 'http://54.206.113.217:3001/:path*',
       },
     ];
   },
