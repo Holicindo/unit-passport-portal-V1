@@ -285,7 +285,8 @@ export default function QrPassportPage() {
     setQcUploading(prev => ({ ...prev, [fieldKey]: true }));
     try {
       const { data } = await unitApi.uploadMedia([file]);
-      const uploadedUrl = data?.urls?.[0] || data?.[0] || '';
+      // Backend returns array of { url, key, originalName }
+      const uploadedUrl = data?.[0]?.url || data?.urls?.[0] || '';
       if (uploadedUrl) {
         handleEditChange(`specs.${fieldKey}`, uploadedUrl);
       } else {
@@ -304,7 +305,8 @@ export default function QrPassportPage() {
     try {
       const fileArray = Array.from(files);
       const { data } = await unitApi.uploadMedia(fileArray);
-      const urls: string[] = data?.urls || data || [];
+      // Backend returns array of { url, key, originalName }
+      const urls: string[] = Array.isArray(data) ? data.map((d: any) => d?.url || d).filter(Boolean) : (data?.urls || []);
       const existing = editData.specs?.photo_gallery
         ? editData.specs.photo_gallery.split(',').filter(Boolean)
         : [];
@@ -322,7 +324,8 @@ export default function QrPassportPage() {
     try {
       const fileArray = Array.from(files);
       const { data } = await unitApi.uploadMedia(fileArray);
-      const urls: string[] = data?.urls || data || [];
+      // Backend returns array of { url, key, originalName }
+      const urls: string[] = Array.isArray(data) ? data.map((d: any) => d?.url || d).filter(Boolean) : (data?.urls || []);
       const existing = editData.specs?.manuals_urls
         ? editData.specs.manuals_urls.split(',').filter(Boolean)
         : [];
