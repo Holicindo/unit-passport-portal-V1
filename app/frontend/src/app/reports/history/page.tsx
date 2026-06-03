@@ -37,8 +37,9 @@ function ReportHistoryInner() {
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   
-  // Initialize typeFilter directly from URL query param
+  // Initialize typeFilter & unitFilter directly from URL query params
   const [typeFilter, setTypeFilter] = useState(() => searchParams.get('type') || '');
+  const [unitFilter, setUnitFilter] = useState(() => searchParams.get('unit') || '');
   const [searchQuery, setSearchQuery] = useState('');
   
   const [selectedReports, setSelectedReports] = useState<string[]>([]);
@@ -50,7 +51,7 @@ function ReportHistoryInner() {
   const loadReports = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await reportApi.findAll(page, pageSize, typeFilter);
+      const { data } = await reportApi.findAll(page, pageSize, typeFilter, unitFilter);
       setReports(data.data || []);
       setTotalPages(data.meta?.last_page || 1);
     } catch (err) {
@@ -58,7 +59,7 @@ function ReportHistoryInner() {
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, typeFilter]);
+  }, [page, pageSize, typeFilter, unitFilter]);
 
   useEffect(() => {
     loadReports();
@@ -110,8 +111,18 @@ function ReportHistoryInner() {
           <h2 className={styles.title}>Riwayat Laporan</h2>
           <p className={styles.subtitle}>Daftar seluruh laporan digital yang telah diserahkan.</p>
         </div>
-        {typeFilter && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px' }}>
+          {unitFilter && (
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: '6px',
+              background: '#2E5BFF15', color: '#2E5BFF',
+              border: '1px solid #2E5BFF40', borderRadius: '20px',
+              padding: '4px 12px', fontSize: '0.78rem', fontWeight: 600,
+            }}>
+              Unit: {unitFilter}
+            </span>
+          )}
+          {typeFilter && (
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: '6px',
               background: '#FF6B0015', color: '#FF6B00',
@@ -120,17 +131,19 @@ function ReportHistoryInner() {
             }}>
               Filter: {formTypes.find(f => f.id === typeFilter)?.label || typeFilter}
             </span>
+          )}
+          {(typeFilter || unitFilter) && (
             <button
-              onClick={() => { setTypeFilter(''); router.push('/reports/history'); }}
+              onClick={() => { setTypeFilter(''); setUnitFilter(''); router.push('/reports/history'); }}
               style={{
                 background: 'none', border: '1px solid #cbd5e1', borderRadius: '8px',
                 padding: '4px 12px', fontSize: '0.78rem', color: '#64748b', cursor: 'pointer',
               }}
             >
-              Hapus Filter
+              Hapus Semua Filter
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </header>
 
       {/* Mobile Submenu Pill Tabs */}

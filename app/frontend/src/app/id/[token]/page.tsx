@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { unitApi } from '@/lib/api';
+import { unitApi, reportApi } from '@/lib/api';
 import { 
   ShieldAlert, Wrench, FileText, CheckCircle2, 
   ExternalLink, Phone, ArrowLeft, Loader2, RefreshCw, 
@@ -191,6 +191,10 @@ export default function QrPassportPage() {
   const [qcUploading, setQcUploading] = useState<Record<string, boolean>>({});
   const [photoGalleryUploading, setPhotoGalleryUploading] = useState(false);
 
+  // Unit reports — fetched once after unit loads, used to check which reports exist
+  const [unitReports, setUnitReports] = useState<any[]>([]);
+  const [manualsUploading, setManualsUploading] = useState(false);
+
   // Toast notification state
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
@@ -313,6 +317,24 @@ export default function QrPassportPage() {
     }
   };
 
+  const handleManualsUpload = async (files: FileList) => {
+    setManualsUploading(true);
+    try {
+      const fileArray = Array.from(files);
+      const { data } = await unitApi.uploadMedia(fileArray);
+      const urls: string[] = data?.urls || data || [];
+      const existing = editData.specs?.manuals_urls
+        ? editData.specs.manuals_urls.split(',').filter(Boolean)
+        : [];
+      const merged = [...existing, ...urls].join(',');
+      handleEditChange('specs.manuals_urls', merged);
+    } catch (err) {
+      showToast('Gagal mengupload file manuals. Coba lagi.', 'error');
+    } finally {
+      setManualsUploading(false);
+    }
+  };
+
   // Load user from localStorage (safe parse)
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -379,6 +401,19 @@ export default function QrPassportPage() {
       loadUnitData();
     }
   }, [token]);
+
+  // Load unit reports after unit data is available
+  useEffect(() => {
+    if (unit?.id) {
+      reportApi.findByUnit(unit.id)
+        .then(({ data }) => {
+          // backend may return array or paginated object
+          const list = Array.isArray(data) ? data : (data?.data || []);
+          setUnitReports(list);
+        })
+        .catch(() => setUnitReports([]));
+    }
+  }, [unit?.id]);
 
   // Load clients for Admin Transfer
   useEffect(() => {
@@ -1105,25 +1140,52 @@ export default function QrPassportPage() {
                       Laporan Test Run, Sistem Pendingin, dan Inspeksi dibuat melalui modul laporan. ITR adalah attachment email dari Jakarta yang di-upload oleh tim Bandung.
                     </p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      {/* Test Run Results — link ke history filter INSPECTION */}
+                      {/* Test Run Results — file upload (attachment), sama seperti ITR */}
                       <div>
                         <p style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-space-grey)', marginBottom: '4px' }}>
-                          Laporan Test Run
+                          Test Run Results
                         </p>
-                        <button
-                          type="button"
-                          onClick={() => router.push(`/reports/inspection?unit=${unit?.id || ''}`)}
-                          style={{
+                        {editData.specs?.test_run_url ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', color: '#10b981' }}>
+                            <CheckCircle2 size={14} /> File terupload
+                            <button
+                              type="button"
+                              onClick={() => window.open(editData.specs.test_run_url, '_blank')}
+                              style={{ background: 'none', border: 'none', color: '#8bb2ff', cursor: 'pointer', fontSize: '0.75rem', textDecoration: 'underline' }}
+                            >
+                              Lihat
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleEditChange('specs.test_run_url', '')}
+                              style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.75rem' }}
+                            >
+                              Hapus
+                            </button>
+                          </div>
+                        ) : (
+                          <label style={{
                             display: 'flex', alignItems: 'center', gap: '8px',
-                            background: 'rgba(46,91,255,0.1)', border: '1px solid rgba(46,91,255,0.3)',
-                            borderRadius: '8px', padding: '10px 14px', cursor: 'pointer',
-                            color: '#8bb2ff', fontSize: '0.82rem', fontFamily: 'inherit', width: '100%',
-                          }}
-                        >
-                          <FileText size={15} />
-                          Buka Form Inspection Report (QC)
-                          <ExternalLink size={13} style={{ marginLeft: 'auto', flexShrink: 0 }} />
-                        </button>
+                            border: '1px dashed rgba(255,255,255,0.2)', borderRadius: '8px',
+                            padding: '10px 14px', cursor: qcUploading['test_run_url'] ? 'not-allowed' : 'pointer',
+                            color: '#8f9bb3', fontSize: '0.82rem',
+                            background: 'rgba(255,255,255,0.02)',
+                            opacity: qcUploading['test_run_url'] ? 0.6 : 1,
+                          }}>
+                            <ImageIcon size={16} />
+                            {qcUploading['test_run_url'] ? 'Mengupload...' : 'Klik untuk upload file (PDF/JPG/PNG)'}
+                            <input
+                              type="file"
+                              accept=".pdf,.jpg,.jpeg,.png"
+                              style={{ display: 'none' }}
+                              disabled={qcUploading['test_run_url']}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleQcFileUpload('test_run_url', file);
+                              }}
+                            />
+                          </label>
+                        )}
                       </div>
 
                       {/* Cooling System Report — link ke halaman pilih tipe cooling */}
@@ -1133,15 +1195,61 @@ export default function QrPassportPage() {
                         </p>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                           {[
-                            { label: 'Cooling System Report 1 Suhu', path: '/reports/cooling' },
-                            { label: 'Cooling System Report 2 Suhu', path: '/reports/cooling2' },
-                            { label: 'Cooling System Report 3 Suhu', path: '/reports/cooling3' },
-                            { label: 'Cooling System Report Warm', path: '/reports/reportwarm' },
-                          ].map(({ label, path }) => (
+                            { label: 'Cooling System Report 1 Suhu', path: '/reports/cooling', type: 'COOLING_1' },
+                            { label: 'Cooling System Report 2 Suhu', path: '/reports/cooling2', type: 'COOLING_2' },
+                            { label: 'Cooling System Report 3 Suhu', path: '/reports/cooling3', type: 'COOLING_3' },
+                            { label: 'Cooling System Report Warm', path: '/reports/reportwarm', type: 'COOLING_WARM' },
+                          ].map(({ label, path, type }) => {
+                            const count = unitReports.filter((r: any) => r.form_type === type).length;
+                            return (
+                              <button
+                                key={path}
+                                type="button"
+                                onClick={() => {
+                                  if (count > 0) {
+                                    router.push(`/reports/history?unit=${unit?.id || ''}&type=${type}`);
+                                  } else {
+                                    router.push(`${path}?unit=${unit?.id || ''}`);
+                                  }
+                                }}
+                                style={{
+                                  display: 'flex', alignItems: 'center', gap: '8px',
+                                  background: 'rgba(46,91,255,0.1)', border: '1px solid rgba(46,91,255,0.3)',
+                                  borderRadius: '8px', padding: '10px 14px', cursor: 'pointer',
+                                  color: '#8bb2ff', fontSize: '0.82rem', fontFamily: 'inherit', width: '100%',
+                                }}
+                              >
+                                <FileText size={15} />
+                                {label}
+                                {count > 0 && (
+                                  <span style={{ marginLeft: '4px', background: 'rgba(16,185,129,0.2)', color: '#10b981', borderRadius: '10px', padding: '1px 6px', fontSize: '0.7rem', fontWeight: 700 }}>
+                                    {count}
+                                  </span>
+                                )}
+                                <ExternalLink size={13} style={{ marginLeft: 'auto', flexShrink: 0 }} />
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Inspection Report — link ke inspection */}
+                      <div>
+                        <p style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-space-grey)', marginBottom: '4px' }}>
+                          Laporan Inspeksi
+                        </p>
+                        {(() => {
+                          const count = unitReports.filter((r: any) => r.form_type === 'INSPECTION').length;
+                          return (
                             <button
-                              key={path}
                               type="button"
-                              onClick={() => router.push(`${path}?unit=${unit?.id || ''}`)}
+                              onClick={() => {
+                                if (count > 0) {
+                                  router.push(`/reports/history?unit=${unit?.id || ''}&type=INSPECTION`);
+                                } else {
+                                  router.push(`/reports/inspection?unit=${unit?.id || ''}`);
+                                }
+                              }}
                               style={{
                                 display: 'flex', alignItems: 'center', gap: '8px',
                                 background: 'rgba(46,91,255,0.1)', border: '1px solid rgba(46,91,255,0.3)',
@@ -1150,32 +1258,16 @@ export default function QrPassportPage() {
                               }}
                             >
                               <FileText size={15} />
-                              {label}
+                              {count > 0 ? `Lihat ${count} Inspection Report` : 'Buat Inspection Report (QC)'}
+                              {count > 0 && (
+                                <span style={{ background: 'rgba(16,185,129,0.2)', color: '#10b981', borderRadius: '10px', padding: '1px 6px', fontSize: '0.7rem', fontWeight: 700 }}>
+                                  {count}
+                                </span>
+                              )}
                               <ExternalLink size={13} style={{ marginLeft: 'auto', flexShrink: 0 }} />
                             </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Inspection Report — link ke issue-analysis */}
-                      <div>
-                        <p style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-space-grey)', marginBottom: '4px' }}>
-                          Laporan Inspeksi
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => router.push(`/reports/issue-analysis?unit=${unit?.id || ''}`)}
-                          style={{
-                            display: 'flex', alignItems: 'center', gap: '8px',
-                            background: 'rgba(46,91,255,0.1)', border: '1px solid rgba(46,91,255,0.3)',
-                            borderRadius: '8px', padding: '10px 14px', cursor: 'pointer',
-                            color: '#8bb2ff', fontSize: '0.82rem', fontFamily: 'inherit', width: '100%',
-                          }}
-                        >
-                          <FileText size={15} />
-                          Buka Form Inspeksi & Analisis Masalah
-                          <ExternalLink size={13} style={{ marginLeft: 'auto', flexShrink: 0 }} />
-                        </button>
+                          );
+                        })()}
                       </div>
 
                       {/* ITR — tetap upload file */}
@@ -1331,17 +1423,17 @@ export default function QrPassportPage() {
 
                   {/* File-based items */}
                   {[
-                    { label: 'Test Run Results', urlKey: 'test_run_url', desc: null, routePath: '/reports/inspection' },
-                    { label: 'Cooling System Report', urlKey: 'cooling_report_url', desc: null, routePath: '/reports/cooling' },
-                    { label: 'Inspection Report', urlKey: 'inspection_url', desc: null, routePath: '/reports/issue-analysis' },
-                    { label: 'ITR', urlKey: 'itr_url', desc: 'Inventory Transfer Request — surat pesanan produksi dari Jakarta. Di-upload oleh tim Bandung setelah menerima attachment email.', routePath: null },
-                  ].map(({ label, urlKey, desc, routePath }) => {
+                    { label: 'Test Run Results', urlKey: 'test_run_url', desc: null, routePath: null, formType: null },
+                    { label: 'Cooling System Report', urlKey: 'cooling_report_url', desc: null, routePath: '/reports/cooling', formType: 'COOLING_1' },
+                    { label: 'Inspection Report', urlKey: 'inspection_url', desc: null, routePath: '/reports/inspection', formType: 'INSPECTION' },
+                    { label: 'ITR', urlKey: 'itr_url', desc: 'Inventory Transfer Request — surat pesanan produksi dari Jakarta. Di-upload oleh tim Bandung setelah menerima attachment email.', routePath: null, formType: null },
+                  ].map(({ label, urlKey, desc, routePath, formType }) => {
                     const url = unit?.specs?.[urlKey];
-                    // For report-linked items: always clickable (go to form), show history count if has data
-                    // For ITR: only clickable if URL exists
                     const isReportLink = routePath !== null;
                     const isClickable = isReportLink ? true : !!url;
                     const unitParam = unit?.id ? `?unit=${unit.id}` : '';
+                    // Count existing reports of this type
+                    const reportCount = formType ? unitReports.filter((r: any) => r.form_type === formType).length : 0;
 
                     return (
                       <button
@@ -1349,7 +1441,12 @@ export default function QrPassportPage() {
                         type="button"
                         onClick={() => {
                           if (isReportLink) {
-                            router.push(`${routePath}${unitParam}`);
+                            // If reports exist for this type, go to filtered history; else open new form
+                            if (reportCount > 0) {
+                              router.push(`/reports/history?unit=${unit?.id || ''}&type=${formType}`);
+                            } else {
+                              router.push(`${routePath}${unitParam}`);
+                            }
                           } else if (url) {
                             window.open(url, '_blank');
                           }
@@ -1417,9 +1514,20 @@ export default function QrPassportPage() {
                             </span>
                           </span>
                         )}
-                        {/* Report link items: always show arrow */}
+                        {/* Report link items: show count badge + arrow */}
                         {isReportLink && (
-                          <ExternalLink size={15} color="rgba(255,255,255,0.8)" style={{ flexShrink: 0 }} />
+                          <>
+                            {reportCount > 0 && (
+                              <span style={{
+                                background: 'rgba(16,185,129,0.2)', color: '#10b981',
+                                borderRadius: '10px', padding: '1px 7px',
+                                fontSize: '0.7rem', fontWeight: 700, flexShrink: 0,
+                              }}>
+                                {reportCount}
+                              </span>
+                            )}
+                            <ExternalLink size={15} color="rgba(255,255,255,0.8)" style={{ flexShrink: 0 }} />
+                          </>
                         )}
                         {/* ITR: show status */}
                         {!isReportLink && url && <ExternalLink size={15} color="rgba(255,255,255,0.8)" style={{ flexShrink: 0 }} />}
@@ -1569,20 +1677,136 @@ export default function QrPassportPage() {
             </div>
             <div className={styles.mediaSingleItem} style={{ padding: '16px' }}>
               {editBlocks.manuals ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <EditField label="URL Diagram Sirkulasi Udara (Gambar/PDF)" value={editData.diagram_image_url || ''} onChange={(v) => handleEditChange('diagram_image_url', v)} placeholder="https://..." />
-                  <EditField label="URL User Manual PDF" value={editData.specs?.manual_url || ''} onChange={(v) => handleEditChange('specs.manual_url', v)} placeholder="https://..." />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <p style={{ fontSize: '0.75rem', color: '#64748b', lineHeight: 1.5 }}>
+                    Upload diagram sirkulasi udara, satu atau beberapa file (JPG, PNG, atau PDF).
+                  </p>
+
+                  {/* Existing manuals thumbnails */}
+                  {(() => {
+                    const urls = editData.specs?.manuals_urls
+                      ? editData.specs.manuals_urls.split(',').filter(Boolean)
+                      : [];
+                    return urls.length > 0 ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        {urls.map((url: string, idx: number) => {
+                          const isPdf = url.toLowerCase().includes('.pdf') || url.toLowerCase().includes('pdf');
+                          return (
+                            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                              <FileText size={14} color="#8bb2ff" style={{ flexShrink: 0 }} />
+                              <span style={{ flex: 1, fontSize: '0.78rem', color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {isPdf ? `Diagram PDF ${idx + 1}` : `Diagram Gambar ${idx + 1}`}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => window.open(url, '_blank')}
+                                style={{ background: 'none', border: 'none', color: '#8bb2ff', cursor: 'pointer', fontSize: '0.72rem', textDecoration: 'underline', flexShrink: 0 }}
+                              >
+                                Lihat
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const current = (editData.specs?.manuals_urls || '').split(',').filter(Boolean);
+                                  current.splice(idx, 1);
+                                  handleEditChange('specs.manuals_urls', current.join(','));
+                                }}
+                                style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.72rem', flexShrink: 0 }}
+                              >
+                                Hapus
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : null;
+                  })()}
+
+                  {/* Upload trigger */}
+                  <label style={{
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                    border: '1px dashed rgba(255,255,255,0.2)', borderRadius: '8px',
+                    padding: '10px 14px', cursor: manualsUploading ? 'not-allowed' : 'pointer',
+                    color: '#8f9bb3', fontSize: '0.82rem',
+                    background: 'rgba(255,255,255,0.02)',
+                    opacity: manualsUploading ? 0.6 : 1,
+                  }}>
+                    <ImageIcon size={16} />
+                    {manualsUploading ? 'Mengupload...' : 'Klik untuk upload diagram (bisa pilih banyak, JPG/PNG/PDF)'}
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png,.webp"
+                      multiple
+                      style={{ display: 'none' }}
+                      disabled={manualsUploading}
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files.length > 0) {
+                          handleManualsUpload(e.target.files);
+                        }
+                      }}
+                    />
+                  </label>
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <button className={styles.btnPrimary} style={{ justifyContent: 'space-between', padding: '12px 16px', background: 'rgba(255,255,255,0.05)', color: 'var(--color-primary-text)' }} onClick={() => setSelectedMedia('diagram')}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><BookOpen size={16}/> Diagram Sirkulasi Udara</span>
-                    <ExternalLink size={16} color="#8f9bb3" />
-                  </button>
-                  <button className={styles.btnPrimary} style={{ justifyContent: 'space-between', padding: '12px 16px', background: 'rgba(255,255,255,0.05)', color: 'var(--color-primary-text)' }} onClick={() => showToast('Membuka Buku Panduan Pengguna', 'info')}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><BookOpen size={16}/> User Manual</span>
-                    <ExternalLink size={16} color="#8f9bb3" />
-                  </button>
+                  {(() => {
+                    const urls = unit?.specs?.manuals_urls
+                      ? String(unit.specs.manuals_urls).split(',').filter(Boolean)
+                      : [];
+
+                    if (urls.length === 0) {
+                      return (
+                        <div style={{
+                          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                          padding: '32px 16px', gap: '10px',
+                          background: 'rgba(255,255,255,0.02)', borderRadius: '10px',
+                          border: '1px dashed rgba(255,255,255,0.1)',
+                        }}>
+                          <BookOpen size={28} color="#3d4f6e" />
+                          <p style={{ color: '#64748b', fontSize: '0.82rem', textAlign: 'center' }}>Belum ada diagram yang diupload</p>
+                          {isAdmin && (
+                            <p style={{ color: '#475569', fontSize: '0.72rem', textAlign: 'center' }}>Klik "Revise" untuk mengupload diagram</p>
+                          )}
+                        </div>
+                      );
+                    }
+
+                    return urls.map((url: string, idx: number) => {
+                      const isPdf = url.toLowerCase().includes('.pdf') || url.toLowerCase().includes('pdf');
+                      const isImage = /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(url);
+                      return (
+                        <div key={idx}>
+                          {isImage ? (
+                            <div
+                              onClick={() => window.open(url, '_blank')}
+                              style={{ cursor: 'pointer', borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}
+                            >
+                              <img
+                                src={url}
+                                alt={`Diagram ${idx + 1}`}
+                                style={{ width: '100%', display: 'block', objectFit: 'contain', maxHeight: '280px', background: '#0a0e1a' }}
+                              />
+                              <div style={{ padding: '8px 12px', background: 'rgba(255,255,255,0.03)', fontSize: '0.72rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <ImageIcon size={12} /> Diagram {idx + 1} — klik untuk buka penuh
+                              </div>
+                            </div>
+                          ) : (
+                            <button
+                              className={styles.btnPrimary}
+                              style={{ justifyContent: 'space-between', padding: '12px 16px', background: 'rgba(255,255,255,0.05)', color: 'var(--color-primary-text)' }}
+                              onClick={() => window.open(url, '_blank')}
+                            >
+                              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <FileText size={16} />
+                                {isPdf ? `Diagram PDF ${idx + 1}` : `File Diagram ${idx + 1}`}
+                              </span>
+                              <ExternalLink size={16} color="#8f9bb3" />
+                            </button>
+                          )}
+                        </div>
+                      );
+                    });
+                  })()}
                 </div>
               )}
             </div>
