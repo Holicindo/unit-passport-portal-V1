@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Patch, Param, Body, UseGuards, Request, Query, UploadedFiles, UseInterceptors } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiConsumes } from '@nestjs/swagger';
 import { FilesInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 import { UnitsService } from './units.service';
 import { StorageService } from '../storage/storage.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -131,8 +132,14 @@ export class UnitsController {
   @Post('upload-media')
   @ApiOperation({ summary: 'Admin: Upload unit media (test run photo, diagram)' })
   @ApiConsumes('multipart/form-data')
-  @UseInterceptors(FilesInterceptor('files', 2, { limits: { fileSize: 10 * 1024 * 1024 } }))
+  @UseInterceptors(FilesInterceptor('files', 10, {
+    storage: memoryStorage(),
+    limits: { fileSize: 20 * 1024 * 1024 },
+  }))
   async uploadMedia(@UploadedFiles() files: Express.Multer.File[]) {
+    if (!files || files.length === 0) {
+      return [];
+    }
     const results: { url: string; key: string; originalName: string }[] = [];
     for (const file of files) {
       const result = await this.storageService.uploadFile(file, 'unit-media');

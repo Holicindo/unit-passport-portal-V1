@@ -1462,7 +1462,7 @@ export default function QrPassportPage() {
                               router.push(`${routePath}${unitParam}`);
                             }
                           } else if (url) {
-                            window.open(url, '_blank');
+                            window.open(typeof url === 'string' ? url : String(url), '_blank');
                           }
                         }}
                         disabled={!isClickable}
@@ -1490,7 +1490,19 @@ export default function QrPassportPage() {
                         onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '1'; (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'; }}
                       >
                         <FileText size={16} color={isClickable ? '#ffffff' : '#64748b'} style={{ flexShrink: 0 }} />
-                        <span style={{ flex: 1 }}>{label}</span>
+                        <span style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1px' }}>
+                          <span>{label}</span>
+                          {/* Show file type hint for attachment items */}
+                          {!isReportLink && url && (() => {
+                            const urlStr = typeof url === 'string' ? url : String(url);
+                            const isPdf = /\.pdf(\?|$)/i.test(urlStr) || urlStr.toLowerCase().includes('pdf');
+                            return (
+                              <span style={{ fontSize: '0.68rem', fontWeight: 400, opacity: 0.75 }}>
+                                {isPdf ? 'PDF — klik untuk buka' : 'File gambar — klik untuk buka'}
+                              </span>
+                            );
+                          })()}
+                        </span>
                         {/* Tooltip for ITR */}
                         {desc && (
                           <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}
