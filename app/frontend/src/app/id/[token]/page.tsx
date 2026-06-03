@@ -1206,7 +1206,10 @@ export default function QrPassportPage() {
                                 key={path}
                                 type="button"
                                 onClick={() => {
-                                  if (count > 0) {
+                                  if (count === 1) {
+                                    const report = unitReports.find((r: any) => r.form_type === type);
+                                    if (report) router.push(`/reports/view/${report.id}`);
+                                  } else if (count > 1) {
                                     router.push(`/reports/history?unit=${unit?.id || ''}&type=${type}`);
                                   } else {
                                     router.push(`${path}?unit=${unit?.id || ''}`);
@@ -1244,7 +1247,10 @@ export default function QrPassportPage() {
                             <button
                               type="button"
                               onClick={() => {
-                                if (count > 0) {
+                                if (count === 1) {
+                                  const report = unitReports.find((r: any) => r.form_type === 'INSPECTION');
+                                  if (report) router.push(`/reports/view/${report.id}`);
+                                } else if (count > 1) {
                                   router.push(`/reports/history?unit=${unit?.id || ''}&type=INSPECTION`);
                                 } else {
                                   router.push(`/reports/inspection?unit=${unit?.id || ''}`);
@@ -1441,10 +1447,15 @@ export default function QrPassportPage() {
                         type="button"
                         onClick={() => {
                           if (isReportLink) {
-                            // If reports exist for this type, go to filtered history; else open new form
-                            if (reportCount > 0) {
+                            if (reportCount === 1) {
+                              // Exactly 1 report — open directly
+                              const report = unitReports.find((r: any) => r.form_type === formType);
+                              if (report) router.push(`/reports/view/${report.id}`);
+                            } else if (reportCount > 1) {
+                              // Multiple reports — open filtered history
                               router.push(`/reports/history?unit=${unit?.id || ''}&type=${formType}`);
                             } else {
+                              // No reports — open new form
                               router.push(`${routePath}${unitParam}`);
                             }
                           } else if (url) {
