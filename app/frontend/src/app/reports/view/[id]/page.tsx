@@ -22,6 +22,20 @@ export default function ReportView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Redirect CLIENT users to client portal report view
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('user');
+      if (raw) {
+        const user = JSON.parse(raw);
+        if (user?.role === 'CLIENT') {
+          router.replace(`/client-portal/reports/${id}`);
+          return;
+        }
+      }
+    } catch { /* ignore */ }
+  }, [id, router]);
+
   useEffect(() => {
     const fetchReport = async () => {
       try {

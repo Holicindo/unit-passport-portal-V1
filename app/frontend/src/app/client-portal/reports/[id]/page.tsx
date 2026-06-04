@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { reportApi, notificationApi } from '@/lib/api';
+import { useState, useEffect, useRef } from 'react';
+import { reportApi } from '@/lib/api';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Printer, FileDown, Camera, Loader2 } from 'lucide-react';
 import styles from '../../ClientPortal.module.css';
@@ -23,6 +23,43 @@ export default function ClientReportDetail() {
   const [report, setReport] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const reportWrapperRef = useRef<HTMLDivElement>(null);
+  const reportContainerRef = useRef<HTMLDivElement>(null);
+
+  // Scale report to fit mobile viewport — update on resize
+  useEffect(() => {
+    const applyScale = () => {
+      const wrapper = reportWrapperRef.current;
+      const container = reportContainerRef.current;
+      if (!wrapper || !container) return;
+      const isMobile = window.innerWidth <= 768;
+      if (isMobile) {
+        const availableWidth = window.innerWidth - 32; // account for 16px padding each side
+        const scale = availableWidth / 794;
+        wrapper.style.transform = `scale(${scale})`;
+        wrapper.style.transformOrigin = 'top left';
+        wrapper.style.width = '794px';
+        // Compensate container height so nothing is clipped
+        const scaledHeight = wrapper.scrollHeight * scale;
+        container.style.height = `${scaledHeight}px`;
+        container.style.overflow = 'hidden';
+      } else {
+        wrapper.style.transform = '';
+        wrapper.style.transformOrigin = '';
+        wrapper.style.width = '';
+        container.style.height = '';
+        container.style.overflow = '';
+      }
+    };
+
+    // Apply after template renders
+    const timeout = setTimeout(applyScale, 100);
+    window.addEventListener('resize', applyScale);
+    return () => {
+      clearTimeout(timeout);
+      window.removeEventListener('resize', applyScale);
+    };
+  }, [report]);
 
   useEffect(() => {
     const fetchReport = async () => {
@@ -116,65 +153,73 @@ export default function ClientReportDetail() {
 
   return (
     <div>
-      {/* Toolbar */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        marginBottom: '20px', flexWrap: 'wrap', gap: '12px',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      {/* Toolbar — stacked layout on mobile */}
+      <div style={{ marginBottom: '16px' }}>
+        {/* Row 1: back + report info */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
           <button
             onClick={() => router.back()}
             style={{
-              display: 'flex', alignItems: 'center', gap: '6px',
+              display: 'flex', alignItems: 'center',
               background: 'none', border: 'none',
               color: 'var(--brand-space-grey)', cursor: 'pointer',
               fontWeight: 600, fontFamily: 'var(--font-body)', fontSize: '0.875rem',
+              flexShrink: 0, padding: '4px 6px 4px 0',
             }}
           >
-            <ArrowLeft size={16} /> Kembali
+            <ArrowLeft size={18} />
           </button>
-          <div>
-            <div style={{ fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--brand-deep-navy)', fontSize: '0.9rem' }}>
-              LAPORAN QC — {report.id}
+          <div style={{ minWidth: 0 }}>
+            <div style={{
+              fontWeight: 700, fontFamily: 'var(--font-heading)',
+              color: 'var(--brand-deep-navy)', fontSize: '0.85rem',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}>
+              Laporan: {report.id}
             </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--brand-space-grey)', marginTop: '2px' }}>
-              Unit: {report.unit?.serial_number} · {report.unit?.model_name}
+            <div style={{ fontSize: '0.7rem', color: 'var(--brand-space-grey)', marginTop: '1px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {report.unit?.serial_number} · {report.unit?.model_name}
             </div>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
+        {/* Row 2: action buttons full width */}
+        <div style={{ display: 'flex', gap: '8px' }}>
           <button
             onClick={handlePrint}
             style={{
-              display: 'flex', alignItems: 'center', gap: '6px',
-              padding: '8px 16px', borderRadius: '8px',
+              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+              padding: '9px 12px', borderRadius: '8px',
               border: '1px solid var(--brand-border)',
               background: 'white', cursor: 'pointer',
-              fontFamily: 'var(--font-body)', fontSize: '0.85rem', fontWeight: 600,
+              fontFamily: 'var(--font-body)', fontSize: '0.82rem', fontWeight: 600,
               color: 'var(--brand-deep-navy)',
             }}
           >
-            <Printer size={15} /> Cetak / Print
+            <Printer size={14} /> Cetak / Print
           </button>
           <button
             onClick={handlePrint}
             style={{
-              display: 'flex', alignItems: 'center', gap: '6px',
-              padding: '8px 16px', borderRadius: '8px',
+              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+              padding: '9px 12px', borderRadius: '8px',
               border: 'none',
               background: 'var(--brand-cobalt-blue)', cursor: 'pointer',
-              fontFamily: 'var(--font-body)', fontSize: '0.85rem', fontWeight: 600,
+              fontFamily: 'var(--font-body)', fontSize: '0.82rem', fontWeight: 600,
               color: 'white',
             }}
           >
-            <FileDown size={15} /> Simpan PDF
+            <FileDown size={14} /> Simpan PDF
           </button>
         </div>
       </div>
 
-      {/* Report preview */}
-      <div id="report-print-area" style={{ background: 'white', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
-        {renderTemplate()}
+      {/* Report preview — scaled to fit mobile screen, no horizontal scroll */}
+      <div style={{ background: 'white', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
+        <div ref={reportContainerRef} style={{ position: 'relative' }}>
+          <div id="report-print-area" ref={reportWrapperRef} className="reportScaleWrapper">
+            {renderTemplate()}
+          </div>
+        </div>
 
         {/* Photo documentation */}
         {report.photo_urls && report.photo_urls.length > 0 && report.form_type !== 'COMMISSIONING' && (
@@ -210,8 +255,24 @@ export default function ClientReportDetail() {
         @media print {
           .photoContainerPrintExclude { display: none !important; }
           nav, header, footer, aside { display: none !important; }
+          .reportScaleWrapper { transform: none !important; width: auto !important; }
         }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        /* Mobile: scale A4 template to fit viewport width */
+        @media (max-width: 768px) {
+          .reportScaleWrapper {
+            /* A4 content is ~794px wide. Scale it to viewport width */
+            transform-origin: top left;
+            transform: scale(calc((100vw - 32px) / 794));
+            width: 794px;
+            /* height collapses because transform doesn't affect layout flow */
+            /* Use JS-based height or padding-bottom trick via CSS custom property */
+          }
+          .reportScaleWrapper + .scaleHeightCompensator {
+            display: block;
+          }
+        }
       ` }} />
     </div>
   );

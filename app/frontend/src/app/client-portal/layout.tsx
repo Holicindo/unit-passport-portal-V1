@@ -12,9 +12,11 @@ import {
   Search,
   LogOut,
   User,
+  X,
+  ChevronRight,
 } from 'lucide-react';
 import styles from './ClientPortal.module.css';
-import { notificationApi } from '@/lib/api';
+import { notificationApi, unitApi } from '@/lib/api';
 
 // ── Holicindo Logo SVG (tidak diubah sesuai permintaan) ──
 function HolicLogo({ size = 20 }: { size?: number }) {
@@ -101,9 +103,17 @@ export default function ClientPortalLayout({ children }: { children: React.React
   const [user, setUser]               = useState<any>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notifCount, setNotifCount]   = useState(0);
+  const [notifPanelOpen, setNotifPanelOpen] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [searchOpen, setSearchOpen]   = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [fleet, setFleet]             = useState<any[]>([]);
   const router      = useRouter();
   const pathname    = usePathname();
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchRef   = useRef<HTMLDivElement>(null);
+  const notifRef    = useRef<HTMLDivElement>(null);
 
   // Baca user dari localStorage — data sesuai yang didaftarkan
   useEffect(() => {
@@ -132,10 +142,36 @@ export default function ClientPortalLayout({ children }: { children: React.React
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setDropdownOpen(false);
       }
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setSearchOpen(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifPanelOpen(false);
+      }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
+
+  // Load fleet for search
+  useEffect(() => {
+    if (!user) return;
+    unitApi.findMyFleet()
+      .then(({ data }) => setFleet(data || []))
+      .catch(() => {});
+  }, [user]);
+
+  // Search filter
+  useEffect(() => {
+    if (!searchQuery.trim()) { setSearchResults([]); return; }
+    const q = searchQuery.toLowerCase();
+    const results = fleet.filter(u =>
+      u.serial_number?.toLowerCase().includes(q) ||
+      u.model_name?.toLowerCase().includes(q) ||
+      u.current_client?.city?.toLowerCase().includes(q)
+    ).slice(0, 6);
+    setSearchResults(results);
+  }, [searchQuery, fleet]);
 
   // Poll notifikasi setiap 60 detik
   useEffect(() => {
@@ -144,6 +180,7 @@ export default function ClientPortalLayout({ children }: { children: React.React
       try {
         const { data } = await notificationApi.getAlerts();
         const alerts = Array.isArray(data) ? data : (data?.data || []);
+        setNotifications(alerts);
         const unread = alerts.filter((n: any) => !n.is_read).length;
         setNotifCount(unread);
       } catch { /* silently ignore */ }
@@ -201,14 +238,152 @@ export default function ClientPortalLayout({ children }: { children: React.React
         {/* Kanan: Search + Notif + Avatar */}
         <div className={styles.navRight}>
 
-          <button className={styles.navIconBtn} aria-label="Cari">
-            <Search size={18} />
-          </button>
+          {/* Search */}
+          <div ref={searchRef} style={{ position: 'relative' }}>
+            <button
+              className={styles.navIconBtn}
+              aria-label="Cari"
+              onClick={() => { setSearchOpen(v => !v); setNotifPanelOpen(false); setDropdownOpen(false); }}
+              style={{ background: searchOpen ? 'var(--brand-light-grey)' : undefined }}
+            >
+              <Search size={18} />
+            </button>
+            {searchOpen && (
+              <div style={{
+                position: 'absolute', top: 'calc(100% + 8px)', right: 0,
+                width: '320px', background: 'white', border: '1px solid var(--brand-border)',
+                borderRadius: '12px', boxShadow: '0 8px 24px rgba(0,31,63,0.12)',
+                zIndex: 300, overflow: 'hidden',
+              }}>
+                <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--brand-light-grey)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Search size={15} color="var(--brand-space-grey)" style={{ flexShrink: 0 }} />
+                  <input
+                    autoFocus
+                    type="text"
+                    placeholder="Cari serial number atau model..."
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    style={{
+                      flex: 1, border: 'none', outline: 'none',
+                      fontSize: '0.875rem', fontFamily: 'var(--font-body)',
+                      color: 'var(--brand-deep-navy)', background: 'transparent',
+                    }}
+                  />
+                  {searchQuery && (
+                    <button onClick={() => setSearchQuery('')} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--brand-space-grey)', display: 'flex' }}>
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+                {searchQuery && (
+                  <div>
+                    {searchResults.length === 0 ? (
+                      <div style={{ padding: '20px', textAlign: 'center', color: 'var(--brand-space-grey)', fontSize: '0.82rem', fontFamily: 'var(--font-body)' }}>
+                        Tidak ada unit ditemukan
+                      </div>
+                    ) : (
+                      searchResults.map(u => (
+                        <button
+                          key={u.id}
+                          onClick={() => { router.push(`/client-portal/units/${u.id}`); setSearchOpen(false); setSearchQuery(''); }}
+                          style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                            width: '100%', padding: '12px 16px', border: 'none',
+                            background: 'transparent', cursor: 'pointer', textAlign: 'left',
+                            borderBottom: '1px solid var(--brand-light-grey)',
+                          }}
+                          onMouseEnter={e => (e.currentTarget.style.background = 'var(--brand-light-grey)')}
+                          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                        >
+                          <div>
+                            <div style={{ fontWeight: 700, fontSize: '0.875rem', color: 'var(--brand-deep-navy)', fontFamily: 'var(--font-heading)' }}>
+                              {u.serial_number}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--brand-space-grey)', fontFamily: 'var(--font-body)' }}>
+                              {u.model_name} · {u.current_client?.city || '—'}
+                            </div>
+                          </div>
+                          <ChevronRight size={14} color="var(--brand-space-grey)" />
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+                {!searchQuery && (
+                  <div style={{ padding: '16px', textAlign: 'center', color: 'var(--brand-space-grey)', fontSize: '0.78rem', fontFamily: 'var(--font-body)' }}>
+                    Ketik untuk mencari unit di fleet Anda
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
-          <button className={styles.navIconBtn} aria-label="Notifikasi" style={{ position: 'relative' }}>
-            <Bell size={18} />
-            {notifCount > 0 && <span className={styles.notifDot} />}
-          </button>
+          {/* Notifikasi */}
+          <div ref={notifRef} style={{ position: 'relative' }}>
+            <button
+              className={styles.navIconBtn}
+              aria-label="Notifikasi"
+              onClick={() => { setNotifPanelOpen(v => !v); setSearchOpen(false); setDropdownOpen(false); }}
+              style={{ position: 'relative' }}
+            >
+              <Bell size={18} />
+              {notifCount > 0 && (
+                <span style={{
+                  position: 'absolute', top: '6px', right: '6px',
+                  width: '8px', height: '8px', borderRadius: '50%',
+                  background: 'var(--brand-safety-orange)',
+                  border: '2px solid white',
+                }} />
+              )}
+            </button>
+            {notifPanelOpen && (
+              <div style={{
+                position: 'absolute', top: 'calc(100% + 8px)', right: 0,
+                width: '300px', background: 'white', border: '1px solid var(--brand-border)',
+                borderRadius: '12px', boxShadow: '0 8px 24px rgba(0,31,63,0.12)',
+                zIndex: 300, overflow: 'hidden',
+              }}>
+                <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--brand-light-grey)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--brand-deep-navy)', fontFamily: 'var(--font-heading)' }}>
+                    Notifikasi {notifCount > 0 && <span style={{ background: 'var(--brand-safety-orange)', color: 'white', borderRadius: '20px', padding: '1px 7px', fontSize: '0.7rem' }}>{notifCount}</span>}
+                  </span>
+                  <button onClick={() => setNotifPanelOpen(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--brand-space-grey)', display: 'flex' }}>
+                    <X size={15} />
+                  </button>
+                </div>
+                {notifications.length === 0 ? (
+                  <div style={{ padding: '28px', textAlign: 'center', color: 'var(--brand-space-grey)', fontSize: '0.82rem', fontFamily: 'var(--font-body)' }}>
+                    Tidak ada notifikasi
+                  </div>
+                ) : (
+                  <div style={{ maxHeight: '320px', overflowY: 'auto' }}>
+                    {notifications.map((n: any) => (
+                      <div
+                        key={n.id}
+                        style={{
+                          padding: '12px 16px', borderBottom: '1px solid var(--brand-light-grey)',
+                          background: n.is_read ? 'transparent' : 'rgba(46,91,255,0.04)',
+                          cursor: 'pointer',
+                        }}
+                        onClick={() => {
+                          notificationApi.markAsRead(n.id).catch(() => {});
+                          setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, is_read: true } : x));
+                          setNotifCount(c => Math.max(0, c - 1));
+                        }}
+                      >
+                        <div style={{ fontSize: '0.82rem', color: 'var(--brand-deep-navy)', fontFamily: 'var(--font-body)', lineHeight: 1.5 }}>
+                          {n.message || n.title || 'Notifikasi baru'}
+                        </div>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--brand-space-grey)', marginTop: '4px', fontFamily: 'var(--font-body)' }}>
+                          {n.created_at ? new Date(n.created_at).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Avatar + Dropdown */}
           <div className={styles.userDropdown} ref={dropdownRef}>
@@ -216,7 +391,7 @@ export default function ClientPortalLayout({ children }: { children: React.React
               name={displayName}
               photoUrl={photoUrl}
               size={42}
-              onClick={() => setDropdownOpen(v => !v)}
+              onClick={() => { setDropdownOpen(v => !v); setSearchOpen(false); setNotifPanelOpen(false); }}
             />
 
             {dropdownOpen && (

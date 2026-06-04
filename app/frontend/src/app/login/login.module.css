@@ -535,18 +535,19 @@
   }
 
   .logoMark {
-    width: 54px;
-    height: 54px;
-    margin-bottom: 8px;
+    width: 80px;
+    height: 80px;
+    margin-bottom: 12px;
   }
 
   .brandName {
-    font-size: 0.95rem;
-    letter-spacing: 0.2em;
+    font-size: 1.6rem;
+    letter-spacing: 0.25em;
   }
 
   .brandTagline {
-    font-size: 0.6rem;
+    font-size: 0.85rem;
+    letter-spacing: 0.18em;
   }
 
   /* ── Form Area Bottom Sheet ── */
