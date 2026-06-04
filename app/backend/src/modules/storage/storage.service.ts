@@ -19,6 +19,7 @@ export class StorageService {
     this.bucketName = this.configService.get<string>('AWS_S3_BUCKET')?.trim() || '';
 
     if (accessKeyId && secretAccessKey && this.bucketName) {
+      console.log(`[StorageService] S3 enabled. Bucket: ${this.bucketName}, Region: ${this.configService.get('AWS_REGION')}, KeyId: ${accessKeyId.substring(0, 8)}...`);
       this.s3Client = new S3Client({
         region: this.configService.get<string>('AWS_REGION') || 'ap-southeast-1',
         credentials: { accessKeyId, secretAccessKey },
@@ -51,7 +52,18 @@ export class StorageService {
       }
       const filePath = path.join(uploadDir, fileName);
       fs.writeFileSync(filePath, file.buffer);
-      
+
+      // Verify the file was actually written to disk
+      if (!fs.existsSync(filePath)) {
+        throw new Error(`File gagal disimpan ke disk: ${filePath}`);
+      }
+      const writtenSize = fs.statSync(filePath).size;
+      if (writtenSize === 0) {
+        fs.unlinkSync(filePath);
+        throw new Error(`File ditulis tapi kosong (0 bytes): ${filePath}`);
+      }
+
+      console.log(`[StorageService] File saved: ${filePath} (${writtenSize} bytes)`);
       const url = `http://localhost:3001/uploads/${folder}/${fileName}`;
       return { url, key };
     }

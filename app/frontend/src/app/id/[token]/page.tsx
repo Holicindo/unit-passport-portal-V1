@@ -381,6 +381,23 @@ export default function QrPassportPage() {
       const uploadedUrl = data?.[0]?.url || data?.urls?.[0] || '';
       if (uploadedUrl) {
         handleEditChange(`specs.${fieldKey}`, uploadedUrl);
+
+        // Auto-save to database immediately after upload — don't wait for manual Save
+        if (unit?.id) {
+          // Use editData.specs if available (has any unsaved changes), otherwise fall back to unit.specs
+          const baseSpecs = (editData.specs && Object.keys(editData.specs).length > 0)
+            ? { ...editData.specs }
+            : (unit?.specs ? { ...unit.specs } : {});
+          baseSpecs[fieldKey] = uploadedUrl;
+          try {
+            await unitApi.update(unit.id, { specs: baseSpecs });
+            showToast('File berhasil diupload dan disimpan.', 'success');
+            loadUnitData();
+          } catch (saveErr: any) {
+            console.error('Auto-save after upload failed', saveErr);
+            showToast('File terupload tapi gagal disimpan ke unit. Klik Simpan manual.', 'info');
+          }
+        }
       } else {
         showToast('Upload berhasil tapi URL tidak ditemukan.', 'info');
       }
