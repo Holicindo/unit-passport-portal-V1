@@ -14,6 +14,7 @@ import {
   User,
 } from 'lucide-react';
 import styles from './ClientPortal.module.css';
+import { notificationApi } from '@/lib/api';
 
 // ── Holicindo Logo SVG (tidak diubah sesuai permintaan) ──
 function HolicLogo({ size = 20 }: { size?: number }) {
@@ -99,7 +100,7 @@ function UserAvatar({
 export default function ClientPortalLayout({ children }: { children: React.ReactNode }) {
   const [user, setUser]               = useState<any>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [notifCount]                  = useState(0);
+  const [notifCount, setNotifCount]   = useState(0);
   const router      = useRouter();
   const pathname    = usePathname();
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -135,6 +136,22 @@ export default function ClientPortalLayout({ children }: { children: React.React
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
+
+  // Poll notifikasi setiap 60 detik
+  useEffect(() => {
+    if (!user) return;
+    const fetchNotif = async () => {
+      try {
+        const { data } = await notificationApi.getAlerts();
+        const alerts = Array.isArray(data) ? data : (data?.data || []);
+        const unread = alerts.filter((n: any) => !n.is_read).length;
+        setNotifCount(unread);
+      } catch { /* silently ignore */ }
+    };
+    fetchNotif();
+    const interval = setInterval(fetchNotif, 60_000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');

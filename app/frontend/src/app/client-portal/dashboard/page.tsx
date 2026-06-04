@@ -145,10 +145,20 @@ export default function ClientDashboard() {
     const fetchData = async () => {
       try {
         const { data: fleetData } = await unitApi.findMyFleet();
-        setFleet(fleetData || []);
+        const fleet = fleetData || [];
+        setFleet(fleet);
+        // Fetch service logs for each unit (max first 3 units to avoid too many requests)
         try {
-          const { data: logsData } = await serviceLogApi.findAll(1, 5);
-          setRecentLogs(logsData?.data || logsData || []);
+          const logsPromises = fleet.slice(0, 3).map((u: any) =>
+            serviceLogApi.findByUnit(u.id).then(r => r.data || []).catch(() => [])
+          );
+          const logsArrays = await Promise.all(logsPromises);
+          const allLogs = logsArrays.flat();
+          // Sort by service_date descending and take top 5
+          const sorted = allLogs
+            .sort((a: any, b: any) => new Date(b.service_date || 0).getTime() - new Date(a.service_date || 0).getTime())
+            .slice(0, 5);
+          setRecentLogs(sorted);
         } catch { /* log servis opsional */ }
       } catch (err) {
         console.error('Gagal memuat data fleet:', err);
