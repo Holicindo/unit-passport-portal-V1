@@ -29,6 +29,19 @@ export default function ClientProfile() {
     } catch {}
   }, []);
 
+  // Sync form values whenever user data changes (preserves data when entering edit mode)
+  useEffect(() => {
+    if (user) {
+      setForm(f => ({
+        name: f.name || user.name || '',
+        email: f.email || user.email || '',
+        phone: f.phone || user.phone || '',
+        company_name: f.company_name || user.company_name || '',
+        city: f.city || user.city || '',
+      }));
+    }
+  }, [user]);
+
   const handleSave = () => {
     if (!user) return;
     const updated = { ...user, ...form };
@@ -37,6 +50,20 @@ export default function ClientProfile() {
     setEditing(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
+  };
+
+  const handleCancel = () => {
+    // Reset form to current user values without losing what was there
+    if (user) {
+      setForm({
+        name: user.name || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        company_name: user.company_name || '',
+        city: user.city || '',
+      });
+    }
+    setEditing(false);
   };
 
   const handleLogout = () => {
@@ -98,7 +125,7 @@ export default function ClientProfile() {
           </div>
 
           {/* Info fields */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {[
               { icon: User, label: 'Nama Lengkap', key: 'name', value: user?.name },
               { icon: Mail, label: 'Email', key: 'email', value: user?.email },
@@ -106,28 +133,45 @@ export default function ClientProfile() {
               { icon: Building2, label: 'Perusahaan', key: 'company_name', value: user?.company_name },
               { icon: MapPin, label: 'Kota', key: 'city', value: user?.city },
             ].map(({ icon: Icon, label, key, value }) => (
-              <div key={key} className={styles.infoRow}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '130px' }}>
-                  <Icon size={15} color="var(--brand-space-grey)" style={{ flexShrink: 0 }} />
-                  <span className={styles.infoLabel}>{label}</span>
+              <div key={key}>
+                {/* Label row */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                  <Icon size={13} color="var(--brand-space-grey)" style={{ flexShrink: 0 }} />
+                  <span style={{
+                    fontSize: '0.72rem', fontWeight: 700,
+                    color: 'var(--brand-space-grey)', textTransform: 'uppercase',
+                    letterSpacing: '0.05em', fontFamily: 'var(--font-heading)',
+                  }}>
+                    {label}
+                  </span>
                 </div>
+                {/* Value / Input row */}
                 {editing ? (
                   <input
                     type={key === 'email' ? 'email' : 'text'}
                     value={form[key as keyof typeof form]}
                     onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
                     style={{
-                      flex: 1, border: '1px solid var(--brand-border)', borderRadius: '6px',
-                      padding: '6px 10px', fontSize: '0.875rem', fontFamily: 'var(--font-body)',
+                      width: '100%', border: '1px solid var(--brand-border)', borderRadius: '8px',
+                      padding: '9px 12px', fontSize: '0.875rem', fontFamily: 'var(--font-body)',
                       color: 'var(--brand-deep-navy)', outline: 'none',
-                      background: 'var(--brand-light-grey)',
+                      background: key === 'email' ? 'var(--brand-light-grey)' : 'var(--brand-optic-white)',
+                      boxSizing: 'border-box',
+                      cursor: key === 'email' ? 'not-allowed' : 'text',
                     }}
                     disabled={key === 'email'}
                   />
                 ) : (
-                  <span className={styles.infoValue} style={{ textAlign: 'right' }}>
-                    {value || <span style={{ color: 'var(--brand-space-grey)', fontWeight: 400 }}>—</span>}
-                  </span>
+                  <div style={{
+                    padding: '9px 12px', borderRadius: '8px',
+                    background: 'var(--brand-light-grey)',
+                    fontSize: '0.875rem', fontWeight: 600,
+                    color: value ? 'var(--brand-deep-navy)' : 'var(--brand-space-grey)',
+                    fontFamily: 'var(--font-body)',
+                    minHeight: '38px', display: 'flex', alignItems: 'center',
+                  }}>
+                    {value || '—'}
+                  </div>
                 )}
               </div>
             ))}
@@ -140,7 +184,7 @@ export default function ClientProfile() {
                 <button onClick={handleSave} className={styles.btnPrimary} style={{ flex: 1 }}>
                   <Save size={15} /> Simpan Perubahan
                 </button>
-                <button onClick={() => setEditing(false)} className={styles.btnSecondary}>
+                <button onClick={handleCancel} className={styles.btnSecondary}>
                   <X size={15} />
                 </button>
               </>
