@@ -895,7 +895,26 @@ a {
   color: #fff;
 }
 
+/* ============================================================
+   STAT TOOLTIP CUSTOM STYLES
+   ============================================================ */
+.stat-tip-anchor {
+  position: relative;
+}
 
+.stat-tip-anchor:hover .stat-tip-bubble {
+  display: block !important;
+  animation: tooltipFadeIn 0.2s ease-out forwards;
+}
+
+.stat-tip-anchor:hover .stat-tip-icon {
+  color: var(--color-cobalt-blue, #2E5BFF) !important;
+}
+
+@keyframes tooltipFadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 /* ============================================================
    PRINT STYLES — Hide all UI chrome, show only report content

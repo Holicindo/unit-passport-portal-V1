@@ -117,7 +117,7 @@ function UnitsPageInner() {
     if (units.length > 0) {
       const cities = [...new Set(
         units
-          .map((u: any) => u.current_client?.city)
+          .map((u: any) => u.city || u.current_client?.city)
           .filter(Boolean)
       )].sort() as string[];
       setAvailableCities(prev => {
@@ -139,7 +139,7 @@ function UnitsPageInner() {
       (u.warranty_expiry && new Date(u.warranty_expiry) >= today);
 
     const matchesCity = !cityFilter ||
-      (u.current_client?.city ?? '').toLowerCase() === cityFilter.toLowerCase();
+      (u.city || u.current_client?.city || '').toLowerCase() === cityFilter.toLowerCase();
 
     return matchesSearch && matchesWarranty && matchesCity;
   });
@@ -353,7 +353,7 @@ function UnitsPageInner() {
                         <td className={styles.modelCell}>{unit.model_name}</td>
                         <td>
                           <span style={{ color: 'var(--color-space-grey)', fontSize: '0.85rem' }}>
-                            {unit.current_client?.outlet_branch || '—'}
+                            {unit.outlet_branch || '—'}
                           </span>
                         </td>
                         <td className={styles.customerCell}>
@@ -361,7 +361,7 @@ function UnitsPageInner() {
                         </td>
                         <td>
                           <span style={{ color: 'var(--color-space-grey)', fontSize: '0.85rem' }}>
-                            {unit.current_client?.city || '—'}
+                            {unit.city || '—'}
                           </span>
                         </td>
                         <td>

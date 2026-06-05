@@ -403,6 +403,66 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
+/* ── Stats Card Tooltip ── */
+.statTooltipAnchor {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  z-index: 10;
+}
+
+.statTooltipIcon {
+  color: rgba(139, 178, 255, 0.65);
+  cursor: help;
+  transition: color 0.2s;
+  display: block;
+}
+
+.statTooltipAnchor:hover .statTooltipIcon {
+  color: #8bb2ff;
+}
+
+.statTooltip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  width: 210px;
+  background: #0f1b35;
+  color: #e2e8f0;
+  font-size: 0.72rem;
+  line-height: 1.55;
+  font-weight: 400;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(139, 178, 255, 0.2);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  white-space: normal;
+  text-align: left;
+}
+
+.statTooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  right: 6px;
+  border: 5px solid transparent;
+  border-top-color: #0f1b35;
+}
+
+.statTooltipAnchor:hover .statTooltip {
+  display: block;
+  animation: tooltipFade 0.15s ease;
+}
+
+@keyframes tooltipFade {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 .statusIcon {
   width: 44px;
   height: 44px;
@@ -1693,6 +1753,64 @@
   color: #717378;
 }
 
+/* ══════════════════════════════════════════════════════════
+   DARK MODE — Explicit overrides to ensure all text is white
+   ══════════════════════════════════════════════════════════ */
+
+/* Header */
+[data-theme="dark"] .serialNumber   { color: #ffffff; }
+[data-theme="dark"] .modelName      { color: rgba(255, 255, 255, 0.6); }
+[data-theme="dark"] .lastUpdated    { color: rgba(255, 255, 255, 0.55); }
+[data-theme="dark"] .backBtn        { color: rgba(255, 255, 255, 0.55); }
+[data-theme="dark"] .backBtn:hover  { color: #ffffff; }
+
+/* Cards */
+[data-theme="dark"] .cardHeader        { color: #ffffff; }
+[data-theme="dark"] .cardHeader h2     { color: #ffffff; }
+
+/* Spec rows */
+[data-theme="dark"] .specLabel  { color: rgba(255, 255, 255, 0.55); }
+[data-theme="dark"] .specValue  { color: #ffffff; }
+[data-theme="dark"] .btnViewAll { color: #ffffff; border-color: rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.04); }
+
+/* Status cards */
+[data-theme="dark"] .statusText h3   { color: rgba(255, 255, 255, 0.55); }
+[data-theme="dark"] .statusText p    { color: #ffffff; }
+[data-theme="dark"] .statusText span { color: rgba(255, 255, 255, 0.45); }
+
+/* Action card text */
+[data-theme="dark"] .sectionInfo    { color: rgba(255, 255, 255, 0.7); }
+[data-theme="dark"] .restrictedText { color: rgba(255, 255, 255, 0.7); }
+[data-theme="dark"] .guestNote      { color: rgba(255, 255, 255, 0.55); }
+[data-theme="dark"] .publicPrompt h3      { color: #ffffff; }
+[data-theme="dark"] .clientActions h3,
+[data-theme="dark"] .partnerActions h3,
+[data-theme="dark"] .adminActions h3  { color: #ffffff; }
+
+/* Media */
+[data-theme="dark"] .mediaContent h3 { color: #ffffff; }
+[data-theme="dark"] .mediaContent p  { color: rgba(255, 255, 255, 0.6); }
+
+/* Service history */
+[data-theme="dark"] .historyDate  { color: #ffffff; }
+[data-theme="dark"] .historyTech  { color: #ffffff; }
+[data-theme="dark"] .historyNotes { color: rgba(255, 255, 255, 0.6); }
+[data-theme="dark"] .emptyState   { color: rgba(255, 255, 255, 0.5); }
+
+/* Modals */
+[data-theme="dark"] .modalHeader h2    { color: #ffffff; }
+[data-theme="dark"] .closeBtn          { color: rgba(255, 255, 255, 0.6); }
+[data-theme="dark"] .closeBtn:hover    { color: #ffffff; }
+[data-theme="dark"] .modalHint         { color: rgba(255, 255, 255, 0.6); }
+[data-theme="dark"] .formGroup label   { color: rgba(255, 255, 255, 0.8); }
+[data-theme="dark"] .formGroup input,
+[data-theme="dark"] .formGroup select,
+[data-theme="dark"] .formGroup textarea {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
 /* ==========================================================================
    CAROUSEL MOBILE FIRST
    ========================================================================== */
@@ -1870,6 +1988,7 @@
   .carouselSlide:nth-child(3) { grid-column: 1 / -1; }
   .carouselSlide:nth-child(4) { grid-column: 1 / 2; }
   .carouselSlide:nth-child(5) { grid-column: 2 / 3; }
+  .carouselSlide:nth-child(6) { grid-column: 1 / -1; }
 
   /* Slide 3: transparent shell — renders as original statusBar */
   .carouselSlide:nth-child(3) {

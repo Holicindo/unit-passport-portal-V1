@@ -32,6 +32,16 @@ export class CreateUnitDto {
   @IsNotEmpty()
   current_client_id!: string;
 
+  @ApiProperty({ example: 'Starbucks Grand Indonesia', required: false })
+  @IsString()
+  @IsOptional()
+  outlet_branch?: string;
+
+  @ApiProperty({ example: 'Jakarta', required: false })
+  @IsString()
+  @IsOptional()
+  city?: string;
+
   @ApiProperty({ example: 'https://example.com/test_run.jpg', required: false })
   @IsString()
   @IsOptional()

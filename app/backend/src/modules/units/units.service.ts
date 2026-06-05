@@ -25,7 +25,8 @@ export class UnitsService {
         { qr_token: token_or_serial },
         { serial_number: token_or_serial }
       ],
-      select: ['id', 'serial_number', 'model_name', 'specs', 'warranty_expiry', 'status', 'test_run_image_url', 'diagram_image_url', 'qr_token'],
+      relations: ['current_client'],
+      select: ['id', 'serial_number', 'model_name', 'specs', 'warranty_expiry', 'status', 'test_run_image_url', 'diagram_image_url', 'qr_token', 'outlet_branch', 'city', 'current_client'],
     });
     if (!unit) throw new NotFoundException('Unit tidak ditemukan');
     return unit;
@@ -164,6 +165,8 @@ export class UnitsService {
     if (dto.status !== undefined) (unit as any).status = dto.status;
     if (dto.test_run_image_url !== undefined) unit.test_run_image_url = dto.test_run_image_url;
     if (dto.diagram_image_url !== undefined) unit.diagram_image_url = dto.diagram_image_url;
+    if (dto.outlet_branch !== undefined) unit.outlet_branch = dto.outlet_branch;
+    if (dto.city !== undefined) unit.city = dto.city;
 
     if (dto.current_client_id) {
       const newClient = await this.clientRepo.findOne({ where: { id: dto.current_client_id } });

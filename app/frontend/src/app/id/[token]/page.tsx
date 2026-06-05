@@ -300,15 +300,12 @@ export default function QrPassportPage() {
   const toggleEdit = (block: keyof typeof editBlocks) => {
     if (!editBlocks[block]) {
       // Entering edit mode — initialise editData with current unit values
-      setEditData((prev: any) => ({
-        ...prev,
-        model_name: unit?.model_name || '',
-        serial_number: unit?.serial_number || '',
-        specs: { ...unit?.specs },
+      setEditData({
+        ...unit,
         current_client: { ...unit?.current_client },
-        diagram_image_url: unit?.diagram_image_url || '',
-        warranty_expiry: unit?.warranty_expiry || '',
-      }));
+        outlet_branch: unit?.outlet_branch || '',
+        city: unit?.city || '',
+      });
     } else {
       // Saving mode
       handleSave(block);
@@ -338,7 +335,11 @@ export default function QrPassportPage() {
     try {
       if (unit && unit.id) {
         // Build payload with only valid backend fields
-        const payload: any = {};
+        const payload: any = {
+          current_client_id: editData.current_client?.id,
+          outlet_branch: editData.outlet_branch,
+          city: editData.city,
+        };
         if (editData.model_name !== undefined) payload.model_name = editData.model_name;
         if (editData.specs !== undefined) payload.specs = editData.specs;
         if (editData.diagram_image_url !== undefined) payload.diagram_image_url = editData.diagram_image_url;
@@ -567,11 +568,15 @@ export default function QrPassportPage() {
     setRoutingLoading(true);
     try {
       const combinedNotes = `[${issueMainCategory}${issueSubCategory ? ` - ${issueSubCategory}` : ''}] ${serviceNotes}`.trim();
-      const contactInfo = storeName ? `${serviceName} (${storeName})` : serviceName;
+      const contactInfo = {
+        name: unit.current_client?.company_name || 'Holicindo Admin',
+        phone: 'Hubungi via WhatsApp / Portal',
+        city: unit.city || unit.current_client?.city || unit.specs?.city || 'Jakarta',
+      };
       const { data } = await unitApi.requestService(unit.id, {
-        city: unit.current_client?.city || unit.specs?.city || 'Jakarta',
+        city: contactInfo.city,
         notes: combinedNotes,
-        contact_name: contactInfo,
+        contact_name: serviceName,
         contact_phone: servicePhone
       });
       setRoutingResult(data);
@@ -1155,7 +1160,11 @@ export default function QrPassportPage() {
             </div>
             <div className={styles.statsCardGrid}>
           {/* Status Unit */}
-          <div className={styles.statusCard}>
+          <div className={styles.statusCard} style={{ position: 'relative' }}>
+            <span className={styles.statTooltipAnchor}>
+              <HelpCircle size={12} className={styles.statTooltipIcon} />
+              <span className={styles.statTooltip}>Kondisi operasional unit saat ini berdasarkan riwayat servis dan laporan QC terakhir.</span>
+            </span>
             <div className={`${styles.statusIcon} ${styles.success}`}>
               <CheckCircle2 size={24} />
             </div>
@@ -1167,7 +1176,11 @@ export default function QrPassportPage() {
           </div>
 
           {/* Garansi */}
-          <div className={styles.statusCard}>
+          <div className={styles.statusCard} style={{ position: 'relative' }}>
+            <span className={styles.statTooltipAnchor}>
+              <HelpCircle size={12} className={styles.statTooltipIcon} />
+              <span className={styles.statTooltip}>Masa garansi resmi dari Holicindo dihitung sejak tanggal produksi unit.</span>
+            </span>
             <div className={`${styles.statusIcon} ${isWarrantyActive ? styles.success : styles.warning}`}>
               <ShieldAlert size={24} />
             </div>
@@ -1179,7 +1192,11 @@ export default function QrPassportPage() {
           </div>
 
           {/* Last Service */}
-          <div className={styles.statusCard}>
+          <div className={styles.statusCard} style={{ position: 'relative' }}>
+            <span className={styles.statTooltipAnchor}>
+              <HelpCircle size={12} className={styles.statTooltipIcon} />
+              <span className={styles.statTooltip}>Tanggal terakhir unit mendapat kunjungan servis atau perawatan yang tercatat di sistem.</span>
+            </span>
             <div className={`${styles.statusIcon} ${styles.info}`}>
               <Wrench size={24} />
             </div>
@@ -1191,7 +1208,11 @@ export default function QrPassportPage() {
           </div>
 
           {/* Next Service */}
-          <div className={styles.statusCard}>
+          <div className={styles.statusCard} style={{ position: 'relative' }}>
+            <span className={styles.statTooltipAnchor}>
+              <HelpCircle size={12} className={styles.statTooltipIcon} />
+              <span className={styles.statTooltip}>Estimasi jadwal servis berikutnya. Standar rekomendasi adalah setiap 180 hari untuk unit aktif.</span>
+            </span>
             <div className={`${styles.statusIcon} ${styles.info}`}>
               <Clock size={24} />
             </div>
@@ -1203,7 +1224,11 @@ export default function QrPassportPage() {
           </div>
 
           {/* Verifikasi */}
-          <div className={styles.statusCard}>
+          <div className={styles.statusCard} style={{ position: 'relative' }}>
+            <span className={styles.statTooltipAnchor}>
+              <HelpCircle size={12} className={styles.statTooltipIcon} />
+              <span className={styles.statTooltip}>Status keaslian unit yang dikonfirmasi oleh tim Holicindo melalui sistem Unit Passport.</span>
+            </span>
             <div className={`${styles.statusIcon} ${styles.success}`}>
               <CheckCircle2 size={24} />
             </div>
@@ -2058,26 +2083,27 @@ export default function QrPassportPage() {
                   <EditField label="Customer Name" value={editData.current_client?.company_name || ''} onChange={(v) => handleEditChange('current_client.company_name', v)} />
                   <EditField label="SO Number" value={editData.specs?.so_number || ''} onChange={(v) => handleEditChange('specs.so_number', v)} />
                   <EditField label="DO Number" value={editData.specs?.do_number || ''} onChange={(v) => handleEditChange('specs.do_number', v)} />
-                  <EditField label="Outlet Branch" value={editData.current_client?.outlet_branch || ''} onChange={(v) => handleEditChange('current_client.outlet_branch', v)} />
-                  {/* City dropdown — auto-fills Province */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '10px' }}>
-                    <label style={{ fontSize: '0.8rem', color: 'var(--color-space-grey)', fontWeight: 600 }}>City</label>
-                    <CustomSelect
-                      value={editData.current_client?.city || ''}
-                      onChange={(v) => {
-                        handleEditChange('current_client.city', v);
-                        // Auto-fill province based on city
-                        const prov = INDONESIA_CITIES.find(c => c.city === v)?.province || '';
-                        handleEditChange('current_client.province', prov);
-                      }}
-                      options={[
-                        { value: '', label: '— Pilih Kota —' },
-                        ...INDONESIA_CITIES.map(c => ({ value: c.city, label: `${c.city} (${c.province})` }))
-                      ]}
-                      placeholder="— Pilih Kota —"
-                    />
+                  
+                  {/* New Master Data Fields */}
+                  <EditField label="ITR Number" value={editData.specs?.itr_number || ''} onChange={(v) => handleEditChange('specs.itr_number', v)} />
+                  <EditField label="PRO Number" value={editData.specs?.pro_number || ''} onChange={(v) => handleEditChange('specs.pro_number', v)} />
+                  <EditField label="QM Number" value={editData.specs?.qm_number || ''} onChange={(v) => handleEditChange('specs.qm_number', v)} />
+                  <EditField label="Manufacture SN" value={editData.specs?.manufacture_sn || ''} onChange={(v) => handleEditChange('specs.manufacture_sn', v)} />
+                  <EditField label="Delivery Date" value={editData.specs?.delivery_date || ''} onChange={(v) => handleEditChange('specs.delivery_date', v)} placeholder="DD/MM/YYYY" />
+                  <EditField label="Finish Date" value={editData.specs?.finish_date || ''} onChange={(v) => handleEditChange('specs.finish_date', v)} placeholder="DD/MM/YYYY" />
+
+                  <EditField label="Outlet Branch" value={editData.outlet_branch || ''} onChange={(v) => handleEditChange('outlet_branch', v)} />
+                  <div className={styles.editRow}>
+                    <div className={styles.editGroup}>
+                      <span className={styles.editLabel}>City</span>
+                      <input 
+                        type="text" 
+                        className={styles.editInput} 
+                        value={editData.city || ''} 
+                        onChange={(e) => handleEditChange('city', e.target.value)} 
+                      />
+                    </div>
                   </div>
-                  <EditField label="Province (auto-terisi)" value={editData.current_client?.province || ''} onChange={(v) => handleEditChange('current_client.province', v)} placeholder="Terisi otomatis saat pilih kota" />
                 </div>
               ) : (
                 <>
@@ -2094,14 +2120,36 @@ export default function QrPassportPage() {
                     <span className={styles.specValue}>{unit.specs?.do_number || '—'}</span>
                   </div>
                   <div className={styles.specItem}>
+                    <span className={styles.specLabel}>ITR Number</span>
+                    <span className={styles.specValue}>{unit.specs?.itr_number || '—'}</span>
+                  </div>
+                  <div className={styles.specItem}>
+                    <span className={styles.specLabel}>PRO Number</span>
+                    <span className={styles.specValue}>{unit.specs?.pro_number || '—'}</span>
+                  </div>
+                  <div className={styles.specItem}>
+                    <span className={styles.specLabel}>QM Number</span>
+                    <span className={styles.specValue}>{unit.specs?.qm_number || '—'}</span>
+                  </div>
+                  <div className={styles.specItem}>
+                    <span className={styles.specLabel}>Manufacture SN</span>
+                    <span className={styles.specValue}>{unit.specs?.manufacture_sn || '—'}</span>
+                  </div>
+                  <div className={styles.specItem}>
+                    <span className={styles.specLabel}>Delivery Date</span>
+                    <span className={styles.specValue}>{unit.specs?.delivery_date || '—'}</span>
+                  </div>
+                  <div className={styles.specItem}>
+                    <span className={styles.specLabel}>Finish Date</span>
+                    <span className={styles.specValue}>{unit.specs?.finish_date || '—'}</span>
+                  </div>
+                  <div className={styles.specItem}>
                     <span className={styles.specLabel}>Outlet Branch</span>
-                    <span className={styles.specValue}>{unit.current_client?.outlet_branch || '—'}</span>
+                    <span className={styles.specValue}>{unit.outlet_branch || '—'}</span>
                   </div>
                   <div className={styles.specItem} style={{ borderBottom: 'none' }}>
-                    <span className={styles.specLabel}>Outlet Address</span>
-                    <span className={styles.specValue}>
-                      {unit.current_client?.city ? `${unit.current_client.city}, ${unit.current_client.province || ''}` : '—'}
-                    </span>
+                    <span className={styles.specLabel}>Outlet City</span>
+                    <span className={styles.specValue}>{unit.city || '—'}</span>
                   </div>
                 </>
               )}

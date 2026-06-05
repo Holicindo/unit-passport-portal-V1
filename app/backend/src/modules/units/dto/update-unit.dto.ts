@@ -27,6 +27,16 @@ export class UpdateUnitDto {
   @IsOptional()
   current_client_id?: string;
 
+  @ApiProperty({ example: 'Starbucks Serpong', required: false })
+  @IsString()
+  @IsOptional()
+  outlet_branch?: string;
+
+  @ApiProperty({ example: 'Tangerang', required: false })
+  @IsString()
+  @IsOptional()
+  city?: string;
+
   @ApiProperty({ example: 'https://example.com/test_run.jpg', required: false })
   @IsString()
   @IsOptional()

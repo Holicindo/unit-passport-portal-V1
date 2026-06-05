@@ -51,6 +51,12 @@ export class Unit {
   @ManyToOne(() => Client, (client) => client.units)
   current_client!: Client;
 
+  @Column({ nullable: true })
+  outlet_branch!: string;
+
+  @Column({ nullable: true })
+  city!: string;
+
   @Column({ type: 'date', nullable: true })
   production_date!: Date;
 
