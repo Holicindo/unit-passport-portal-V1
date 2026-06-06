@@ -939,6 +939,12 @@ export default function QrPassportPage() {
                       theme="dark"
                     />
                   </div>
+
+                  <EditField label="PRO Number" value={editData.specs?.pro_number || ''} onChange={(v) => handleEditChange('specs.pro_number', v)} />
+                  <EditField label="QM Number" value={editData.specs?.qm_number || ''} onChange={(v) => handleEditChange('specs.qm_number', v)} />
+                  <EditField label="Manufacture SN" value={editData.specs?.manufacture_sn || ''} onChange={(v) => handleEditChange('specs.manufacture_sn', v)} />
+                  <EditField label="Delivery Date" value={editData.specs?.delivery_date || ''} onChange={(v) => handleEditChange('specs.delivery_date', v)} placeholder="DD/MM/YYYY" />
+                  <EditField label="Finish Date" value={editData.specs?.finish_date || ''} onChange={(v) => handleEditChange('specs.finish_date', v)} placeholder="DD/MM/YYYY" />
                 </div>
               ) : (
                 <>
@@ -982,6 +988,27 @@ export default function QrPassportPage() {
                       </div>
                     </>
                   )}
+
+                  <div className={styles.specItem}>
+                    <span className={styles.specLabel}>PRO Number</span>
+                    <span className={styles.specValue}>{unit.specs?.pro_number || '—'}</span>
+                  </div>
+                  <div className={styles.specItem}>
+                    <span className={styles.specLabel}>QM Number</span>
+                    <span className={styles.specValue}>{unit.specs?.qm_number || '—'}</span>
+                  </div>
+                  <div className={styles.specItem}>
+                    <span className={styles.specLabel}>Manufacture SN</span>
+                    <span className={styles.specValue}>{unit.specs?.manufacture_sn || '—'}</span>
+                  </div>
+                  <div className={styles.specItem}>
+                    <span className={styles.specLabel}>Delivery Date</span>
+                    <span className={styles.specValue}>{unit.specs?.delivery_date || '—'}</span>
+                  </div>
+                  <div className={styles.specItem}>
+                    <span className={styles.specLabel}>Finish Date</span>
+                    <span className={styles.specValue}>{unit.specs?.finish_date || '—'}</span>
+                  </div>
                   
                   <div className={styles.specItem}>
                     <span className={styles.specLabel}>Dibuat Pada</span>
@@ -2083,25 +2110,32 @@ export default function QrPassportPage() {
                   <EditField label="Customer Name" value={editData.current_client?.company_name || ''} onChange={(v) => handleEditChange('current_client.company_name', v)} />
                   <EditField label="SO Number" value={editData.specs?.so_number || ''} onChange={(v) => handleEditChange('specs.so_number', v)} />
                   <EditField label="DO Number" value={editData.specs?.do_number || ''} onChange={(v) => handleEditChange('specs.do_number', v)} />
-                  
-                  {/* New Master Data Fields */}
-                  <EditField label="ITR Number" value={editData.specs?.itr_number || ''} onChange={(v) => handleEditChange('specs.itr_number', v)} />
-                  <EditField label="PRO Number" value={editData.specs?.pro_number || ''} onChange={(v) => handleEditChange('specs.pro_number', v)} />
-                  <EditField label="QM Number" value={editData.specs?.qm_number || ''} onChange={(v) => handleEditChange('specs.qm_number', v)} />
-                  <EditField label="Manufacture SN" value={editData.specs?.manufacture_sn || ''} onChange={(v) => handleEditChange('specs.manufacture_sn', v)} />
-                  <EditField label="Delivery Date" value={editData.specs?.delivery_date || ''} onChange={(v) => handleEditChange('specs.delivery_date', v)} placeholder="DD/MM/YYYY" />
-                  <EditField label="Finish Date" value={editData.specs?.finish_date || ''} onChange={(v) => handleEditChange('specs.finish_date', v)} placeholder="DD/MM/YYYY" />
-
                   <EditField label="Outlet Branch" value={editData.outlet_branch || ''} onChange={(v) => handleEditChange('outlet_branch', v)} />
+                  
                   <div className={styles.editRow}>
                     <div className={styles.editGroup}>
-                      <span className={styles.editLabel}>City</span>
-                      <input 
-                        type="text" 
+                      <span className={styles.editLabel}>Outlet Address (City)</span>
+                      <select 
                         className={styles.editInput} 
                         value={editData.city || ''} 
-                        onChange={(e) => handleEditChange('city', e.target.value)} 
-                      />
+                        onChange={(e) => handleEditChange('city', e.target.value)}
+                        style={{ background: '#1e293b', color: '#f8fafc' }}
+                      >
+                        <option value="">-- Pilih Kota --</option>
+                        {Object.entries(
+                          INDONESIA_CITIES.reduce((acc: Record<string, string[]>, item) => {
+                            if (!acc[item.province]) acc[item.province] = [];
+                            acc[item.province].push(item.city);
+                            return acc;
+                          }, {})
+                        ).map(([province, cities]) => (
+                          <optgroup key={province} label={province}>
+                            {(cities as string[]).map(city => (
+                              <option key={city} value={city}>{city}</option>
+                            ))}
+                          </optgroup>
+                        ))}
+                      </select>
                     </div>
                   </div>
                 </div>
@@ -2120,36 +2154,17 @@ export default function QrPassportPage() {
                     <span className={styles.specValue}>{unit.specs?.do_number || '—'}</span>
                   </div>
                   <div className={styles.specItem}>
-                    <span className={styles.specLabel}>ITR Number</span>
-                    <span className={styles.specValue}>{unit.specs?.itr_number || '—'}</span>
-                  </div>
-                  <div className={styles.specItem}>
-                    <span className={styles.specLabel}>PRO Number</span>
-                    <span className={styles.specValue}>{unit.specs?.pro_number || '—'}</span>
-                  </div>
-                  <div className={styles.specItem}>
-                    <span className={styles.specLabel}>QM Number</span>
-                    <span className={styles.specValue}>{unit.specs?.qm_number || '—'}</span>
-                  </div>
-                  <div className={styles.specItem}>
-                    <span className={styles.specLabel}>Manufacture SN</span>
-                    <span className={styles.specValue}>{unit.specs?.manufacture_sn || '—'}</span>
-                  </div>
-                  <div className={styles.specItem}>
-                    <span className={styles.specLabel}>Delivery Date</span>
-                    <span className={styles.specValue}>{unit.specs?.delivery_date || '—'}</span>
-                  </div>
-                  <div className={styles.specItem}>
-                    <span className={styles.specLabel}>Finish Date</span>
-                    <span className={styles.specValue}>{unit.specs?.finish_date || '—'}</span>
-                  </div>
-                  <div className={styles.specItem}>
                     <span className={styles.specLabel}>Outlet Branch</span>
                     <span className={styles.specValue}>{unit.outlet_branch || '—'}</span>
                   </div>
                   <div className={styles.specItem} style={{ borderBottom: 'none' }}>
-                    <span className={styles.specLabel}>Outlet City</span>
-                    <span className={styles.specValue}>{unit.city || '—'}</span>
+                    <span className={styles.specLabel}>Outlet Address (City)</span>
+                    <span className={styles.specValue}>
+                      {unit.city ? (() => {
+                        const match = INDONESIA_CITIES.find(c => c.city === unit.city);
+                        return match ? `${unit.city} — ${match.province}` : unit.city;
+                      })() : '—'}
+                    </span>
                   </div>
                 </>
               )}

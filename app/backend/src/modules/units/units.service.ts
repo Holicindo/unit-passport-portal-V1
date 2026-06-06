@@ -26,7 +26,6 @@ export class UnitsService {
         { serial_number: token_or_serial }
       ],
       relations: ['current_client'],
-      select: ['id', 'serial_number', 'model_name', 'specs', 'warranty_expiry', 'status', 'test_run_image_url', 'diagram_image_url', 'qr_token', 'outlet_branch', 'city', 'current_client'],
     });
     if (!unit) throw new NotFoundException('Unit tidak ditemukan');
     return unit;
