@@ -61,6 +61,9 @@ export default function DashboardPage() {
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
   const [upcomingPMs, setUpcomingPMs] = useState<any[]>([]);
   const [warrantyIssues, setWarrantyIssues] = useState<any[]>([]);
+  const [frequentCallIds, setFrequentCallIds] = useState<any[]>([]);
+  const [overdueCallIds, setOverdueCallIds] = useState<any[]>([]);
+  const [warrantyCategories, setWarrantyCategories] = useState({ glass: 0, electrical: 0, refrigeration: 0 });
   const [hoveredPoint, setHoveredPoint] = useState<any>(null);
 
   useEffect(() => {
@@ -229,26 +232,59 @@ export default function DashboardPage() {
       ];
       setRecentActivities(combinedSchedules);
 
-      // 6. Warranty Issues (New Block)
-      const warrantyIssuesCount: Record<string, { model: string, count: number }> = {};
+      // 6. Dashboard Analytics Phase 1 Implementation
+      const wCategories = { glass: 0, electrical: 0, refrigeration: 0 };
+      const overdueTickets: any[] = [];
+      const callIdVisits: Record<string, { sn: string, visits: number, issue: string }> = {};
+
       rawLogs.forEach((log: any) => {
-         const logDate = new Date(log.created_at || log.date || new Date());
-         if (log.unit && log.unit.warranty_end) {
-            const wEnd = new Date(log.unit.warranty_end);
-            if (logDate <= wEnd) {
-               const sn = log.unit.serial_number;
-               if (!warrantyIssuesCount[sn]) {
-                  warrantyIssuesCount[sn] = { model: log.unit.model_name, count: 0 };
-               }
-               warrantyIssuesCount[sn].count++;
-            }
-         }
+        // A. Keluhan Berulang (> 2x)
+        const callId = log.call_id || log.issue_description || 'Unknown Issue';
+        if (!callIdVisits[callId]) {
+          callIdVisits[callId] = { sn: log.unit?.serial_number || '-', visits: 0, issue: log.issue_description || 'General Service' };
+        }
+        callIdVisits[callId].visits++;
+
+        // B. Tiket Terbengkalai (> 2 Minggu)
+        if (log.status !== 'COMPLETED') {
+          const createdDate = new Date(log.created_at || log.service_date || new Date());
+          const diffDays = Math.floor((new Date().getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
+          if (diffDays >= 14) {
+            overdueTickets.push({
+              callId: log.id || callId,
+              sn: log.unit?.serial_number || '-',
+              daysOpen: diffDays,
+              issue: log.issue_description || 'Pending Service'
+            });
+          }
+        }
+
+        // C. Warranty Kategorisasi
+        const logDate = new Date(log.created_at || log.date || new Date());
+        if (log.unit && log.unit.warranty_expiry) {
+           const wEnd = new Date(log.unit.warranty_expiry);
+           if (logDate <= wEnd) {
+              const desc = (log.issue_description || '').toLowerCase();
+              if (desc.includes('glass') || desc.includes('kaca') || desc.includes('pecah')) {
+                wCategories.glass++;
+              } else if (desc.includes('listrik') || desc.includes('lampu') || desc.includes('kabel') || desc.includes('electrical')) {
+                wCategories.electrical++;
+              } else {
+                wCategories.refrigeration++;
+              }
+           }
+        }
       });
-      const wIssuesList = Object.entries(warrantyIssuesCount)
-        .map(([sn, val]) => ({ sn, name: val.model, count: val.count }))
-        .sort((a, b) => b.count - a.count)
+
+      const fCallIds = Object.entries(callIdVisits)
+        .map(([id, data]) => ({ id, ...data }))
+        .filter(c => c.visits >= 2)
+        .sort((a, b) => b.visits - a.visits)
         .slice(0, 5);
-      setWarrantyIssues(wIssuesList);
+
+      setFrequentCallIds(fCallIds);
+      setOverdueCallIds(overdueTickets.sort((a, b) => b.daysOpen - a.daysOpen).slice(0, 5));
+      setWarrantyCategories(wCategories);
 
       // 7. Scheduled PMs (Upcoming)
       const pms = rawLogs
@@ -283,6 +319,9 @@ export default function DashboardPage() {
       setRecentActivities([]);
       setUpcomingPMs([]);
       setWarrantyIssues([]);
+      setFrequentCallIds([]);
+      setOverdueCallIds([]);
+      setWarrantyCategories({ glass: 0, electrical: 0, refrigeration: 0 });
     } finally {
       setLoading(false);
       setSyncing(false);
@@ -725,92 +764,116 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          {/* A. Call ID Berulang */}
           <div className={styles.listCard}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
               <h3 className={styles.listTitle} style={{ marginBottom: 0 }}>
-                <BarChart2 size={16} style={{ color: 'var(--color-safety-orange)', marginRight: '6px', verticalAlign: 'middle' }} />
-                Unit Sering Servis
+                <ShieldAlert size={16} style={{ color: 'var(--color-safety-orange)', marginRight: '6px', verticalAlign: 'middle' }} />
+                Keluhan Berulang (Sulit)
               </h3>
             </div>
             <p style={{ fontSize: '0.7rem', color: 'var(--color-space-grey)', marginBottom: '16px' }}>
-              Unit dengan laporan servis terbanyak dalam 12 bulan.
+              Call ID / Komplain yang dikunjungi teknisi lebih dari 2 kali.
             </p>
             
             <div className={styles.listItems}>
               {loading ? (
-                [1,2,3,4,5].map(i => (
+                [1,2].map(i => (
                   <div key={i} style={{ height: '40px', background: '#F1F5F9', borderRadius: '6px', animation: 'pulse 1.5s infinite' }}></div>
                 ))
               ) : (
-                <>
-                  {frequentUnits.map((unit, idx) => (
+                frequentCallIds.length === 0 ? (
+                  <div style={{ fontSize: '0.75rem', color: 'var(--color-space-grey)', textAlign: 'center', padding: '16px 0' }}>
+                    Tidak ada keluhan berulang terdeteksi.
+                  </div>
+                ) : (
+                  frequentCallIds.map((call, idx) => (
                     <div key={idx} className={styles.listItem} style={{ flexDirection: 'column', gap: '2px', alignItems: 'stretch' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span className={styles.unitName} style={{ fontWeight: 700, color: 'var(--color-deep-navy)' }}>{unit.sn}</span>
-                        <span className={styles.unitCount} style={{ fontSize: '0.8rem', fontWeight: 800 }}>{unit.count}x Servis</span>
+                        <span className={styles.unitName} style={{ fontWeight: 700, color: 'var(--color-deep-navy)' }}>SN: {call.sn}</span>
+                        <span className={styles.unitCount} style={{ fontSize: '0.75rem', fontWeight: 800, color: '#E11D48', background: 'rgba(225, 29, 72, 0.08)', padding: '2px 6px', borderRadius: '6px' }}>
+                          {call.visits}x Kunjungan
+                        </span>
                       </div>
-                      <span style={{ fontSize: '0.72rem', color: 'var(--color-space-grey)' }}>{unit.name}</span>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--color-space-grey)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{call.issue}</span>
                     </div>
-                  ))}
-                  {frequentUnits.length > 0 && (
-                    <button style={{
-                      marginTop: '8px',
-                      background: 'transparent',
-                      border: 'none',
-                      color: 'var(--color-cobalt-blue)',
-                      fontSize: '0.75rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '4px',
-                      padding: '8px',
-                      borderRadius: '8px',
-                    }}>
-                      Lihat Selengkapnya... <ChevronRight size={14} />
-                    </button>
-                  )}
-                </>
+                  ))
+                )
               )}
             </div>
           </div>
 
-          {/* NEW BLOCK: Warranty Issues */}
+          {/* B. Tiket Terbengkalai */}
           <div className={styles.listCard}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
               <h3 className={styles.listTitle} style={{ marginBottom: 0 }}>
-                <ShieldAlert size={16} style={{ color: '#E11D48', marginRight: '6px', verticalAlign: 'middle' }} />
-                Warranty Issues
+                <Activity size={16} style={{ color: '#E11D48', marginRight: '6px', verticalAlign: 'middle' }} />
+                Tiket Terbengkalai {'>'} 2 Minggu
               </h3>
             </div>
             <p style={{ fontSize: '0.7rem', color: 'var(--color-space-grey)', marginBottom: '16px' }}>
-              Unit yang diservis padahal masih dalam masa garansi.
+              Komplain berstatus Pending lebih dari 14 hari.
+            </p>
+            
+            <div className={styles.listItems}>
+              {loading ? (
+                [1,2].map(i => (
+                  <div key={i} style={{ height: '40px', background: '#F1F5F9', borderRadius: '6px', animation: 'pulse 1.5s infinite' }}></div>
+                ))
+              ) : (
+                overdueCallIds.length === 0 ? (
+                  <div style={{ fontSize: '0.75rem', color: 'var(--color-space-grey)', textAlign: 'center', padding: '16px 0' }}>
+                    Tidak ada tiket terbengkalai.
+                  </div>
+                ) : (
+                  overdueCallIds.map((ticket, idx) => (
+                    <div key={idx} className={styles.listItem} style={{ flexDirection: 'column', gap: '2px', alignItems: 'stretch', borderLeft: '3px solid #E11D48' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span className={styles.unitName} style={{ fontWeight: 700, color: 'var(--color-deep-navy)' }}>SN: {ticket.sn}</span>
+                        <span className={styles.unitCount} style={{ fontSize: '0.75rem', fontWeight: 800, color: '#E11D48' }}>
+                          {ticket.daysOpen} Hari
+                        </span>
+                      </div>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--color-space-grey)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ticket.issue}</span>
+                    </div>
+                  ))
+                )
+              )}
+            </div>
+          </div>
+
+          {/* C. Kategori Kerusakan Garansi */}
+          <div className={styles.listCard}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+              <h3 className={styles.listTitle} style={{ marginBottom: 0 }}>
+                <ShieldAlert size={16} style={{ color: 'var(--color-cobalt-blue)', marginRight: '6px', verticalAlign: 'middle' }} />
+                Distribusi Masalah Garansi
+              </h3>
+            </div>
+            <p style={{ fontSize: '0.7rem', color: 'var(--color-space-grey)', marginBottom: '16px' }}>
+              Berdasarkan klaim unit yang masih dalam masa garansi pabrik.
             </p>
             
             <div className={styles.listItems}>
               {loading ? (
                 [1,2,3].map(i => (
-                  <div key={i} style={{ height: '40px', background: '#F1F5F9', borderRadius: '6px', animation: 'pulse 1.5s infinite' }}></div>
+                  <div key={i} style={{ height: '30px', background: '#F1F5F9', borderRadius: '6px', animation: 'pulse 1.5s infinite' }}></div>
                 ))
               ) : (
-                warrantyIssues.length === 0 ? (
-                  <div style={{ fontSize: '0.75rem', color: 'var(--color-space-grey)', textAlign: 'center', padding: '16px 0' }}>
-                    Tidak ada masalah garansi tercatat.
+                <>
+                  <div className={styles.listItem} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-deep-navy)' }}>🔵 Refrigeration Issues</span>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 800 }}>{warrantyCategories.refrigeration} Kasus</span>
                   </div>
-                ) : (
-                  warrantyIssues.map((unit, idx) => (
-                    <div key={idx} className={styles.listItem} style={{ flexDirection: 'column', gap: '2px', alignItems: 'stretch' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span className={styles.unitName} style={{ fontWeight: 700, color: 'var(--color-deep-navy)' }}>{unit.sn}</span>
-                        <span className={styles.unitCount} style={{ fontSize: '0.75rem', fontWeight: 800, color: '#E11D48', background: 'rgba(225, 29, 72, 0.08)', padding: '2px 6px', borderRadius: '6px' }}>
-                          {unit.count} Kasus
-                        </span>
-                      </div>
-                      <span style={{ fontSize: '0.72rem', color: 'var(--color-space-grey)' }}>{unit.name}</span>
-                    </div>
-                  ))
-                )
+                  <div className={styles.listItem} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-deep-navy)' }}>🟡 Electrical Issues</span>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 800 }}>{warrantyCategories.electrical} Kasus</span>
+                  </div>
+                  <div className={styles.listItem} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-deep-navy)' }}>⚪ Glass / Physical Issues</span>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 800 }}>{warrantyCategories.glass} Kasus</span>
+                  </div>
+                </>
               )}
             </div>
           </div>

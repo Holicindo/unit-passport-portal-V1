@@ -26,7 +26,13 @@ export const authApi = {
 };
 
 export const unitApi = {
-  findAll: (page = 1, limit = 10) => api.get(`/units?page=${page}&limit=${limit}`),
+  findAll: (page = 1, limit = 10, search?: string, city?: string, client?: string) => {
+    let url = `/units?page=${page}&limit=${limit}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    if (city) url += `&city=${encodeURIComponent(city)}`;
+    if (client) url += `&client=${encodeURIComponent(client)}`;
+    return api.get(url);
+  },
   findMyFleet: () => api.get('/units/my-fleet'),
   findOne: (id: string) => api.get(`/units/${id}`),
   findByQrToken: (token: string) => api.get(`/units/scan/${token}`),
@@ -38,6 +44,15 @@ export const unitApi = {
     files.forEach(f => formData.append('files', f));
     return api.post('/units/upload-media', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
+  bulkUpload: (file: File, mode: 'upsert' | 'replace' = 'upsert') => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('mode', mode);
+    return api.post('/units/bulk-upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 300000, // 5 minutes — processing 600+ rows takes time
     });
   },
 };

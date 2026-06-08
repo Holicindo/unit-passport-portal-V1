@@ -1,7 +1,7 @@
 
-import { Controller, Get, Post, Patch, Param, Body, UseGuards, Request, Query, UploadedFiles, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Param, Body, UseGuards, Request, Query, UploadedFiles, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiConsumes } from '@nestjs/swagger';
-import { FilesInterceptor } from '@nestjs/platform-express';
+import { FilesInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { UnitsService } from './units.service';
 import { StorageService } from '../storage/storage.service';
@@ -79,8 +79,11 @@ export class UnitsController {
   findAll(
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10,
+    @Query('search') search?: string,
+    @Query('city') city?: string,
+    @Query('client') client?: string,
   ) {
-    return this.unitsService.findAll(page, limit);
+    return this.unitsService.findAll(page, limit, search, city, client);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -124,6 +127,28 @@ export class UnitsController {
   @ApiOperation({ summary: 'Admin: Regenerate all QR tokens to use serial-number-based format (holi-cp-[serial])' })
   regenerateQrTokens() {
     return this.unitsService.regenerateAllQrTokens();
+  }
+
+  // --- BULK UPLOAD: CSV Import ---
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @Post('bulk-upload')
+  @ApiOperation({ summary: 'Admin: Bulk upload units from CSV file' })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('file', {
+    storage: memoryStorage(),
+    limits: { fileSize: 50 * 1024 * 1024 },
+  }))
+  async bulkUpload(
+    @UploadedFile() file: Express.Multer.File,
+    @Body('mode') mode: string,
+  ) {
+    if (!file) {
+      return { success: false, message: 'No file uploaded' };
+    }
+    const uploadMode = mode === 'replace' ? 'replace' : 'upsert';
+    return this.unitsService.bulkUpload(file.buffer, uploadMode);
   }
 
   // --- FILE UPLOAD: Unit Media ---
