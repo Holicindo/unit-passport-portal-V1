@@ -133,7 +133,15 @@
   width: 100% !important;
   height: 100% !important;
   object-fit: cover !important;
-  transform: none !important; /* Mencegah efek mirror dari library */
+  transform: scaleX(1) !important; /* Force no mirror */
+  -webkit-transform: scaleX(1) !important;
+}
+
+/* Override html5-qrcode default mirror on front camera */
+.scannerViewport video::-webkit-media-controls { display: none !important; }
+#qr-reader video {
+  transform: scaleX(1) !important;
+  -webkit-transform: scaleX(1) !important;
 }
 
 /* Premium Scanning Line Overlay */

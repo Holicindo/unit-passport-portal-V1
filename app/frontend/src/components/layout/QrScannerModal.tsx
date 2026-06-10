@@ -33,6 +33,19 @@ export default function QrScannerModal({ isOpen, onClose }: QrScannerModalProps)
     }
   }, []);
 
+  // Force remove mirror effect on video element
+  const fixMirror = useCallback(() => {
+    [0, 200, 500, 1000].forEach(delay => {
+      setTimeout(() => {
+        const videos = document.querySelectorAll(`#${scannerId} video`);
+        videos.forEach((v) => {
+          (v as HTMLVideoElement).style.setProperty('transform', 'scaleX(1)', 'important');
+          (v as HTMLVideoElement).style.setProperty('-webkit-transform', 'scaleX(1)', 'important');
+        });
+      }, delay);
+    });
+  }, [scannerId]);
+
   const startScanner = useCallback(async (mode: FacingMode) => {
     setInitializing(true);
     setScannerError(null);
@@ -74,12 +87,13 @@ export default function QrScannerModal({ isOpen, onClose }: QrScannerModalProps)
       );
 
       setInitializing(false);
+      fixMirror();
     } catch (err) {
       console.error('Failed to start scanner:', err);
       setInitializing(false);
       setScannerError('Gagal mengakses kamera. Pastikan izin kamera telah diberikan.');
     }
-  }, [onClose, router, stopScanner]);
+  }, [onClose, router, stopScanner, fixMirror]);
 
   // Start scanner when modal opens
   useEffect(() => {

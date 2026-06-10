@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { serviceLogApi, unitApi } from '@/lib/api';
-import { Wrench, Search, LogOut, QrCode, AlertCircle, ChevronRight, Loader2 } from 'lucide-react';
+import { Wrench, Search, LogOut, QrCode, AlertCircle, ChevronRight, Loader2, ChevronDown, CheckCircle2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import styles from './partner-portal.module.css';
 
@@ -21,6 +21,7 @@ export default function PartnerPortalPage() {
   const [noteModalOpen, setNoteModalOpen] = useState(false);
   const [noteText, setNoteText] = useState('');
   const [selectedUnit, setSelectedUnit] = useState<any>(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   useEffect(() => {
     const raw = localStorage.getItem('user');
@@ -151,17 +152,35 @@ export default function PartnerPortalPage() {
         <div className={styles.headerMain}>
           <div className={styles.brandRow}>
             <div className={styles.brandIcon}>
-              <Wrench size={18} color="#ffffff" />
+              <Wrench size={22  } color="#ffffff" />
             </div>
             <div className={styles.brandText}>
               <div className={styles.brandLabel}>PARTNER PORTAL</div>
               <div className={styles.brandSub}>Holicindo Service Network</div>
             </div>
           </div>
-          <button className={styles.logoutBtn} onClick={handleLogout} aria-label="Logout">
-            <LogOut size={15} />
-            <span>Keluar</span>
-          </button>
+          <div className={styles.profileDropdownContainer}>
+            <button className={styles.profileChip} onClick={() => setDropdownOpen(!dropdownOpen)}>
+              <div className={styles.profileAvatar}>{user.name?.charAt(0)?.toUpperCase() || 'T'}</div>
+              <div className={styles.profileText}>
+                <div className={styles.profileName}>{user.name || 'Teknisi'}</div>
+                <div className={styles.profileRole}>Teknisi Mitra Resmi Holicindo</div>
+              </div>
+              <ChevronDown size={14} className={`${styles.dropdownIcon} ${dropdownOpen ? styles.open : ''}`} />
+            </button>
+            {dropdownOpen && (
+              <div className={styles.dropdownMenu}>
+                <div className={styles.dropdownHeader}>
+                  <div className={styles.dropdownFullName}>{user.name || 'Teknisi'}</div>
+                  <div className={styles.dropdownFullRole}>Teknisi Mitra Resmi Holicindo</div>
+                </div>
+                <button className={styles.dropdownItem} onClick={handleLogout} aria-label="Logout">
+                  <LogOut size={15} />
+                  <span>Keluar</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
         {/* Badge row */}
         <div className={styles.headerBadgeRow}>
@@ -170,13 +189,29 @@ export default function PartnerPortalPage() {
       </header>
 
       <div className={styles.container}>
-        <div className={styles.welcomeCard}>
-          <div className={styles.welcomeAvatar}>{user.name?.charAt(0)?.toUpperCase() || 'T'}</div>
-          <div>
-            <div className={styles.welcomeName}>{user.name || 'Teknisi'}</div>
-            <div className={styles.welcomeRole}>Teknisi Mitra Resmi Holicindo</div>
+        <section className={styles.statsSection}>
+          <div className={styles.statCard}>
+            <div className={styles.statIcon} style={{color: '#2E5BFF', background: 'rgba(46, 91, 255, 0.15)'}}><QrCode size={18}/></div>
+            <div className={styles.statInfo}>
+              <div className={styles.statValue}>3</div>
+              <div className={styles.statLabel}>Tugas Hari Ini</div>
+            </div>
           </div>
-        </div>
+          <div className={styles.statCard}>
+            <div className={styles.statIcon} style={{color: '#FF6B00', background: 'rgba(255, 107, 0, 0.15)'}}><AlertCircle size={18}/></div>
+            <div className={styles.statInfo}>
+              <div className={styles.statValue}>1</div>
+              <div className={styles.statLabel}>Pending</div>
+            </div>
+          </div>
+          <div className={styles.statCard}>
+            <div className={styles.statIcon} style={{color: '#00d68f', background: 'rgba(0, 214, 143, 0.15)'}}><CheckCircle2 size={18}/></div>
+            <div className={styles.statInfo}>
+              <div className={styles.statValue}>2</div>
+              <div className={styles.statLabel}>Selesai</div>
+            </div>
+          </div>
+        </section>
 
         <section className={styles.scanSection}>
           <div className={styles.sectionLabel}>Mulai Servis</div>
