@@ -9,43 +9,7 @@ import { CustomSelect } from '@/components/ui/CustomSelect';
 import WarmReportForm from '@/components/reports/WarmReportForm';
 import WarmReportTemplate from '@/components/reports/WarmReportTemplate';
 import styles from './reportwarm.module.css';
-
-const EMPTY_FORM = {
-  header: {
-    order_document: '',
-    production_code: '',
-    starting_date: '',
-    finishing_date: '',
-    inspection_date: '',
-    customer: '',
-    category: '',
-    item_code: '',
-    model: '',
-  },
-  general_inspection: {
-    rows: [
-      { part: '', setting_temp: '', temp_dalam: '', digital_type: '' },
-      { part: '', setting_temp: '', temp_dalam: '', digital_type: '' },
-      { part: '', setting_temp: '', temp_dalam: '', digital_type: '' },
-    ],
-    type_heater: '',
-    jumlah_heater: '',
-    amp_start: '',
-    amp_run: '',
-    spesifikasi_heater: '',
-  },
-  performance_inspection: {
-    room_min: '',
-    room_max: '',
-    room_hum: '',
-    qc_1: false,
-    qc_2: false,
-    qc_2_time: '',
-    qc_3: false,
-    qc_4: false,
-  },
-  footer: { tech_name: '', qc_name: '' },
-};
+import { EMPTY_FORM } from './constants';
 
 export default function ReportWarmPage() {
   const router = useRouter();

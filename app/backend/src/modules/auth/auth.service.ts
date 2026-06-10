@@ -44,8 +44,12 @@ export class AuthService {
     };
   }
 
-  async findAll(): Promise<User[]> {
-    return this.userRepository.find({ order: { created_at: 'DESC' } });
+  async findAll(): Promise<Omit<User, 'password'>[]> {
+    const users = await this.userRepository.find({
+      select: ['id', 'name', 'email', 'role', 'status', 'client_id', 'partner_id', 'created_at', 'updated_at'],
+      order: { created_at: 'DESC' },
+    });
+    return users;
   }
 
   async login(email: string, password: string) {

@@ -5,6 +5,17 @@ import { Search, Plus, Edit3, Trash2 } from 'lucide-react';
 import styles from './partners.module.css';
 import { CustomSelect } from '../../components/ui/CustomSelect';
 import { partnerApi } from '@/lib/api';
+import PartnerFormModal from './components/PartnerFormModal';
+import {
+  overlayStyle,
+  modalStyle,
+  modalTitleStyle,
+  modalFooterStyle,
+  cancelBtnStyle,
+  saveBtnStyle,
+  toggleBtnStyle,
+  toggleKnobStyle,
+} from './modalStyles';
 
 interface Partner {
   id: string;
@@ -28,22 +39,15 @@ export default function PartnersPage() {
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Filters
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-
-  // Modals
   const [showAddModal, setShowAddModal] = useState(false);
   const [editTarget, setEditTarget] = useState<Partner | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Partner | null>(null);
-
-  // Form state (shared for add/edit)
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  // ── Fetch ──────────────────────────────────────────────────────────────────
   const fetchPartners = async () => {
     setLoading(true);
     setError(null);
@@ -59,43 +63,29 @@ export default function PartnersPage() {
 
   useEffect(() => { fetchPartners(); }, []);
 
-  // ── Filtered list ──────────────────────────────────────────────────────────
   const filtered = useMemo(() => {
     return partners.filter((p) => {
-      const matchSearch =
-        !search ||
+      const matchSearch = !search ||
         p.partner_name.toLowerCase().includes(search.toLowerCase()) ||
         p.city.toLowerCase().includes(search.toLowerCase());
-      const matchStatus =
-        !statusFilter ||
+      const matchStatus = !statusFilter ||
         (statusFilter === 'ACTIVE' && p.is_active) ||
         (statusFilter === 'INACTIVE' && !p.is_active);
       return matchSearch && matchStatus;
     });
   }, [partners, search, statusFilter]);
 
-  // ── Toggle is_active ───────────────────────────────────────────────────────
   const handleToggleActive = async (partner: Partner) => {
     const newVal = !partner.is_active;
-    // Optimistic update
-    setPartners((prev) =>
-      prev.map((p) => (p.id === partner.id ? { ...p, is_active: newVal } : p))
-    );
+    setPartners((prev) => prev.map((p) => (p.id === partner.id ? { ...p, is_active: newVal } : p)));
     try {
       await partnerApi.toggleActive(partner.id, newVal);
     } catch {
-      // Revert on failure
-      setPartners((prev) =>
-        prev.map((p) => (p.id === partner.id ? { ...p, is_active: !newVal } : p))
-      );
+      setPartners((prev) => prev.map((p) => (p.id === partner.id ? { ...p, is_active: !newVal } : p)));
     }
   };
 
-  // ── Add ────────────────────────────────────────────────────────────────────
-  const openAddModal = () => {
-    setForm(emptyForm);
-    setShowAddModal(true);
-  };
+  const openAddModal = () => { setForm(emptyForm); setShowAddModal(true); };
 
   const handleAdd = async () => {
     if (!form.partner_name.trim() || !form.city.trim()) return;
@@ -104,22 +94,13 @@ export default function PartnersPage() {
       await partnerApi.create(form);
       setShowAddModal(false);
       fetchPartners();
-    } catch {
-      alert('Gagal menambah mitra. Coba lagi.');
-    } finally {
-      setSaving(false);
-    }
+    } catch { alert('Gagal menambah mitra. Coba lagi.'); }
+    finally { setSaving(false); }
   };
 
-  // ── Edit ───────────────────────────────────────────────────────────────────
   const openEditModal = (partner: Partner) => {
     setEditTarget(partner);
-    setForm({
-      partner_name: partner.partner_name,
-      city: partner.city,
-      contact_wa: partner.contact_wa,
-      is_active: partner.is_active,
-    });
+    setForm({ partner_name: partner.partner_name, city: partner.city, contact_wa: partner.contact_wa, is_active: partner.is_active });
   };
 
   const handleEdit = async () => {
@@ -129,14 +110,10 @@ export default function PartnersPage() {
       await partnerApi.update(editTarget.id, form);
       setEditTarget(null);
       fetchPartners();
-    } catch {
-      alert('Gagal menyimpan perubahan. Coba lagi.');
-    } finally {
-      setSaving(false);
-    }
+    } catch { alert('Gagal menyimpan perubahan. Coba lagi.'); }
+    finally { setSaving(false); }
   };
 
-  // ── Delete ─────────────────────────────────────────────────────────────────
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
@@ -144,61 +121,9 @@ export default function PartnersPage() {
       await partnerApi.delete(deleteTarget.id);
       setDeleteTarget(null);
       fetchPartners();
-    } catch {
-      alert('Gagal menghapus mitra. Coba lagi.');
-    } finally {
-      setDeleting(false);
-    }
+    } catch { alert('Gagal menghapus mitra. Coba lagi.'); }
+    finally { setDeleting(false); }
   };
-
-  // ── Shared form fields ─────────────────────────────────────────────────────
-  const renderFormFields = () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      <div>
-        <label style={labelStyle}>Nama Mitra <span style={{ color: '#E11D48' }}>*</span></label>
-        <input
-          style={inputStyle}
-          value={form.partner_name}
-          onChange={(e) => setForm({ ...form, partner_name: e.target.value })}
-          placeholder="Contoh: PT Teknisi Handal"
-        />
-      </div>
-      <div>
-        <label style={labelStyle}>Kota <span style={{ color: '#E11D48' }}>*</span></label>
-        <input
-          style={inputStyle}
-          value={form.city}
-          onChange={(e) => setForm({ ...form, city: e.target.value })}
-          placeholder="Contoh: Jakarta"
-        />
-      </div>
-      <div>
-        <label style={labelStyle}>Nomor WhatsApp</label>
-        <input
-          style={inputStyle}
-          value={form.contact_wa}
-          onChange={(e) => setForm({ ...form, contact_wa: e.target.value })}
-          placeholder="Contoh: 6281234567890"
-        />
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: '#f8fafc', borderRadius: '10px', border: '1px solid #f0f0f4' }}>
-        <div>
-          <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--color-deep-navy)' }}>Smart Routing</div>
-          <div style={{ fontSize: '0.8rem', color: 'var(--color-space-grey)', marginTop: '2px' }}>
-            {form.is_active ? 'Routing Aktif — pesan diteruskan ke mitra ini' : 'Routing Nonaktif — fallback ke WhatsApp HQ'}
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={() => setForm({ ...form, is_active: !form.is_active })}
-          style={toggleBtnStyle(form.is_active)}
-          aria-label="Toggle routing aktif"
-        >
-          <span style={toggleKnobStyle(form.is_active)} />
-        </button>
-      </div>
-    </div>
-  );
 
   return (
     <div className={styles.container}>
@@ -223,16 +148,9 @@ export default function PartnersPage() {
               placeholder="Filter Status..."
             />
           </div>
-
           <div className="dtToolbarRight">
             <div className="dtToolbarSearch">
-              <input
-                type="text"
-                placeholder="Cari nama mitra atau kota..."
-                className="dtToolbarSearchInput"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
+              <input type="text" placeholder="Cari nama mitra atau kota..." className="dtToolbarSearchInput" value={search} onChange={(e) => setSearch(e.target.value)} />
               <Search size={16} className="dtToolbarSearchIcon" />
             </div>
             <button className="dtToolbarCreateBtn" onClick={openAddModal}>
@@ -255,74 +173,41 @@ export default function PartnersPage() {
             </thead>
             <tbody>
               {loading ? (
-                <tr>
-                  <td colSpan={5} className={styles.loadingCell}>Memuat data mitra...</td>
-                </tr>
+                <tr><td colSpan={5} className={styles.loadingCell}>Memuat data mitra...</td></tr>
               ) : error ? (
-                <tr>
-                  <td colSpan={5} className={styles.loadingCell} style={{ color: '#E11D48' }}>{error}</td>
-                </tr>
+                <tr><td colSpan={5} className={styles.loadingCell} style={{ color: '#E11D48' }}>{error}</td></tr>
               ) : filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className={styles.loadingCell}>Tidak ada mitra ditemukan.</td>
-                </tr>
+                <tr><td colSpan={5} className={styles.loadingCell}>Tidak ada mitra ditemukan.</td></tr>
               ) : (
                 filtered.map((partner) => (
                   <tr key={partner.id} className={styles.dataRow}>
-                    <td>
-                      <span className={styles.partnerName}>{partner.partner_name}</span>
-                    </td>
+                    <td><span className={styles.partnerName}>{partner.partner_name}</span></td>
                     <td>{partner.city}</td>
                     <td>
                       {partner.contact_wa ? (
-                        <a
-                          href={`https://wa.me/${partner.contact_wa.replace(/\D/g, '')}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--color-deep-navy)', textDecoration: 'none', fontWeight: 500 }}
-                        >
-                          {WA_ICON}
-                          {partner.contact_wa}
+                        <a href={`https://wa.me/${partner.contact_wa.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
+                          style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--color-deep-navy)', textDecoration: 'none', fontWeight: 500 }}>
+                          {WA_ICON}{partner.contact_wa}
                         </a>
-                      ) : (
-                        <span style={{ color: 'var(--color-space-grey)', fontSize: '0.85rem' }}>—</span>
-                      )}
+                      ) : <span style={{ color: 'var(--color-space-grey)', fontSize: '0.85rem' }}>—</span>}
                     </td>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <button
-                          type="button"
-                          onClick={() => handleToggleActive(partner)}
+                        <button type="button" onClick={() => handleToggleActive(partner)}
                           style={toggleBtnStyle(partner.is_active)}
                           aria-label={partner.is_active ? 'Nonaktifkan routing' : 'Aktifkan routing'}
-                          title={partner.is_active ? 'Klik untuk nonaktifkan routing' : 'Klik untuk aktifkan routing'}
-                        >
+                          title={partner.is_active ? 'Klik untuk nonaktifkan routing' : 'Klik untuk aktifkan routing'}>
                           <span style={toggleKnobStyle(partner.is_active)} />
                         </button>
-                        <span
-                          className={`${styles.statusBadge} ${partner.is_active ? styles.badgeSuccess : styles.badgeWarning}`}
-                          style={{ cursor: 'default' }}
-                        >
+                        <span className={`${styles.statusBadge} ${partner.is_active ? styles.badgeSuccess : styles.badgeWarning}`} style={{ cursor: 'default' }}>
                           {partner.is_active ? 'Routing Aktif' : 'Routing Nonaktif'}
                         </span>
                       </div>
                     </td>
                     <td>
                       <div className={styles.actions}>
-                        <button
-                          className={styles.actionIconBtn}
-                          title="Edit Mitra"
-                          onClick={() => openEditModal(partner)}
-                        >
-                          <Edit3 size={16} />
-                        </button>
-                        <button
-                          className={`${styles.actionIconBtn} ${styles.actionIconBtnDanger}`}
-                          title="Hapus Mitra"
-                          onClick={() => setDeleteTarget(partner)}
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        <button className={styles.actionIconBtn} title="Edit Mitra" onClick={() => openEditModal(partner)}><Edit3 size={16} /></button>
+                        <button className={`${styles.actionIconBtn} ${styles.actionIconBtnDanger}`} title="Hapus Mitra" onClick={() => setDeleteTarget(partner)}><Trash2 size={16} /></button>
                       </div>
                     </td>
                   </tr>
@@ -333,43 +218,16 @@ export default function PartnersPage() {
         </div>
       </div>
 
-      {/* ── Add Modal ─────────────────────────────────────────────────────── */}
       {showAddModal && (
-        <div style={overlayStyle} onClick={() => setShowAddModal(false)}>
-          <div style={modalStyle} onClick={(e) => e.stopPropagation()}>
-            <h2 style={modalTitleStyle}>Tambah Mitra Baru</h2>
-            {renderFormFields()}
-            <div style={modalFooterStyle}>
-              <button style={cancelBtnStyle} onClick={() => setShowAddModal(false)} disabled={saving}>
-                Batal
-              </button>
-              <button style={saveBtnStyle} onClick={handleAdd} disabled={saving || !form.partner_name.trim() || !form.city.trim()}>
-                {saving ? 'Menyimpan...' : 'Simpan'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <PartnerFormModal title="Tambah Mitra Baru" form={form} setForm={setForm} saving={saving}
+          onClose={() => setShowAddModal(false)} onSubmit={handleAdd} submitLabel="Simpan" />
       )}
 
-      {/* ── Edit Modal ────────────────────────────────────────────────────── */}
       {editTarget && (
-        <div style={overlayStyle} onClick={() => setEditTarget(null)}>
-          <div style={modalStyle} onClick={(e) => e.stopPropagation()}>
-            <h2 style={modalTitleStyle}>Edit Mitra</h2>
-            {renderFormFields()}
-            <div style={modalFooterStyle}>
-              <button style={cancelBtnStyle} onClick={() => setEditTarget(null)} disabled={saving}>
-                Batal
-              </button>
-              <button style={saveBtnStyle} onClick={handleEdit} disabled={saving || !form.partner_name.trim() || !form.city.trim()}>
-                {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <PartnerFormModal title="Edit Mitra" form={form} setForm={setForm} saving={saving}
+          onClose={() => setEditTarget(null)} onSubmit={handleEdit} submitLabel="Simpan Perubahan" />
       )}
 
-      {/* ── Delete Confirmation ───────────────────────────────────────────── */}
       {deleteTarget && (
         <div style={overlayStyle} onClick={() => setDeleteTarget(null)}>
           <div style={{ ...modalStyle, maxWidth: '420px' }} onClick={(e) => e.stopPropagation()}>
@@ -378,14 +236,8 @@ export default function PartnersPage() {
               Yakin ingin menghapus <strong>{deleteTarget.partner_name}</strong>? Tindakan ini tidak dapat dibatalkan.
             </p>
             <div style={modalFooterStyle}>
-              <button style={cancelBtnStyle} onClick={() => setDeleteTarget(null)} disabled={deleting}>
-                Batal
-              </button>
-              <button
-                style={{ ...saveBtnStyle, background: '#E11D48' }}
-                onClick={handleDelete}
-                disabled={deleting}
-              >
+              <button style={cancelBtnStyle} onClick={() => setDeleteTarget(null)} disabled={deleting}>Batal</button>
+              <button style={{ ...saveBtnStyle, background: '#E11D48' }} onClick={handleDelete} disabled={deleting}>
                 {deleting ? 'Menghapus...' : 'Ya, Hapus'}
               </button>
             </div>
@@ -395,113 +247,3 @@ export default function PartnersPage() {
     </div>
   );
 }
-
-// ── Inline styles for modal & toggle ────────────────────────────────────────
-
-const overlayStyle: React.CSSProperties = {
-  position: 'fixed',
-  inset: 0,
-  background: 'rgba(0,0,0,0.45)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  zIndex: 1000,
-  padding: '16px',
-};
-
-const modalStyle: React.CSSProperties = {
-  background: '#fff',
-  borderRadius: '16px',
-  padding: '32px',
-  width: '100%',
-  maxWidth: '480px',
-  boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '24px',
-};
-
-const modalTitleStyle: React.CSSProperties = {
-  fontFamily: 'var(--font-heading)',
-  fontSize: '1.25rem',
-  fontWeight: 800,
-  color: 'var(--color-deep-navy)',
-  margin: 0,
-};
-
-const modalFooterStyle: React.CSSProperties = {
-  display: 'flex',
-  justifyContent: 'flex-end',
-  gap: '12px',
-};
-
-const labelStyle: React.CSSProperties = {
-  display: 'block',
-  fontSize: '0.82rem',
-  fontWeight: 700,
-  color: 'var(--color-space-grey)',
-  textTransform: 'uppercase',
-  letterSpacing: '0.05em',
-  marginBottom: '6px',
-};
-
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '10px 14px',
-  borderRadius: '10px',
-  border: '1px solid rgba(0,31,63,0.12)',
-  fontSize: '0.95rem',
-  fontFamily: 'var(--font-body)',
-  color: 'var(--color-deep-navy)',
-  background: '#fff',
-  boxSizing: 'border-box',
-  outline: 'none',
-};
-
-const cancelBtnStyle: React.CSSProperties = {
-  padding: '10px 20px',
-  borderRadius: '10px',
-  border: '1px solid rgba(0,31,63,0.12)',
-  background: '#f8fafc',
-  color: 'var(--color-deep-navy)',
-  fontWeight: 600,
-  fontSize: '0.9rem',
-  cursor: 'pointer',
-};
-
-const saveBtnStyle: React.CSSProperties = {
-  padding: '10px 24px',
-  borderRadius: '10px',
-  border: 'none',
-  background: 'var(--color-deep-navy)',
-  color: '#fff',
-  fontWeight: 700,
-  fontSize: '0.9rem',
-  cursor: 'pointer',
-};
-
-const toggleBtnStyle = (active: boolean): React.CSSProperties => ({
-  position: 'relative',
-  width: '44px',
-  height: '24px',
-  borderRadius: '50px',
-  border: 'none',
-  background: active ? '#00C48C' : '#d1d5db',
-  cursor: 'pointer',
-  transition: 'background 0.25s ease',
-  flexShrink: 0,
-  padding: 0,
-});
-
-const toggleKnobStyle = (active: boolean): React.CSSProperties => ({
-  position: 'absolute',
-  top: '3px',
-  left: active ? '23px' : '3px',
-  width: '18px',
-  height: '18px',
-  borderRadius: '50%',
-  background: '#fff',
-  boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
-  transition: 'left 0.25s ease',
-  display: 'block',
-});

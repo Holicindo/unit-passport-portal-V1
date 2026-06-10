@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useRef, DragEvent } from 'react';
+import { useState, useEffect, DragEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { unitApi } from '@/lib/api';
-import { ArrowLeft, Loader2, Save, Wrench, HelpCircle, ShieldAlert, Upload, ImageIcon, X } from 'lucide-react';
+import { ArrowLeft, Loader2, Save, HelpCircle } from 'lucide-react';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import DatePicker from '@/components/ui/DatePicker';
+import MediaUploader from './components/MediaUploader';
 import styles from './new.module.css';
 
 // Helper: Auto-categorize unit type based on model name keywords
@@ -54,8 +55,6 @@ export default function RegisterUnitPage() {
   const [uploadingMedia, setUploadingMedia] = useState(false);
   const [dragActiveTestRun, setDragActiveTestRun] = useState(false);
   const [dragActiveDiagram, setDragActiveDiagram] = useState(false);
-  const testRunInputRef = useRef<HTMLInputElement>(null);
-  const diagramInputRef = useRef<HTMLInputElement>(null);
 
   // UI states
   const [loading, setLoading] = useState(false);
@@ -441,79 +440,13 @@ export default function RegisterUnitPage() {
         {/* Section 4: Media & Verifikasi Pabrik */}
         <div className={styles.formSection}>
           <h3 className={styles.sectionTitle}>4. Media & Verifikasi Pabrik (Opsional)</h3>
-          <div className={styles.dropZoneGrid}>
-            {/* Test Run Photo */}
-            <div className={styles.dropZoneWrapper}>
-              <label>Foto Test Run & Quality Control</label>
-              <div
-                className={`${styles.dropZone} ${dragActiveTestRun ? styles.dropZoneActive : ''}`}
-                onClick={() => testRunInputRef.current?.click()}
-                onDrop={(e) => handleDrop(e, 'testRun')}
-                onDragOver={(e) => handleDragOver(e, 'testRun')}
-                onDragLeave={(e) => handleDragLeave(e, 'testRun')}
-              >
-                {testRunPreview ? (
-                  <div className={styles.dropZonePreview}>
-                    <img src={testRunPreview} alt="Test Run Preview" />
-                    <button type="button" className={styles.dropZoneRemove} onClick={(e) => { e.stopPropagation(); removeFile('testRun'); }}>
-                      <X size={14} />
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <Upload size={32} className={styles.dropZoneIcon} />
-                    <p className={styles.dropZoneText}>
-                      <strong>Klik atau seret foto</strong> ke area ini<br/>
-                      JPG, PNG, WEBP — Maks 10MB
-                    </p>
-                  </>
-                )}
-                <input
-                  ref={testRunInputRef}
-                  type="file"
-                  accept="image/*"
-                  style={{ display: 'none' }}
-                  onChange={(e) => { if (e.target.files?.[0]) handleFileSelect(e.target.files[0], 'testRun'); }}
-                />
-              </div>
-            </div>
-
-            {/* Diagram / Blueprint */}
-            <div className={styles.dropZoneWrapper}>
-              <label>Diagram Sirkulasi / Cetak Biru Digital</label>
-              <div
-                className={`${styles.dropZone} ${dragActiveDiagram ? styles.dropZoneActive : ''}`}
-                onClick={() => diagramInputRef.current?.click()}
-                onDrop={(e) => handleDrop(e, 'diagram')}
-                onDragOver={(e) => handleDragOver(e, 'diagram')}
-                onDragLeave={(e) => handleDragLeave(e, 'diagram')}
-              >
-                {diagramPreview ? (
-                  <div className={styles.dropZonePreview}>
-                    <img src={diagramPreview} alt="Diagram Preview" />
-                    <button type="button" className={styles.dropZoneRemove} onClick={(e) => { e.stopPropagation(); removeFile('diagram'); }}>
-                      <X size={14} />
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <ImageIcon size={32} className={styles.dropZoneIcon} />
-                    <p className={styles.dropZoneText}>
-                      <strong>Klik atau seret diagram</strong> ke area ini<br/>
-                      JPG, PNG, WEBP — Maks 10MB
-                    </p>
-                  </>
-                )}
-                <input
-                  ref={diagramInputRef}
-                  type="file"
-                  accept="image/*"
-                  style={{ display: 'none' }}
-                  onChange={(e) => { if (e.target.files?.[0]) handleFileSelect(e.target.files[0], 'diagram'); }}
-                />
-              </div>
-            </div>
-          </div>
+          <MediaUploader
+            testRunFile={testRunFile} testRunPreview={testRunPreview}
+            diagramFile={diagramFile} diagramPreview={diagramPreview}
+            dragActiveTestRun={dragActiveTestRun} dragActiveDiagram={dragActiveDiagram}
+            onFileSelect={handleFileSelect} onRemove={removeFile}
+            onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
+          />
         </div>
 
         <div className={styles.actionRow}>

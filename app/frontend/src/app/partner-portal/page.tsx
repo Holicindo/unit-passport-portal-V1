@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { serviceLogApi, unitApi } from '@/lib/api';
-import { Wrench, Search, LogOut, QrCode, AlertCircle, ChevronRight, Loader2, ChevronDown, CheckCircle2 } from 'lucide-react';
+import { Wrench, Search, LogOut, QrCode, AlertCircle, Loader2, ChevronDown, CheckCircle2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import styles from './partner-portal.module.css';
+import { TicketCard, NoteModal } from './components/TicketComponents';
 
 const QrScannerModal = dynamic(() => import('@/components/layout/QrScannerModal'), { ssr: false });
 
@@ -269,40 +270,10 @@ export default function PartnerPortalPage() {
           ) : (
             <div className={styles.ticketList}>
               {tickets.map(log => (
-                <div
-                  key={log.id}
-                  className={styles.ticketCard}
-                  onClick={() => log.unit?.qr_token && router.push(`/id/${log.unit.qr_token}`)}
-                >
-                  <div className={styles.ticketHeader}>
-                    <span className={styles.callIdBadge}>{log.id}</span>
-                    <span className={styles.pendingBadge}>PENDING</span>
-                  </div>
-                  <div className={styles.unitInfo}>
-                    <span className={styles.unitModel}>{log.unit?.model_name || 'Unit'}</span>
-                    <span className={styles.unitSn}>SN: {log.unit?.serial_number || '—'}</span>
-                  </div>
-                  <div className={styles.issueText}>
-                    {(log.issue_description || 'Tidak ada deskripsi').slice(0, 90)}
-                    {(log.issue_description || '').length > 90 ? '…' : ''}
-                  </div>
-                  <div className={styles.ticketFooter}>
-                    <span className={styles.ticketDate}>
-                      {log.service_date ? new Date(log.service_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
-                    </span>
-                    <div className={styles.ticketActions}>
-                      <button className={styles.closeBtn} onClick={(e) => { e.stopPropagation(); handleCloseTicket(log.id); }}>
-                        Selesaikan & Tutup Tiket
-                      </button>
-                      <button className={styles.noteBtn} onClick={(e) => { e.stopPropagation(); openNoteModal(log); }}>
-                        Tambah Catatan Servis
-                      </button>
-                      <button className={styles.openUnitBtn} onClick={(e) => { e.stopPropagation(); log.unit?.qr_token && router.push(`/id/${log.unit.qr_token}`); }}>
-                        Buka Unit <ChevronRight size={13} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <TicketCard key={log.id} log={log}
+                  onCloseTicket={(id) => handleCloseTicket(id)}
+                  onOpenNote={(l) => openNoteModal(l)}
+                  onOpenUnit={(l) => l.unit?.qr_token && router.push(`/id/${l.unit.qr_token}`)} />
               ))}
             </div>
           )}
@@ -314,22 +285,7 @@ export default function PartnerPortalPage() {
 
       {/* Modal for adding service note */}
       {noteModalOpen && (
-        <div className={styles.noteModalBackdrop} onClick={() => setNoteModalOpen(false)}>
-          <div className={styles.noteModal} onClick={e => e.stopPropagation()}>
-            <h3>Tambah Catatan Servis</h3>
-            <textarea
-              rows={6}
-              value={noteText}
-              onChange={e => setNoteText(e.target.value)}
-              placeholder="Masukkan detail tindakan, komponen diganti, dll."
-              className={styles.noteTextarea}
-            />
-            <div className={styles.noteModalActions}>
-              <button onClick={() => setNoteModalOpen(false)} className={styles.cancelBtn}>Batal</button>
-              <button onClick={saveNote} className={styles.saveBtn}>Simpan & Tutup Tiket</button>
-            </div>
-          </div>
-        </div>
+        <NoteModal noteText={noteText} setNoteText={setNoteText} onSave={saveNote} onClose={() => setNoteModalOpen(false)} />
       )}
 
       {/* Technical Docs Section (shown after tickets) */}

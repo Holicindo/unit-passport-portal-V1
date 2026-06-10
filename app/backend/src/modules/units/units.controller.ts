@@ -4,6 +4,8 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiConsume
 import { FilesInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { UnitsService } from './units.service';
+import { UnitsBulkService } from './units-bulk.service';
+import { UnitsSmartRoutingService } from './units-smart-routing.service';
 import { StorageService } from '../storage/storage.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -18,6 +20,8 @@ import { TransferOwnershipDto } from './dto/transfer-ownership.dto';
 export class UnitsController {
   constructor(
     private readonly unitsService: UnitsService,
+    private readonly unitsBulkService: UnitsBulkService,
+    private readonly unitsSmartRoutingService: UnitsSmartRoutingService,
     private readonly storageService: StorageService,
   ) {}
 
@@ -36,7 +40,7 @@ export class UnitsController {
     @Param('id') id: string,
     @Body() body: { city?: string; notes?: string; contact_phone?: string; contact_name?: string }
   ) {
-    return this.unitsService.requestServiceSmartRouting(id, body);
+    return this.unitsSmartRoutingService.requestServiceSmartRouting(id, body);
   }
 
   // --- LEVEL 2: CLIENT ---
@@ -148,7 +152,7 @@ export class UnitsController {
       return { success: false, message: 'No file uploaded' };
     }
     const uploadMode = mode === 'replace' ? 'replace' : 'upsert';
-    return this.unitsService.bulkUpload(file.buffer, uploadMode);
+    return this.unitsBulkService.bulkUpload(file.buffer, uploadMode);
   }
 
   // --- FILE UPLOAD: Unit Media ---
