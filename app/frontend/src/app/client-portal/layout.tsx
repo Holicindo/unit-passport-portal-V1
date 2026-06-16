@@ -375,7 +375,7 @@ export default function ClientPortalLayout({ children }: { children: React.React
                           {n.message || n.title || 'Notifikasi baru'}
                         </div>
                         <div style={{ fontSize: '0.7rem', color: 'var(--brand-space-grey)', marginTop: '4px', fontFamily: 'var(--font-body)' }}>
-                          {n.created_at ? new Date(n.created_at).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}
+                          {n.created_at ? new Date(n.created_at).toLocaleString('id-ID', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) : ''}
                         </div>
                       </div>
                     ))}

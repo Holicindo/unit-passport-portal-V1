@@ -15,49 +15,68 @@ export default function ServiceTrendChart({ chartData, loading, liveTime }: Prop
   const [hoveredPoint, setHoveredPoint] = useState<any>(null);
   const { completedLine, completedFill, pendingLine, pendingFill, points } = computeSplinePaths(chartData);
 
+  // Compute Y-axis scale labels
+  const maxVal = chartData.length > 0 ? Math.max(...chartData.map(c => Math.max(c.completed, c.pending)), 4) : 4;
+  const yLabels = [
+    { y: '15%', value: maxVal },        // top
+    { y: '50%', value: Math.round(maxVal / 2) }, // middle
+    { y: '85%', value: 0 },             // bottom
+  ];
+
   return (
     <div className={styles.chartCard}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
           <h3 className={styles.chartTitle} style={{ margin: 0 }}>
-            <TrendingUp size={18} style={{ color: '#E11D48' }} />
+            <TrendingUp size={18} style={{ color: 'var(--color-safety-orange)' }} />
             Tren Aktivitas Servis (12 Bulan Terakhir)
           </h3>
           <p style={{ margin: 0, fontSize: '0.74rem', color: 'var(--color-space-grey)' }}>Membandingkan jumlah servis selesai vs yang masih pending secara bulanan.</p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
           <span style={{
-            fontSize: '0.72rem', background: 'rgba(0,196,140,0.08)', color: '#00C48C',
+            fontSize: '0.72rem', background: 'rgba(46,91,255,0.08)', color: 'var(--color-cobalt-blue)',
             padding: '4px 10px', borderRadius: '12px', fontWeight: 800, letterSpacing: '0.5px',
             display: 'flex', alignItems: 'center', gap: '4px'
           }}>
-            <span style={{ width: '6px', height: '6px', background: '#00C48C', borderRadius: '50%', display: 'inline-block', animation: 'pulse 1.2s infinite' }}></span>
+            <span style={{ width: '6px', height: '6px', background: 'var(--color-cobalt-blue)', borderRadius: '50%', display: 'inline-block', animation: 'pulse 1.2s infinite' }}></span>
             REAL-TIME SYNCED ({liveTime || 'Live Clock'})
           </span>
           <div style={{ display: 'flex', gap: '12px', fontSize: '0.72rem', fontWeight: 700 }}>
-            <span style={{ color: '#E11D48' }}>● Pending</span>
-            <span style={{ color: '#00C48C' }}>● Selesai</span>
+            <span style={{ color: 'var(--color-safety-orange)' }}>● Pending</span>
+            <span style={{ color: 'var(--color-cobalt-blue)' }}>● Selesai</span>
           </div>
         </div>
       </div>
 
-      <div style={{ position: 'relative', width: '100%', height: '240px' }}>
+      <div className={styles.chartCeruk} style={{ position: 'relative', width: '100%', height: '260px' }}>
         {loading ? (
           <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '8px' }}>
             <RefreshCw size={24} className={styles.spin} style={{ color: 'var(--color-cobalt-blue)' }} />
             <span style={{ fontSize: '0.8rem', color: 'var(--color-space-grey)', fontWeight: 600 }}>Memuat Grafik Aktivitas...</span>
           </div>
         ) : (
-          <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+          <div style={{ position: 'relative', width: '100%', height: '100%', paddingLeft: '32px' }}>
+            {/* Y-axis labels */}
+            <div style={{ position: 'absolute', left: 0, top: 0, bottom: '24px', width: '28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', pointerEvents: 'none' }}>
+              {yLabels.map((label, i) => (
+                <span key={i} style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--color-space-grey)', textAlign: 'right', opacity: 0.7 }}>
+                  {label.value}
+                </span>
+              ))}
+            </div>
+
+            {/* Chart SVG */}
+            <div style={{ position: 'relative', width: '100%', height: '100%' }}>
             <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
               <defs>
                 <linearGradient id="comp-grad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#00C48C" stopOpacity="0.25" />
-                  <stop offset="100%" stopColor="#00C48C" stopOpacity="0.0" />
+                  <stop offset="0%" stopColor="#2E5BFF" stopOpacity="0.25" />
+                  <stop offset="100%" stopColor="#2E5BFF" stopOpacity="0.0" />
                 </linearGradient>
                 <linearGradient id="pend-grad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#E11D48" stopOpacity="0.25" />
-                  <stop offset="100%" stopColor="#E11D48" stopOpacity="0.0" />
+                  <stop offset="0%" stopColor="#FF6B00" stopOpacity="0.25" />
+                  <stop offset="100%" stopColor="#FF6B00" stopOpacity="0.0" />
                 </linearGradient>
               </defs>
 
@@ -69,10 +88,10 @@ export default function ServiceTrendChart({ chartData, loading, liveTime }: Prop
               {pendingFill && <path d={pendingFill} fill="url(#pend-grad)" />}
 
               {pendingLine && (
-                <path d={pendingLine} stroke="#E11D48" strokeWidth="2.5" fill="none" vectorEffect="non-scaling-stroke" />
+                <path d={pendingLine} stroke="#FF6B00" strokeWidth="2.5" fill="none" vectorEffect="non-scaling-stroke" />
               )}
               {completedLine && (
-                <path d={completedLine} stroke="#00C48C" strokeWidth="2.5" fill="none" vectorEffect="non-scaling-stroke" />
+                <path d={completedLine} stroke="#2E5BFF" strokeWidth="2.5" fill="none" vectorEffect="non-scaling-stroke" />
               )}
             </svg>
 
@@ -103,6 +122,7 @@ export default function ServiceTrendChart({ chartData, loading, liveTime }: Prop
               </div>
             ))}
           </div>
+          </div>
         )}
 
         {hoveredPoint && (
@@ -118,10 +138,10 @@ export default function ServiceTrendChart({ chartData, loading, liveTime }: Prop
               {hoveredPoint.fullName}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.75rem', fontWeight: 700 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#E11D48' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-safety-orange)' }}>
                 <span>● Pending</span><span style={{ fontWeight: 800 }}>{hoveredPoint.pending}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#00C48C' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-cobalt-blue)' }}>
                 <span>● Selesai</span><span style={{ fontWeight: 800 }}>{hoveredPoint.completed}</span>
               </div>
             </div>

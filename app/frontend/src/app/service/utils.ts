@@ -56,7 +56,7 @@ export const parseDetailedIssue = (desc: string) => {
 export const formatDate = (dateStr: string) => {
   if (!dateStr) return '-';
   try {
-    return new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+    return new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
   } catch {
     return dateStr;
   }

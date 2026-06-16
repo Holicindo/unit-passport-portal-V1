@@ -98,9 +98,9 @@ export default function AuditAnalyticsPage() {
   }, [warrantyIssues]);
 
   const stats = [
-    { label: 'Tiket Berulang', value: repeatedUnits.length, icon: RefreshCw, color: 'var(--color-safety-orange)', bg: 'rgba(255,107,0,0.08)' },
-    { label: 'Tiket Terlambat', value: overdueTickets.length, icon: Clock, color: '#E11D48', bg: 'rgba(225,29,72,0.08)' },
-    { label: 'Masalah Garansi', value: warrantyIssues.length, icon: ShieldCheck, color: 'var(--color-cobalt-blue)', bg: 'rgba(46,91,255,0.08)' },
+    { label: 'Tiket Berulang', value: repeatedUnits.length, icon: RefreshCw, color: '#FF6B00', bg: 'rgba(255,107,0,0.08)' },
+    { label: 'Tiket Terlambat', value: overdueTickets.length, icon: Clock, color: '#FF6B00', bg: 'rgba(255,107,0,0.08)' },
+    { label: 'Masalah Garansi', value: warrantyIssues.length, icon: ShieldCheck, color: '#001F3F', bg: 'rgba(0,31,63,0.08)' },
   ];
 
   return (
@@ -127,8 +127,18 @@ export default function AuditAnalyticsPage() {
           : stats.map((s) => {
               const Icon = s.icon;
               return (
-                <div key={s.label} className={styles.statCard}>
-                  <div className={styles.statIcon} style={{ background: s.bg, color: s.color }}>
+                <div key={s.label} className={styles.statCard} style={{
+                  background: '#ECEEF2',
+                  border: 'none',
+                  borderRadius: '24px',
+                  boxShadow: '-6px -6px 14px rgba(255, 255, 255, 0.85), 6px 6px 14px rgba(0, 31, 63, 0.1)',
+                }}>
+                  <div className={styles.statIcon} style={{
+                    background: '#ECEEF2',
+                    color: s.color,
+                    borderRadius: '16px',
+                    boxShadow: 'inset -4px -4px 8px rgba(255, 255, 255, 0.9), inset 4px 4px 8px rgba(0, 31, 63, 0.1)',
+                  }}>
                     <Icon size={22} strokeWidth={2} />
                   </div>
                   <div>

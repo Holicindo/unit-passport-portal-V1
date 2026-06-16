@@ -2,6 +2,7 @@
 
 import { X, Loader2, HelpCircle } from 'lucide-react';
 import { CustomSelect } from '@/components/ui/CustomSelect';
+import { getUnitType, UNIT_TYPE_LABELS, UNIT_TYPE_COLORS } from '../../id/[token]/constants';
 import styles from '../service.module.css';
 
 interface ServiceFormModalProps {
@@ -24,6 +25,12 @@ interface ServiceFormModalProps {
   setTechnicianName: (v: string) => void;
   status: string;
   setStatus: (v: string) => void;
+  taskType: string;
+  setTaskType: (v: string) => void;
+  scheduledDate: string;
+  setScheduledDate: (v: string) => void;
+  deliveryDate: string;
+  setDeliveryDate: (v: string) => void;
   submitting: boolean;
 }
 
@@ -36,10 +43,17 @@ export default function ServiceFormModal(props: ServiceFormModalProps) {
     issueDescription, setIssueDescription,
     actionTaken, setActionTaken,
     technicianName, setTechnicianName,
-    status, setStatus, submitting,
+    status, setStatus,
+    taskType, setTaskType,
+    scheduledDate, setScheduledDate,
+    deliveryDate, setDeliveryDate,
+    submitting,
   } = props;
 
   if (!show) return null;
+
+  const selectedUnit = units.find(u => u.id === selectedUnitId);
+  const autoUnitType = selectedUnit ? getUnitType(selectedUnit.model_name) : null;
 
   const handlePreSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,6 +78,20 @@ export default function ServiceFormModal(props: ServiceFormModalProps) {
               <label>Pilih Unit / Mesin Bermasalah *</label>
               <CustomSelect value={selectedUnitId} onChange={(val) => setSelectedUnitId(val)}
                 options={[{ value: '', label: '— Cari & Pilih Unit —' }, ...units.map((u) => ({ value: u.id, label: `${u.model_name} (SN: ${u.serial_number}) - ${u.current_client?.company_name}` }))]} />
+              {autoUnitType && (
+                <div style={{ marginTop: '8px', padding: '10px 14px', background: UNIT_TYPE_COLORS[autoUnitType].bg, border: `1px solid ${UNIT_TYPE_COLORS[autoUnitType].border}`, borderRadius: '10px', fontSize: '0.85rem', color: UNIT_TYPE_COLORS[autoUnitType].color, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  Kategori Otomatis: {UNIT_TYPE_LABELS[autoUnitType]}
+                </div>
+              )}
+            </div>
+            <div className={`${styles.formGroup} ${styles.formGroupFull}`}>
+              <label>Jenis Pekerjaan *</label>
+              <CustomSelect value={taskType} onChange={(val) => setTaskType(val)}
+                options={[
+                  { value: 'CORRECTIVE', label: 'Servis Perbaikan (Corrective)' },
+                  { value: 'PREVENTIVE', label: 'Perawatan Rutin (Preventive)' },
+                  { value: 'INSTALLATION', label: 'Pengiriman & Instalasi (Delivery)' },
+                ]} />
             </div>
             <div className={`${styles.formGroup} ${styles.formGroupFull}`}>
               <label>Mitra Regional / Teknisi Penanggungjawab</label>
@@ -85,8 +113,18 @@ export default function ServiceFormModal(props: ServiceFormModalProps) {
             <div className={styles.formGroup}>
               <label>Status Awal</label>
               <CustomSelect value={status} onChange={(val) => setStatus(val)}
-                options={[{ value: 'PENDING', label: 'PENDING (Antrean)' }, { value: 'COMPLETED', label: 'COMPLETED (Selesai)' }, { value: 'CANCELLED', label: 'CANCELLED (Batal)' }]} />
+                options={[{ value: 'PENDING', label: 'PENDING (Antrean)' }, { value: 'IN PROGRESS', label: 'IN PROGRESS (Dikerjakan)' }, { value: 'COMPLETED', label: 'COMPLETED (Selesai)' }, { value: 'CANCELED', label: 'CANCELED (Batal)' }]} />
             </div>
+            <div className={styles.formGroup}>
+              <label>Tanggal Jadwal Servis</label>
+              <input type="date" value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)} />
+            </div>
+            {taskType === 'INSTALLATION' && (
+              <div className={`${styles.formGroup} ${styles.formGroupFull}`}>
+                <label>Tanggal Delivery / Pengiriman</label>
+                <input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} />
+              </div>
+            )}
           </div>
         </div>
         <footer className={styles.modalFooter}>

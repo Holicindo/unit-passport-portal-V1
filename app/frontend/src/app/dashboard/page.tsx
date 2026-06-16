@@ -57,10 +57,10 @@ export default function DashboardPage() {
             disabled={syncing || loading}
             style={{
               display: 'flex', alignItems: 'center', gap: '8px',
-              background: 'rgba(255,255,255,0.7)', border: '1px solid rgba(0,31,63,0.08)',
-              padding: '8px 16px', borderRadius: '24px', fontSize: '0.82rem',
-              fontWeight: 700, color: 'var(--color-deep-navy)', cursor: 'pointer',
-              boxShadow: '0 4px 12px rgba(0,31,63,0.02)', transition: 'all 0.2s',
+              background: '#ECEEF2', border: 'none',
+              padding: '10px 20px', borderRadius: '24px', fontSize: '0.85rem',
+              fontWeight: 700, color: 'var(--color-cobalt-blue)', cursor: 'pointer',
+              boxShadow: '-4px -4px 10px rgba(255, 255, 255, 0.9), 4px 4px 10px rgba(0, 31, 63, 0.08)', transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
             }}
           >
             <RefreshCw size={14} className={syncing ? styles.spin : ''} style={{ color: 'var(--color-cobalt-blue)' }} />

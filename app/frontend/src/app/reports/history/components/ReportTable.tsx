@@ -76,7 +76,7 @@ export default function ReportTable({
                     </td>
                     <td>
                       <div className={styles.dateCell}>
-                        <span>{parseDate(report.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
+                        <span>{parseDate(report.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                         <small>{parseDate(report.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB</small>
                       </div>
                     </td>
@@ -146,7 +146,7 @@ export default function ReportTable({
                   <div className={styles.metaField}>
                     <span className={styles.metaLabel}>Tanggal:</span>
                     <span className={styles.metaValue}>
-                      {parseDate(report.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })} {parseDate(report.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
+                      {parseDate(report.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })} {parseDate(report.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
                     </span>
                   </div>
                   <div className={styles.metaField}>

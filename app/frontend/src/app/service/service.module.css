@@ -45,23 +45,28 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: var(--color-cobalt-blue);
-  color: white;
+  background: #ECEEF2;
+  color: var(--color-cobalt-blue);
   border: none;
   padding: 12px 24px;
-  border-radius: var(--radius-md);
+  border-radius: 24px;
   font-family: var(--font-heading);
   font-weight: 700;
   font-size: 0.95rem;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 4px 14px rgba(46, 91, 255, 0.2);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: -4px -4px 10px rgba(255, 255, 255, 0.9), 4px 4px 10px rgba(0, 31, 63, 0.08);
 }
 
 .createBtn:hover {
-  background: #2E5BFF;
+  box-shadow: -6px -6px 14px rgba(255, 255, 255, 0.95), 6px 6px 14px rgba(0, 31, 63, 0.1);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(46, 91, 255, 0.3);
+  color: #2E5BFF;
+}
+
+.createBtn:active {
+  box-shadow: inset -4px -4px 8px rgba(255, 255, 255, 0.9), inset 4px 4px 8px rgba(0, 31, 63, 0.08);
+  transform: translateY(0);
 }
 
 /* Stats Cards */
@@ -135,12 +140,18 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  background: #F8FAFC;
-  border: 1px solid #E2E8F0;
-  border-radius: 10px;
-  padding: 8px 14px;
+  background: #ECEEF2;
+  border: none;
+  border-radius: 30px;
+  padding: 10px 16px;
   width: 100%;
   max-width: 320px;
+  box-shadow: inset 4px 4px 8px rgba(0, 31, 63, 0.08), inset -4px -4px 8px rgba(255, 255, 255, 0.9);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.searchWrapper:focus-within {
+  box-shadow: inset 6px 6px 12px rgba(0, 31, 63, 0.12), inset -6px -6px 12px rgba(255, 255, 255, 0.95);
 }
 
 .searchIcon {
@@ -170,20 +181,21 @@
 }
 
 .filterSelect {
-  background: #F8FAFC;
-  border: 1px solid #E2E8F0;
-  border-radius: 8px;
+  background: #ECEEF2;
+  border: none;
+  border-radius: 10px;
   padding: 8px 16px;
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--color-deep-navy);
   outline: none;
   cursor: pointer;
-  transition: border-color 0.2s;
+  box-shadow: inset -4px -4px 8px rgba(255, 255, 255, 0.9), inset 4px 4px 8px rgba(0, 31, 63, 0.08);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .filterSelect:focus {
-  border-color: var(--color-cobalt-blue);
+  box-shadow: inset -6px -6px 12px rgba(255, 255, 255, 0.95), inset 6px 6px 12px rgba(0, 31, 63, 0.12);
 }
 
 /* Table */
@@ -333,13 +345,18 @@
 }
 
 .badgePending {
-  background: rgba(221, 139, 81, 0.1);
-  color: var(--color-safety-orange);
+  background: rgba(255, 87, 34, 0.1);
+  color: var(--color-safety-orange, #FF5722);
+}
+
+.badgeInProgress {
+  background: rgba(0, 71, 171, 0.1);
+  color: var(--color-cobalt-blue, #0047AB);
 }
 
 .badgeCompleted {
-  background: rgba(104, 205, 177, 0.1);
-  color: var(--color-success);
+  background: rgba(10, 25, 47, 0.1);
+  color: var(--color-deep-navy, #0a192f);
 }
 
 .badgeCancelled {
@@ -353,21 +370,28 @@
 }
 
 .actionBtn {
-  background: #F8FAFC;
-  border: 1px solid #E2E8F0;
+  background: #ECEEF2;
+  border: none;
   color: var(--color-space-grey);
   padding: 8px;
-  border-radius: 8px;
+  border-radius: 50%;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: -4px -4px 10px rgba(255, 255, 255, 0.9), 4px 4px 10px rgba(0, 31, 63, 0.08);
 }
 
 .actionBtn:hover {
-  background: #F1F5F9;
   color: var(--color-deep-navy);
+  box-shadow: -6px -6px 14px rgba(255, 255, 255, 0.95), 6px 6px 14px rgba(0, 31, 63, 0.1);
+  transform: translateY(-1px);
+}
+
+.actionBtn:active {
+  box-shadow: inset -4px -4px 8px rgba(255, 255, 255, 0.9), inset 4px 4px 8px rgba(0, 31, 63, 0.08);
+  transform: translateY(0);
 }
 
 .emptyState {
@@ -392,6 +416,29 @@
   color: var(--color-space-grey);
   max-width: 320px;
   line-height: 1.5;
+}
+
+.expandBtn {
+  background: #ECEEF2;
+  border: 1px solid rgba(0, 31, 63, 0.1);
+  color: var(--color-deep-navy);
+  border-radius: 4px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 0;
+  line-height: 1;
+}
+
+.expandBtn:hover {
+  background: #d9e2ec;
+  color: var(--color-cobalt-blue);
 }
 
 /* Modal Overlay & Forms */
@@ -539,40 +586,51 @@
 }
 
 .cancelBtn {
-  background: white;
-  border: 1px solid #E2E8F0;
+  background: #ECEEF2;
+  border: none;
   color: var(--color-space-grey);
   padding: 10px 20px;
-  border-radius: 8px;
+  border-radius: 24px;
   font-family: var(--font-heading);
   font-weight: 700;
   font-size: 0.85rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: -4px -4px 10px rgba(255, 255, 255, 0.9), 4px 4px 10px rgba(0, 31, 63, 0.08);
 }
 
 .cancelBtn:hover {
-  background: #F1F5F9;
   color: var(--color-deep-navy);
+  box-shadow: -6px -6px 14px rgba(255, 255, 255, 0.95), 6px 6px 14px rgba(0, 31, 63, 0.1);
+}
+
+.cancelBtn:active {
+  box-shadow: inset -4px -4px 8px rgba(255, 255, 255, 0.9), inset 4px 4px 8px rgba(0, 31, 63, 0.08);
 }
 
 .saveBtn {
-  background: var(--color-cobalt-blue);
-  color: white;
+  background: #ECEEF2;
+  color: var(--color-cobalt-blue);
   border: none;
   padding: 10px 24px;
-  border-radius: 8px;
+  border-radius: 24px;
   font-family: var(--font-heading);
   font-weight: 700;
   font-size: 0.85rem;
   cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: 0 4px 10px rgba(46, 91, 255, 0.15);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: -4px -4px 10px rgba(255, 255, 255, 0.9), 4px 4px 10px rgba(0, 31, 63, 0.08);
 }
 
 .saveBtn:hover {
-  background: #2E5BFF;
-  box-shadow: 0 4px 14px rgba(46, 91, 255, 0.25);
+  color: #2E5BFF;
+  box-shadow: -6px -6px 14px rgba(255, 255, 255, 0.95), 6px 6px 14px rgba(0, 31, 63, 0.1);
+  transform: translateY(-1px);
+}
+
+.saveBtn:active {
+  box-shadow: inset -4px -4px 8px rgba(255, 255, 255, 0.9), inset 4px 4px 8px rgba(0, 31, 63, 0.08);
+  transform: translateY(0);
 }
 
 .errorAlert {

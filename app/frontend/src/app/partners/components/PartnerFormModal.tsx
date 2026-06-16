@@ -75,7 +75,7 @@ export default function PartnerFormModal({
           </div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: '#f8fafc', borderRadius: '10px', border: '1px solid #f0f0f4' }}>
             <div>
-              <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--color-deep-navy)' }}>Smart Routing</div>
+              <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--color-deep-navy)' }}>Status Routing</div>
               <div style={{ fontSize: '0.8rem', color: 'var(--color-space-grey)', marginTop: '2px' }}>
                 {form.is_active ? 'Routing Aktif — pesan diteruskan ke mitra ini' : 'Routing Nonaktif — fallback ke WhatsApp HQ'}
               </div>

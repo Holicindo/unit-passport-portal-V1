@@ -322,7 +322,7 @@ export default function ClientUnitDetail() {
                     <span className={unitStyles.logDate}>
                       <Calendar size={12} />
                       {log.service_date
-                        ? new Date(log.service_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+                        ? new Date(log.service_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
                         : '—'}
                     </span>
                   </div>
@@ -397,7 +397,7 @@ export default function ClientUnitDetail() {
                   </td>
                   <td data-label="Tanggal" style={{ color: 'var(--brand-space-grey)' }}>
                     {rep.created_at
-                      ? new Date(rep.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+                      ? new Date(rep.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
                       : '—'}
                   </td>
                   <td data-label="Dibuat Oleh" style={{ color: 'var(--brand-space-grey)' }}>

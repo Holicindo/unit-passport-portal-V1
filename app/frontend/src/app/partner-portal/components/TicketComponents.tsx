@@ -35,7 +35,7 @@ export function TicketCard({ log, onCloseTicket, onOpenNote, onOpenUnit }: Ticke
       </div>
       <div className={styles.ticketFooter}>
         <span className={styles.ticketDate}>
-          {log.service_date ? new Date(log.service_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
+          {log.service_date ? new Date(log.service_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'}
         </span>
         <div className={styles.ticketActions}>
           <button className={styles.closeBtn} onClick={(e) => { e.stopPropagation(); onCloseTicket(log.id); }}>

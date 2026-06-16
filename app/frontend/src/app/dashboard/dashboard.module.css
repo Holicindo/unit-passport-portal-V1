@@ -39,12 +39,19 @@
 }
 
 .chartCard {
-  background: var(--color-optic-white);
+  background: #ECEEF2;
   border-radius: var(--radius-lg);
-  border: 1px solid rgba(0, 0, 0, 0.03);
   padding: 24px 28px;
-  box-shadow: 0 10px 30px rgba(0, 0, 50, 0.03);
+  box-shadow: -6px -6px 14px rgba(255, 255, 255, 0.85), 6px 6px 14px rgba(0, 31, 63, 0.1);
   min-height: 290px;
+}
+
+.chartCeruk {
+  background: #ECEEF2;
+  border-radius: 16px;
+  padding: 20px 24px 16px 16px;
+  box-shadow: inset 6px 6px 12px rgba(0, 31, 63, 0.08), inset -6px -6px 12px rgba(255, 255, 255, 0.95);
+  margin-top: 16px;
 }
 
 .chartTitle {
@@ -84,11 +91,10 @@
 }
 
 .listCard {
-  background: var(--color-optic-white);
+  background: #ECEEF2;
   border-radius: var(--radius-lg);
-  border: 1px solid rgba(0, 0, 0, 0.03);
   padding: 28px;
-  box-shadow: 0 10px 30px rgba(0, 0, 50, 0.03);
+  box-shadow: -6px -6px 14px rgba(255, 255, 255, 0.85), 6px 6px 14px rgba(0, 31, 63, 0.1);
 }
 
 .listTitle {
@@ -137,6 +143,19 @@
 .unitCount {
   color: var(--color-safety-orange);
   font-weight: 600;
+}
+
+/* ── Empty State Box ── */
+.emptyStateBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 20px 16px;
+  background: #ECEEF2;
+  box-shadow: inset -4px -4px 8px rgba(255, 255, 255, 0.9), inset 4px 4px 8px rgba(0, 31, 63, 0.08);
+  border-radius: 12px;
+  text-align: center;
 }
 
 @keyframes fadeIn {
@@ -211,11 +230,12 @@
 }
 
 .syncBtn:hover {
-  background: rgba(0, 31, 63, 0.05) !important;
+  box-shadow: -6px -6px 14px rgba(255, 255, 255, 0.95), 6px 6px 14px rgba(0, 31, 63, 0.1) !important;
   transform: translateY(-1px) !important;
-  box-shadow: 0 4px 12px rgba(0,31,63,0.06) !important;
+  color: #2E5BFF !important;
 }
 
 .syncBtn:active {
+  box-shadow: inset -4px -4px 8px rgba(255, 255, 255, 0.9), inset 4px 4px 8px rgba(0, 31, 63, 0.08) !important;
   transform: translateY(0) !important;
 }

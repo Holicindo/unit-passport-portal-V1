@@ -79,6 +79,8 @@ export const serviceLogApi = {
   create: (data: any) => api.post('/service-logs', data),
   update: (id: string, data: any) => api.put(`/service-logs/${id}`, data),
   findByUnit: (unitId: string) => api.get(`/service-logs/unit/${unitId}`),
+  bulkReschedule: (ids: string[], newDate: string, newDeliveryDate?: string) =>
+    api.post('/service-logs/bulk-reschedule', { ids, newDate, newDeliveryDate }),
 };
 
 export const partnerApi = {

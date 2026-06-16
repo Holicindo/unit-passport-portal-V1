@@ -6,7 +6,7 @@ import {
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import {
   ISSUE_MAIN_CATEGORIES,
-  ISSUE_SUB_CATEGORIES,
+  ISSUE_SUB_CATEGORIES_SHOWCASE,
 } from '../constants';
 import styles from '../id.module.css';
 
@@ -16,6 +16,7 @@ export interface ServiceRequestModalProps {
   onSubmit: (e: React.FormEvent) => void;
   loading: boolean;
   routingResult: any;
+  unitType?: string; // 'SHOWCASE' | 'MESIN' | undefined
   // Form state
   storeName: string;
   setStoreName: (v: string) => void;
@@ -37,6 +38,7 @@ export default function ServiceRequestModal({
   onSubmit,
   loading,
   routingResult,
+  unitType,
   storeName,
   setStoreName,
   serviceName,
@@ -52,6 +54,16 @@ export default function ServiceRequestModal({
 }: ServiceRequestModalProps) {
   if (!show) return null;
 
+  // Determine if unit type is already known
+  const isShowcase = unitType === 'SHOWCASE';
+  const isMesin = unitType === 'MESIN';
+  const isKnownType = isShowcase || isMesin;
+
+  // For known showcase units, show sub-category directly
+  // For known mesin units, no sub-category needed
+  const showMainCategorySelect = !isKnownType;
+  const showSubCategory = isShowcase || issueMainCategory === 'Kendala Showcase';
+
   return (
     <div className={styles.modalOverlay}>
       <div className={styles.modalCard}>
@@ -60,14 +72,14 @@ export default function ServiceRequestModal({
             <button onClick={onClose} className={styles.mobileBackBtn}>
               <ArrowLeft size={18} strokeWidth={2.5} />
             </button>
-            <h2>Request Service &amp; Smart Routing</h2>
+            <h2>Request Service</h2>
           </div>
           <button onClick={onClose} className={styles.closeBtn}>×</button>
         </div>
 
         {!routingResult ? (
           <form onSubmit={onSubmit} className={styles.modalForm}>
-            <p className={styles.modalHint}>Permintaan akan diproses menggunakan sistem Smart Routing regional kami.</p>
+            <p className={styles.modalHint}>Isi formulir berikut untuk mengirimkan permintaan servis ke tim kami.</p>
 
             <div className={styles.formGroup}>
               <label>Nama/Kode Outlet (Toko) <span className={styles.mobileOnly} style={{ color: '#ef4444' }}>*</span></label>
@@ -84,27 +96,31 @@ export default function ServiceRequestModal({
               <input type="text" value={servicePhone} onChange={(e) => setServicePhone(e.target.value)} placeholder="Contoh: 0812XXXXXXXX" required />
             </div>
 
-            <div className={styles.formGroup}>
-              <label>Pilih Kategori Kendala Utama <span className={styles.mobileOnly} style={{ color: '#ef4444' }}>*</span></label>
-              <CustomSelect
-                value={issueMainCategory}
-                onChange={(val) => {
-                  setIssueMainCategory(val);
-                  if (val !== 'Kendala Showcase') setIssueSubCategory('');
-                }}
-                options={ISSUE_MAIN_CATEGORIES}
-                placeholder="— Pilih Kategori —"
-              />
-            </div>
-
-            {issueMainCategory === 'Kendala Showcase' && (
+            {/* Kategori Unit — hanya muncul jika tipe unit belum diketahui */}
+            {showMainCategorySelect && (
               <div className={styles.formGroup}>
-                <label>Sub-Kategori Kendala Showcase <span className={styles.mobileOnly} style={{ color: '#ef4444' }}>*</span></label>
+                <label>Kategori Unit <span className={styles.mobileOnly} style={{ color: '#ef4444' }}>*</span></label>
+                <CustomSelect
+                  value={issueMainCategory}
+                  onChange={(val) => {
+                    setIssueMainCategory(val);
+                    if (val !== 'Kendala Showcase') setIssueSubCategory('');
+                  }}
+                  options={ISSUE_MAIN_CATEGORIES}
+                  placeholder="— Pilih Kategori —"
+                />
+              </div>
+            )}
+
+            {/* Sub-kategori Showcase — tampil jika unit adalah showcase atau kategori dipilih showcase */}
+            {showSubCategory && (
+              <div className={styles.formGroup}>
+                <label>Kendala Unit <span className={styles.mobileOnly} style={{ color: '#ef4444' }}>*</span></label>
                 <CustomSelect
                   value={issueSubCategory}
                   onChange={(val) => setIssueSubCategory(val)}
-                  options={ISSUE_SUB_CATEGORIES}
-                  placeholder="— Pilih Sub-Kategori —"
+                  options={ISSUE_SUB_CATEGORIES_SHOWCASE}
+                  placeholder="— Pilih Kendala —"
                 />
               </div>
             )}
@@ -126,7 +142,7 @@ export default function ServiceRequestModal({
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <button type="submit" className={styles.btnSubmit} disabled={loading}>
-                {loading ? 'Melakukan Smart Routing...' : (
+                {loading ? 'Memproses Permintaan...' : (
                   <>Kirim Permintaan Servis <span className={styles.mobileOnly} style={{ fontSize: '1.1rem', marginLeft: '6px' }}>→</span></>
                 )}
               </button>
@@ -141,7 +157,7 @@ export default function ServiceRequestModal({
             {routingResult.routed_to === 'PARTNER' ? (
               <div className={styles.resultCardSuccess}>
                 <CheckCircle2 size={36} color="var(--color-success)" />
-                <h3>Smart Routing Berhasil!</h3>
+                <h3>Permintaan Berhasil Dikirim!</h3>
                 <p>{routingResult.message}</p>
                 <div className={styles.partnerContactCard}>
                   <h4>Informasi Partner Regional:</h4>

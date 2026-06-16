@@ -167,7 +167,7 @@ export default function PartnersPage() {
                 <th>Nama Mitra</th>
                 <th>Kota</th>
                 <th>Kontak WhatsApp</th>
-                <th>Smart Routing</th>
+                <th>Status</th>
                 <th style={{ textAlign: 'right' }}>Aksi</th>
               </tr>
             </thead>

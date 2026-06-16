@@ -216,7 +216,7 @@ export default function ClientWarranty() {
                       <td data-label="Tgl. Produksi" style={{ color: 'var(--brand-space-grey)' }}>
                         {unit.production_date
                           ? new Date(unit.production_date).toLocaleDateString('id-ID', {
-                              day: 'numeric', month: 'short', year: 'numeric',
+                              day: 'numeric', month: 'long', year: 'numeric',
                             })
                           : '-'}
                       </td>

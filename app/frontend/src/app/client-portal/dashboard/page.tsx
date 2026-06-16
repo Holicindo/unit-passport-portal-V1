@@ -191,7 +191,7 @@ export default function ClientDashboard() {
                       </div>
                     </div>
                     <div className={styles.upcomingDate}>
-                      {log.service_date ? new Date(log.service_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : '-'}
+                      {log.service_date ? new Date(log.service_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}
                     </div>
                   </div>
                 ))}

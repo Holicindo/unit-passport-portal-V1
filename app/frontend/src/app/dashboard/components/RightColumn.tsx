@@ -1,6 +1,6 @@
 'use client';
 
-import { Users, ShieldAlert, Activity } from 'lucide-react';
+import { Users, ShieldAlert, Activity, CheckCircle2 } from 'lucide-react';
 import { WarrantyCategories } from '../utils';
 import styles from '../dashboard.module.css';
 
@@ -61,15 +61,17 @@ export default function RightColumn({ loading, activeClients, frequentCallIds, o
             ))
           ) : (
             frequentCallIds.length === 0 ? (
-              <div style={{ fontSize: '0.75rem', color: 'var(--color-space-grey)', textAlign: 'center', padding: '16px 0' }}>
-                Tidak ada keluhan berulang terdeteksi.
+              <div className={styles.emptyStateBox}>
+                <CheckCircle2 size={20} style={{ color: 'var(--color-cobalt-blue)' }} />
+                <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--color-deep-navy)' }}>Tidak ada keluhan berulang</span>
+                <span style={{ fontSize: '0.68rem', color: 'var(--color-space-grey)' }}>Semua masalah terselesaikan dalam 1 kunjungan.</span>
               </div>
             ) : (
               frequentCallIds.map((call, idx) => (
                 <div key={idx} className={styles.listItem} style={{ flexDirection: 'column', gap: '2px', alignItems: 'stretch' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span className={styles.unitName} style={{ fontWeight: 700, color: 'var(--color-deep-navy)' }}>SN: {call.sn}</span>
-                    <span className={styles.unitCount} style={{ fontSize: '0.75rem', fontWeight: 800, color: '#E11D48', background: 'rgba(225,29,72,0.08)', padding: '2px 6px', borderRadius: '6px' }}>
+                    <span className={styles.unitCount} style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-safety-orange)', background: 'rgba(255,107,0,0.08)', padding: '2px 6px', borderRadius: '6px' }}>
                       {call.visits}x Kunjungan
                     </span>
                   </div>
@@ -85,7 +87,7 @@ export default function RightColumn({ loading, activeClients, frequentCallIds, o
       <div className={styles.listCard}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
           <h3 className={styles.listTitle} style={{ marginBottom: 0 }}>
-            <Activity size={16} style={{ color: '#E11D48', marginRight: '6px', verticalAlign: 'middle' }} />
+            <Activity size={16} style={{ color: 'var(--color-safety-orange)', marginRight: '6px', verticalAlign: 'middle' }} />
             Tiket Terbengkalai {'>'} 2 Minggu
           </h3>
         </div>
@@ -99,15 +101,17 @@ export default function RightColumn({ loading, activeClients, frequentCallIds, o
             ))
           ) : (
             overdueCallIds.length === 0 ? (
-              <div style={{ fontSize: '0.75rem', color: 'var(--color-space-grey)', textAlign: 'center', padding: '16px 0' }}>
-                Tidak ada tiket terbengkalai.
+              <div className={styles.emptyStateBox}>
+                <CheckCircle2 size={20} style={{ color: 'var(--color-cobalt-blue)' }} />
+                <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--color-deep-navy)' }}>Tidak ada tiket terbengkalai</span>
+                <span style={{ fontSize: '0.68rem', color: 'var(--color-space-grey)' }}>Semua tiket ditangani dalam waktu kurang dari 14 hari.</span>
               </div>
             ) : (
               overdueCallIds.map((ticket, idx) => (
-                <div key={idx} className={styles.listItem} style={{ flexDirection: 'column', gap: '2px', alignItems: 'stretch', borderLeft: '3px solid #E11D48' }}>
+                <div key={idx} className={styles.listItem} style={{ flexDirection: 'column', gap: '2px', alignItems: 'stretch', borderLeft: '3px solid var(--color-safety-orange)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span className={styles.unitName} style={{ fontWeight: 700, color: 'var(--color-deep-navy)' }}>SN: {ticket.sn}</span>
-                    <span className={styles.unitCount} style={{ fontSize: '0.75rem', fontWeight: 800, color: '#E11D48' }}>
+                    <span className={styles.unitCount} style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-safety-orange)' }}>
                       {ticket.daysOpen} Hari
                     </span>
                   </div>
@@ -138,15 +142,24 @@ export default function RightColumn({ loading, activeClients, frequentCallIds, o
           ) : (
             <>
               <div className={styles.listItem} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-deep-navy)' }}>🔵 Refrigeration Issues</span>
+                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-deep-navy)', display: 'flex', alignItems: 'center' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--color-cobalt-blue)', marginRight: '8px' }}></span>
+                  Refrigeration Issues
+                </span>
                 <span style={{ fontSize: '0.75rem', fontWeight: 800 }}>{warrantyCategories.refrigeration} Kasus</span>
               </div>
               <div className={styles.listItem} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-deep-navy)' }}>🟡 Electrical Issues</span>
+                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-deep-navy)', display: 'flex', alignItems: 'center' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--color-space-grey)', marginRight: '8px' }}></span>
+                  Electrical Issues
+                </span>
                 <span style={{ fontSize: '0.75rem', fontWeight: 800 }}>{warrantyCategories.electrical} Kasus</span>
               </div>
               <div className={styles.listItem} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-deep-navy)' }}>⚪ Glass / Physical Issues</span>
+                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-deep-navy)', display: 'flex', alignItems: 'center' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--color-deep-navy)', marginRight: '8px' }}></span>
+                  Glass / Physical Issues
+                </span>
                 <span style={{ fontSize: '0.75rem', fontWeight: 800 }}>{warrantyCategories.glass} Kasus</span>
               </div>
             </>

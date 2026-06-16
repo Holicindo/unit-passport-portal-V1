@@ -59,7 +59,14 @@ export function DesktopTable({ units, loading, pageSize }: TableProps) {
             <tbody>
               {units.map((unit) => (
                 <tr key={unit.id} className={styles.dataRow}>
-                  <td><span style={{ fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--color-deep-navy)' }}>{unit.serial_number}</span></td>
+                  <td>
+                    <Link 
+                      href={`/id/${unit.qr_token}`} 
+                      className={styles.serialLink}
+                    >
+                      {unit.serial_number}
+                    </Link>
+                  </td>
                   <td className={styles.modelCell}>{unit.model_name}</td>
                   <td><span style={{ color: 'var(--color-space-grey)', fontSize: '0.85rem' }}>{unit.outlet_branch || '—'}</span></td>
                   <td className={styles.customerCell}>{unit.current_client?.company_name || <span className={styles.noOwner}>—</span>}</td>

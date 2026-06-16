@@ -40,6 +40,8 @@ export class ServiceLogsService {
       ...logData,
       unit: { id: unitId } as any,
       partner: partnerId ? { id: partnerId } as any : undefined,
+      scheduled_date: logData.scheduled_date ? new Date(logData.scheduled_date) : undefined,
+      delivery_date: logData.delivery_date ? new Date(logData.delivery_date) : undefined,
     });
     return this.logRepo.save(log);
   }
@@ -81,10 +83,30 @@ export class ServiceLogsService {
     if (data.service_date !== undefined) {
       log.service_date = new Date(data.service_date);
     }
+    if (data.scheduled_date !== undefined) {
+      log.scheduled_date = data.scheduled_date ? new Date(data.scheduled_date) : null;
+    }
+    if (data.delivery_date !== undefined) {
+      log.delivery_date = data.delivery_date ? new Date(data.delivery_date) : null;
+    }
+    if (data.planning_notes !== undefined) log.planning_notes = data.planning_notes;
+    if (data.is_allocated !== undefined) log.is_allocated = data.is_allocated;
+    if (data.task_type !== undefined) log.task_type = data.task_type;
     if (data.status === 'COMPLETED') {
       log.completed_at = new Date();
     }
 
     return this.logRepo.save(log);
+  }
+
+  async bulkReschedule(ids: string[], newDate: string, newDeliveryDate?: string) {
+    const logs = await this.logRepo.findByIds(ids);
+    const updated = logs.map(log => {
+      log.scheduled_date = new Date(newDate);
+      log.service_date = new Date(newDate);
+      if (newDeliveryDate) log.delivery_date = new Date(newDeliveryDate);
+      return log;
+    });
+    return this.logRepo.save(updated);
   }
 }

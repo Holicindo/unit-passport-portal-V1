@@ -1,160 +1,231 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { unitApi, partnerApi, serviceLogApi } from '@/lib/api';
-import { Calendar, Search, Loader2, ArrowLeft, Clock, AlertCircle } from 'lucide-react';
+import { serviceLogApi, unitApi, partnerApi } from '@/lib/api';
+import { Calendar, Search, Loader2, ArrowLeft, Clock, AlertCircle, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import styles from './planning.module.css';
 import StatsGrid from '@/components/dashboard/StatsGrid';
-import AssignPmModal from './components/AssignPmModal';
-import PlanningCard from './components/PlanningCard';
 
-export default function ServicePlanningPage() {
+const TASK_LABELS: Record<string, string> = { CORRECTIVE: 'Perbaikan', PREVENTIVE: 'Perawatan', INSTALLATION: 'Instalasi' };
+const TASK_STYLE: Record<string, string> = { CORRECTIVE: styles.taskCorrective, PREVENTIVE: styles.taskPreventive, INSTALLATION: styles.taskInstallation };
+
+function fmtDate(d: string | Date | null) {
+  if (!d) return '-';
+  return new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+export default function ScheduleManagementPage() {
   const router = useRouter();
+  const [logs, setLogs] = useState<any[]>([]);
   const [units, setUnits] = useState<any[]>([]);
   const [partners, setPartners] = useState<any[]>([]);
-  const [serviceLogs, setServiceLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'calendar' | 'kanban'>('kanban');
   const [searchQuery, setSearchQuery] = useState('');
-  const [priorityFilter, setPriorityFilter] = useState('ALL');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedUnit, setSelectedUnit] = useState<any>(null);
-  const [selectedPartnerId, setSelectedPartnerId] = useState('');
-  const [scheduledDate, setScheduledDate] = useState(new Date().toISOString().split('T')[0]);
-  const [notes, setNotes] = useState('');
-  const [formError, setFormError] = useState<string | null>(null);
+  const [taskFilter, setTaskFilter] = useState('ALL');
+
+  // Calendar state
+  const [calMonth, setCalMonth] = useState(new Date().getMonth());
+  const [calYear, setCalYear] = useState(new Date().getFullYear());
+
+  // Bulk reschedule
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+  const [rescheduleDate, setRescheduleDate] = useState('');
+  const [rescheduleDelivery, setRescheduleDelivery] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  // Notes modal
+  const [notesModal, setNotesModal] = useState<any | null>(null);
+  const [editNotes, setEditNotes] = useState('');
 
   const fetchData = async () => {
     setLoading(true);
     setError(null);
     try {
-      const [unitsRes, partnersRes, logsRes] = await Promise.all([
-        unitApi.findAll(1, 1000), partnerApi.findAll(), serviceLogApi.findAll(1, 1000),
+      const [logsRes, unitsRes, partnersRes] = await Promise.all([
+        serviceLogApi.findAll(1, 1000), unitApi.findAll(1, 1000), partnerApi.findAll(),
       ]);
-      if (unitsRes.data && Array.isArray(unitsRes.data.data)) setUnits(unitsRes.data.data);
-      else if (Array.isArray(unitsRes.data)) setUnits(unitsRes.data);
+      const logsData = logsRes.data?.data ?? (Array.isArray(logsRes.data) ? logsRes.data : []);
+      setLogs(logsData.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
+      setUnits(unitsRes.data?.data ?? (Array.isArray(unitsRes.data) ? unitsRes.data : []));
       if (Array.isArray(partnersRes.data)) setPartners(partnersRes.data);
-      if (logsRes.data && Array.isArray(logsRes.data.data)) setServiceLogs(logsRes.data.data);
-      else if (Array.isArray(logsRes.data)) setServiceLogs(logsRes.data);
-    } catch (e: any) {
-      console.error('Failed to load planning data:', e);
-      setError('Gagal memuat data kalender rencana servis. Pastikan server backend Anda menyala.');
-    } finally {
-      setLoading(false);
-    }
+    } catch { setError('Gagal memuat data jadwal.'); }
+    finally { setLoading(false); }
   };
 
   useEffect(() => { fetchData(); }, []);
 
-  const getPmSchedule = (unit: any) => {
-    const registrationDate = unit.created_at ? new Date(unit.created_at) : new Date();
-    const today = new Date();
-    let nextPm = new Date(registrationDate);
-    while (nextPm <= today) nextPm.setMonth(nextPm.getMonth() + 3);
+  // Filtered logs (exclude completed/canceled for planning view)
+  const activeLogs = useMemo(() => {
+    return logs.filter(l => {
+      const matchTask = taskFilter === 'ALL' || l.task_type === taskFilter;
+      const q = searchQuery.toLowerCase();
+      const matchSearch = [l.unit?.serial_number, l.unit?.model_name, l.technician_name, l.call_id, l.id]
+        .some(v => v?.toLowerCase().includes(q));
+      return matchTask && matchSearch;
+    });
+  }, [logs, taskFilter, searchQuery]);
 
-    const diffDays = Math.ceil((nextPm.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    let statusLabel = 'SCHEDULED', statusText = 'Terjadwal';
-    if (diffDays <= 15) { statusLabel = 'DUE'; statusText = 'Jatuh Tempo'; }
-    else if (diffDays > 90) { statusLabel = 'OVERDUE'; statusText = 'Terlambat'; }
+  // Kanban categories
+  const unallocated = activeLogs.filter(l => !l.is_allocated && l.status !== 'COMPLETED' && l.status !== 'CANCELED' && l.status !== 'CANCELLED');
+  const allocated = activeLogs.filter(l => l.is_allocated && l.status !== 'COMPLETED' && l.status !== 'CANCELED' && l.status !== 'CANCELLED');
+  const completed = activeLogs.filter(l => l.status === 'COMPLETED' || l.status === 'CANCELED' || l.status === 'CANCELLED');
 
-    const pmLogs = serviceLogs.filter(log => log.unit?.id === unit.id && log.status === 'COMPLETED');
-    const lastPmDate = pmLogs.length > 0 ? new Date(pmLogs[0].service_date) : null;
-    return { nextPmDate: nextPm, daysRemaining: diffDays, statusLabel, statusText, lastPmDate };
+  // Calendar helpers
+  const calDays = useMemo(() => {
+    const first = new Date(calYear, calMonth, 1);
+    const last = new Date(calYear, calMonth + 1, 0);
+    const startDay = first.getDay();
+    const days: (number | null)[] = [];
+    for (let i = 0; i < startDay; i++) days.push(null);
+    for (let d = 1; d <= last.getDate(); d++) days.push(d);
+    return days;
+  }, [calMonth, calYear]);
+
+  const getLogsForDay = (day: number) => {
+    return activeLogs.filter(l => {
+      const sd = l.scheduled_date || l.service_date;
+      if (!sd) return false;
+      const d = new Date(sd);
+      return d.getDate() === day && d.getMonth() === calMonth && d.getFullYear() === calYear;
+    });
+  };
+  const getDeliveriesForDay = (day: number) => {
+    return activeLogs.filter(l => {
+      if (!l.delivery_date) return false;
+      const d = new Date(l.delivery_date);
+      return d.getDate() === day && d.getMonth() === calMonth && d.getFullYear() === calYear;
+    });
   };
 
-  const handleOpenAssign = (unit: any) => {
-    setSelectedUnit(unit);
-    const schedule = getPmSchedule(unit);
-    setScheduledDate(schedule.nextPmDate.toISOString().split('T')[0]);
-    setSelectedPartnerId('');
-    setNotes(`Perawatan berkala rutin (Preventive Maintenance) ke-${Math.floor(Math.random() * 4) + 1} untuk unit dengan nomor seri ${unit.serial_number}. Pembersihan kondensor, pengecekan gas refrigeran, dan kalibrasi suhu.`);
-    setFormError(null);
-    setIsModalOpen(true);
+  // Bulk actions
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleBulkReschedule = async () => {
+    if (!rescheduleDate) return;
     setSubmitting(true);
-    setFormError(null);
-    const payload = {
-      unitId: selectedUnit.id,
-      partnerId: selectedPartnerId || undefined,
-      issue_description: 'Siklus Pemeliharaan Berkala Terjadwal (Preventive Maintenance Schedule)',
-      action_taken: `Menjalankan inspeksi berkala: ${notes.trim()}`,
-      status: 'PENDING',
-      service_date: new Date(scheduledDate),
-      technician_name: 'Menunggu Alokasi Mitra',
-    };
     try {
-      await serviceLogApi.create(payload);
-      setIsModalOpen(false);
+      await serviceLogApi.bulkReschedule(selectedIds, rescheduleDate, rescheduleDelivery || undefined);
+      setSelectedIds([]); setShowRescheduleModal(false);
+      setRescheduleDate(''); setRescheduleDelivery('');
       await fetchData();
-    } catch (err: any) {
-      console.error('Submit PM schedule error:', err);
-      setFormError(err.response?.data?.message || 'Gagal mendelegasikan jadwal PM. Silakan coba lagi.');
-    } finally {
-      setSubmitting(false);
-    }
+    } catch { alert('Gagal mengubah jadwal.'); }
+    finally { setSubmitting(false); }
   };
 
-  const compiledSchedules = units.map(unit => ({ unit, ...getPmSchedule(unit) }));
+  const handleSaveNotes = async () => {
+    if (!notesModal) return;
+    setSubmitting(true);
+    try {
+      await serviceLogApi.update(notesModal.id, { planning_notes: editNotes, is_allocated: true });
+      setNotesModal(null);
+      await fetchData();
+    } catch { alert('Gagal menyimpan catatan.'); }
+    finally { setSubmitting(false); }
+  };
 
-  const filteredSchedules = compiledSchedules.filter(item => {
-    const matchesPriority = priorityFilter === 'ALL' || item.statusLabel === priorityFilter;
-    const sn = item.unit.serial_number?.toLowerCase() || '';
-    const model = item.unit.model_name?.toLowerCase() || '';
-    const client = item.unit.current_client?.company_name?.toLowerCase() || '';
-    const query = searchQuery.toLowerCase();
-    return matchesPriority && (sn.includes(query) || model.includes(query) || client.includes(query));
-  });
+  const monthNames = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  const dayNames = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+  const today = new Date();
 
-  const totalScheduled = compiledSchedules.length;
-  const dueThisMonth = compiledSchedules.filter(s => s.statusLabel === 'DUE').length;
-  const overdueCount = compiledSchedules.filter(s => s.statusLabel === 'OVERDUE').length;
+  // Render kanban card
+  const renderCard = (log: any) => (
+    <div key={log.id} className={styles.kanbanCard}>
+      <div className={styles.kanbanCardHeader}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <input type="checkbox" className={styles.kanbanCheckbox} checked={selectedIds.includes(log.id)}
+            onChange={() => toggleSelect(log.id)} onClick={e => e.stopPropagation()} />
+          <span className={styles.kanbanCallId}>{log.call_id || log.id}</span>
+        </div>
+        <span className={`${styles.kanbanTaskBadge} ${TASK_STYLE[log.task_type] || styles.taskCorrective}`}>
+          {TASK_LABELS[log.task_type] || 'Perbaikan'}
+        </span>
+      </div>
+      <div>
+        <div className={styles.kanbanUnit}>{log.unit?.model_name || 'Unit'}</div>
+        <div className={styles.kanbanSn}>SN: {log.unit?.serial_number || '-'}</div>
+      </div>
+      <div className={styles.kanbanMeta}>
+        <Calendar size={12} /> {fmtDate(log.scheduled_date || log.service_date)}
+        {log.delivery_date && <><span style={{ margin: '0 4px' }}>|</span> {fmtDate(log.delivery_date)}</>}
+      </div>
+      <div className={styles.kanbanMeta}>
+        <span className={`${styles.badge} ${log.status === 'PENDING' ? styles.badgePending : log.status === 'IN PROGRESS' ? styles.badgeInProgress : log.status === 'COMPLETED' ? styles.badgeCompleted : styles.badgeCancelled}`}>{log.status}</span>
+        <span style={{ marginLeft: 'auto', fontSize: '0.72rem' }}>{log.technician_name || 'Belum alokasi'}</span>
+      </div>
+      {log.planning_notes && <div className={styles.kanbanNotes}>{log.planning_notes}</div>}
+      <button onClick={() => { setNotesModal(log); setEditNotes(log.planning_notes || ''); }}
+        style={{ marginTop: '4px', background: 'var(--color-deep-navy)', border: 'none', borderRadius: '6px', padding: '6px 8px', fontSize: '0.72rem', color: 'white', cursor: 'pointer', fontWeight: 700, transition: 'background 0.2s' }}>
+        {log.planning_notes ? 'Edit Catatan' : 'Tambah Catatan'}
+      </button>
+    </div>
+  );
 
   return (
     <div className={styles.container}>
       <header className={styles.pageHeader}>
         <div className={styles.titleSection}>
-          <button className={styles.backBtn} onClick={() => router.push('/service')} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'none', border: 'none', color: 'var(--color-space-grey)', cursor: 'pointer', marginBottom: '8px', fontSize: '0.85rem', fontWeight: 700 }}>
+          <button onClick={() => router.push('/service')} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'none', border: 'none', color: 'var(--color-space-grey)', cursor: 'pointer', marginBottom: '8px', fontSize: '0.85rem', fontWeight: 700 }}>
             <ArrowLeft size={16} /><span>Kembali ke Log Servis</span>
           </button>
-          <h2 className={styles.title}>Rencana &amp; Penjadwalan Servis</h2>
-          <p className={styles.subtitle}>Sistem Kalender Pemeliharaan Berkala (Preventive Maintenance) Digital Twin.</p>
+          <h2 className={styles.title}>Pengaturan Jadwal</h2>
+          <p className={styles.subtitle}>Kelola jadwal servis, perawatan & pengiriman dalam satu kalender terpadu.</p>
+        </div>
+        <div className={styles.viewTabs}>
+          <button className={`${styles.viewTab} ${viewMode === 'kanban' ? styles.viewTabActive : ''}`} onClick={() => setViewMode('kanban')}>Kanban</button>
+          <button className={`${styles.viewTab} ${viewMode === 'calendar' ? styles.viewTabActive : ''}`} onClick={() => setViewMode('calendar')}>Kalender</button>
         </div>
       </header>
 
       <div className="mobile-sub-tabs">
         <button className="mobile-sub-tab" onClick={() => router.push('/service')}>Log Servis</button>
-        <button className="mobile-sub-tab active" onClick={() => router.push('/service/planning')}>Rencana Servis</button>
+        <button className="mobile-sub-tab active" onClick={() => router.push('/service/planning')}>Pengaturan Jadwal</button>
+        <button className="mobile-sub-tab" onClick={() => router.push('/service/evaluation')}>Evaluasi Servis</button>
       </div>
 
       <StatsGrid loading={loading} items={[
-        { label: 'Total Unit Dipantau', value: loading ? '...' : totalScheduled, max: 1000, icon: Calendar, accent: '#2E5BFF' },
-        { label: 'Jatuh Tempo Bulan Ini', value: loading ? '...' : dueThisMonth, max: 100, icon: Clock, accent: '#FF6B00' },
-        { label: 'Terlambat Penjadwalan', value: loading ? '...' : overdueCount, max: 50, icon: AlertCircle, accent: '#FF4D4D' },
+        { label: 'Belum Dialokasi', value: loading ? '...' : unallocated.length, max: 100, icon: AlertCircle, accent: '#FF5722' },
+        { label: 'Sudah Terjadwal', value: loading ? '...' : allocated.length, max: 100, icon: Clock, accent: '#0047AB' },
+        { label: 'Selesai / Batal', value: loading ? '...' : completed.length, max: 100, icon: Calendar, accent: '#0a192f' },
       ]} />
 
       <div className="dtToolbar">
         <div className="dtToolbarLeft">
-          <div className="dtToolbarText">Urgensi PM:</div>
-          <CustomSelect value={priorityFilter} onChange={(val) => setPriorityFilter(val)}
+          <div className="dtToolbarText">Jenis:</div>
+          <CustomSelect value={taskFilter} onChange={setTaskFilter}
             options={[
-              { value: 'ALL', label: 'Semua Unit' }, { value: 'DUE', label: 'Jatuh Tempo Bulan Ini' },
-              { value: 'SCHEDULED', label: 'Terjadwal (Aman)' }, { value: 'OVERDUE', label: 'Terlambat Penjadwalan' },
-            ]} placeholder="Urgensi PM..." />
+              { value: 'ALL', label: 'Semua Jenis' }, { value: 'CORRECTIVE', label: 'Perbaikan' },
+              { value: 'PREVENTIVE', label: 'Perawatan' }, { value: 'INSTALLATION', label: 'Instalasi' },
+            ]} />
         </div>
         <div className="dtToolbarRight">
           <div className="dtToolbarSearch">
-            <input type="text" placeholder="Cari SN, model, atau klien..." value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)} className="dtToolbarSearchInput" />
+            <input type="text" placeholder="Cari SN, model, Call ID..." value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)} className="dtToolbarSearchInput" />
             <Search size={16} className="dtToolbarSearchIcon" />
           </div>
         </div>
       </div>
+
+      {/* Bulk action bar */}
+      {selectedIds.length > 0 && (
+        <div className={styles.bulkBar}>
+          <span className={styles.bulkBarText}>{selectedIds.length} tiket dipilih</span>
+          <div className={styles.bulkBarActions}>
+            <button className={`${styles.bulkBtn} ${styles.bulkBtnReschedule}`}
+              onClick={() => { setRescheduleDate(''); setRescheduleDelivery(''); setShowRescheduleModal(true); }}>
+              Ubah Jadwal Massal
+            </button>
+            <button className={`${styles.bulkBtn} ${styles.bulkBtnCancel}`} onClick={() => setSelectedIds([])}>Batal Pilih</button>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '60px' }}>
@@ -162,32 +233,132 @@ export default function ServicePlanningPage() {
         </div>
       ) : error ? (
         <div className={styles.errorAlert}>{error}</div>
-      ) : filteredSchedules.length === 0 ? (
-        <div className={styles.planningGrid}>
-          <div className={styles.emptyState}>
-            <Calendar size={48} style={{ color: 'var(--color-space-grey)', opacity: 0.4 }} />
-            <h3 className={styles.emptyTitle}>Tidak Ada Jadwal Rencana Servis</h3>
-            <p className={styles.emptyDesc}>Tidak ada data armada digital twin yang sesuai dengan filter pencarian Anda.</p>
+      ) : viewMode === 'calendar' ? (
+        /* ============ CALENDAR VIEW ============ */
+        <div className={styles.calendarContainer}>
+          <div className={styles.calendarHeader}>
+            <div className={styles.calendarNav}>
+              <button className={styles.calendarNavBtn} onClick={() => { if (calMonth === 0) { setCalMonth(11); setCalYear(y => y - 1); } else setCalMonth(m => m - 1); }}><ChevronLeft size={16} /></button>
+            </div>
+            <h3 className={styles.calendarTitle}>{monthNames[calMonth]} {calYear}</h3>
+            <div className={styles.calendarNav}>
+              <button className={styles.calendarNavBtn} onClick={() => { if (calMonth === 11) { setCalMonth(0); setCalYear(y => y + 1); } else setCalMonth(m => m + 1); }}><ChevronRight size={16} /></button>
+            </div>
+          </div>
+          <div className={styles.calendarGrid}>
+            {dayNames.map(d => <div key={d} className={styles.calendarDayHeader}>{d}</div>)}
+            {calDays.map((day, i) => {
+              if (day === null) return <div key={`e${i}`} className={`${styles.calendarDay} ${styles.calendarDayEmpty}`} />;
+              const sLogs = getLogsForDay(day);
+              const dLogs = getDeliveriesForDay(day);
+              const isToday = day === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear();
+              const serviceCount = sLogs.filter(l => l.task_type !== 'INSTALLATION').length;
+              const installCount = sLogs.filter(l => l.task_type === 'INSTALLATION').length;
+              return (
+                <div key={day} className={`${styles.calendarDay} ${isToday ? styles.calendarDayToday : ''}`}>
+                  <div className={styles.calendarDayNum}>{day}</div>
+                  <div>
+                    {serviceCount > 0 && <><span className={`${styles.calendarDot} ${styles.calendarDotService}`} /><span className={styles.calendarDayCount}>{serviceCount}</span> </>}
+                    {dLogs.length > 0 && <><span className={`${styles.calendarDot} ${styles.calendarDotDelivery}`} /><span className={styles.calendarDayCount}>{dLogs.length}</span> </>}
+                    {installCount > 0 && <><span className={`${styles.calendarDot} ${styles.calendarDotInstall}`} /><span className={styles.calendarDayCount}>{installCount}</span></>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className={styles.calendarLegend}>
+            <div className={styles.legendItem}><span className={`${styles.calendarDot} ${styles.calendarDotService}`} /> Servis</div>
+            <div className={styles.legendItem}><span className={`${styles.calendarDot} ${styles.calendarDotDelivery}`} /> Delivery</div>
+            <div className={styles.legendItem}><span className={`${styles.calendarDot} ${styles.calendarDotInstall}`} /> Instalasi</div>
           </div>
         </div>
       ) : (
-        <div className={styles.planningGrid}>
-          {filteredSchedules.map(({ unit, nextPmDate, daysRemaining, statusLabel, statusText, lastPmDate }) => (
-            <PlanningCard key={unit.id} unit={unit} nextPmDate={nextPmDate} daysRemaining={daysRemaining}
-              statusLabel={statusLabel} statusText={statusText} lastPmDate={lastPmDate}
-              onAssign={() => handleOpenAssign(unit)} />
-          ))}
+        /* ============ KANBAN VIEW ============ */
+        <div className={styles.kanbanContainer}>
+          <div className={styles.kanbanColumn}>
+            <div className={styles.kanbanHeader}>
+              <span className={styles.kanbanTitle}>Belum Dialokasi</span>
+              <span className={styles.kanbanCount}>{unallocated.length}</span>
+            </div>
+            <div className={styles.kanbanBody}>
+              {unallocated.length === 0 ? <div className={styles.emptyState}><AlertCircle size={24} style={{ opacity: 0.3 }} /><p className={styles.emptyDesc}>Semua tiket sudah dialokasi</p></div>
+                : unallocated.map(renderCard)}
+            </div>
+          </div>
+          <div className={styles.kanbanColumn}>
+            <div className={styles.kanbanHeader}>
+              <span className={styles.kanbanTitle}>Sudah Terjadwal</span>
+              <span className={styles.kanbanCount}>{allocated.length}</span>
+            </div>
+            <div className={styles.kanbanBody}>
+              {allocated.length === 0 ? <div className={styles.emptyState}><Clock size={24} style={{ opacity: 0.3 }} /><p className={styles.emptyDesc}>Belum ada jadwal aktif</p></div>
+                : allocated.map(renderCard)}
+            </div>
+          </div>
+          <div className={styles.kanbanColumn}>
+            <div className={styles.kanbanHeader}>
+              <span className={styles.kanbanTitle}>Selesai / Batal</span>
+              <span className={styles.kanbanCount}>{completed.length}</span>
+            </div>
+            <div className={styles.kanbanBody}>
+              {completed.length === 0 ? <div className={styles.emptyState}><Calendar size={24} style={{ opacity: 0.3 }} /><p className={styles.emptyDesc}>Belum ada yang selesai</p></div>
+                : completed.slice(0, 20).map(renderCard)}
+            </div>
+          </div>
         </div>
       )}
 
-      {isModalOpen && selectedUnit && (
-        <AssignPmModal
-          unitModel={selectedUnit.model_name} unitSerial={selectedUnit.serial_number}
-          partners={partners} selectedPartnerId={selectedPartnerId} setPartnerId={setSelectedPartnerId}
-          scheduledDate={scheduledDate} setScheduledDate={setScheduledDate}
-          notes={notes} setNotes={setNotes} formError={formError} submitting={submitting}
-          onClose={() => setIsModalOpen(false)} onSubmit={handleSubmit}
-        />
+      {/* Reschedule Modal */}
+      {showRescheduleModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowRescheduleModal(false)}>
+          <div className={styles.modalCard} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>Ubah Jadwal Massal ({selectedIds.length} tiket)</h3>
+              <button className={styles.closeBtn} onClick={() => setShowRescheduleModal(false)}><X size={20} /></button>
+            </div>
+            <div className={styles.modalBody}>
+              <div className={styles.formGroup}>
+                <label>Tanggal Servis Baru *</label>
+                <input type="date" value={rescheduleDate} onChange={e => setRescheduleDate(e.target.value)} />
+              </div>
+              <div className={styles.formGroup}>
+                <label>Tanggal Delivery Baru (opsional)</label>
+                <input type="date" value={rescheduleDelivery} onChange={e => setRescheduleDelivery(e.target.value)} />
+              </div>
+            </div>
+            <div className={styles.modalFooter}>
+              <button className={styles.cancelBtn} onClick={() => setShowRescheduleModal(false)}>Batal</button>
+              <button className={styles.saveBtn} disabled={!rescheduleDate || submitting} onClick={handleBulkReschedule}>
+                {submitting ? 'Menyimpan...' : 'Terapkan Jadwal Baru'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Notes Modal */}
+      {notesModal && (
+        <div className={styles.modalOverlay} onClick={() => setNotesModal(null)}>
+          <div className={styles.modalCard} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>Catatan Planning — {notesModal.call_id || notesModal.id}</h3>
+              <button className={styles.closeBtn} onClick={() => setNotesModal(null)}><X size={20} /></button>
+            </div>
+            <div className={styles.modalBody}>
+              <div className={styles.formGroup}>
+                <label>Catatan Internal (hanya untuk admin/teknisi)</label>
+                <textarea value={editNotes} onChange={e => setEditNotes(e.target.value)}
+                  placeholder="Contoh: Perlu bawa spare part kompresor, koordinasi dengan mitra Surabaya..." rows={4} />
+              </div>
+            </div>
+            <div className={styles.modalFooter}>
+              <button className={styles.cancelBtn} onClick={() => setNotesModal(null)}>Batal</button>
+              <button className={styles.saveBtn} disabled={submitting} onClick={handleSaveNotes}>
+                {submitting ? 'Menyimpan...' : 'Simpan & Alokasi'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

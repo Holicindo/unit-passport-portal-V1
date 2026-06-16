@@ -36,8 +36,8 @@
 }
 
 .primaryBtn {
-  background: var(--color-cobalt-blue);
-  color: white;
+  background: linear-gradient(135deg, #2E5BFF 0%, #1e4bd6 100%);
+  color: white !important;
   border: none;
   padding: 12px 24px;
   border-radius: 24px;
@@ -47,13 +47,14 @@
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(46, 91, 255, 0.2);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: -4px -4px 10px rgba(255,255,255,0.8), 4px 4px 10px rgba(46,91,255,0.3);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .primaryBtn:hover {
+  background: linear-gradient(135deg, #1e4bd6 0%, #1738a1 100%);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(46, 91, 255, 0.3);
+  box-shadow: -6px -6px 14px rgba(255,255,255,0.9), 6px 6px 14px rgba(46,91,255,0.4);
 }
 
 .primaryBtn:disabled {
@@ -136,12 +137,9 @@
 }
 
 .card {
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
+  background: #ECEEF2;
   border-radius: var(--radius-lg);
-  box-shadow: var(--glass-shadow);
+  box-shadow: -6px -6px 14px rgba(255, 255, 255, 0.85), 6px 6px 14px rgba(0, 31, 63, 0.1);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -231,13 +229,13 @@
 }
 
 .badgeActive {
-  background: rgba(0, 196, 140, 0.1);
-  color: #00C48C;
+  background: rgba(0, 31, 63, 0.1);
+  color: #001F3F;
 }
 
 .badgeSuspend {
-  background: rgba(225, 29, 72, 0.1);
-  color: #E11D48;
+  background: rgba(255, 107, 0, 0.1);
+  color: #FF6B00;
 }
 
 .roleBadge {
@@ -253,25 +251,31 @@
 }
 
 .actionBtn {
-  background: transparent;
+  background: #ECEEF2;
   border: none;
   color: var(--color-space-grey);
   cursor: pointer;
   padding: 8px;
-  border-radius: 8px;
-  transition: all 0.2s ease;
+  border-radius: 50%;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: -4px -4px 10px rgba(255, 255, 255, 0.9), 4px 4px 10px rgba(0, 31, 63, 0.08);
 }
 
 .actionBtn:hover {
-  background: rgba(46, 91, 255, 0.08);
   color: var(--color-cobalt-blue);
+  box-shadow: -6px -6px 14px rgba(255, 255, 255, 0.95), 6px 6px 14px rgba(0, 31, 63, 0.1);
+  transform: translateY(-1px);
+}
+
+.actionBtn:active {
+  box-shadow: inset -4px -4px 8px rgba(255, 255, 255, 0.9), inset 4px 4px 8px rgba(0, 31, 63, 0.08);
+  transform: translateY(0);
 }
 
 .actionBtnDanger:hover {
-  background: rgba(225, 29, 72, 0.08);
   color: #E11D48;
 }
 

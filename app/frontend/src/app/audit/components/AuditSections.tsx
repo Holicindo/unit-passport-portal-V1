@@ -66,9 +66,9 @@ export function RepeatedVisitsSection({ data, loading }: { data: RepeatedUnit[];
     <section className={styles.section}>
       <div className={styles.sectionHeader}>
         <div className={styles.sectionTitleGroup}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-safety-orange)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6B00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
           <h2 className={styles.sectionTitle}>Tiket Berulang</h2>
-          <span className={styles.sectionBadge} style={{ background: 'rgba(255,107,0,0.1)', color: 'var(--color-safety-orange)' }}>
+          <span className={styles.sectionBadge} style={{ background: 'rgba(255,107,0,0.1)', color: '#FF6B00' }}>
             &gt;2 kunjungan
           </span>
         </div>
@@ -77,7 +77,12 @@ export function RepeatedVisitsSection({ data, loading }: { data: RepeatedUnit[];
         </p>
       </div>
 
-      <div className={styles.tableCard}>
+      <div className={styles.tableCard} style={{
+        background: '#ECEEF2',
+        border: 'none',
+        borderRadius: '24px',
+        boxShadow: '-6px -6px 14px rgba(255, 255, 255, 0.85), 6px 6px 14px rgba(0, 31, 63, 0.1)',
+      }}>
         <div className={styles.tableWrapper}>
           <table className={styles.table}>
             <thead>
@@ -137,9 +142,9 @@ export function OverdueTicketsSection({ data, units, loading }: { data: ServiceL
     <section className={styles.section}>
       <div className={styles.sectionHeader}>
         <div className={styles.sectionTitleGroup}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E11D48" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6B00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           <h2 className={styles.sectionTitle}>Tiket Terlambat</h2>
-          <span className={styles.sectionBadge} style={{ background: 'rgba(225,29,72,0.1)', color: '#E11D48' }}>
+          <span className={styles.sectionBadge} style={{ background: 'rgba(255,107,0,0.1)', color: '#FF6B00' }}>
             &gt;2 minggu belum selesai
           </span>
         </div>
@@ -148,7 +153,12 @@ export function OverdueTicketsSection({ data, units, loading }: { data: ServiceL
         </p>
       </div>
 
-      <div className={styles.tableCard}>
+      <div className={styles.tableCard} style={{
+        background: '#ECEEF2',
+        border: 'none',
+        borderRadius: '24px',
+        boxShadow: '-6px -6px 14px rgba(255, 255, 255, 0.85), 6px 6px 14px rgba(0, 31, 63, 0.1)',
+      }}>
         <div className={styles.tableWrapper}>
           <table className={styles.table}>
             <thead>
@@ -206,10 +216,10 @@ export function OverdueTicketsSection({ data, units, loading }: { data: ServiceL
 // ─── Section 3: Warranty Issues ──────────────────────────────────────────────
 
 const categoryMeta: Record<WarrantyCategory, { icon: React.ElementType; color: string; bg: string }> = {
-  'Kaca / Glass': { icon: Square, color: '#0ea5e9', bg: 'rgba(14,165,233,0.08)' },
-  Kelistrikan: { icon: Zap, color: '#F59E0B', bg: 'rgba(245,158,11,0.08)' },
-  Refrigerasi: { icon: Thermometer, color: '#6366f1', bg: 'rgba(99,102,241,0.08)' },
-  Lainnya: { icon: HelpCircle, color: 'var(--color-space-grey)', bg: 'rgba(100,116,139,0.08)' },
+  'Kaca / Glass': { icon: Square, color: '#001F3F', bg: 'rgba(0,31,63,0.08)' },
+  Kelistrikan: { icon: Zap, color: '#FF6B00', bg: 'rgba(255,107,0,0.08)' },
+  Refrigerasi: { icon: Thermometer, color: '#001F3F', bg: 'rgba(0,31,63,0.08)' },
+  Lainnya: { icon: HelpCircle, color: '#FF6B00', bg: 'rgba(255,107,0,0.08)' },
 };
 
 export function WarrantyIssuesSection({
@@ -225,9 +235,9 @@ export function WarrantyIssuesSection({
     <section className={styles.section}>
       <div className={styles.sectionHeader}>
         <div className={styles.sectionTitleGroup}>
-          <ShieldCheck size={18} style={{ color: 'var(--color-cobalt-blue)' }} />
+          <ShieldCheck size={18} style={{ color: '#001F3F' }} />
           <h2 className={styles.sectionTitle}>Masalah dalam Masa Garansi</h2>
-          <span className={styles.sectionBadge} style={{ background: 'rgba(46,91,255,0.1)', color: 'var(--color-cobalt-blue)' }}>
+          <span className={styles.sectionBadge} style={{ background: 'rgba(0,31,63,0.1)', color: '#001F3F' }}>
             Garansi aktif
           </span>
         </div>
@@ -244,8 +254,18 @@ export function WarrantyIssuesSection({
               ([cat, meta]) => {
                 const Icon = meta.icon;
                 return (
-                  <div key={cat} className={styles.categoryCard} style={{ borderTopColor: meta.color }}>
-                    <div className={styles.categoryIcon} style={{ background: meta.bg, color: meta.color }}>
+                  <div key={cat} className={styles.categoryCard} style={{
+                    background: '#ECEEF2',
+                    border: 'none',
+                    borderRadius: '24px',
+                    boxShadow: '-6px -6px 14px rgba(255, 255, 255, 0.85), 6px 6px 14px rgba(0, 31, 63, 0.1)',
+                  }}>
+                    <div className={styles.categoryIcon} style={{
+                      background: '#ECEEF2',
+                      color: meta.color,
+                      borderRadius: '16px',
+                      boxShadow: 'inset -4px -4px 8px rgba(255, 255, 255, 0.9), inset 4px 4px 8px rgba(0, 31, 63, 0.1)',
+                    }}>
                       <Icon size={20} strokeWidth={2} />
                     </div>
                     <div className={styles.categoryCount} style={{ color: meta.color }}>
@@ -259,7 +279,12 @@ export function WarrantyIssuesSection({
       </div>
 
       {/* Warranty issues table */}
-      <div className={styles.tableCard}>
+      <div className={styles.tableCard} style={{
+        background: '#ECEEF2',
+        border: 'none',
+        borderRadius: '24px',
+        boxShadow: '-6px -6px 14px rgba(255, 255, 255, 0.85), 6px 6px 14px rgba(0, 31, 63, 0.1)',
+      }}>
         <div className={styles.tableWrapper}>
           <table className={styles.table}>
             <thead>

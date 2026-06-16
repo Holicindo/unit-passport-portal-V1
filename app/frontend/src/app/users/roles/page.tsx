@@ -41,14 +41,14 @@ const initialRoles: RoleConfig[] = [
   {
     id: 'SUPER_ADMIN',
     label: 'Super Admin',
-    color: '#2E5BFF',
+    color: '#001F3F',
     description: 'Akses penuh ke seluruh sistem tanpa batasan.',
     menus: defaultMenus.map(m => ({ ...m, permissions: { view: true, create: true, edit: true, delete: true } })),
   },
   {
     id: 'PARTNER',
     label: 'Partner',
-    color: '#00C48C',
+    color: '#001F3F',
     description: 'Mitra resmi yang menangani servis unit di lapangan.',
     menus: defaultMenus.map(m => ({
       ...m,
@@ -63,7 +63,7 @@ const initialRoles: RoleConfig[] = [
   {
     id: 'MECHANIC',
     label: 'Mekanik',
-    color: '#FFB800',
+    color: '#FF6B00',
     description: 'Teknisi lapangan yang melakukan eksekusi servis.',
     menus: defaultMenus.map(m => ({
       ...m,
@@ -78,7 +78,7 @@ const initialRoles: RoleConfig[] = [
   {
     id: 'CLIENT',
     label: 'Klien',
-    color: '#9D4EDD',
+    color: '#FF6B00',
     description: 'Pemilik unit yang hanya dapat melihat data unit miliknya.',
     menus: defaultMenus.map(m => ({
       ...m,
@@ -161,7 +161,7 @@ export default function RolesPage() {
         <button
           className={styles.primaryBtn}
           onClick={handleSave}
-          style={saved ? { background: '#00C48C', boxShadow: '0 4px 14px rgba(0,196,140,0.3)' } : {}}
+          style={saved ? { background: 'linear-gradient(135deg, #059669 0%, #047857 100%)', boxShadow: '-4px -4px 10px rgba(255,255,255,0.8), 4px 4px 10px rgba(5,150,105,0.3)' } : {}}
         >
           <Save size={18} strokeWidth={2.5} />
           {saved ? 'Tersimpan' : 'Simpan Perubahan'}
@@ -178,11 +178,13 @@ export default function RolesPage() {
               key={role.id}
               onClick={() => setActiveRole(role.id)}
               style={{
-                background: activeRole === role.id ? `${role.color}08` : 'var(--glass-bg)',
-                border: activeRole === role.id ? `1.5px solid ${role.color}35` : '1px solid var(--glass-border)',
+                background: '#ECEEF2',
+                border: 'none',
                 borderRadius: 'var(--radius-lg)',
                 padding: '24px 28px',
-                boxShadow: activeRole === role.id ? `0 6px 24px ${role.color}12` : 'var(--glass-shadow)',
+                boxShadow: activeRole === role.id 
+                  ? '-6px -6px 14px rgba(255, 255, 255, 0.85), 6px 6px 14px rgba(0, 31, 63, 0.1)'
+                  : 'inset -4px -4px 8px rgba(255, 255, 255, 0.9), inset 4px 4px 8px rgba(0, 31, 63, 0.06)',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '8px',
@@ -208,8 +210,9 @@ export default function RolesPage() {
 
       {/* Role Description */}
       <div style={{
-        background: `${currentRole.color}08`,
-        border: `1px solid ${currentRole.color}20`,
+        background: '#ECEEF2',
+        border: 'none',
+        boxShadow: 'inset -4px -4px 8px rgba(255, 255, 255, 0.9), inset 4px 4px 8px rgba(0, 31, 63, 0.06)',
         borderRadius: '16px',
         padding: '20px 28px',
         marginBottom: '28px',
@@ -221,7 +224,8 @@ export default function RolesPage() {
           width: '48px',
           height: '48px',
           borderRadius: '14px',
-          background: `${currentRole.color}15`,
+          background: '#ECEEF2',
+          boxShadow: '-4px -4px 8px rgba(255, 255, 255, 0.9), 4px 4px 8px rgba(0, 31, 63, 0.08)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',

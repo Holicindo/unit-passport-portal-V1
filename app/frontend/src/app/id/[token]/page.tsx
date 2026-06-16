@@ -19,7 +19,7 @@ import PartnerLogModal from './components/PartnerLogModal';
 import AdminTransferModal from './components/AdminTransferModal';
 import AllSpecsModal from './components/AllSpecsModal';
 import ServiceHistorySection from './components/ServiceHistorySection';
-import { INDONESIA_CITIES } from './constants';
+import { INDONESIA_CITIES, getUnitType, UNIT_TYPE_LABELS, UNIT_TYPE_COLORS } from './constants';
 import styles from './id.module.css';
 
 export default function QrPassportPage() {
@@ -33,6 +33,8 @@ export default function QrPassportPage() {
     belongsToClient, hasClientRestriction,
     isWarrantyActive, expiryDate,
   } = passport;
+
+  const autoUnitType = unit ? getUnitType(unit.model_name) : 'MESIN';
 
   const admin = useAdminActions(unit, loadUnitData, showToast);
   const {
@@ -98,6 +100,17 @@ export default function QrPassportPage() {
             <div className={styles.titleRow}>
               <h1 className={styles.serialNumber}>{unit.serial_number}</h1>
               <span className={styles.verifiedBadgeTop}><CheckCircle2 size={16} /> Terverifikasi</span>
+              {unit && (
+                <span style={{
+                  background: UNIT_TYPE_COLORS[autoUnitType].bg,
+                  color: UNIT_TYPE_COLORS[autoUnitType].color,
+                  border: `1px solid ${UNIT_TYPE_COLORS[autoUnitType].border}`,
+                  padding: '5px 12px', borderRadius: '50px', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.04em',
+                  display: 'inline-flex', alignItems: 'center', gap: '5px',
+                }}>
+                  {UNIT_TYPE_LABELS[autoUnitType]}
+                </span>
+              )}
             </div>
             <p className={styles.modelName}>{unit.model_name}</p>
           </div>
@@ -123,7 +136,7 @@ export default function QrPassportPage() {
                 {isDark ? <Sun size={12} /> : <Moon size={12} />} {isDark ? 'Light' : 'Dark'}
               </button>
             </div>
-            <div className={styles.lastUpdated}><Clock size={12} /> Terakhir diperbarui: {new Date(unit.updated_at || Date.now()).toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' })} WIB</div>
+            <div className={styles.lastUpdated}><Clock size={12} /> Terakhir diperbarui: {new Date(unit.updated_at || Date.now()).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
           </div>
         </header>
 
@@ -155,45 +168,35 @@ export default function QrPassportPage() {
                   </div>
                   {(editData.specs?.type === 'MESIN') ? (<>
                     <EditField label="Dimensi" value={editData.specs?.dimension || ''} onChange={(v) => handleEditChange('specs.dimension', v)} />
-                    <EditField label="Daya (Watt)" value={editData.specs?.power || editData.specs?.wattage || ''} onChange={(v) => { handleEditChange('specs.power', v); handleEditChange('specs.wattage', v); }} />
+                    <EditField label="Daya / Power" value={editData.specs?.power || editData.specs?.wattage || ''} onChange={(v) => { handleEditChange('specs.power', v); handleEditChange('specs.wattage', v); }} />
                     <EditField label="Kapasitas" value={editData.specs?.capacity || ''} onChange={(v) => handleEditChange('specs.capacity', v)} />
                     <EditField label="Kompresor" value={editData.specs?.compressor || ''} onChange={(v) => handleEditChange('specs.compressor', v)} />
                     <EditField label="Refrigerant" value={editData.specs?.refrigerant || ''} onChange={(v) => handleEditChange('specs.refrigerant', v)} />
                   </>) : (<>
                     <EditField label="Kompresor" value={editData.specs?.compressor || ''} onChange={(v) => handleEditChange('specs.compressor', v)} />
                     <EditField label="Refrigerant" value={editData.specs?.refrigerant || ''} onChange={(v) => handleEditChange('specs.refrigerant', v)} />
-                    <EditField label="Daya / Wattage" value={editData.specs?.wattage || editData.specs?.power || ''} onChange={(v) => { handleEditChange('specs.wattage', v); handleEditChange('specs.power', v); }} />
+                    <EditField label="Daya / Power" value={editData.specs?.wattage || editData.specs?.power || ''} onChange={(v) => { handleEditChange('specs.wattage', v); handleEditChange('specs.power', v); }} />
                     <EditField label="Dimensi" value={editData.specs?.dimension || ''} onChange={(v) => handleEditChange('specs.dimension', v)} />
                     <EditField label="Kapasitas" value={editData.specs?.capacity || ''} onChange={(v) => handleEditChange('specs.capacity', v)} />
                   </>)}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '10px' }}>
                     <DatePicker label="Garansi Berakhir" value={editData.warranty_expiry ? editData.warranty_expiry.slice(0, 10) : ''} onChange={(v) => handleEditChange('warranty_expiry', v)} theme="dark" />
                   </div>
-                  <EditField label="PRO Number" value={editData.specs?.pro_number || ''} onChange={(v) => handleEditChange('specs.pro_number', v)} />
-                  <EditField label="QM Number" value={editData.specs?.qm_number || ''} onChange={(v) => handleEditChange('specs.qm_number', v)} />
-                  <EditField label="Manufacture SN" value={editData.specs?.manufacture_sn || ''} onChange={(v) => handleEditChange('specs.manufacture_sn', v)} />
-                  <EditField label="Delivery Date" value={editData.specs?.delivery_date || ''} onChange={(v) => handleEditChange('specs.delivery_date', v)} />
-                  <EditField label="Finish Date" value={editData.specs?.finish_date || ''} onChange={(v) => handleEditChange('specs.finish_date', v)} />
+                  <DatePicker label="Production Date" value={editData.specs?.production_date ? editData.specs.production_date.slice(0, 10) : (editData.specs?.finish_date ? editData.specs.finish_date.slice(0, 10) : '')} onChange={(v) => handleEditChange('specs.production_date', v)} theme="dark" />
                 </div>
               ) : (<>
                 <div className={styles.specItem}><span className={styles.specLabel}>Model</span><span className={styles.specValue}>{unit.model_name}</span></div>
                 <div className={styles.specItem}><span className={styles.specLabel}>Serial Number</span><span className={styles.specValue}>{unit.serial_number}</span></div>
                 {unit.specs?.type === 'MESIN' || (!unit.specs?.type && unit.specs?.dimension) ? (<>
                   <div className={styles.specItem}><span className={styles.specLabel}>Dimensi</span><span className={styles.specValue}>{unit.specs?.dimension || '—'}</span></div>
-                  <div className={styles.specItem}><span className={styles.specLabel}>Daya Listrik</span><span className={styles.specValue}>{unit.specs?.power || '—'}</span></div>
+                  <div className={styles.specItem}><span className={styles.specLabel}>Daya / Power</span><span className={styles.specValue}>{unit.specs?.power || '—'}</span></div>
                   <div className={styles.specItem}><span className={styles.specLabel}>Kapasitas</span><span className={styles.specValue}>{unit.specs?.capacity || '—'}</span></div>
                 </>) : (<>
                   <div className={styles.specItem}><span className={styles.specLabel}>Kompresor</span><span className={styles.specValue}>{unit.specs?.compressor || '—'}</span></div>
                   <div className={styles.specItem}><span className={styles.specLabel}>Refrigeran</span><span className={styles.specValue}>{unit.specs?.refrigerant || '—'}</span></div>
-                  <div className={styles.specItem}><span className={styles.specLabel}>Daya / Wattage</span><span className={styles.specValue}>{unit.specs?.wattage || '—'}</span></div>
+                  <div className={styles.specItem}><span className={styles.specLabel}>Daya / Power</span><span className={styles.specValue}>{unit.specs?.wattage || '—'}</span></div>
                 </>)}
-                <div className={styles.specItem}><span className={styles.specLabel}>PRO Number</span><span className={styles.specValue}>{unit.specs?.pro_number || '—'}</span></div>
-                <div className={styles.specItem}><span className={styles.specLabel}>QM Number</span><span className={styles.specValue}>{unit.specs?.qm_number || '—'}</span></div>
-                <div className={styles.specItem}><span className={styles.specLabel}>Manufacture SN</span><span className={styles.specValue}>{unit.specs?.manufacture_sn || '—'}</span></div>
-                <div className={styles.specItem}><span className={styles.specLabel}>Delivery Date</span><span className={styles.specValue}>{unit.specs?.delivery_date || '—'}</span></div>
-                <div className={styles.specItem}><span className={styles.specLabel}>Finish Date</span><span className={styles.specValue}>{unit.specs?.finish_date || '—'}</span></div>
-                <div className={styles.specItem}><span className={styles.specLabel}>Dibuat Pada</span><span className={styles.specValue}>{unit.created_at ? new Date(unit.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }) : '—'}</span></div>
-                <div className={styles.specItem} style={{ borderBottom: 'none' }}><span className={styles.specLabel}>Lokasi Pembuatan</span><span className={styles.specValue}>Tangerang, Indonesia</span></div>
+                <div className={styles.specItem} style={{ borderBottom: 'none' }}><span className={styles.specLabel}>Production Date</span><span className={styles.specValue}>{(unit.specs?.production_date || unit.specs?.finish_date) ? new Date(unit.specs.production_date || unit.specs.finish_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'}</span></div>
               </>)}
               {!editBlocks.spesifikasi && <button className={styles.btnViewAll} onClick={() => setShowAllSpecsModal(true)}>Lihat Semua Spesifikasi <span>›</span></button>}
             </div>
@@ -244,7 +247,7 @@ export default function QrPassportPage() {
                   <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}><div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(139,92,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(139,92,246,0.2)' }}><ShieldAlert size={20} color="#a78bfa" /></div></div>
                   <h3 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '8px', textAlign: 'center' }}>Administrator Control</h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
-                    <button className={styles.btnEmergency} onClick={() => setShowServiceModal(true)}>Uji Alur Smart Routing</button>
+                    <button className={styles.btnEmergency} onClick={() => setShowServiceModal(true)}>Request Service</button>
                     <button className={styles.btnPrimary} onClick={() => setShowTransferModal(true)}>Pindahkan Kepemilikan</button>
                   </div>
                 </div>
@@ -257,16 +260,20 @@ export default function QrPassportPage() {
             <div className={styles.cardHeader}><div className={styles.cardHeaderLeft}><Settings size={16} color="#8bb2ff" /><h2>Stats Card</h2></div></div>
             <div className={styles.statsCardGrid}>
               {[
-                { tip: 'Kondisi operasional unit saat ini.', icon: <CheckCircle2 size={24} />, cls: styles.success, title: 'Status Unit', status: 'Normal', color: '#10b981', sub: 'Unit beroperasi dengan baik' },
-                { tip: 'Masa garansi resmi dari Holicindo.', icon: <ShieldAlert size={24} />, cls: isWarrantyActive ? styles.success : styles.warning, title: 'Garansi', status: isWarrantyActive ? 'Aktif' : 'Kedaluwarsa', color: isWarrantyActive ? '#10b981' : '#f59e0b', sub: isWarrantyActive ? `Hingga ${expiryDate?.toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }) || ''}` : 'Hubungi support' },
+                { tip: 'Kondisi operasional unit saat ini.', icon: <CheckCircle2 size={24} />, cls: styles.success, title: 'Status Unit', status: 'Normal', color: 'var(--color-cobalt-blue)', sub: 'Unit beroperasi dengan baik' },
+                { tip: 'Masa garansi resmi dari Holicindo.', icon: <ShieldAlert size={24} />, cls: isWarrantyActive ? styles.success : styles.warning, title: 'Garansi', status: isWarrantyActive ? 'Aktif' : 'Kedaluwarsa', color: isWarrantyActive ? 'var(--color-cobalt-blue)' : '#f59e0b', sub: isWarrantyActive ? `Hingga ${expiryDate?.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) || ''}` : 'Hubungi support' },
                 { tip: 'Tanggal terakhir unit diservis.', icon: <Wrench size={24} />, cls: styles.info, title: 'Last Service', status: 'Belum Ada', color: '#336bd9ff', sub: 'Belum pernah diservis' },
                 { tip: 'Estimasi jadwal servis berikutnya.', icon: <Clock size={24} />, cls: styles.info, title: 'Next Service', status: 'Disarankan', color: '#3b82f6', sub: 'Dalam 180 hari' },
-                { tip: 'Status keaslian unit.', icon: <CheckCircle2 size={24} />, cls: styles.success, title: 'Verifikasi', status: 'Asli', color: '#10b981', sub: 'Unit terverifikasi Holicindo' },
+                { tip: 'Status keaslian unit.', icon: <CheckCircle2 size={24} />, cls: styles.success, title: 'Verifikasi', status: 'Asli', color: 'var(--color-cobalt-blue)', sub: 'Unit terverifikasi Holicindo' },
               ].map((s) => (
                 <div key={s.title} className={styles.statusCard} style={{ position: 'relative' }}>
                   <span className={styles.statTooltipAnchor}><HelpCircle size={12} className={styles.statTooltipIcon} /><span className={styles.statTooltip}>{s.tip}</span></span>
                   <div className={`${styles.statusIcon} ${s.cls}`}>{s.icon}</div>
-                  <div className={styles.statusText}><h3>{s.title}</h3><p style={{ color: s.color }}>{s.status}</p><span>{s.sub}</span></div>
+                  <div className={styles.statusText}>
+                    <h3>{s.title}</h3>
+                    <p style={{ color: s.color }}>{s.status}</p>
+                    <span>{s.sub}</span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -341,6 +348,40 @@ export default function QrPassportPage() {
                             </label>
                           )}
                         </div>); })()}
+                      {/* Work Order upload */}
+                      {(() => { const key = 'work_order_url'; return (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <label style={{ fontSize: '0.8rem', color: 'var(--color-space-grey)', fontWeight: 600 }}>Work Order</label>
+                          {editData.specs?.[key] ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', color: '#10b981' }}>
+                              <CheckCircle2 size={14} /> File terupload
+                              <button type="button" onClick={() => window.open(editData.specs[key], '_blank')} style={{ background: 'none', border: 'none', color: '#8bb2ff', cursor: 'pointer', fontSize: '0.75rem', textDecoration: 'underline' }}>Lihat</button>
+                              <button type="button" onClick={() => handleEditChange(`specs.${key}`, '')} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.75rem' }}>Hapus</button>
+                            </div>
+                          ) : (
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', border: '1px dashed rgba(255,255,255,0.2)', borderRadius: '8px', padding: '10px 14px', cursor: 'pointer', color: '#8f9bb3', fontSize: '0.82rem', background: 'rgba(255,255,255,0.02)', opacity: qcUploading[key] ? 0.6 : 1 }}>
+                              <ImageIcon size={16} />{qcUploading[key] ? 'Mengupload...' : 'Klik untuk upload file (PDF/JPG/PNG)'}
+                              <input type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display: 'none' }} disabled={qcUploading[key]} onChange={(e) => { const f = e.target.files?.[0]; if (f) handleQcFileUpload(key, f); }} />
+                            </label>
+                          )}
+                        </div>); })()}
+                      {/* Component Reports upload */}
+                      {(() => { const key = 'component_reports_url'; return (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <label style={{ fontSize: '0.8rem', color: 'var(--color-space-grey)', fontWeight: 600 }}>Component Reports</label>
+                          {editData.specs?.[key] ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', color: '#10b981' }}>
+                              <CheckCircle2 size={14} /> File terupload
+                              <button type="button" onClick={() => window.open(editData.specs[key], '_blank')} style={{ background: 'none', border: 'none', color: '#8bb2ff', cursor: 'pointer', fontSize: '0.75rem', textDecoration: 'underline' }}>Lihat</button>
+                              <button type="button" onClick={() => handleEditChange(`specs.${key}`, '')} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.75rem' }}>Hapus</button>
+                            </div>
+                          ) : (
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', border: '1px dashed rgba(255,255,255,0.2)', borderRadius: '8px', padding: '10px 14px', cursor: 'pointer', color: '#8f9bb3', fontSize: '0.82rem', background: 'rgba(255,255,255,0.02)', opacity: qcUploading[key] ? 0.6 : 1 }}>
+                              <ImageIcon size={16} />{qcUploading[key] ? 'Mengupload...' : 'Klik untuk upload file (PDF/JPG/PNG)'}
+                              <input type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display: 'none' }} disabled={qcUploading[key]} onChange={(e) => { const f = e.target.files?.[0]; if (f) handleQcFileUpload(key, f); }} />
+                            </label>
+                          )}
+                        </div>); })()}
                     </div>
                   </div>
                   <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }} />
@@ -390,6 +431,8 @@ export default function QrPassportPage() {
                       { label: 'Cooling System Report', urlKey: 'cooling_report_url', desc: coolingTooltip, routePath: '/reports/cooling', formType: '__COOLING__' },
                       { label: 'Inspection Report', urlKey: 'inspection_url', desc: null, routePath: '/reports/inspection', formType: 'INSPECTION' },
                       { label: 'ITR', urlKey: 'itr_url', desc: 'Inventory Transfer Request', routePath: null, formType: null },
+                      { label: 'Work Order', urlKey: 'work_order_url', desc: 'Work Order Document', routePath: null, formType: null },
+                      { label: 'Component Reports', urlKey: 'component_reports_url', desc: 'Component Reports Document', routePath: null, formType: null },
                     ];
                     return items.map(({ label, urlKey, desc, routePath, formType }) => {
                       const url = unit?.specs?.[urlKey]; const isReportLink = routePath !== null; const isCooling = formType === '__COOLING__';
@@ -429,7 +472,7 @@ export default function QrPassportPage() {
                         <FileText size={15} color="#8bb2ff" /><span style={{ flex: 1, fontSize: '0.85rem' }}>Production PIC</span>
                         {has ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(16,185,129,0.12)', color: '#10b981', borderRadius: '20px', padding: '2px 8px', fontSize: '0.72rem', fontWeight: 700 }}><Check size={11} /> Ada</span> : <span style={{ background: 'rgba(255,255,255,0.06)', color: '#64748b', borderRadius: '20px', padding: '2px 8px', fontSize: '0.72rem', fontWeight: 600 }}>Belum ada data</span>}
                       </div>
-                      {has && <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '0 0 8px 8px', padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>{pn && <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Nama: <strong style={{ color: '#e2e8f0' }}>{pn}</strong></span>}{pd && <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Tanggal: <strong style={{ color: '#e2e8f0' }}>{new Date(pd + 'T00:00:00').toLocaleDateString('id-ID', { dateStyle: 'long' })}</strong></span>}{pnt && <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Catatan: <strong style={{ color: '#e2e8f0' }}>{pnt}</strong></span>}</div>}
+                      {has && <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '0 0 8px 8px', padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>{pn && <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Nama: <strong style={{ color: '#e2e8f0' }}>{pn}</strong></span>}{pd && <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Tanggal: <strong style={{ color: '#e2e8f0' }}>{new Date(pd + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</strong></span>}{pnt && <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Catatan: <strong style={{ color: '#e2e8f0' }}>{pnt}</strong></span>}</div>}
                     </div>); })()}
                   <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', margin: '4px 0' }} />
                   {/* Photo Gallery */}
@@ -471,14 +514,60 @@ export default function QrPassportPage() {
                     <ImageIcon size={16} />{manualsUploading ? 'Mengupload...' : 'Klik untuk upload diagram (JPG/PNG/PDF)'}
                     <input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" multiple style={{ display: 'none' }} disabled={manualsUploading} onChange={(e) => { if (e.target.files?.length) handleManualsUpload(e.target.files); }} />
                   </label>
+                  {/* YouTube Link Upload */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '0.8rem', color: 'var(--color-space-grey)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="#ef4444"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                      Link Video YouTube (Opsional)
+                    </label>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input
+                        type="url"
+                        placeholder="https://youtube.com/watch?v=..."
+                        style={{ flex: 1, padding: '10px 12px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#f8fafc', fontSize: '0.82rem', fontFamily: 'inherit', outline: 'none' }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const val = (e.target as HTMLInputElement).value.trim();
+                            if (val && (val.includes('youtube.com') || val.includes('youtu.be'))) {
+                              const existing = editData.specs?.manuals_urls ? editData.specs.manuals_urls.split(',').filter(Boolean) : [];
+                              handleEditChange('specs.manuals_urls', [...existing, val].join(','));
+                              (e.target as HTMLInputElement).value = '';
+                            }
+                          }
+                        }}
+                        id="youtube-link-input"
+                      />
+                      <button type="button" style={{ padding: '10px 14px', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '8px', color: '#ef4444', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 700, fontFamily: 'inherit', whiteSpace: 'nowrap' }}
+                        onClick={() => {
+                          const inp = document.getElementById('youtube-link-input') as HTMLInputElement;
+                          const val = inp?.value.trim();
+                          if (val && (val.includes('youtube.com') || val.includes('youtu.be'))) {
+                            const existing = editData.specs?.manuals_urls ? editData.specs.manuals_urls.split(',').filter(Boolean) : [];
+                            handleEditChange('specs.manuals_urls', [...existing, val].join(','));
+                            inp.value = '';
+                          }
+                        }}
+                      >+ Tambah</button>
+                    </div>
+                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Tekan Enter atau klik Tambah untuk menyimpan link</span>
+                  </div>
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {(() => { const urls = unit?.specs?.manuals_urls ? String(unit.specs.manuals_urls).split(',').filter(Boolean) : [];
                     if (urls.length === 0) return (<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 16px', gap: '10px', background: 'rgba(255,255,255,0.02)', borderRadius: '10px', border: '1px dashed rgba(255,255,255,0.1)' }}><BookOpen size={28} color="#3d4f6e" /><p style={{ color: '#64748b', fontSize: '0.82rem', textAlign: 'center' }}>Belum ada diagram</p></div>);
-                    return urls.map((url: string, idx: number) => { const isPdf = url.includes('pdf'); const isImage = /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(url); return (
+                    return urls.map((url: string, idx: number) => { const isPdf = url.includes('pdf'); const isImage = /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(url); const isYoutube = url.includes('youtube.com') || url.includes('youtu.be'); return (
                       <div key={idx}>
-                        {isImage ? <div onClick={() => window.open(url, '_blank')} style={{ cursor: 'pointer', borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}><img src={url} alt={`Diagram ${idx + 1}`} style={{ width: '100%', display: 'block', objectFit: 'contain', maxHeight: '280px', background: '#0a0e1a' }} /><div style={{ padding: '8px 12px', background: 'rgba(255,255,255,0.03)', fontSize: '0.72rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '6px' }}><ImageIcon size={12} /> Diagram {idx + 1}</div></div>
+                        {isYoutube ? (
+                          <button className={styles.btnPrimary} style={{ justifyContent: 'space-between', padding: '12px 16px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', color: '#fff', fontFamily: 'inherit' }} onClick={() => window.open(url, '_blank')}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="#ef4444"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                              Video YouTube {idx + 1}
+                            </span>
+                            <ExternalLink size={15} color="rgba(255,255,255,0.7)" style={{ flexShrink: 0 }} />
+                          </button>
+                        ) : isImage ? <div onClick={() => window.open(url, '_blank')} style={{ cursor: 'pointer', borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}><img src={url} alt={`Diagram ${idx + 1}`} style={{ width: '100%', display: 'block', objectFit: 'contain', maxHeight: '280px', background: '#0a0e1a' }} /><div style={{ padding: '8px 12px', background: 'rgba(255,255,255,0.03)', fontSize: '0.72rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '6px' }}><ImageIcon size={12} /> Diagram {idx + 1}</div></div>
                         : <button className={styles.btnPrimary} style={{ justifyContent: 'space-between', padding: '12px 16px', background: 'rgba(255,255,255,0.05)', color: 'var(--color-primary-text)' }} onClick={() => window.open(url, '_blank')}><span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><FileText size={16} />{isPdf ? `Diagram PDF ${idx + 1}` : `File Diagram ${idx + 1}`}</span><ExternalLink size={16} color="#8f9bb3" /></button>}
                       </div>); });
                   })()}
@@ -500,11 +589,16 @@ export default function QrPassportPage() {
               {editBlocks.ownership ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingBottom: '16px' }}>
                   <EditField label="Customer Name" value={editData.current_client?.company_name || ''} onChange={(v) => handleEditChange('current_client.company_name', v)} />
+                  <EditField label="HQ Address (Pusat)" value={editData.specs?.hq_address || ''} onChange={(v) => handleEditChange('specs.hq_address', v)} />
                   <EditField label="SO Number" value={editData.specs?.so_number || ''} onChange={(v) => handleEditChange('specs.so_number', v)} />
                   <EditField label="DO Number" value={editData.specs?.do_number || ''} onChange={(v) => handleEditChange('specs.do_number', v)} />
+                  <DatePicker label="Delivery Date" value={editData.specs?.delivery_date ? editData.specs.delivery_date.slice(0, 10) : ''} onChange={(v) => handleEditChange('specs.delivery_date', v)} theme="dark" />
+                  
+                  <div style={{ marginTop: '12px', marginBottom: '8px', paddingBottom: '4px', borderBottom: '1px solid rgba(255,255,255,0.1)', fontSize: '0.85rem', fontWeight: 600, color: '#8bb2ff' }}>Lokasi Unit (Branch)</div>
                   <EditField label="Outlet Branch" value={editData.outlet_branch || ''} onChange={(v) => handleEditChange('outlet_branch', v)} />
+                  <EditField label="Branch Address (Jalan)" value={editData.specs?.branch_address || ''} onChange={(v) => handleEditChange('specs.branch_address', v)} />
                   <div className={styles.editRow}><div className={styles.editGroup}>
-                    <span className={styles.editLabel}>Outlet Address (City)</span>
+                    <span className={styles.editLabel}>Kota (City)</span>
                     <select className={styles.editInput} value={editData.city || ''} onChange={(e) => handleEditChange('city', e.target.value)} style={{ background: '#1e293b', color: '#f8fafc' }}>
                       <option value="">-- Pilih Kota --</option>
                       {Object.entries(INDONESIA_CITIES.reduce((acc: Record<string, string[]>, item) => { if (!acc[item.province]) acc[item.province] = []; acc[item.province].push(item.city); return acc; }, {})).map(([province, cities]) => (<optgroup key={province} label={province}>{(cities as string[]).map(city => <option key={city} value={city}>{city}</option>)}</optgroup>))}
@@ -513,10 +607,15 @@ export default function QrPassportPage() {
                 </div>
               ) : (<>
                 <div className={styles.specItem}><span className={styles.specLabel}>Customer Name</span><span className={styles.specValue}>{unit.current_client?.company_name || '—'}</span></div>
+                <div className={styles.specItem}><span className={styles.specLabel}>HQ Address</span><span className={styles.specValue}>{unit.specs?.hq_address || '—'}</span></div>
                 <div className={styles.specItem}><span className={styles.specLabel}>SO Number</span><span className={styles.specValue}>{unit.specs?.so_number || '—'}</span></div>
                 <div className={styles.specItem}><span className={styles.specLabel}>DO Number</span><span className={styles.specValue}>{unit.specs?.do_number || '—'}</span></div>
+                <div className={styles.specItem}><span className={styles.specLabel}>Delivery Date</span><span className={styles.specValue}>{unit.specs?.delivery_date ? new Date(unit.specs.delivery_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'}</span></div>
+                
+                <div style={{ marginTop: '12px', padding: '4px 16px', fontSize: '0.75rem', fontWeight: 700, color: '#8bb2ff', textTransform: 'uppercase', letterSpacing: '0.05em', background: 'rgba(59,130,246,0.1)' }}>Lokasi Unit (Branch)</div>
                 <div className={styles.specItem}><span className={styles.specLabel}>Outlet Branch</span><span className={styles.specValue}>{unit.outlet_branch || '—'}</span></div>
-                <div className={styles.specItem} style={{ borderBottom: 'none' }}><span className={styles.specLabel}>Outlet Address (City)</span><span className={styles.specValue}>{unit.city ? (() => { const m = INDONESIA_CITIES.find(c => c.city === unit.city); return m ? `${unit.city} — ${m.province}` : unit.city; })() : '—'}</span></div>
+                <div className={styles.specItem}><span className={styles.specLabel}>Branch Address</span><span className={styles.specValue}>{unit.specs?.branch_address || '—'}</span></div>
+                <div className={styles.specItem} style={{ borderBottom: 'none' }}><span className={styles.specLabel}>City & Province</span><span className={styles.specValue}>{unit.city ? (() => { const m = INDONESIA_CITIES.find(c => c.city === unit.city); return m ? `${unit.city}, ${m.province}` : unit.city; })() : '—'}</span></div>
               </>)}
             </div>
           </section>
@@ -545,6 +644,7 @@ export default function QrPassportPage() {
 
         {/* Modals */}
         <ServiceRequestModal show={showServiceModal} onClose={closeServiceModal} onSubmit={handleServiceRequest} loading={routingLoading} routingResult={routingResult}
+          unitType={autoUnitType}
           storeName={storeName} setStoreName={setStoreName} serviceName={serviceName} setServiceName={setServiceName} servicePhone={servicePhone} setServicePhone={setServicePhone}
           issueMainCategory={issueMainCategory} setIssueMainCategory={setIssueMainCategory} issueSubCategory={issueSubCategory} setIssueSubCategory={setIssueSubCategory}
           serviceNotes={serviceNotes} setServiceNotes={setServiceNotes} />

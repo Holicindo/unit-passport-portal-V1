@@ -574,6 +574,17 @@
   color: #ffffff;
 }
 
+.cardContent {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.mediaSingleItem {
+  display: flex;
+  flex-direction: column;
+}
+
 .restrictedText {
   color: #94a3b8;
   font-size: 0.95rem;
@@ -895,15 +906,12 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(1, 4, 18, 0.7);
-  backdrop-filter: blur(20px) saturate(140%);
-  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  background: rgba(255, 255, 255, 0.88);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  padding: 16px;
-  animation: overlayFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 1px;
 }
 
 @keyframes overlayFadeIn {
@@ -912,16 +920,19 @@
 }
 
 .modalCard {
-  background: linear-gradient(180deg, rgba(6, 13, 33, 0.85) 0%, rgba(4, 8, 20, 0.95) 100%);
+  background: #ffffff;
   width: 100%;
   max-width: 540px;
-  border-radius: 24px;
-  border: 1px solid rgba(46, 91, 255, 0.15);
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.8), 0 0 40px rgba(10, 30, 100, 0.3);
-  overflow: hidden;
-  animation: modalIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 16px;
+  border: 1px solid #e8edf4;
+  box-shadow:
+    0 4px 6px rgba(0, 31, 63, 0.04),
+    0 16px 40px rgba(0, 31, 63, 0.12),
+    0 1px 0 rgba(255, 255, 255, 0.9) inset;
 }
+
 
 @keyframes modalIn {
   from { transform: scale(0.96) translateY(12px); opacity: 0; }
@@ -929,17 +940,17 @@
 }
 
 .modalHeader {
-  background: rgba(255, 255, 255, 0.05);
-  padding: 24px 28px;
+  background: #f8fafc;
+  padding: 20px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid #e8edf4;
 }
 
 .modalHeader h2 {
-  font-size: 1.2rem;
-  color: #ffffff;
+  font-size: 1.1rem;
+  color: #0f172a;
   font-weight: 800;
   letter-spacing: -0.01em;
 }
@@ -947,11 +958,16 @@
 .closeBtn {
   background: none;
   border: none;
-  font-size: 2rem;
+  font-size: 1.6rem;
   color: #94a3b8;
   cursor: pointer;
   transition: all 0.2s;
   line-height: 0.8;
+}
+
+.closeBtn:hover {
+  color: #0f172a;
+  transform: scale(1.1);
 }
 
 .headerLeftMobile {
@@ -968,17 +984,20 @@
 }
 
 .modalForm {
-  padding: 28px;
+  padding: 22px 24px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 .modalHint {
-  font-size: 0.9rem;
-  color: #94a3b8;
-  margin-bottom: 6px;
+  font-size: 0.88rem;
+  color: #64748b;
+  background: #f1f5f9;
+  border-radius: 8px;
+  padding: 10px 14px;
   line-height: 1.5;
+  box-shadow: inset 0 1px 3px rgba(0,31,63,0.06);
 }
 
 .formGroup {
@@ -988,10 +1007,10 @@
 }
 
 .formGroup label {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 800;
   text-transform: uppercase;
-  color: #ffffff;
+  color: #374151;
   letter-spacing: 0.05em;
 }
 
@@ -1034,22 +1053,21 @@
 }
 
 .btnSubmit {
-  background: linear-gradient(135deg, #184cf4 0%, #0a2eb5 100%);
+  background: #1a3a8f;
   color: white;
   border: none;
-  padding: 16px;
+  padding: 14px;
   border-radius: var(--radius-md);
-  font-weight: 800;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  margin-top: 10px;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2), 0 4px 12px rgba(10, 46, 181, 0.4);
+  transition: all 0.2s ease;
+  margin-top: 6px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 2px 8px rgba(0,0,0,0.4);
 }
 
 .btnSubmit:hover {
-  transform: translateY(-1px);
-  background: linear-gradient(180deg, #1f56ff 0%, #0c36cf 100%);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.3), 0 6px 16px rgba(10, 46, 181, 0.5);
+  background: #1e45a8;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 4px 12px rgba(0,0,0,0.5);
 }
 
 .routingResult {
@@ -1474,10 +1492,15 @@
    Default for public scan. Dark mode is opt-in via toggle.
    ══════════════════════════════════════════════════════════ */
 [data-theme="light"].pageWrapper {
-  background-color: #F2F4F7;
-  background-image:
-    radial-gradient(ellipse at 10% 15%, rgba(46, 91, 255, 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 90% 80%, rgba(0, 31, 63, 0.05) 0%, transparent 50%);
+  background: linear-gradient(135deg, rgba(220, 222, 228, 0.95), rgba(240, 242, 246, 0.98), rgba(228, 230, 236, 0.95), rgba(200, 203, 212, 0.92), rgba(236, 238, 242, 0.96));
+  background-size: 300% 300%;
+  animation: passportGradientFlow 8s ease infinite;
+}
+
+@keyframes passportGradientFlow {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 [data-theme="light"].pageWrapper::before,
@@ -1510,27 +1533,29 @@
   background: rgba(16, 185, 129, 0.1);
   color: #059669;
   border-color: rgba(16, 185, 129, 0.25);
-  box-shadow: none;
+  box-shadow: -3px -3px 8px rgba(255, 255, 255, 0.7), 3px 3px 8px rgba(0, 31, 63, 0.06);
 }
 
 [data-theme="light"] .accessBadgeTop {
   background: rgba(46, 91, 255, 0.08);
   color: #2E5BFF;
   border-color: rgba(46, 91, 255, 0.2);
+  box-shadow: -3px -3px 8px rgba(255, 255, 255, 0.7), 3px 3px 8px rgba(0, 31, 63, 0.06);
 }
 
 [data-theme="light"] .lastUpdated {
   color: #717378;
 }
 
-/* Cards */
+/* Cards — Neumorphic Embossed */
 [data-theme="light"] .card,
-[data-theme="light"] .sectionCard,
-[data-theme="light"] .actionCard {
-  background: #ffffff;
-  border: 1px solid rgba(0, 31, 63, 0.08);
-  box-shadow: 0 4px 16px rgba(0, 31, 63, 0.06);
+[data-theme="light"] .sectionCard {
+  background: #ECEEF2;
+  border: none;
+  box-shadow: -6px -6px 14px rgba(255, 255, 255, 0.85), 6px 6px 14px rgba(0, 31, 63, 0.08);
   backdrop-filter: none;
+  border-radius: 16px;
+  transition: box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 [data-theme="light"] .cardHeader {
@@ -1540,6 +1565,16 @@
 
 [data-theme="light"] .cardHeader h2 {
   color: #001F3F;
+}
+
+[data-theme="light"] .cardContent,
+[data-theme="light"] .mediaSingleItem {
+  background: #E2E6EC;
+  box-shadow: inset 8px 8px 16px rgba(0, 31, 63, 0.15), inset -8px -8px 16px rgba(255, 255, 255, 1);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 0 16px 16px 16px;
+  border: 1px solid rgba(0, 31, 63, 0.05);
 }
 
 [data-theme="light"] .specItem {
@@ -1555,34 +1590,69 @@
 }
 
 [data-theme="light"] .btnViewAll {
-  background: rgba(0, 31, 63, 0.03);
-  border-color: rgba(0, 31, 63, 0.1);
+  background: #ECEEF2;
+  border: none;
   color: #001F3F;
+  border-radius: 14px;
+  box-shadow: -4px -4px 10px rgba(255, 255, 255, 0.9), 4px 4px 10px rgba(0, 31, 63, 0.08);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 [data-theme="light"] .btnViewAll:hover {
-  background: rgba(0, 31, 63, 0.06);
+  box-shadow: -6px -6px 14px rgba(255, 255, 255, 0.95), 6px 6px 14px rgba(0, 31, 63, 0.1);
+  transform: translateY(-2px);
 }
 
-/* Status cards */
+[data-theme="light"] .btnViewAll:active {
+  box-shadow: inset 4px 4px 8px rgba(0, 31, 63, 0.08), inset -4px -4px 8px rgba(255, 255, 255, 0.9);
+  transform: translateY(0);
+}
+
+/* Status cards — Neumorphic (Recessed/Ceruk) */
 [data-theme="light"] .statusCard {
-  background: #ffffff;
-  border-color: rgba(0, 31, 63, 0.08);
-  box-shadow: 0 2px 8px rgba(0, 31, 63, 0.04);
+  background: #E2E6EC;
+  border: 1px solid rgba(0, 31, 63, 0.03);
+  box-shadow: inset 6px 6px 12px rgba(0, 31, 63, 0.12), inset -6px -6px 12px rgba(255, 255, 255, 1);
+  border-radius: 18px;
+  padding: 18px 22px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-theme="light"] .statusCard:hover {
+  box-shadow: inset 8px 8px 16px rgba(0, 31, 63, 0.15), inset -8px -8px 16px rgba(255, 255, 255, 1);
 }
 
 [data-theme="light"] .statusText h3 {
   color: #717378;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+}
+
+[data-theme="light"] .statusText p {
+  color: #001F3F;
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
 }
 
 [data-theme="light"] .statusText span {
   color: #717378;
 }
 
-/* Action card */
+[data-theme="light"] .statusIcon {
+  background: #ECF0F3;
+  box-shadow: inset 9px 9px 15px #D1D9E6, inset -9px -9px 15px #FFFFFF;
+  border: none;
+  border-radius: 12px;
+  width: 46px;
+  height: 46px;
+}
+
+/* Action card — Neumorphic */
 [data-theme="light"] .actionCard {
-  border-color: rgba(46, 91, 255, 0.12);
-  box-shadow: 0 8px 24px rgba(0, 31, 63, 0.08);
+  background: #ECEEF2;
+  border: none;
+  box-shadow: -6px -6px 14px rgba(255, 255, 255, 0.85), 6px 6px 14px rgba(0, 31, 63, 0.08);
+  border-radius: 16px;
 }
 
 [data-theme="light"] .actionCard::before {
@@ -1590,7 +1660,7 @@
 }
 
 [data-theme="light"] .actionCard .cardHeader {
-  background: rgba(0, 31, 63, 0.02);
+  background: transparent;
   border-bottom-color: rgba(0, 31, 63, 0.06);
   color: #001F3F;
 }
@@ -1600,12 +1670,23 @@
 [data-theme="light"] .guestNote,
 [data-theme="light"] .modalHint {
   color: #717378;
+  background: #ECEEF2;
+  box-shadow: inset 6px 6px 12px rgba(0, 31, 63, 0.08), inset -6px -6px 12px rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
 }
 
-/* Media section */
+/* Media section — Neumorphic */
 [data-theme="light"] .mediaItem {
-  background: #f8fafc;
-  border-color: rgba(0, 31, 63, 0.08);
+  background: #ECEEF2;
+  border: none;
+  box-shadow: -4px -4px 10px rgba(255, 255, 255, 0.85), 4px 4px 10px rgba(0, 31, 63, 0.07);
+  border-radius: 14px;
+}
+
+[data-theme="light"] .mediaItem:hover {
+  box-shadow: -6px -6px 14px rgba(255, 255, 255, 0.9), 6px 6px 14px rgba(0, 31, 63, 0.09);
 }
 
 [data-theme="light"] .mediaContent h3 {
@@ -1619,6 +1700,15 @@
 /* Service history */
 [data-theme="light"] .emptyState {
   color: #717378;
+  background: #ECEEF2;
+  box-shadow: inset 6px 6px 12px rgba(0, 31, 63, 0.08), inset -6px -6px 12px rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
 }
 
 /* Dot grid — hide in light mode */
@@ -1634,10 +1724,10 @@
 }
 
 [data-theme="light"] .modalCard {
-  background: #ffffff;
-  border-color: rgba(0, 31, 63, 0.1);
-  border-top-color: rgba(255, 255, 255, 0.8);
-  box-shadow: 0 20px 60px rgba(0, 31, 63, 0.15);
+  background: #ECEEF2;
+  border: none;
+  box-shadow: -8px -8px 20px rgba(255, 255, 255, 0.9), 8px 8px 20px rgba(0, 31, 63, 0.12);
+  border-radius: 24px;
 }
 
 [data-theme="light"] .modalHeader {
@@ -1716,20 +1806,24 @@
   color: #001F3F;
 }
 
-/* Light mode: modal form inputs stay light */
+/* Light mode: modal form inputs — Neumorphic Inset */
 [data-theme="light"] .formGroup input,
 [data-theme="light"] .formGroup select,
 [data-theme="light"] .formGroup textarea {
-  background: #f1f5f9;
-  border-color: #e2e8f0;
+  background: #ECEEF2;
+  border: none;
+  border-radius: 12px;
   color: #0f172a;
+  box-shadow: inset 4px 4px 8px rgba(0, 31, 63, 0.08), inset -4px -4px 8px rgba(255, 255, 255, 0.9);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 [data-theme="light"] .formGroup input:focus,
 [data-theme="light"] .formGroup select:focus,
 [data-theme="light"] .formGroup textarea:focus {
-  background: #ffffff;
-  border-color: #2e5bff;
+  background: #ECEEF2;
+  border: none;
+  box-shadow: inset 6px 6px 12px rgba(0, 31, 63, 0.12), inset -6px -6px 12px rgba(255, 255, 255, 0.95);
 }
 
 /* Light mode: modal card white */
@@ -1920,8 +2014,11 @@
 }
 
 [data-theme="light"] .statsCardGrid .statusCard {
-  background: #f8fafc;
-  box-shadow: none;
+  background: #ECF0F3;
+  box-shadow: 18px 18px 30px #D1D9E6, -18px -18px 30px #FFFFFF;
+  border: none;
+  border-radius: 20px;
+  padding: 24px 22px;
 }
 
 /* 5th card (Verifikasi) spans full width on mobile */
@@ -1949,8 +2046,9 @@
     border-bottom: 1px solid rgba(255,255,255,0.05);
   }
   [data-theme="light"] .header {
-    background-color: #ffffff;
-    border-bottom: 1px solid rgba(0,0,0,0.05);
+    background-color: #ECEEF2;
+    border-bottom: none;
+    box-shadow: 0 4px 10px rgba(0, 31, 63, 0.06);
   }
 }
 
@@ -2021,9 +2119,11 @@
     border-radius: 16px;
   }
   [data-theme="light"] .statsCardGrid .statusCard {
-    background: #ffffff;
-    border: 1px solid rgba(0, 31, 63, 0.08);
-    box-shadow: 0 2px 8px rgba(0, 31, 63, 0.04);
+    background: #ECF0F3;
+    border: none;
+    box-shadow: 18px 18px 30px #D1D9E6, -18px -18px 30px #FFFFFF;
+    border-radius: 20px;
+    padding: 24px 22px;
   }
 }
 
@@ -2045,19 +2145,114 @@
 }
 
 .btnRevise {
-  background: var(--color-cobalt-blue);
+  background: linear-gradient(135deg, #2E5BFF 0%, #1e4bd6 100%);
   color: #fff;
   border: none;
-  border-radius: 6px;
-  padding: 4px 12px;
+  border-radius: 8px;
+  padding: 5px 14px;
   font-size: 0.75rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(46, 91, 255, 0.2);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: -3px -3px 8px rgba(255, 255, 255, 0.7), 3px 3px 8px rgba(46, 91, 255, 0.25);
 }
 
 .btnRevise:hover {
-  background: #1a47e5;
+  background: linear-gradient(135deg, #1e4bd6 0%, #1738a1 100%);
   transform: translateY(-1px);
+  box-shadow: -4px -4px 10px rgba(255, 255, 255, 0.8), 4px 4px 10px rgba(46, 91, 255, 0.3);
+}
+
+.btnRevise:active {
+  box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.2), inset -3px -3px 6px rgba(255, 255, 255, 0.1);
+  transform: translateY(0);
+}
+
+/* ==========================================================================
+   NEUMORPHIC GLOBAL OVERRIDES (From Reference Image 2 & 3)
+   ========================================================================== */
+.pageWrapper,
+[data-theme="light"].pageWrapper,
+[data-theme="dark"].pageWrapper {
+  background: #ECF0F3 !important;
+}
+
+/* Make all cards Neumorphic in both themes using Exact Reference Drop Shadow */
+[data-theme="dark"] .card,
+[data-theme="dark"] .sectionCard,
+.card,
+.sectionCard {
+  background: #ECF0F3 !important;
+  border: none !important;
+  box-shadow: 18px 18px 30px #D1D9E6, -18px -18px 30px #FFFFFF !important;
+  backdrop-filter: none !important;
+  border-radius: 20px !important;
+  overflow: visible !important;
+}
+
+[data-theme="dark"] .statusCard,
+.statusCard {
+  background: #ECF0F3 !important;
+  border: none !important;
+  box-shadow: 18px 18px 30px #D1D9E6, -18px -18px 30px #FFFFFF !important;
+  border-radius: 20px !important;
+  overflow: visible !important;
+}
+
+[data-theme="dark"] .actionCard,
+.actionCard {
+  background: #ECF0F3 !important;
+  border: none !important;
+  box-shadow: 12px 12px 24px #D1D9E6, -12px -12px 24px #FFFFFF !important;
+  border-radius: 16px !important;
+  overflow: visible !important;
+}
+
+[data-theme="dark"] .mediaItem,
+.mediaItem {
+  background: #ECF0F3 !important;
+  border: none !important;
+  box-shadow: 9px 9px 15px #D1D9E6, -9px -9px 15px #FFFFFF !important;
+  border-radius: 14px !important;
+  overflow: visible !important;
+}
+
+[data-theme="dark"] .modalCard,
+.modalCard {
+  background: #ECF0F3 !important;
+  border: none !important;
+  box-shadow: 20px 20px 35px #D1D9E6, -20px -20px 35px #FFFFFF !important;
+  border-radius: 24px !important;
+  overflow: visible !important;
+}
+
+/* Form Inputs and Icons - Inner Shadow */
+[data-theme="dark"] .formGroup input,
+[data-theme="dark"] .formGroup select,
+[data-theme="dark"] .formGroup textarea,
+.formGroup input,
+.formGroup select,
+.formGroup textarea,
+.statusIcon {
+  background: #ECF0F3 !important;
+  border: none !important;
+  border-radius: 12px !important;
+  box-shadow: inset 9px 9px 15px #D1D9E6, inset -9px -9px 15px #FFFFFF !important;
+}
+
+.formGroup input,
+.formGroup select,
+.formGroup textarea {
+  color: var(--color-cobalt-blue) !important;
+}
+
+/* Status Icons Colors */
+.statusIcon.success,
+.statusIcon.info {
+  color: var(--color-cobalt-blue) !important;
+}
+
+.statusIcon.warning,
+.statusIcon.error {
+  color: var(--color-safety-orange) !important;
 }

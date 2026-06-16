@@ -11,104 +11,111 @@
   justify-content: center;
   position: relative;
   overflow: hidden;
-  background-color: #010412;
-  background-image: 
-    radial-gradient(ellipse at 50% 50%, rgba(10, 40, 150, 0.5) 0%, transparent 60%),
-    radial-gradient(ellipse at top left, rgba(20, 80, 255, 0.3) 0%, transparent 45%),
-    radial-gradient(ellipse at bottom right, rgba(20, 80, 255, 0.3) 0%, transparent 45%);
+  
+  /* Base dark background */
+  background: #020612;
   padding: 24px;
 }
 
-/* ── Diagonal line decorations (background) ── */
-.container::before,
+/* ── Aura Light Effect (Background) ── */
+.container::before {
+  content: '';
+  position: absolute;
+  width: 140vw;
+  height: 100vh;
+  top: -20%;
+  left: -20%;
+  background: radial-gradient(ellipse at center, rgba(59, 130, 246, 0.15) 0%, transparent 60%);
+  filter: blur(120px);
+  z-index: 0;
+  animation: auroraFloat1 20s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
 .container::after {
   content: '';
   position: absolute;
-  pointer-events: none;
+  width: 120vw;
+  height: 120vh;
+  bottom: -30%;
+  right: -20%;
+  background: radial-gradient(ellipse at center, rgba(139, 92, 246, 0.12) 0%, rgba(14, 165, 233, 0.1) 40%, transparent 65%);
+  filter: blur(140px);
   z-index: 0;
-}
-
-/* Top left to bottom right diagonal */
-.container::before {
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: repeating-linear-gradient(
-    45deg,
-    transparent,
-    transparent 100px,
-    rgba(70, 120, 255, 0.15) 100px,
-    rgba(70, 120, 255, 0.15) 101px
-  );
-  opacity: 0.8;
-}
-
-/* Bottom left to top right diagonal */
-.container::after {
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: repeating-linear-gradient(
-    -45deg,
-    transparent,
-    transparent 100px,
-    rgba(70, 120, 255, 0.1) 100px,
-    rgba(70, 120, 255, 0.1) 101px
-  );
-  opacity: 0.8;
-}
-
-/* ── Dot grid decoration (left) ── */
-.dotGrid {
-  position: absolute;
-  top: 30%;
-  left: 10%;
-  width: 250px;
-  height: 300px;
-  background-image: radial-gradient(circle, rgba(70, 130, 255, 0.6) 1px, transparent 1px);
-  background-size: 20px 20px;
+  animation: auroraFloat2 25s ease-in-out infinite alternate;
   pointer-events: none;
-  opacity: 0.7;
-  mask-image: radial-gradient(circle, black 20%, transparent 60%);
-  
-  -webkit-mask-image: radial-gradient(circle, black 20%, transparent 60%);
-  z-index: 0;
 }
 
-/* ── Dot grid decoration (right) ── */
-.dotGridRight {
-  position: absolute;
-  top: 40%;
-  right: 10%;
-  width: 300px;
-  height: 300px;
-  background-image: radial-gradient(circle, rgba(70, 130, 255, 0.6) 1px, transparent 1px);
-  background-size: 20px 20px;
-  pointer-events: none;
-  opacity: 0.7;
-  mask-image: radial-gradient(circle, black 20%, transparent 60%);
-  -webkit-mask-image: radial-gradient(circle, black 20%, transparent 60%);
-  z-index: 0;
+@keyframes auroraFloat1 {
+  0% { transform: rotate(-2deg) translate(0, 0) scale(1); opacity: 0.3; }
+  50% { opacity: 0.7; }
+  100% { transform: rotate(5deg) translate(4%, -4%) scale(1.1); opacity: 0.4; }
 }
 
-/* ── Login Box (Desktop Glassmorphism, Mobile Wrapper) ── */
+@keyframes auroraFloat2 {
+  0% { transform: rotate(2deg) translate(0, 0) scale(1); opacity: 0.6; }
+  50% { opacity: 0.3; }
+  100% { transform: rotate(-5deg) translate(-6%, 6%) scale(1.1); opacity: 0.7; }
+}
+
+.dotGrid, .dotGridRight {
+  display: none;
+}
+
+@property --border-angle {
+  syntax: "<angle>";
+  inherits: true;
+  initial-value: 0turn;
+}
+
+/* ── Login Box (Animated Glowing Border Card) ── */
 .loginBox {
   width: 100%;
   max-width: 420px;
-  background: linear-gradient(180deg, rgba(6, 13, 33, 0.85) 0%, rgba(4, 8, 20, 0.95) 100%);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(46, 91, 255, 0.15);
-  border-top: 1px solid rgba(255, 255, 255, 0.2); /* Highlight edge */
-  border-radius: 16px;
+  border-radius: 20px;
   padding: 40px 32px 32px;
-  box-shadow:
-    0 24px 64px rgba(0, 0, 0, 0.8),
-    0 0 40px rgba(10, 30, 100, 0.3);
   position: relative;
   z-index: 1;
+  background: transparent;
+
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.6),
+    0 32px 80px rgba(0, 0, 0, 0.8);
+}
+
+/* ── Solid Card Background & Sharp Border (z-index: -1) ── */
+.loginBox::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  z-index: -1;
+  
+  border: 2px solid transparent;
+  background: 
+    linear-gradient(#0c1424, #0c1424) padding-box,
+    conic-gradient(from var(--border-angle), transparent 50%, rgba(40,110,255,0.6) 80%, rgba(200,230,255,0.9) 95%, #ffffff 100%) border-box;
+  animation: borderRotate 4s linear infinite;
+}
+
+/* ── Blurred Spilling Glow Behind (z-index: -2) ── */
+.loginBox::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 21px;
+  z-index: -2;
+
+  background: conic-gradient(from var(--border-angle), transparent 50%, rgba(40,110,255,0.4) 70%, rgba(200,230,255,0.8) 95%, #ffffff 100%);
+  filter: blur(12px); /* Tighter, more subtle glow */
+  animation: borderRotate 4s linear infinite;
+  opacity: 0.9;
+}
+
+@keyframes borderRotate {
+  100% {
+    --border-angle: 1turn;
+  }
 }
 
 /* ── Brand header ── */
@@ -122,7 +129,7 @@
 .logoMark {
   width: 100px;
   height: 110px;
-  margin-bottom: 12px;
+  margin-bottom: -15px;
   filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.1));
 }
 
@@ -190,7 +197,7 @@
 }
 
 /* Input with icon */
-.inputWithIcon {
+.inputWithIconNew {
   position: relative;
   display: flex;
   align-items: center;
@@ -206,69 +213,91 @@
   z-index: 2;
 }
 
-.inputWithIcon input {
+.inputWithIconNew input {
   width: 100%;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
+  background: #101728 !important;
+  background-color: #101728 !important;
+  border: none !important;
+  border-radius: 30px;
   padding: 12px 14px 12px 42px;
-  color: #0f172a !important;
+  color: #ffffff !important;
   font-size: 0.9rem;
   font-weight: 500;
   font-family: var(--font-body, 'Inter', sans-serif);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: auto;
   position: relative;
   z-index: 1;
   box-sizing: border-box;
+  /* Pure Dark Neumorphism Inset Shadow (Softened) */
+  box-shadow: inset 8px 8px 16px rgba(0, 0, 0, 0.8) !important;
 }
 
-.inputWithIcon input::placeholder {
-  color: #94a3b8;
+.inputWithIconNew input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
   font-weight: 400;
 }
 
-.inputWithIcon input:focus {
+.inputWithIconNew input:focus {
   outline: none;
-  border-color: #2e5bff;
-  background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(46, 91, 255, 0.15);
+  background: #101728;
+  box-shadow: inset 8px 8px 16px rgba(0, 0, 0, 0.7), inset -8px -8px 16px rgba(255, 255, 255, 0.05), 0 0 0 2px rgba(46, 91, 255, 0.2);
+}
+
+.inputWithIconNew input:-webkit-autofill,
+.inputWithIconNew input:-webkit-autofill:hover, 
+.inputWithIconNew input:-webkit-autofill:focus, 
+.inputWithIconNew input:-webkit-autofill:active {
+  transition: background-color 5000s ease-in-out 0s;
+  -webkit-text-fill-color: #ffffff !important;
+  box-shadow: inset 8px 8px 16px rgba(0, 0, 0, 0.7), inset -8px -8px 16px rgba(255, 255, 255, 0.05);
 }
 
 /* Password wrapper */
-.passwordWrapper {
+.passwordWrapperNew {
   position: relative;
   display: flex;
   align-items: center;
 }
 
-.passwordWrapper input {
+.passwordWrapperNew input {
   width: 100%;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
+  background: #101728 !important;
+  background-color: #101728 !important;
+  border: none !important;
+  border-radius: 30px;
   padding: 12px 46px 12px 42px;
-  color: #0f172a !important;
+  color: #ffffff !important;
   font-size: 0.9rem;
   font-weight: 500;
   font-family: var(--font-body, 'Inter', sans-serif);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: auto;
   position: relative;
   z-index: 1;
   box-sizing: border-box;
+  /* Pure Dark Neumorphism Inset Shadow (Softened) */
+  box-shadow: inset 8px 8px 16px rgba(0, 0, 0, 0.8) !important;
 }
 
-.passwordWrapper input::placeholder {
-  color: #94a3b8;
+.passwordWrapperNew input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
   font-weight: 400;
 }
 
-.passwordWrapper input:focus {
+.passwordWrapperNew input:focus {
   outline: none;
-  border-color: #2e5bff;
-  background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(46, 91, 255, 0.15);
+  background: #101728;
+  box-shadow: inset 8px 8px 16px rgba(0, 0, 0, 0.7), inset -8px -8px 16px rgba(255, 255, 255, 0.05), 0 0 0 2px rgba(46, 91, 255, 0.2);
+}
+
+.passwordWrapperNew input:-webkit-autofill,
+.passwordWrapperNew input:-webkit-autofill:hover, 
+.passwordWrapperNew input:-webkit-autofill:focus, 
+.passwordWrapperNew input:-webkit-autofill:active {
+  transition: background-color 5000s ease-in-out 0s;
+  -webkit-text-fill-color: #ffffff !important;
+  box-shadow: inset 8px 8px 16px rgba(0, 0, 0, 0.7), inset -8px -8px 16px rgba(255, 255, 255, 0.05);
 }
 
 .lockIcon {
@@ -334,23 +363,30 @@
 
 /* Sign In button */
 .loginButton {
-  background: linear-gradient(180deg, #184cf4 0%, #0a2eb5 100%);
+  background: #101728;
   color: #ffffff;
   border: none;
-  border-radius: 6px;
-  padding: 12px;
+  border-radius: 30px;
+  padding: 14px;
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2), 0 4px 12px rgba(10, 46, 181, 0.4);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  /* High-Contrast Neumorphism Outset Shadow */
+  box-shadow: -6px -6px 14px rgba(255, 255, 255, 0.05), 8px 8px 18px rgba(0, 0, 0, 0.6);
   font-family: var(--font-body, 'Inter', sans-serif);
   width: 100%;
 }
 
 .loginButton:hover:not(:disabled) {
-  background: linear-gradient(180deg, #1f56ff 0%, #0c36cf 100%);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.3), 0 6px 16px rgba(10, 46, 181, 0.5);
+  background: #101728;
+  box-shadow: -8px -8px 18px rgba(255, 255, 255, 0.08), 10px 10px 22px rgba(0, 0, 0, 0.8);
+  transform: translateY(-2px);
+}
+
+.loginButton:active:not(:disabled) {
+  box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.6), inset -3px -3px 6px rgba(255, 255, 255, 0.03);
+  transform: translateY(0);
 }
 
 .loginButton:disabled {
@@ -444,17 +480,25 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #050a17;
-  border: 1px solid #1c2b4b;
-  border-radius: 6px;
-  padding: 11px 20px;
+  background: #101728;
+  border: none;
+  border-radius: 30px;
+  padding: 12px 20px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  /* Dark Neumorphism Shadow */
+  box-shadow: -3px -3px 8px rgba(255, 255, 255, 0.03), 3px 3px 8px rgba(0, 0, 0, 0.6);
 }
 
 .googleButton:hover {
-  background: #0a1329;
-  border-color: #2a3c63;
+  background: #101728;
+  box-shadow: -4px -4px 10px rgba(255, 255, 255, 0.05), 4px 4px 10px rgba(0, 0, 0, 0.8);
+  transform: translateY(-2px);
+}
+
+.googleButton:active {
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.5), inset -2px -2px 5px rgba(255, 255, 255, 0.02);
+  transform: translateY(0);
 }
 
 /* ── Security footer ── */
@@ -586,8 +630,8 @@
   }
 
   /* Light Mode Inputs */
-  .inputWithIcon input,
-  .passwordWrapper input {
+  .inputWithIconNew input,
+  .passwordWrapperNew input {
     background: #f8fafc;
     border: 1px solid #cbd5e1;
     color: #0f172a !important;
@@ -595,15 +639,15 @@
     padding-bottom: 12px;
   }
 
-  .inputWithIcon input:focus,
-  .passwordWrapper input:focus {
+  .inputWithIconNew input:focus,
+  .passwordWrapperNew input:focus {
     background: #ffffff;
     border-color: #2e5bff;
     box-shadow: 0 0 0 2px rgba(46, 91, 255, 0.15);
   }
 
-  .inputWithIcon input::placeholder,
-  .passwordWrapper input::placeholder {
+  .inputWithIconNew input::placeholder,
+  .passwordWrapperNew input::placeholder {
     color: #94a3b8;
   }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './TopBar.module.css';
 import { Search, Mail, Bell, ChevronDown, Menu, LogOut, QrCode, Sun, Moon } from 'lucide-react';
@@ -22,6 +22,10 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
   const [alerts, setAlerts] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+  // Refs for click-outside detection
+  const profileRef = useRef<HTMLDivElement>(null);
+  const bellRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
@@ -49,6 +53,20 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
     } catch (err) {
       console.error('Failed to parse user data in TopBar', err);
     }
+  }, []);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+      if (bellRef.current && !bellRef.current.contains(e.target as Node)) {
+        setBellOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   useEffect(() => {
@@ -140,7 +158,7 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
         </div>
         */}
 
-        <div className={styles.iconContainer}>
+        <div className={styles.iconContainer} ref={bellRef}>
           <button className={styles.actionBtn} onClick={() => { setBellOpen(!bellOpen); setMailOpen(false); setDropdownOpen(false); }}>
             <Bell size={20} />
             {unreadAlertsCount > 0 && <span className={styles.badge} style={{ background: '#f59e0b' }}>{unreadAlertsCount}</span>}
@@ -157,7 +175,7 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
                   <div 
                     key={alert.id} 
                     className={styles.notificationItem} 
-                    style={{ background: alert.is_read ? 'transparent' : '#fffbeb' }}
+                    style={{ background: alert.is_read ? 'transparent' : 'rgba(46, 91, 255, 0.05)' }}
                     onClick={() => markAsRead(alert.id, 'ALERT')}
                   >
                     <div style={{ fontSize: '0.8rem', fontWeight: 600 }}>{alert.title}</div>
@@ -169,7 +187,7 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
           )}
         </div>
         
-        <div className={styles.profileContainer}>
+        <div className={styles.profileContainer} ref={profileRef}>
           <div className={styles.userProfile} onClick={() => { setDropdownOpen(!dropdownOpen); setMailOpen(false); setBellOpen(false); }}>
             <div className={styles.avatar}>
               <img 
@@ -185,7 +203,7 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
           </div>
 
           {dropdownOpen && (
-            <div className={styles.dropdownMenu}>
+            <div className={styles.dropdownMenu} onClick={(e) => e.stopPropagation()}>
               <div className={styles.dropdownEmail}>
                 {user?.email}
               </div>

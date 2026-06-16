@@ -113,9 +113,9 @@ export default function UsersPage() {
       </header>
 
       <StatsGrid items={[
-        { label: 'Total Pengguna', value: users.length, max: 100, icon: Users, accent: '#2E5BFF' },
-        { label: 'Akun Aktif', value: users.filter(u => u.status === 'ACTIVE').length, max: 100, icon: CheckCircle2, accent: '#00C48C' },
-        { label: 'Ditangguhkan', value: users.filter(u => u.status === 'SUSPENDED').length, max: 50, icon: ShieldCheck, accent: '#FF4D4D' },
+        { label: 'Total Pengguna', value: users.length, max: 100, icon: Users, accent: '#001F3F' },
+        { label: 'Akun Aktif', value: users.filter(u => u.status === 'ACTIVE').length, max: 100, icon: CheckCircle2, accent: '#001F3F' },
+        { label: 'Ditangguhkan', value: users.filter(u => u.status === 'SUSPENDED').length, max: 50, icon: ShieldCheck, accent: '#FF6B00' },
       ]} />
 
       <div className={styles.card}>

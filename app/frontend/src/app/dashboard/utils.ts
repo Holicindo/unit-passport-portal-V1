@@ -25,6 +25,7 @@ export interface ScheduleItem {
   description: string;
   timeStr: string;
   section: string;
+  taskType?: string;
 }
 
 export interface PMItem {
@@ -146,15 +147,18 @@ export function computeSchedules(rawLogs: any[]): ScheduleItem[] {
 
   rawLogs.forEach((log: any) => {
     if (log.status !== 'COMPLETED') {
-      const sDate = new Date(log.scheduled_date || log.date || new Date());
+      const sDate = new Date(log.scheduled_date || log.service_date || new Date());
       sDate.setHours(0, 0, 0, 0);
+      const taskTypeMap: Record<string, string> = { CORRECTIVE: 'Perbaikan', PREVENTIVE: 'Perawatan', INSTALLATION: 'Instalasi' };
+      const taskType = log.task_type || 'CORRECTIVE';
       const act: ScheduleItem = {
         id: `log-${log.id}`,
         type: 'info',
-        title: 'Servis Terjadwal',
-        description: `${log.unit?.model_name || 'Unit'} (${log.unit?.serial_number || '-'}) diservis oleh ${log.partner?.name || 'Partner'}`,
+        title: taskTypeMap[taskType] || 'Servis Terjadwal',
+        description: `${log.unit?.model_name || 'Unit'} (${log.unit?.serial_number || '-'}) — ${log.technician_name || 'Belum dialokasi'}`,
         timeStr: '',
         section: sDate.getTime() === today.getTime() ? 'Hari Ini' : 'Besok',
+        taskType,
       };
       if (sDate.getTime() === today.getTime()) schedulesToday.push(act);
       else if (sDate.getTime() === tomorrow.getTime()) schedulesTomorrow.push(act);

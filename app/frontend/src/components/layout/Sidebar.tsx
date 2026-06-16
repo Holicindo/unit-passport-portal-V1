@@ -7,35 +7,16 @@ import {
   Users, Shield, Briefcase, Building2, Activity, Database
 } from 'lucide-react';
 
-/* ── Holic Logo SVG — icon only, no text ── */
+/* ── Holic Logo SVG — same as login page ── */
 function HolicIcon({ className }: { className?: string }) {
   return (
-    <svg
-      className={className}
-      viewBox="0 0 200 210"
-      fill="none"
-      stroke="#0f172a"
-      strokeWidth="9"
-      strokeLinecap="square"
-      strokeLinejoin="miter"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      {/* Outer triangle with chamfered bottom corners */}
-      <polyline points="100,8 8,182 20,198 180,198 192,182 100,8" />
-
-      {/* Center vertical double line */}
-      <line x1="93" y1="20" x2="93" y2="198" strokeWidth="7" />
-      <line x1="107" y1="20" x2="107" y2="198" strokeWidth="7" />
-
-      {/* Top right L-bracket (outer) */}
-      <polyline points="107,75 150,75 150,128" strokeWidth="7" />
-      {/* Top right L-bracket (inner) */}
-      <polyline points="107,87 138,87 138,128" strokeWidth="7" />
-
-      {/* Bottom right L-bracket (outer) */}
-      <polyline points="107,128 168,128 168,178" strokeWidth="7" />
-      {/* Bottom right L-bracket (inner) */}
-      <polyline points="107,140 156,140 156,178" strokeWidth="7" />
+    <svg className={className} viewBox="0 0 140 120" fill="none" stroke="currentColor" strokeWidth="5"
+      strokeLinecap="square" strokeLinejoin="miter" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="60,5 10,95 20,110 60,110" />
+      <line x1="70" y1="15" x2="70" y2="110" />
+      <polyline points="70,15 110,90 100,110 70,110" />
+      <polyline points="80,110 80,55 125,45" />
+      <polyline points="90,110 90,85 135,75" />
     </svg>
   );
 }

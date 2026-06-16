@@ -78,4 +78,11 @@ export class ServiceLogsController {
   update(@Param('id') id: string, @Body() body: any) {
     return this.serviceLogsService.update(id, body);
   }
+
+  @Post('bulk-reschedule')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Admin: Reschedule multiple service logs at once' })
+  bulkReschedule(@Body() body: { ids: string[]; newDate: string; newDeliveryDate?: string }) {
+    return this.serviceLogsService.bulkReschedule(body.ids, body.newDate, body.newDeliveryDate);
+  }
 }

@@ -15,10 +15,10 @@ export default function AllSpecsModal({ show, onClose, unit }: AllSpecsModalProp
     { label: 'Model', value: unit.model_name },
     { label: 'Serial Number', value: unit.serial_number },
     { label: 'Garansi Berakhir', value: unit.warranty_expiry ? new Date(unit.warranty_expiry).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }) : '—' },
-    { label: 'Dibuat Pada', value: unit.created_at ? new Date(unit.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }) : '—' },
+    { label: 'Production Date', value: (unit.specs?.production_date || unit.specs?.finish_date) ? new Date(unit.specs.production_date || unit.specs.finish_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '—' },
     ...(unit.specs
       ? Object.entries(unit.specs as Record<string, unknown>)
-          .filter(([, v]) => v !== null && v !== undefined && v !== '' && typeof v !== 'object')
+          .filter(([k, v]) => v !== null && v !== undefined && v !== '' && typeof v !== 'object' && !['pro_number', 'qm_number', 'manufacture_sn', 'production_date', 'finish_date', 'delivery_date'].includes(k))
           .map(([k, v]) => ({
             label: k.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
             value: String(v),

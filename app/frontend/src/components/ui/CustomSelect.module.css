@@ -1,7 +1,8 @@
 .selectContainer {
   position: relative;
   display: inline-block;
-  min-width: 140px;
+  min-width: 70px;
+  width: max-content;
 }
 
 .selectTrigger {
@@ -9,25 +10,25 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  background: var(--color-optic-white, #ffffff);
-  border: 1px solid rgba(0, 31, 63, 0.15);
-  border-radius: 6px;
-  padding: 8px 12px;
+  background: #ECEEF2;
+  border: none;
+  border-radius: 20px;
+  padding: 10px 16px;
   font-size: 0.85rem;
   color: var(--color-deep-navy, #001f3f);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   font-family: inherit;
   gap: 8px;
+  box-shadow: -4px -4px 10px rgba(255, 255, 255, 0.9), 4px 4px 10px rgba(0, 31, 63, 0.08);
 }
 
 .selectTrigger:hover {
-  border-color: rgba(0, 31, 63, 0.25);
+  box-shadow: -6px -6px 14px rgba(255, 255, 255, 0.95), 6px 6px 14px rgba(0, 31, 63, 0.1);
 }
 
 .selectTrigger.open {
-  border-color: var(--color-cobalt-blue, #2E5BFF);
-  box-shadow: 0 0 0 3px rgba(46, 91, 255, 0.15);
+  box-shadow: inset -4px -4px 8px rgba(255, 255, 255, 0.9), inset 4px 4px 8px rgba(0, 31, 63, 0.08);
 }
 
 .placeholder {
@@ -51,15 +52,15 @@
 
 .dropdownMenu {
   position: absolute;
-  top: calc(100% + 4px);
+  top: calc(100% + 8px);
   left: 0;
   width: 100%;
   min-width: max-content;
-  background: #ffffff;
-  border: 1px solid rgba(0, 31, 63, 0.08);
-  border-radius: 8px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-  padding: 6px;
+  background: #ECEEF2;
+  border: none;
+  border-radius: 16px;
+  box-shadow: -8px -8px 20px rgba(255, 255, 255, 0.9), 8px 8px 20px rgba(0, 31, 63, 0.15);
+  padding: 8px;
   z-index: 100;
   animation: slideDown 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -72,9 +73,12 @@
 .searchBox {
   display: flex;
   align-items: center;
-  padding: 8px;
-  border-bottom: 1px solid rgba(0, 31, 63, 0.08);
-  margin-bottom: 4px;
+  padding: 8px 12px;
+  background: #ECEEF2;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  border: none;
+  box-shadow: inset -3px -3px 6px rgba(255, 255, 255, 0.9), inset 3px 3px 6px rgba(0, 31, 63, 0.08);
 }
 
 .searchIcon {

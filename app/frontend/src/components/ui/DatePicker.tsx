@@ -20,6 +20,39 @@ const DAYS_SHORT = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
 
 type ViewMode = 'days' | 'months' | 'years';
 
+// ── Color palettes ──────────────────────────────────────────────────────────
+const lightColors = {
+  popupBg: '#ffffff',
+  popupBorder: '#e2e8f0',
+  popupShadow: '0 12px 40px rgba(0,0,0,0.15)',
+  text: '#0f172a',
+  textMuted: '#475569',
+  textSubtle: '#94a3b8',
+  accent: '#2563eb',
+  accentBg: '#2563eb18',
+  dayHover: '#f1f5f9',
+  emptyDay: '#e2e8f0',
+  monthBorder: '#e2e8f0',
+  monthBg: '#ffffff',
+  footerBorder: '#f1f5f9',
+};
+
+const darkColors = {
+  popupBg: 'rgba(8, 12, 28, 0.95)',
+  popupBorder: 'rgba(46, 91, 255, 0.2)',
+  popupShadow: '0 16px 48px rgba(0,0,0,0.5), 0 0 0 1px rgba(46,91,255,0.1)',
+  text: '#ffffff',
+  textMuted: '#a0abc0',
+  textSubtle: '#6b7a94',
+  accent: '#4f7fff',
+  accentBg: 'rgba(79, 127, 255, 0.15)',
+  dayHover: 'rgba(46, 91, 255, 0.12)',
+  emptyDay: 'rgba(46, 91, 255, 0.08)',
+  monthBorder: 'rgba(46, 91, 255, 0.15)',
+  monthBg: 'rgba(4, 8, 20, 0.6)',
+  footerBorder: 'rgba(46, 91, 255, 0.1)',
+};
+
 export default function DatePicker({
   value,
   onChange,
@@ -39,6 +72,18 @@ export default function DatePicker({
   );
   // popup position: always above the button
   const [popupStyle, setPopupStyle] = useState<React.CSSProperties>({});
+
+  // ── Detect dark mode from document ─────────────────────────────────────────
+  const [isDark, setIsDark] = useState(false);
+  useEffect(() => {
+    const check = () => setIsDark(document.documentElement.dataset.theme === 'dark');
+    check();
+    const observer = new MutationObserver(check);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => observer.disconnect();
+  }, []);
+
+  const c = isDark || theme === 'dark' ? darkColors : lightColors;
 
   const buttonRef = useRef<HTMLButtonElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
@@ -115,12 +160,11 @@ export default function DatePicker({
     ? selectedDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
     : '';
 
-  // ── Colors (always light popup regardless of theme prop) ──────────────────
-  const triggerBg    = theme === 'dark' ? 'rgba(255,255,255,0.06)' : '#ffffff';
-  const triggerBorder= theme === 'dark' ? '1px solid rgba(255,255,255,0.15)' : '1px solid #e2e8f0';
-  const triggerColor = theme === 'dark' ? '#ffffff' : '#0f172a';
-  const labelColor   = theme === 'dark' ? '#94a3b8' : '#475569';
-  const accent       = '#2563eb';
+  // ── Trigger colors ─────────────────────────────────────────────────────────
+  const triggerBg    = isDark || theme === 'dark' ? 'rgba(255,255,255,0.06)' : '#ffffff';
+  const triggerBorder= isDark || theme === 'dark' ? '1px solid rgba(255,255,255,0.15)' : '1px solid #e2e8f0';
+  const triggerColor = isDark || theme === 'dark' ? '#ffffff' : '#0f172a';
+  const labelColor   = isDark || theme === 'dark' ? '#94a3b8' : '#475569';
 
   const daysInMonth = getDaysInMonth(viewYear, viewMonth);
   const firstDay    = getFirstDay(viewYear, viewMonth);
@@ -132,25 +176,27 @@ export default function DatePicker({
       ref={popupRef}
       style={{
         ...popupStyle,
-        background: '#ffffff',
-        border: '1px solid #e2e8f0',
+        background: c.popupBg,
+        border: `1px solid ${c.popupBorder}`,
         borderRadius: '14px',
         padding: '14px',
-        boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
+        boxShadow: c.popupShadow,
         fontFamily: 'inherit',
+        backdropFilter: 'blur(20px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
       }}
     >
       {/* ── Header ── */}
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'12px' }}>
         {viewMode === 'days' && (
           <button type="button" onClick={prevMonth}
-            style={{ background:'none', border:'none', cursor:'pointer', color:'#475569', padding:'4px 6px', borderRadius:'6px', display:'flex', alignItems:'center' }}>
+            style={{ background:'none', border:'none', cursor:'pointer', color: c.textMuted, padding:'4px 6px', borderRadius:'6px', display:'flex', alignItems:'center' }}>
             <ChevronLeft size={15} />
           </button>
         )}
         {viewMode === 'years' && (
           <button type="button" onClick={() => setYearRangeStart(s => s - 12)}
-            style={{ background:'none', border:'none', cursor:'pointer', color:'#475569', padding:'4px 6px', borderRadius:'6px', display:'flex', alignItems:'center' }}>
+            style={{ background:'none', border:'none', cursor:'pointer', color: c.textMuted, padding:'4px 6px', borderRadius:'6px', display:'flex', alignItems:'center' }}>
             <ChevronLeft size={15} />
           </button>
         )}
@@ -167,24 +213,24 @@ export default function DatePicker({
           style={{
             background: 'none', border: 'none', cursor: 'pointer',
             display: 'flex', alignItems: 'center', gap: '4px',
-            fontSize: '0.9rem', fontWeight: 700, color: '#0f172a',
+            fontSize: '0.9rem', fontWeight: 700, color: c.text,
           }}
         >
           {viewMode === 'days' && <>{MONTHS_ID[viewMonth]} {viewYear}</>}
           {viewMode === 'months' && <>{viewYear}</>}
           {viewMode === 'years' && <>{yearRangeStart} – {yearRangeStart + 11}</>}
-          <ChevronDown size={13} color="#64748b" />
+          <ChevronDown size={13} color={c.textSubtle} />
         </button>
 
         {viewMode === 'days' && (
           <button type="button" onClick={nextMonth}
-            style={{ background:'none', border:'none', cursor:'pointer', color:'#475569', padding:'4px 6px', borderRadius:'6px', display:'flex', alignItems:'center' }}>
+            style={{ background:'none', border:'none', cursor:'pointer', color: c.textMuted, padding:'4px 6px', borderRadius:'6px', display:'flex', alignItems:'center' }}>
             <ChevronRight size={15} />
           </button>
         )}
         {viewMode === 'years' && (
           <button type="button" onClick={() => setYearRangeStart(s => s + 12)}
-            style={{ background:'none', border:'none', cursor:'pointer', color:'#475569', padding:'4px 6px', borderRadius:'6px', display:'flex', alignItems:'center' }}>
+            style={{ background:'none', border:'none', cursor:'pointer', color: c.textMuted, padding:'4px 6px', borderRadius:'6px', display:'flex', alignItems:'center' }}>
             <ChevronRight size={15} />
           </button>
         )}
@@ -196,7 +242,7 @@ export default function DatePicker({
         <>
           <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:'2px', marginBottom:'4px' }}>
             {DAYS_SHORT.map(d => (
-              <div key={d} style={{ textAlign:'center', fontSize:'0.68rem', fontWeight:700, color:'#94a3b8', padding:'3px 0' }}>{d}</div>
+              <div key={d} style={{ textAlign:'center', fontSize:'0.68rem', fontWeight:700, color: c.textSubtle, padding:'3px 0' }}>{d}</div>
             ))}
           </div>
           <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:'2px' }}>
@@ -218,14 +264,14 @@ export default function DatePicker({
                     padding: '6px 2px',
                     fontSize: '0.82rem',
                     cursor: inMonth ? 'pointer' : 'default',
-                    color: isSel ? '#fff' : isTdy ? accent : inMonth ? '#0f172a' : '#e2e8f0',
-                    background: isSel ? accent : isTdy ? `${accent}18` : 'transparent',
+                    color: isSel ? '#fff' : isTdy ? c.accent : inMonth ? c.text : c.emptyDay,
+                    background: isSel ? c.accent : isTdy ? c.accentBg : 'transparent',
                     fontWeight: isSel || isTdy ? 700 : 400,
                     textAlign: 'center',
                     transition: 'background 0.12s',
                   }}
-                  onMouseEnter={e => { if (!isSel && inMonth) (e.currentTarget as HTMLButtonElement).style.background = '#f1f5f9'; }}
-                  onMouseLeave={e => { if (!isSel) (e.currentTarget as HTMLButtonElement).style.background = isTdy ? `${accent}18` : 'transparent'; }}
+                  onMouseEnter={e => { if (!isSel && inMonth) (e.currentTarget as HTMLButtonElement).style.background = c.dayHover; }}
+                  onMouseLeave={e => { if (!isSel) (e.currentTarget as HTMLButtonElement).style.background = isTdy ? c.accentBg : 'transparent'; }}
                 >
                   {inMonth ? day : ''}
                 </button>
@@ -244,13 +290,13 @@ export default function DatePicker({
               <button key={m} type="button"
                 onClick={() => { setViewMonth(idx); setViewMode('days'); }}
                 style={{
-                  border: isCur ? `1.5px solid ${accent}` : '1px solid #e2e8f0',
+                  border: isCur ? `1.5px solid ${c.accent}` : `1px solid ${c.monthBorder}`,
                   borderRadius: '8px',
                   padding: '8px 4px',
                   fontSize: '0.78rem',
                   fontWeight: isCur ? 700 : 400,
-                  color: isCur ? accent : '#0f172a',
-                  background: isCur ? `${accent}08` : '#ffffff',
+                  color: isCur ? c.accent : c.text,
+                  background: isCur ? c.accentBg : c.monthBg,
                   cursor: 'pointer',
                   transition: 'all 0.12s',
                 }}
@@ -272,13 +318,13 @@ export default function DatePicker({
               <button key={yr} type="button"
                 onClick={() => { setViewYear(yr); setViewMode('months'); }}
                 style={{
-                  border: isCur ? `1.5px solid ${accent}` : '1px solid #e2e8f0',
+                  border: isCur ? `1.5px solid ${c.accent}` : `1px solid ${c.monthBorder}`,
                   borderRadius: '8px',
                   padding: '8px 4px',
                   fontSize: '0.82rem',
                   fontWeight: isCur ? 700 : 400,
-                  color: isCur ? accent : '#0f172a',
-                  background: isCur ? `${accent}08` : '#ffffff',
+                  color: isCur ? c.accent : c.text,
+                  background: isCur ? c.accentBg : c.monthBg,
                   cursor: 'pointer',
                   transition: 'all 0.12s',
                 }}
@@ -291,10 +337,10 @@ export default function DatePicker({
       )}
 
       {/* ── Footer ── */}
-      <div style={{ display:'flex', justifyContent:'space-between', marginTop:'12px', paddingTop:'10px', borderTop:'1px solid #f1f5f9' }}>
+      <div style={{ display:'flex', justifyContent:'space-between', marginTop:'12px', paddingTop:'10px', borderTop:`1px solid ${c.footerBorder}` }}>
         <button type="button"
           onClick={() => { onChange(''); setIsOpen(false); }}
-          style={{ background:'none', border:'none', cursor:'pointer', color: accent, fontSize:'0.8rem', fontWeight:600 }}>
+          style={{ background:'none', border:'none', cursor:'pointer', color: c.accent, fontSize:'0.8rem', fontWeight:600 }}>
           Hapus
         </button>
         <button type="button"
@@ -304,7 +350,7 @@ export default function DatePicker({
             setViewMode('days');
             selectDay(today.getDate());
           }}
-          style={{ background:'none', border:'none', cursor:'pointer', color: accent, fontSize:'0.8rem', fontWeight:600 }}>
+          style={{ background:'none', border:'none', cursor:'pointer', color: c.accent, fontSize:'0.8rem', fontWeight:600 }}>
           Hari Ini
         </button>
       </div>

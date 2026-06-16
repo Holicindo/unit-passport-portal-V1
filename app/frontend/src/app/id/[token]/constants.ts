@@ -92,17 +92,21 @@ export const INDONESIA_CITIES = [
 // ─── Issue Category Options for Service Request Modal ────────────────────────
 export const ISSUE_MAIN_CATEGORIES = [
   { value: '', label: '— Pilih Kategori —' },
-  { value: 'Kendala Mesin', label: 'Kendala Mesin (Kompresor, dsb)' },
-  { value: 'Kendala Showcase', label: 'Kendala Showcase (Fisik/Kabinet)' },
+  { value: 'Kendala Showcase', label: 'Showcase (e.g. Chiller Display, Case Display, dll)' },
+  { value: 'Kendala Comersil Refrigeration', label: 'Comersil Refrigeration' },
+  { value: 'Kendala Mesin', label: 'Mesin (e.g. Steamer, dll)' },
 ];
 
-export const ISSUE_SUB_CATEGORIES = [
-  { value: '', label: '— Pilih Sub-Kategori —' },
-  { value: 'Kaca', label: 'Kaca (Pecah/Berembun)' },
-  { value: 'Lampu', label: 'Lampu (Mati/Redup)' },
+export const ISSUE_SUB_CATEGORIES_SHOWCASE = [
+  { value: '', label: '— Pilih Kendala —' },
   { value: 'Pendingin', label: 'Pendingin (Kurang Dingin/Bocor)' },
-  { value: 'Kelistrikan', label: 'Kelistrikan (Korslet/Tidak Menyala)' },
+  { value: 'Kelistrikan', label: 'Kelistrikan (Konslet/Tidak Menyala)' },
+  { value: 'Lampu', label: 'Lampu (Mati/Redup)' },
+  { value: 'Kaca', label: 'Kaca (Pecah/Berembun)' },
 ];
+
+// Alias for backward compatibility
+export const ISSUE_SUB_CATEGORIES = ISSUE_SUB_CATEGORIES_SHOWCASE;
 
 export const LOG_TYPE_OPTIONS = [
   { value: 'CORRECTIVE', label: 'Corrective — Perbaikan Masalah / Kerusakan' },
@@ -110,6 +114,36 @@ export const LOG_TYPE_OPTIONS = [
 ];
 
 export const LOG_STATUS_OPTIONS = [
-  { value: 'COMPLETED', label: 'SELESAI — Tiket ditutup, unit berfungsi normal' },
-  { value: 'PENDING', label: 'MASIH PROSES — Perlu kunjungan lanjutan' },
+  { value: 'PENDING', label: 'Pending' },
+  { value: 'IN PROGRESS', label: 'In Progress' },
+  { value: 'COMPLETED', label: 'Completed' },
+  { value: 'CANCELED', label: 'Canceled' },
 ];
+
+// ─── Unit Type Auto-Detection ────────────────────────────────────────────────
+// Rule: model_name yang mengandung kata "case" (Cold Case, Warm Case, dll) = SHOWCASE
+// Selain itu = MESIN
+export type UnitTypeKey = 'SHOWCASE' | 'MESIN';
+
+export function getUnitType(modelName: string | null | undefined): UnitTypeKey {
+  if (!modelName) return 'MESIN';
+  return /case/i.test(modelName) ? 'SHOWCASE' : 'MESIN';
+}
+
+export const UNIT_TYPE_LABELS: Record<UnitTypeKey, string> = {
+  SHOWCASE: 'Showcase',
+  MESIN: 'Mesin',
+};
+
+export const UNIT_TYPE_COLORS: Record<UnitTypeKey, { bg: string; color: string; border: string }> = {
+  SHOWCASE: {
+    bg: 'rgba(59,130,246,0.12)',
+    color: '#3b82f6',
+    border: 'rgba(59,130,246,0.25)',
+  },
+  MESIN: {
+    bg: 'rgba(245,158,11,0.12)',
+    color: '#d97706',
+    border: 'rgba(245,158,11,0.25)',
+  },
+};

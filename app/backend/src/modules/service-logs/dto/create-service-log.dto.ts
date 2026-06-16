@@ -1,6 +1,6 @@
-import { IsString, IsNotEmpty, IsOptional, IsEnum } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsEnum, IsBoolean } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { ServiceStatus } from '../entities/service-log.entity';
+import { ServiceStatus, TaskType } from '../entities/service-log.entity';
 
 export class CreateServiceLogDto {
   @ApiProperty({ example: 'UNT-XXXXXXX' })
@@ -12,6 +12,11 @@ export class CreateServiceLogDto {
   @IsString()
   @IsOptional()
   partnerId?: string;
+
+  @ApiProperty({ example: 'LOG-XXXXXXX', required: false })
+  @IsString()
+  @IsOptional()
+  call_id?: string;
 
   @ApiProperty({ example: 'Compressor leaking gas' })
   @IsString()
@@ -28,6 +33,11 @@ export class CreateServiceLogDto {
   @IsOptional()
   status?: ServiceStatus;
 
+  @ApiProperty({ example: 'CORRECTIVE', enum: TaskType, required: false })
+  @IsEnum(TaskType)
+  @IsOptional()
+  task_type?: TaskType;
+
   @ApiProperty({ example: 'Budi Technician', required: false })
   @IsString()
   @IsOptional()
@@ -37,4 +47,24 @@ export class CreateServiceLogDto {
   @IsString()
   @IsOptional()
   service_date?: string;
+
+  @ApiProperty({ example: '2026-08-18T00:00:00.000Z', required: false })
+  @IsString()
+  @IsOptional()
+  scheduled_date?: string;
+
+  @ApiProperty({ example: '2026-08-20T00:00:00.000Z', required: false })
+  @IsString()
+  @IsOptional()
+  delivery_date?: string;
+
+  @ApiProperty({ example: 'Catatan internal teknisi.', required: false })
+  @IsString()
+  @IsOptional()
+  planning_notes?: string;
+
+  @ApiProperty({ example: false, required: false })
+  @IsBoolean()
+  @IsOptional()
+  is_allocated?: boolean;
 }

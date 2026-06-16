@@ -41,13 +41,14 @@ export default function ClientLayoutWrapper({ children }: { children: React.Reac
 
         {!hideLayout && (
           <footer style={{
-            padding: '20px',
+            padding: '24px',
             textAlign: 'center',
-            fontSize: '0.8rem',
-            color: 'var(--color-space-grey)',
-            background: 'var(--color-optic-white)',
-            borderTop: '1px solid rgba(0, 31, 63, 0.05)',
+            fontSize: '0.85rem',
+            fontWeight: 600,
+            color: '#001F3F',
+            background: 'transparent',
             marginTop: 'auto',
+            opacity: 0.8,
           }}>
             Copyright ©2026 PT. Holicindo Dasa Anugerah | All Rights Reserved.
           </footer>

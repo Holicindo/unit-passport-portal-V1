@@ -15,7 +15,7 @@ interface PlanningCardProps {
 
 function formatDate(date: Date | null) {
   if (!date) return 'Belum Pernah';
-  return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+  return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
 export default function PlanningCard({

@@ -38,8 +38,8 @@ export function daysBetween(dateA: Date, dateB: Date): number {
 export function formatDate(dateStr: string | null | undefined): string {
   if (!dateStr) return '—';
   return new Date(dateStr).toLocaleDateString('id-ID', {
-    day: '2-digit',
-    month: 'short',
+    day: 'numeric',
+    month: 'long',
     year: 'numeric',
   });
 }

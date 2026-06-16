@@ -1,8 +1,6 @@
 .topBar {
   height: 70px;
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -10,8 +8,8 @@
   position: sticky;
   top: 0;
   z-index: 999;
-  border-bottom: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
+  border-bottom: none;
+  box-shadow: none;
 }
 
 .leftSection {
@@ -29,36 +27,38 @@
   justify-content: center;
   padding: 8px;
   border-radius: 8px;
-  color: var(--color-deep-navy);
-  transition: background 0.2s;
+  color: var(--color-space-grey);
+  transition: background 0.2s, color 0.2s;
 }
 
 .toggleBtn:hover {
   background: rgba(0, 31, 63, 0.05);
+  color: var(--color-deep-navy);
 }
 
 .searchBox {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: rgba(255, 255, 255, 0.5);
-  border: 1px solid var(--glass-border);
-  border-radius: 12px;
-  padding: 8px 16px;
+  background: #ECEEF2;
+  border: none;
+  border-radius: 24px;
+  padding: 10px 18px;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   width: 100%;
-  max-width: 260px; /* Fluid max-width instead of massive fixed width */
+  max-width: 300px;
+  box-shadow: -4px -4px 10px rgba(255, 255, 255, 0.9), 4px 4px 10px rgba(0, 31, 63, 0.08);
 }
 
 .searchBox:focus-within {
-  background: rgba(255, 255, 255, 0.95);
-  border-color: rgba(46, 91, 255, 0.4);
-  box-shadow: 0 0 0 3px rgba(46, 91, 255, 0.1);
+  background: #ECEEF2;
+  box-shadow: inset -4px -4px 8px rgba(255, 255, 255, 0.9), inset 4px 4px 8px rgba(0, 31, 63, 0.08);
 }
 
 .searchIcon {
   font-size: 16px;
-  opacity: 0.4;
+  opacity: 0.8;
+  color: var(--color-space-grey);
 }
 
 .searchInput {
@@ -70,28 +70,42 @@
   color: var(--color-deep-navy);
 }
 
+.searchInput::placeholder {
+  color: var(--color-space-grey);
+  opacity: 0.7;
+}
+
 .actions {
   display: flex;
   align-items: center;
-  gap: 14px; /* Slightly tighter gap for fluid responsiveness */
+  gap: 14px;
 }
 
 .actionBtn {
-  background: transparent;
+  background: #ECEEF2;
   border: none;
   font-size: 20px;
   cursor: pointer;
   position: relative;
-  color: var(--color-deep-navy); /* Bold, crisp navy color */
-  transition: transform 0.2s, color 0.2s;
+  color: var(--color-space-grey);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 10px;
+  border-radius: 50%;
+  box-shadow: -4px -4px 10px rgba(255, 255, 255, 0.9), 4px 4px 10px rgba(0, 31, 63, 0.08);
 }
 
 .actionBtn:hover {
   color: var(--color-cobalt-blue);
-  transform: scale(1.05);
+  box-shadow: -6px -6px 14px rgba(255, 255, 255, 0.95), 6px 6px 14px rgba(0, 31, 63, 0.1);
+  transform: translateY(-1px);
+}
+
+.actionBtn:active {
+  box-shadow: inset -4px -4px 8px rgba(255, 255, 255, 0.9), inset 4px 4px 8px rgba(0, 31, 63, 0.08);
+  transform: translateY(0);
 }
 
 .badge {
@@ -111,10 +125,10 @@
   align-items: center;
   gap: 12px;
   padding-left: 16px;
-  padding-right: 8px; /* Safe breathing room from absolute right boundary */
-  border-left: 1px solid var(--glass-border);
+  padding-right: 8px;
+  border-left: 1px solid rgba(0, 31, 63, 0.1);
   cursor: pointer;
-  flex-shrink: 0; /* Prevents user profile from ever shrinking */
+  flex-shrink: 0;
 }
 
 .avatar {
@@ -122,7 +136,7 @@
   height: 40px;
   border-radius: 50%;
   overflow: hidden;
-  background: #EEE;
+  background: var(--color-optic-white);
   border: 1.5px solid rgba(0, 31, 63, 0.1);
   flex-shrink: 0;
 }
@@ -138,12 +152,13 @@
   font-weight: 700;
   color: var(--color-deep-navy);
   line-height: 1.2;
-  white-space: nowrap; /* Prevents username from breaking into two lines */
+  white-space: nowrap;
 }
 
 .userArrow {
   font-size: 12px;
-  opacity: 0.4;
+  opacity: 0.5;
+  color: var(--color-space-grey);
 }
 
 .profileContainer {
@@ -153,8 +168,8 @@
 .roleBadge {
   font-size: 9px;
   font-weight: 700;
-  background: #f1f5f9;
-  color: #64748b;
+  background: rgba(46, 91, 255, 0.25);
+  color: #5B8AFF;
   padding: 1px 6px;
   border-radius: 4px;
   letter-spacing: 0.5px;
@@ -164,12 +179,12 @@
   position: absolute;
   top: calc(100% + 12px);
   right: 0;
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(24px) saturate(160%);
   -webkit-backdrop-filter: blur(24px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(113, 115, 120, 0.12);
   border-radius: 16px;
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.04), 0 20px 40px rgba(0, 31, 63, 0.08), inset 0 1px 0 rgba(255,255,255,0.6);
+  box-shadow: 0 8px 32px rgba(0, 31, 63, 0.15);
   width: 220px;
   overflow: hidden;
   display: flex;
@@ -189,7 +204,7 @@
   color: var(--color-space-grey);
   border-bottom: 1px solid rgba(0,0,0,0.05);
   word-break: break-all;
-  background: rgba(255,255,255,0.4);
+  background: rgba(242, 244, 247, 0.5);
 }
 
 .iconContainer {
@@ -200,12 +215,12 @@
   position: absolute;
   top: calc(100% + 12px);
   right: -10px;
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(24px) saturate(160%);
   -webkit-backdrop-filter: blur(24px) saturate(160%);
-  border: 1px solid var(--glass-border);
+  border: 1px solid rgba(113, 115, 120, 0.12);
   border-radius: 16px;
-  box-shadow: var(--glass-shadow-hover);
+  box-shadow: 0 8px 32px rgba(0, 31, 63, 0.15);
   width: 280px;
   overflow: hidden;
   display: flex;
@@ -220,7 +235,7 @@
   font-weight: 700;
   color: var(--color-deep-navy);
   border-bottom: 1px solid rgba(0,0,0,0.05);
-  background: rgba(255,255,255,0.4);
+  background: rgba(242, 244, 247, 0.5);
 }
 
 .notificationItem {
@@ -248,10 +263,11 @@
   gap: 10px;
   width: 100%;
   transition: background 0.2s;
+  color: var(--color-deep-navy);
 }
 
 .dropdownItem:hover {
-  background: #FFF1F0;
+  background: rgba(255, 107, 0, 0.08);
 }
 
 .topBarScanBtn {
@@ -260,23 +276,23 @@
   justify-content: center;
   gap: 8px;
   background: var(--color-optic-white);
-  border: 1.5px solid rgba(46, 91, 255, 0.35); /* Elegant cobalt border tint */
-  color: var(--color-cobalt-blue); /* Clear focused cobalt text */
+  border: 1.5px solid rgba(0, 31, 63, 0.1);
+  color: var(--color-deep-navy);
   padding: 8px 18px;
   border-radius: 20px;
   font-family: var(--font-heading);
   font-size: 0.82rem;
-  font-weight: 800; /* Bold & distinct */
+  font-weight: 800;
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 2px 8px rgba(46, 91, 255, 0.06);
-  white-space: nowrap; /* ABSOLUTELY PREVENTS LINE BREAKS */
+  box-shadow: 0 2px 8px rgba(0, 31, 63, 0.04);
+  white-space: nowrap;
   flex-shrink: 0;
 }
 
 .topBarScanBtn:hover {
   border-color: var(--color-cobalt-blue);
-  color: var(--color-optic-white);
+  color: #ffffff;
   background: var(--color-cobalt-blue);
   transform: translateY(-1px);
   box-shadow: 0 4px 14px rgba(46, 91, 255, 0.3);
@@ -309,4 +325,3 @@
     display: none !important;
   }
 }
-
