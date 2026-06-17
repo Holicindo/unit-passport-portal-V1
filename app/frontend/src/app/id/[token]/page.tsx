@@ -5,7 +5,7 @@ import {
   ShieldAlert, Wrench, FileText, CheckCircle2,
   ExternalLink, Phone, ArrowLeft, Loader2,
   Lock, Check, UserCheck, Settings, BookOpen, Clock, Image as ImageIcon,
-  Sun, Moon, QrCode, HelpCircle,
+  Sun, Moon, QrCode, HelpCircle, Package,
 } from 'lucide-react';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import DatePicker from '@/components/ui/DatePicker';
@@ -157,6 +157,20 @@ export default function QrPassportPage() {
               </div>)}
             </div>
             <div className={styles.cardContent}>
+              {!editBlocks.spesifikasi && (() => {
+                const photos = unit.specs?.photo_gallery ? String(unit.specs.photo_gallery).split(',').filter(Boolean) : [];
+                return (
+                  <div className={styles.unitImagePlaceholder}>
+                    <div className={styles.unitImageInner}>
+                      {photos.length > 0 ? (
+                        <img src={photos[0]} alt={unit.model_name} className={styles.unitImage} />
+                      ) : (
+                        <Package size={64} className={styles.unitImageIcon} />
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
               {editBlocks.spesifikasi ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   <EditField label="Model" value={editData.model_name || ''} onChange={(v) => handleEditChange('model_name', v)} />
@@ -620,6 +634,11 @@ export default function QrPassportPage() {
             </div>
           </section>
 
+          {/* Slide 7: Riwayat Servis */}
+          <div className={styles.carouselSlide}>
+            <ServiceHistorySection serviceLogs={unit.service_logs || []} />
+          </div>
+
           </div>
           <button className={`${styles.carouselNavBtn} ${styles.nextBtn}`} onClick={() => { if (carouselRef.current) carouselRef.current.scrollBy({ left: carouselRef.current.clientWidth, behavior: 'smooth' }); }}>&rsaquo;</button>
         </div>
@@ -638,9 +657,6 @@ export default function QrPassportPage() {
             </div>
           </div>
         )}
-
-        {/* Service History */}
-        <ServiceHistorySection serviceLogs={unit.service_logs || []} />
 
         {/* Modals */}
         <ServiceRequestModal show={showServiceModal} onClose={closeServiceModal} onSubmit={handleServiceRequest} loading={routingLoading} routingResult={routingResult}

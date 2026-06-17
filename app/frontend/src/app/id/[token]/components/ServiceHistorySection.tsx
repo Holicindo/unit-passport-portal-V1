@@ -10,7 +10,7 @@ interface ServiceHistorySectionProps {
 const TASK_LABEL: Record<string, string> = { CORRECTIVE: 'Perbaikan', PREVENTIVE: 'Perawatan', INSTALLATION: 'Instalasi' };
 const TASK_COLOR: Record<string, { bg: string; color: string }> = {
   CORRECTIVE: { bg: 'rgba(255,87,34,0.15)', color: '#FF5722' },
-  PREVENTIVE: { bg: 'rgba(0,71,171,0.15)', color: '#8bb2ff' },
+  PREVENTIVE: { bg: 'var(--task-preventive-bg, rgba(0,71,171,0.15))', color: 'var(--task-preventive-color, #8bb2ff)' },
   INSTALLATION: { bg: 'rgba(16,185,129,0.15)', color: '#10b981' },
 };
 
@@ -40,14 +40,11 @@ export default function ServiceHistorySection({ serviceLogs }: ServiceHistorySec
               const taskType = log.task_type || 'CORRECTIVE';
               const tc = TASK_COLOR[taskType] || TASK_COLOR.CORRECTIVE;
               return (
-                <div key={log.id || idx} style={{
-                  display: 'flex', flexDirection: 'column', gap: '8px', padding: '16px',
-                  background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px',
-                }}>
+                <div key={log.id || idx} className={styles.historyCard}>
                   {/* Row 1: Call ID, Jenis, Tanggal, Status */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#8bb2ff' }}>{log.call_id || log.id}</span>
+                      <span className={styles.historyCallId}>{log.call_id || log.id}</span>
                       <span style={{
                         fontSize: '0.63rem', fontWeight: 800, padding: '2px 8px', borderRadius: '4px',
                         background: tc.bg, color: tc.color,
@@ -65,12 +62,12 @@ export default function ServiceHistorySection({ serviceLogs }: ServiceHistorySec
                         </span>
                       )}
                     </div>
-                    <span style={{
-                      fontSize: '0.75rem', fontWeight: 700, padding: '3px 10px', borderRadius: '999px',
-                      background: log.status === 'COMPLETED' ? 'rgba(10, 25, 47, 0.2)' : log.status === 'IN PROGRESS' ? 'rgba(0, 71, 171, 0.2)' : log.status === 'CANCELED' ? 'rgba(113, 115, 120, 0.2)' : 'rgba(255, 87, 34, 0.2)',
-                      color: log.status === 'COMPLETED' ? '#e2e8f0' : log.status === 'IN PROGRESS' ? '#60a5fa' : log.status === 'CANCELED' ? '#94a3b8' : '#FF5722',
-                      border: `1px solid ${log.status === 'COMPLETED' ? 'rgba(10, 25, 47, 0.4)' : log.status === 'IN PROGRESS' ? 'rgba(0, 71, 171, 0.4)' : log.status === 'CANCELED' ? 'rgba(113, 115, 120, 0.4)' : 'rgba(255, 87, 34, 0.4)'}`,
-                    }}>
+                    <span className={`${styles.statusBadge} ${
+                      log.status === 'COMPLETED' ? styles.statusCompleted :
+                      log.status === 'IN PROGRESS' ? styles.statusInProgress :
+                      log.status === 'CANCELED' ? styles.statusCanceled :
+                      styles.statusPending
+                    }`}>
                       {log.status}
                     </span>
                   </div>
@@ -95,11 +92,7 @@ export default function ServiceHistorySection({ serviceLogs }: ServiceHistorySec
 
                   {/* Row 4: Planning notes (hanya jika ada) */}
                   {log.planning_notes && (
-                    <div style={{
-                      fontSize: '0.7rem', color: '#8f9bb3', fontStyle: 'italic',
-                      padding: '6px 8px', background: 'rgba(255,255,255,0.04)', borderRadius: '6px',
-                      border: '1px dashed rgba(255,255,255,0.1)',
-                    }}>
+                    <div className={styles.planningNotes}>
                       📋 {log.planning_notes}
                     </div>
                   )}
