@@ -105,7 +105,8 @@ export default function LoginForm({
           <div className={styles.inputWithIconNew}>
             <span className={styles.inputIcon}><Mail size={16} /></span>
             <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-              placeholder="name@company.com" required autoComplete="off" style={darkInputStyle} />
+              placeholder="name@company.com" required autoComplete="off" style={darkInputStyle}
+              suppressHydrationWarning />
           </div>
         </div>
 
@@ -115,7 +116,8 @@ export default function LoginForm({
             <span className={styles.lockIcon}><Lock size={16} /></span>
             <input id="password" type={showPassword ? 'text' : 'password'} value={password}
               onChange={(e) => setPassword(e.target.value)} placeholder="Enter your password"
-              required autoComplete="new-password" style={darkPasswordStyle} />
+              required autoComplete="new-password" style={darkPasswordStyle}
+              suppressHydrationWarning />
             <button type="button" className={styles.eyeBtn}
               onClick={() => setShowPassword(!showPassword)}
               aria-label={showPassword ? 'Hide password' : 'Show password'}>

@@ -1,0 +1,12 @@
+{
+  "folders": [
+    {
+      "path": ".",
+      "name": "Unit Passport Portal"
+    }
+  ],
+  "settings": {
+    "files.autoSave": "onFocusChange",
+    "editor.formatOnSave": true
+  }
+}

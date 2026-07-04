@@ -244,18 +244,21 @@ export default function ClientPortalLayout({ children }: { children: React.React
               className={styles.navIconBtn}
               aria-label="Cari"
               onClick={() => { setSearchOpen(v => !v); setNotifPanelOpen(false); setDropdownOpen(false); }}
-              style={{ background: searchOpen ? 'var(--brand-light-grey)' : undefined }}
+              style={{ background: searchOpen ? 'var(--neu-base)' : undefined, boxShadow: searchOpen ? 'var(--neu-shadow-inset)' : undefined }}
             >
               <Search size={18} />
             </button>
             {searchOpen && (
               <div style={{
                 position: 'absolute', top: 'calc(100% + 8px)', right: 0,
-                width: '320px', background: 'white', border: '1px solid var(--brand-border)',
-                borderRadius: '12px', boxShadow: '0 8px 24px rgba(0,31,63,0.12)',
+                width: '320px',
+                background: '#E4E6EF',
+                border: 'none',
+                borderRadius: '16px',
+                boxShadow: '-6px -6px 10px rgba(255,255,255,0.72), 6px 6px 12px rgba(0,31,63,0.14), 0 1px 3px rgba(0,31,63,0.05)',
                 zIndex: 300, overflow: 'hidden',
               }}>
-                <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--brand-light-grey)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(0,31,63,0.06)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Search size={15} color="var(--brand-space-grey)" style={{ flexShrink: 0 }} />
                   <input
                     autoFocus
@@ -267,6 +270,7 @@ export default function ClientPortalLayout({ children }: { children: React.React
                       flex: 1, border: 'none', outline: 'none',
                       fontSize: '0.875rem', fontFamily: 'var(--font-body)',
                       color: 'var(--brand-deep-navy)', background: 'transparent',
+                      backgroundColor: 'transparent',
                     }}
                   />
                   {searchQuery && (
@@ -292,7 +296,7 @@ export default function ClientPortalLayout({ children }: { children: React.React
                             background: 'transparent', cursor: 'pointer', textAlign: 'left',
                             borderBottom: '1px solid var(--brand-light-grey)',
                           }}
-                          onMouseEnter={e => (e.currentTarget.style.background = 'var(--brand-light-grey)')}
+                          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.55)')}
                           onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                         >
                           <div>
@@ -332,18 +336,21 @@ export default function ClientPortalLayout({ children }: { children: React.React
                   position: 'absolute', top: '6px', right: '6px',
                   width: '8px', height: '8px', borderRadius: '50%',
                   background: 'var(--brand-safety-orange)',
-                  border: '2px solid white',
+                  border: '2px solid var(--neu-base)',
                 }} />
               )}
             </button>
             {notifPanelOpen && (
               <div style={{
                 position: 'absolute', top: 'calc(100% + 8px)', right: 0,
-                width: '300px', background: 'white', border: '1px solid var(--brand-border)',
-                borderRadius: '12px', boxShadow: '0 8px 24px rgba(0,31,63,0.12)',
+                width: '300px',
+                background: '#E4E6EF',
+                border: 'none',
+                borderRadius: '16px',
+                boxShadow: '-6px -6px 10px rgba(255,255,255,0.72), 6px 6px 12px rgba(0,31,63,0.14), 0 1px 3px rgba(0,31,63,0.05)',
                 zIndex: 300, overflow: 'hidden',
               }}>
-                <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--brand-light-grey)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(0,31,63,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--brand-deep-navy)', fontFamily: 'var(--font-heading)' }}>
                     Notifikasi {notifCount > 0 && <span style={{ background: 'var(--brand-safety-orange)', color: 'white', borderRadius: '20px', padding: '1px 7px', fontSize: '0.7rem' }}>{notifCount}</span>}
                   </span>
@@ -361,8 +368,8 @@ export default function ClientPortalLayout({ children }: { children: React.React
                       <div
                         key={n.id}
                         style={{
-                          padding: '12px 16px', borderBottom: '1px solid var(--brand-light-grey)',
-                          background: n.is_read ? 'transparent' : 'rgba(46,91,255,0.04)',
+                          padding: '12px 16px', borderBottom: '1px solid rgba(0,31,63,0.06)',
+                          background: n.is_read ? 'transparent' : 'rgba(46,91,255,0.05)',
                           cursor: 'pointer',
                         }}
                         onClick={() => {

@@ -15,6 +15,7 @@ import { ServiceReport } from './modules/reports/entities/service-report.entity'
 import { Notification } from './modules/notifications/entities/notification.entity';
 import { Conversation } from './modules/messages/entities/conversation.entity';
 import { ChatMessage } from './modules/messages/entities/chat-message.entity';
+import { IotTelemetryLog } from './modules/iot/entities/iot-telemetry-log.entity';
 import { UnitsModule } from './modules/units/units.module';
 import { ClientsModule } from './modules/clients/clients.module';
 import { PartnersModule } from './modules/partners/partners.module';
@@ -26,6 +27,7 @@ import { StorageModule } from './modules/storage/storage.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { MessagesModule } from './modules/messages/messages.module';
+import { IotModule } from './modules/iot/iot.module';
 
 @Module({
   imports: [
@@ -47,6 +49,7 @@ import { MessagesModule } from './modules/messages/messages.module';
           Client, Unit, Warranty, Partner,
           ServiceLog, ServiceLogAttachment, OwnershipHistory,
           User, ServiceReport, Notification, Conversation, ChatMessage,
+          IotTelemetryLog,
         ],
         synchronize: config.get<string>('DB_SYNC') === 'true',
         logging: config.get<string>('DB_LOGGING') === 'true',
@@ -64,6 +67,7 @@ import { MessagesModule } from './modules/messages/messages.module';
     ReportsModule,
     NotificationsModule,
     MessagesModule,
+    IotModule,
   ],
   controllers: [AppController],
   providers: [AppService],

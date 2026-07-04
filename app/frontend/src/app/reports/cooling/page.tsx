@@ -58,6 +58,7 @@ export default function CoolingFormPage() {
   const [unit, setUnit]               = useState<any>(null);
   const [loading, setLoading]         = useState(false);
   const [loadingData, setLoadingData] = useState(isEditMode);
+  const [error, setError]             = useState<string | null>(null);
   const [isConfirm, setIsConfirm]     = useState(false);
   const [isSuccess, setIsSuccess]     = useState(false);
   const [showPreview, setShowPreview] = useState(false);
@@ -112,13 +113,16 @@ export default function CoolingFormPage() {
   const handleSubmit = async () => {
     if (!unit) return alert('Pilih unit terlebih dahulu!');
     setLoading(true);
+    setError(null);
     try {
       let uploadedUrls: string[] = [];
       if (photos.length > 0) {
         try {
           const { data: uploadRes } = await reportApi.uploadPhotos(photos);
           uploadedUrls = Array.isArray(uploadRes) ? uploadRes : [];
-        } catch {}
+        } catch (err) {
+          setError('Gagal mengupload foto. Melanjutkan tanpa foto...');
+        }
       }
 
       if (isEditMode && editId) {
@@ -139,8 +143,10 @@ export default function CoolingFormPage() {
 
       setIsConfirm(false);
       setIsSuccess(true);
-    } catch (err) {
-      alert('Gagal menyimpan Laporan. Periksa koneksi server backend Anda.');
+    } catch (err: any) {
+      const errorMsg = err?.response?.data?.message || err?.message || 'Gagal menyimpan laporan. Periksa koneksi server.';
+      setError(errorMsg);
+      setIsConfirm(false);
     } finally {
       setLoading(false);
     }
@@ -246,14 +252,21 @@ export default function CoolingFormPage() {
         </div>
       )}
 
+      {/* Error message */}
+      {error && (
+        <div style={{ padding: '12px 24px', background: '#fee2e2', border: '1px solid #ef4444', borderRadius: '8px', margin: '16px 0', color: '#991b1b', fontSize: '14px', textAlign: 'center' }}>
+          <strong>Error:</strong> {error}
+        </div>
+      )}
+
       {/* Footer */}
       <div className={styles.formFooter}>
         {showPreview ? (
-          <button className={styles.previewBtnFooter} onClick={() => setShowPreview(false)}>
+          <button className={styles.previewBtnFooter} onClick={() => setShowPreview(false)} disabled={loading}>
             <EyeOff size={15} /> Kembali ke Form
           </button>
         ) : (
-          <button className={styles.previewBtnFooter} onClick={() => setShowPreview(true)}>
+          <button className={styles.previewBtnFooter} onClick={() => setShowPreview(true)} disabled={loading}>
             <Eye size={15} /> Preview Laporan
           </button>
         )}
@@ -261,10 +274,14 @@ export default function CoolingFormPage() {
           className={styles.saveBtn}
           onClick={() => {
             if (!unit) return alert('Pilih unit terlebih dahulu di bagian atas sebelum menyimpan laporan!');
+            setError(null);
             setIsConfirm(true);
           }}
+          disabled={loading}
+          style={{ opacity: loading ? 0.6 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}
         >
-          <Save size={16} /> {isEditMode ? 'Simpan Perubahan' : 'Simpan Laporan Cooling'}
+          {loading ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Save size={16} />}
+          {loading ? 'Menyimpan...' : (isEditMode ? 'Simpan Perubahan' : 'Simpan Laporan Cooling')}
         </button>
       </div>
 

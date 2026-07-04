@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -50,6 +50,25 @@ export class AuthService {
       order: { created_at: 'DESC' },
     });
     return users;
+  }
+
+  async updateProfile(userId: string, dto: { name?: string; phone?: string; city?: string }) {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User tidak ditemukan');
+
+    if (dto.name !== undefined)  user.name = dto.name;
+    // phone dan city bisa ditambah ke entity nanti jika belum ada
+    // untuk sekarang hanya update name
+    const saved = await this.userRepository.save(user);
+
+    return {
+      id: saved.id,
+      email: saved.email,
+      name: saved.name,
+      role: saved.role,
+      client_id: saved.client_id,
+      partner_id: saved.partner_id,
+    };
   }
 
   async login(email: string, password: string) {

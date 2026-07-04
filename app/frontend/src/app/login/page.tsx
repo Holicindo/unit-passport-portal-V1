@@ -30,6 +30,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
+  const [loginHint, setLoginHint] = useState<'partner' | null>(null);
   const [signupName, setSignupName] = useState('');
   const [signupPasswordConfirm, setSignupPasswordConfirm] = useState('');
   const router = useRouter();
@@ -40,6 +41,10 @@ export default function LoginPage() {
       setRedirectUrl(params.get('redirect'));
       const initialView = params.get('view');
       if (initialView === 'signup') setView('signup');
+
+      // Baca role hint dari QR scan
+      const role = params.get('role');
+      if (role === 'partner') setLoginHint('partner');
 
       // Handle Google OAuth callback
       const token = params.get('token');
@@ -120,6 +125,30 @@ export default function LoginPage() {
           <div className={styles.brandName}>HOLIC</div>
           <div className={styles.brandTagline}>Service Portal</div>
         </div>
+
+        {/* Banner kontekstual untuk teknisi yang scan QR */}
+        {loginHint === 'partner' && (
+          <div style={{
+            background: 'rgba(5,150,105,0.12)',
+            border: '1px solid rgba(5,150,105,0.3)',
+            borderRadius: '10px',
+            padding: '12px 16px',
+            marginBottom: '16px',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '10px',
+          }}>
+            <span style={{ fontSize: '1.2rem', flexShrink: 0 }}>🔧</span>
+            <div>
+              <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#059669', marginBottom: '2px' }}>
+                Login sebagai Teknisi
+              </div>
+              <div style={{ fontSize: '0.75rem', color: '#065f46', lineHeight: 1.5 }}>
+                Masukkan akun teknisi / mitra servis Holicindo untuk mengakses data teknis unit yang sedang Anda perbaiki.
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className={styles.formArea}>
           {view === 'login' && (

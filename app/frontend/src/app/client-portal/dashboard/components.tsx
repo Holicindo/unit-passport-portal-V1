@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { ChevronLeft, ChevronRight, ShieldAlert, Wrench } from 'lucide-react';
 import styles from '../ClientPortal.module.css';
+import calStyles from './calendar.module.css';
 
 // ── Greeting based on time of day ──
 export function useGreeting() {
@@ -22,10 +23,22 @@ export function useGreeting() {
   return greeting;
 }
 
-// ── Mini Calendar Widget ──
-export function MiniCalendar() {
+// ── Calendar Event Types ──
+export type CalendarEventType = 'warranty-expiring' | 'warranty-expired' | 'service';
+
+export interface CalendarEvent {
+  type: CalendarEventType;
+  units: { serial: string; model: string }[];
+}
+
+export type CalendarEvents = Record<string, CalendarEvent>; // key: "YYYY-MM-DD"
+
+// ── Mini Calendar Widget with Events ──
+export function MiniCalendar({ events = {} }: { events?: CalendarEvents }) {
   const today = new Date();
   const [current, setCurrent] = useState({ year: today.getFullYear(), month: today.getMonth() });
+  const [tooltip, setTooltip] = useState<{ day: number; x: number; y: number } | null>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
 
   const MONTH_NAMES = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
   const DAY_NAMES = ['Sen','Sel','Rab','Kam','Jum','Sab','Min'];
@@ -39,30 +52,138 @@ export function MiniCalendar() {
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ];
 
-  const prev = () => setCurrent(c => ({ year: c.month === 0 ? c.year - 1 : c.year, month: c.month === 0 ? 11 : c.month - 1 }));
-  const next = () => setCurrent(c => ({ year: c.month === 11 ? c.year + 1 : c.year, month: c.month === 11 ? 0 : c.month + 1 }));
+  const prev = () => { setTooltip(null); setCurrent(c => ({ year: c.month === 0 ? c.year - 1 : c.year, month: c.month === 0 ? 11 : c.month - 1 })); };
+  const next = () => { setTooltip(null); setCurrent(c => ({ year: c.month === 11 ? c.year + 1 : c.year, month: c.month === 11 ? 0 : c.month + 1 })); };
 
   const isToday = (d: number) =>
     d === today.getDate() && current.month === today.getMonth() && current.year === today.getFullYear();
 
+  const getEventKey = (d: number) => {
+    const mm = String(current.month + 1).padStart(2, '0');
+    const dd = String(d).padStart(2, '0');
+    return `${current.year}-${mm}-${dd}`;
+  };
+
+  const getEvent = (d: number): CalendarEvent | undefined => events[getEventKey(d)];
+
+  const getDotColor = (type: CalendarEventType) => {
+    if (type === 'warranty-expired') return '#EF4444';
+    if (type === 'warranty-expiring') return '#FF6B00';
+    return '#2E5BFF';
+  };
+
+  // Close tooltip on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (tooltipRef.current && !tooltipRef.current.contains(e.target as Node)) {
+        setTooltip(null);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const tooltipEvent = tooltip ? getEvent(tooltip.day) : null;
+
+  // Count events in current month for legend
+  const monthEventCount = Object.entries(events).filter(([key]) => {
+    const [y, m] = key.split('-');
+    return parseInt(y) === current.year && parseInt(m) - 1 === current.month;
+  }).length;
+
   return (
-    <div className={styles.calendarWidget}>
+    <div className={styles.calendarWidget} style={{ position: 'relative' }}>
+      {/* Header */}
       <div className={styles.calendarHeader}>
-        <button className={styles.calendarNavBtn} onClick={prev} aria-label="Bulan sebelumnya"><ChevronLeft size={14} /></button>
+        <button className={styles.calendarNavBtn} onClick={prev} aria-label="Bulan sebelumnya">
+          <ChevronLeft size={14} />
+        </button>
         <span className={styles.calendarMonth}>{MONTH_NAMES[current.month]} {current.year}</span>
-        <button className={styles.calendarNavBtn} onClick={next} aria-label="Bulan berikutnya"><ChevronRight size={14} /></button>
+        <button className={styles.calendarNavBtn} onClick={next} aria-label="Bulan berikutnya">
+          <ChevronRight size={14} />
+        </button>
       </div>
-      <div className={styles.calendarGrid}>
-        {DAY_NAMES.map(d => <div key={d} className={styles.calendarDayName}>{d}</div>)}
-        {cells.map((d, i) => (
-          <div key={i} className={
-            d === null ? styles.calendarDayEmpty :
-            isToday(d) ? `${styles.calendarDay} ${styles.calendarDayToday}` :
-            styles.calendarDay
-          }>
-            {d ?? ''}
+
+      <div style={{ padding: '16px 20px 20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {/* Grid */}
+        <div className={styles.calendarGrid}>
+          {DAY_NAMES.map(d => (
+            <div key={d} className={styles.calendarDayName}>{d}</div>
+          ))}
+          {cells.map((d, i) => {
+            if (d === null) return <div key={i} className={styles.calendarDayEmpty} />;
+            const event = getEvent(d);
+            const isActive = tooltip?.day === d;
+
+            return (
+              <div
+                key={i}
+                className={[
+                  styles.calendarDay,
+                  isToday(d) ? styles.calendarDayToday : '',
+                  event ? calStyles.hasEvent : '',
+                  isActive ? calStyles.eventActive : '',
+                ].filter(Boolean).join(' ')}
+                onClick={e => {
+                  if (!event) { setTooltip(null); return; }
+                  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                  setTooltip(prev => prev?.day === d ? null : { day: d, x: rect.left, y: rect.bottom });
+                }}
+                style={{ cursor: event ? 'pointer' : 'default' }}
+              >
+                {d}
+                {event && (
+                  <span
+                    className={calStyles.eventDot}
+                    style={{ background: getDotColor(event.type) }}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Legend */}
+        {monthEventCount > 0 && (
+          <div className={calStyles.legend}>
+            <span className={calStyles.legendItem}>
+              <span className={calStyles.legendDot} style={{ background: '#FF6B00' }} />
+              Garansi segera habis
+            </span>
+            <span className={calStyles.legendItem}>
+              <span className={calStyles.legendDot} style={{ background: '#EF4444' }} />
+              Garansi habis
+            </span>
           </div>
-        ))}
+        )}
+
+        {/* Tooltip */}
+        {tooltip && tooltipEvent && (
+          <div ref={tooltipRef} className={calStyles.tooltip}>
+            <div className={calStyles.tooltipHeader}>
+              {tooltipEvent.type === 'warranty-expired' && (
+                <><ShieldAlert size={13} color="#EF4444" /> <span style={{ color: '#EF4444' }}>Garansi Habis</span></>
+              )}
+              {tooltipEvent.type === 'warranty-expiring' && (
+                <><ShieldAlert size={13} color="#FF6B00" /> <span style={{ color: '#FF6B00' }}>Garansi Segera Habis</span></>
+              )}
+              {tooltipEvent.type === 'service' && (
+                <><Wrench size={13} color="#2E5BFF" /> <span style={{ color: '#2E5BFF' }}>Servis</span></>
+              )}
+            </div>
+            <div className={calStyles.tooltipList}>
+              {tooltipEvent.units.slice(0, 5).map((u, i) => (
+                <div key={i} className={calStyles.tooltipUnit}>
+                  <span className={calStyles.tooltipSerial}>{u.serial}</span>
+                  <span className={calStyles.tooltipModel}>{u.model}</span>
+                </div>
+              ))}
+              {tooltipEvent.units.length > 5 && (
+                <div className={calStyles.tooltipMore}>+{tooltipEvent.units.length - 5} unit lainnya</div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

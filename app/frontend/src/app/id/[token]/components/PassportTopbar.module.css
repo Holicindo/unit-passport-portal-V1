@@ -1,0 +1,191 @@
+/*
+ * PassportTopbar.module.css
+ */
+
+/* ── Container ─────────────────────────────────────────────────────────── */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  padding: 0 24px;
+  background: #E8EAEE;
+  border-bottom: none;
+  box-shadow:
+    0 4px 12px rgba(0, 31, 63, 0.08),
+    0 2px 0 rgba(255, 255, 255, 0.7) inset;
+  flex-shrink: 0;
+}
+
+/* ── Logo (left) ───────────────────────────────────────────────────────── */
+.topbarLogo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-shrink: 0;
+}
+
+.topbarLogoIcon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-cobalt-blue);
+  flex-shrink: 0;
+}
+
+.topbarLogoText {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 1rem;
+  letter-spacing: 0.1em;
+  color: var(--color-deep-navy);
+  white-space: nowrap;
+  line-height: 1;
+}
+
+/* ── Right group ───────────────────────────────────────────────────────── */
+.topbarRight {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* thin vertical separator */
+.divider {
+  display: inline-block;
+  width: 1px;
+  height: 18px;
+  background: rgba(0, 31, 63, 0.12);
+  margin: 0 6px;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+/* ── Button base (QR + Dark toggle) ────────────────────────────────────── */
+.iconBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: none;
+  background: var(--color-light-tech-grey, #E8EAEE);
+  color: var(--color-space-grey);
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: box-shadow 0.15s, color 0.15s;
+  white-space: nowrap;
+  outline: none;
+  line-height: 1;
+  appearance: none;
+  box-shadow:
+    -3px -3px 7px rgba(255, 255, 255, 0.85),
+     3px  3px 7px rgba(0, 31, 63, 0.12);
+}
+
+.iconBtn:hover {
+  color: var(--color-deep-navy);
+  box-shadow:
+    -2px -2px 5px rgba(255, 255, 255, 0.8),
+     2px  2px 5px rgba(0, 31, 63, 0.15);
+}
+
+.iconBtn:active {
+  box-shadow:
+    inset 2px 2px 5px rgba(0, 31, 63, 0.1),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.85);
+}
+
+/* cobalt accent for QR button */
+.iconBtnAccent {
+  color: var(--color-cobalt-blue);
+  box-shadow:
+    -3px -3px 7px rgba(255, 255, 255, 0.85),
+     3px  3px 7px rgba(46, 91, 255, 0.2);
+}
+
+.iconBtnAccent:hover {
+  box-shadow:
+    -2px -2px 5px rgba(255, 255, 255, 0.8),
+     2px  2px 5px rgba(46, 91, 255, 0.25);
+  color: var(--color-cobalt-blue);
+}
+
+/* ── Badge ─────────────────────────────────────────────────────────────── */
+.topbarBadge,
+.badgeLv1,
+.badgeLv2,
+.badgeLv3,
+.badgeLv4 {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 50px;
+  font-family: var(--font-heading);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  line-height: 1;
+  color: var(--color-cobalt-blue);
+  background-color: rgba(46, 91, 255, 0.08);
+  border: 1px solid rgba(46, 91, 255, 0.2);
+}
+
+/* ── Dark mode ─────────────────────────────────────────────────────────── */
+[data-theme="dark"] .topbar {
+  background: #0d1526;
+  border-bottom-color: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), 0 1px 0 rgba(255,255,255,0.04) inset;
+}
+
+[data-theme="dark"] .topbarLogoText { color: #e2e8f0; }
+[data-theme="dark"] .topbarLogoIcon { color: #7ba7ff; }
+[data-theme="dark"] .divider { background: rgba(255, 255, 255, 0.1); }
+
+[data-theme="dark"] .iconBtn {
+  color: #94a3b8;
+  background: #111827;
+  box-shadow: -3px -3px 6px rgba(255,255,255,0.03), 3px 3px 8px rgba(0,0,0,0.4);
+}
+[data-theme="dark"] .iconBtn:hover {
+  color: #e2e8f0;
+  box-shadow: -2px -2px 5px rgba(255,255,255,0.04), 2px 2px 6px rgba(0,0,0,0.5);
+}
+[data-theme="dark"] .iconBtnAccent {
+  color: #7ba7ff;
+  box-shadow: -3px -3px 6px rgba(255,255,255,0.03), 3px 3px 8px rgba(46,91,255,0.25);
+}
+[data-theme="dark"] .iconBtnAccent:hover {
+  box-shadow: -2px -2px 5px rgba(255,255,255,0.03), 2px 2px 6px rgba(46,91,255,0.35);
+}
+
+[data-theme="dark"] .topbarBadge,
+[data-theme="dark"] .badgeLv1,
+[data-theme="dark"] .badgeLv2,
+[data-theme="dark"] .badgeLv3,
+[data-theme="dark"] .badgeLv4 {
+  color: #7ba7ff;
+  background-color: rgba(123, 167, 255, 0.1);
+  border-color: rgba(123, 167, 255, 0.22);
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .topbar { height: 52px; padding: 0 16px; }
+
+  .topbarLogoText { font-size: 0.88rem; letter-spacing: 0.08em; }
+
+  .topbarBadge { font-size: 0.58rem; padding: 0 8px; height: 24px; }
+
+  .divider { margin: 0 4px; }
+}

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { messageApi } from '@/lib/api';
-import { MessageSquare, Send, ChevronRight, User } from 'lucide-react';
+import { MessageSquare, Send, User, Plus, HeadphonesIcon } from 'lucide-react';
 import styles from '../ClientPortal.module.css';
 import msgStyles from './messages.module.css';
 
@@ -14,6 +14,7 @@ export default function ClientMessages() {
   const [sending, setSending]             = useState(false);
   const [sendError, setSendError]         = useState('');
   const [loading, setLoading]             = useState(true);
+  const [starting, setStarting]           = useState(false);
   const [user, setUser]                   = useState<any>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const pollRef   = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -83,6 +84,41 @@ export default function ClientMessages() {
     }
   };
 
+  // Mulai percakapan baru dengan tim support Holicindo
+  const handleStartConversation = async () => {
+    setStarting(true);
+    try {
+      const { data } = await messageApi.startConversation('support');
+      const newConv = data?.conversation || data;
+      if (newConv?.id) {
+        setConversations(prev => {
+          const exists = prev.find(c => c.id === newConv.id);
+          return exists ? prev : [newConv, ...prev];
+        });
+        setActiveConv(newConv);
+      } else {
+        // Refresh dan pakai conversation pertama
+        const { data: convData } = await messageApi.getConversations();
+        const convs = convData || [];
+        setConversations(convs);
+        if (convs.length > 0) setActiveConv(convs[0]);
+      }
+    } catch (err: any) {
+      // Kalau sudah ada conversation (conflict), ambil yang existing
+      if (err?.response?.status === 409 || err?.response?.status === 400) {
+        try {
+          const { data: convData } = await messageApi.getConversations();
+          const convs = convData || [];
+          setConversations(convs);
+          if (convs.length > 0) setActiveConv(convs[0]);
+        } catch { /* silent */ }
+      }
+      // Untuk error lain tidak block UI, cukup log
+    } finally {
+      setStarting(false);
+    }
+  };
+
   const getInitial = (name: string) => name?.charAt(0)?.toUpperCase() || '?';
 
   const getPartnerName = (conv: any) => {
@@ -105,6 +141,15 @@ export default function ClientMessages() {
         <div className={msgStyles.convPanel}>
           <div className={msgStyles.convHeader}>
             <span className={msgStyles.convHeaderTitle}>Percakapan</span>
+            <button
+              className={msgStyles.newConvBtn}
+              onClick={handleStartConversation}
+              disabled={starting}
+              aria-label="Hubungi Support"
+              title="Mulai percakapan baru"
+            >
+              <Plus size={15} />
+            </button>
           </div>
 
           {loading ? (
@@ -114,8 +159,17 @@ export default function ClientMessages() {
             </div>
           ) : conversations.length === 0 ? (
             <div className={msgStyles.convEmpty}>
-              <MessageSquare size={32} color="var(--brand-space-grey)" />
-              <p>Belum ada percakapan</p>
+              <HeadphonesIcon size={32} color="var(--brand-space-grey)" />
+              <p style={{ textAlign: 'center', fontSize: '0.82rem' }}>Belum ada percakapan</p>
+              <button
+                className={styles.btnPrimary}
+                style={{ fontSize: '0.78rem', padding: '8px 16px', marginTop: '4px' }}
+                onClick={handleStartConversation}
+                disabled={starting}
+              >
+                <Plus size={13} />
+                {starting ? 'Menghubungi...' : 'Hubungi Support'}
+              </button>
             </div>
           ) : (
             <div className={msgStyles.convList}>
@@ -153,10 +207,26 @@ export default function ClientMessages() {
               <div className={styles.emptyStateIcon} style={{ width: 72, height: 72, borderRadius: '50%' }}>
                 <MessageSquare size={32} />
               </div>
-              <div className={styles.emptyStateTitle}>Pilih percakapan</div>
-              <div className={styles.emptyStateDesc}>
-                Pilih percakapan di sebelah kiri untuk mulai berkomunikasi dengan tim Holicindo.
+              <div className={styles.emptyStateTitle}>
+                {conversations.length === 0 ? 'Belum ada percakapan' : 'Pilih percakapan'}
               </div>
+              <div className={styles.emptyStateDesc}>
+                {conversations.length === 0
+                  ? 'Klik "Hubungi Support" untuk mulai berkomunikasi dengan tim Holicindo.'
+                  : 'Pilih percakapan di sebelah kiri untuk mulai berkomunikasi dengan tim Holicindo.'
+                }
+              </div>
+              {conversations.length === 0 && (
+                <button
+                  className={styles.btnPrimary}
+                  style={{ marginTop: '16px' }}
+                  onClick={handleStartConversation}
+                  disabled={starting}
+                >
+                  <HeadphonesIcon size={15} />
+                  {starting ? 'Menghubungi...' : 'Hubungi Support Holicindo'}
+                </button>
+              )}
             </div>
           ) : (
             <>

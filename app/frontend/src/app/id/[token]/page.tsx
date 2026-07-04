@@ -1,12 +1,14 @@
-'use client';
+﻿'use client';
 
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ShieldAlert, Wrench, FileText, CheckCircle2,
   ExternalLink, Phone, ArrowLeft, Loader2,
   Lock, Check, UserCheck, Settings, BookOpen, Clock, Image as ImageIcon,
-  Sun, Moon, QrCode, HelpCircle, Package,
+  HelpCircle, Package, ChevronLeft, ChevronRight,
 } from 'lucide-react';
+import PassportTopbar from './components/PassportTopbar';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import DatePicker from '@/components/ui/DatePicker';
 import { usePassportData } from './hooks/usePassportData';
@@ -19,6 +21,8 @@ import PartnerLogModal from './components/PartnerLogModal';
 import AdminTransferModal from './components/AdminTransferModal';
 import AllSpecsModal from './components/AllSpecsModal';
 import ServiceHistorySection from './components/ServiceHistorySection';
+import IotTelemetryWidget from './components/IotTelemetryWidget';
+import QrCard from './components/QrCard';
 import { INDONESIA_CITIES, getUnitType, UNIT_TYPE_LABELS, UNIT_TYPE_COLORS } from './constants';
 import styles from './id.module.css';
 
@@ -35,6 +39,32 @@ export default function QrPassportPage() {
   } = passport;
 
   const autoUnitType = unit ? getUnitType(unit.model_name) : 'MESIN';
+  const [photoIdx, setPhotoIdx] = useState(0);
+
+  // Ref untuk menyamakan tinggi kolom kiri dan kanan
+  const leftColRef = useRef<HTMLDivElement>(null);
+  const rightColRef = useRef<HTMLDivElement>(null);
+
+  const equalizeColumns = useCallback(() => {
+    const left = leftColRef.current;
+    const right = rightColRef.current;
+    if (!left || !right) return;
+    // Reset dulu agar bisa mengukur tinggi alami
+    left.style.minHeight = '';
+    right.style.minHeight = '';
+    const leftH = left.scrollHeight;
+    const rightH = right.scrollHeight;
+    const maxH = Math.max(leftH, rightH);
+    left.style.minHeight = `${maxH}px`;
+    right.style.minHeight = `${maxH}px`;
+  }, []);
+
+  useEffect(() => {
+    if (!unit) return;
+    const t = setTimeout(equalizeColumns, 100);
+    window.addEventListener('resize', equalizeColumns);
+    return () => { clearTimeout(t); window.removeEventListener('resize', equalizeColumns); };
+  }, [unit, equalizeColumns]);
 
   const admin = useAdminActions(unit, loadUnitData, showToast);
   const {
@@ -72,28 +102,38 @@ export default function QrPassportPage() {
   );
 
   return (
-    <div className={styles.pageWrapper} data-theme={isDark ? 'dark' : 'light'}>
-      {/* Toast */}
+    <div className={styles.pageWrapper} data-theme={isDark ? 'dark' : 'light'} data-page="passport">
+      {/* Toast — CSS module classes */}
       {toast && (
-        <div role="alert" aria-live="polite" style={{
-          position: 'fixed', top: '20px', right: '20px', zIndex: 9999,
-          padding: '12px 20px', borderRadius: '10px', fontSize: '0.88rem', fontWeight: 600,
-          maxWidth: '340px', boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
-          display: 'flex', alignItems: 'center', gap: '10px', color: '#fff',
-          background: toast.type === 'success' ? 'linear-gradient(135deg, #059669, #047857)' : toast.type === 'error' ? 'linear-gradient(135deg, #dc2626, #b91c1c)' : 'linear-gradient(135deg, #2563eb, #1d4ed8)',
-          animation: 'slideIn 0.25s ease',
-        }}>
-          <span style={{ fontSize: '1.1rem' }}>{toast.type === 'success' ? '✓' : toast.type === 'error' ? '✕' : 'ℹ'}</span>
-          {toast.message}
-          <button onClick={clearToast} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'rgba(255,255,255,0.8)', cursor: 'pointer', fontSize: '1rem', padding: 0 }}>×</button>
+        <div role="alert" aria-live="polite" className={styles.toastContainer}>
+          <div className={toast.type === 'success' ? styles.toastSuccess : toast.type === 'error' ? styles.toastError : styles.toastInfo}
+            style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span>{toast.type === 'success' ? '✓' : toast.type === 'error' ? '✕' : 'ℹ'}</span>
+            {toast.message}
+            <button onClick={clearToast} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: '1rem', padding: 0, opacity: 0.7 }}>×</button>
+          </div>
         </div>
       )}
 
       <div className={styles.dotGrid} aria-hidden="true" />
       <div className={styles.dotGridRight} aria-hidden="true" />
 
+      {/* Sticky topbar — outside container */}
+      <PassportTopbar
+        isDark={isDark}
+        setIsDark={setIsDark}
+        isGuest={isGuest}
+        isClient={isClient}
+        isPartner={isPartner}
+        isAdmin={isAdmin}
+        belongsToClient={belongsToClient}
+        hasClientRestriction={hasClientRestriction}
+        unit={unit}
+        token={Array.isArray(token) ? token[0] : (token ?? '')}
+      />
+
       <div className={styles.container}>
-        {/* Header */}
+        {/* Unit header (serial number, model, back button) */}
         <header className={styles.header}>
           <div className={styles.headerLeft}>
             <button onClick={() => router.back()} className={styles.backBtn}><ArrowLeft size={16} /> Kembali ke Daftar Unit</button>
@@ -115,59 +155,94 @@ export default function QrPassportPage() {
             <p className={styles.modelName}>{unit.model_name}</p>
           </div>
           <div className={styles.headerRight}>
-            <div className={styles.accessBadgeTop}>
-              {isGuest && 'LEVEL 1: PUBLIC SCAN'}
-              {isClient && belongsToClient && 'LEVEL 2: FLEET OWNER'}
-              {hasClientRestriction && 'LEVEL 2: RESTRICTED'}
-              {isPartner && 'LEVEL 3: TECHNICAL PARTNER'}
-              {isAdmin && 'LEVEL 4: ADMINISTRATOR'}
-            </div>
-            <div style={{ display: 'flex', gap: '8px', alignSelf: 'flex-end', marginTop: '4px' }}>
-              {isAdmin && (
-                <button onClick={() => {
-                  const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(window.location.origin + '/id/' + token)}`;
-                  const pw = window.open('', '_blank');
-                  if (pw) { pw.document.write(`<html><head><title>Print QR</title><style>@page{margin:0}html,body{margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:sans-serif}</style></head><body><h2>${unit.serial_number}</h2><img src="${qrApiUrl}" alt="QR" style="width:400px;height:400px" onload="window.print();window.close()"/><p>${unit.model_name}</p></body></html>`); pw.document.close(); }
-                }} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: '20px', padding: '4px 10px', cursor: 'pointer', color: '#3b82f6', fontSize: '0.7rem', fontWeight: 700, fontFamily: 'var(--font-heading)' }}>
-                  <QrCode size={12} /> QR
-                </button>
-              )}
-              <button onClick={() => setIsDark(v => !v)} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,31,63,0.08)', border: isDark ? '1px solid rgba(255,255,255,0.18)' : '1px solid rgba(0,31,63,0.15)', borderRadius: '20px', padding: '4px 10px', cursor: 'pointer', color: isDark ? '#e2e8f0' : '#001F3F', fontSize: '0.7rem', fontWeight: 700, fontFamily: 'var(--font-heading)', transition: 'all 0.2s ease' }}>
-                {isDark ? <Sun size={12} /> : <Moon size={12} />} {isDark ? 'Light' : 'Dark'}
-              </button>
-            </div>
             <div className={styles.lastUpdated}><Clock size={12} /> Terakhir diperbarui: {new Date(unit.updated_at || Date.now()).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
           </div>
         </header>
 
-        {/* Carousel */}
-        <div className={styles.carouselWrapper}>
-          <button className={`${styles.carouselNavBtn} ${styles.prevBtn}`} onClick={() => { if (carouselRef.current) carouselRef.current.scrollBy({ left: -carouselRef.current.clientWidth, behavior: 'smooth' }); }}>&lsaquo;</button>
-          <div className={styles.carouselContainer} ref={carouselRef}>
+        {/* 2-COLUMN LAYOUT */}
+        <div className={styles.passportLayout}>
+
+          {/* ── KOLOM KIRI: Spesifikasi Utama + Stats ── */}
+          <div className={styles.passportLeft} ref={leftColRef}>
 
           {/* Slide 1: Spesifikasi Utama */}
-          <section className={`${styles.card} ${styles.carouselSlide}`}>
-            <div className={styles.cardHeader}>
-              <div className={styles.cardHeaderLeft}><FileText size={16} color="#8bb2ff" /><h2>Spesifikasi Utama</h2></div>
+          <section className={`${styles.panel} ${styles.iotPanel}`} style={{ background: "#E8EAEE", border: "none", boxShadow: "-6px -6px 10px rgba(255,255,255,0.72), 6px 6px 12px rgba(0,31,63,0.14)", borderRadius: "20px", backdropFilter: "none" }}>
+            <div className={styles.panelHeader}>
+              <div className={styles.panelHeaderLeft}><FileText size={16} color="var(--color-cobalt-blue)" /><h2>Spesifikasi Utama</h2></div>
               {isAdmin && (<div style={{ display: 'flex', gap: '8px' }}>
-                {editBlocks.spesifikasi && <button className={styles.btnRevise} onClick={() => cancelEdit('spesifikasi')} style={{ background: '#64748b' }}>Cancel</button>}
-                <button className={styles.btnRevise} onClick={() => toggleEdit('spesifikasi')} style={editBlocks.spesifikasi ? { background: '#10b981' } : {}}>
-                  {editBlocks.spesifikasi ? (isSaving ? 'Saving…' : 'Save') : 'Revise'}
+                {editBlocks.spesifikasi && <button className={styles.btnCancel} onClick={() => cancelEdit('spesifikasi')}>Batal</button>}
+                <button className={editBlocks.spesifikasi ? styles.btnSave : styles.btnRevise} onClick={() => toggleEdit('spesifikasi')}>
+                  {editBlocks.spesifikasi ? (isSaving ? 'Menyimpan…' : 'Simpan') : 'Revisi'}
                 </button>
               </div>)}
             </div>
-            <div className={styles.cardContent}>
+            <div className={styles.panelContent}>
               {!editBlocks.spesifikasi && (() => {
                 const photos = unit.specs?.photo_gallery ? String(unit.specs.photo_gallery).split(',').filter(Boolean) : [];
+                const clampedIdx = Math.min(photoIdx, Math.max(0, photos.length - 1));
+                const prev = () => setPhotoIdx(i => (i - 1 + photos.length) % photos.length);
+                const next = () => setPhotoIdx(i => (i + 1) % photos.length);
                 return (
-                  <div className={styles.unitImagePlaceholder}>
-                    <div className={styles.unitImageInner}>
-                      {photos.length > 0 ? (
-                        <img src={photos[0]} alt={unit.model_name} className={styles.unitImage} />
-                      ) : (
-                        <Package size={64} className={styles.unitImageIcon} />
-                      )}
+                  <div style={{ position: 'relative', marginBottom: '16px' }}>
+                    {/* Main image area */}
+                    <div className={styles.unitImagePlaceholder} style={{ marginBottom: 0, overflow: 'hidden', position: 'relative' }}>
+                      <div className={styles.unitImageInner}>
+                        {photos.length > 0 ? (
+                          <img
+                            src={photos[clampedIdx]}
+                            alt={`${unit.model_name} — foto ${clampedIdx + 1} dari ${photos.length}`}
+                            className={styles.unitImage}
+                            style={{ transition: 'opacity 0.2s ease' }}
+                            onClick={() => window.open(photos[clampedIdx], '_blank')}
+                          />
+                        ) : (
+                          <Package size={64} className={styles.unitImageIcon} />
+                        )}
+                      </div>
+
+                      {/* Nav buttons — only show when >1 photo */}
+                      {photos.length > 1 && (<>
+                        <button onClick={prev} style={{
+                          position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)',
+                          background: 'rgba(255,255,255,0.85)', border: 'none', borderRadius: '50%',
+                          width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,31,63,0.15)', zIndex: 2,
+                        }} aria-label="Foto sebelumnya">
+                          <ChevronLeft size={18} color="var(--color-deep-navy)" />
+                        </button>
+                        <button onClick={next} style={{
+                          position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)',
+                          background: 'rgba(255,255,255,0.85)', border: 'none', borderRadius: '50%',
+                          width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,31,63,0.15)', zIndex: 2,
+                        }} aria-label="Foto berikutnya">
+                          <ChevronRight size={18} color="var(--color-deep-navy)" />
+                        </button>
+                        {/* Counter badge */}
+                        <span style={{
+                          position: 'absolute', bottom: '8px', right: '10px',
+                          background: 'rgba(0,31,63,0.55)', color: '#fff',
+                          fontSize: '0.68rem', fontWeight: 700, fontFamily: 'var(--font-heading)',
+                          padding: '2px 8px', borderRadius: '20px', zIndex: 2,
+                        }}>{clampedIdx + 1}/{photos.length}</span>
+                      </>)}
                     </div>
+
+                    {/* Thumbnail strip — only when >1 photo */}
+                    {photos.length > 1 && (
+                      <div style={{ display: 'flex', gap: '6px', marginTop: '8px', overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: '2px' }}>
+                        {photos.map((url, idx) => (
+                          <button key={idx} onClick={() => setPhotoIdx(idx)} style={{
+                            flexShrink: 0, width: '52px', height: '52px', padding: 0, border: 'none',
+                            borderRadius: '6px', overflow: 'hidden', cursor: 'pointer',
+                            outline: idx === clampedIdx ? '2px solid var(--color-cobalt-blue)' : '2px solid transparent',
+                            outlineOffset: '1px', transition: 'outline 0.15s ease', opacity: idx === clampedIdx ? 1 : 0.65,
+                          }} aria-label={`Lihat foto ${idx + 1}`}>
+                            <img src={url} alt={`Thumbnail ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 );
               })()}
@@ -197,6 +272,23 @@ export default function QrPassportPage() {
                     <DatePicker label="Garansi Berakhir" value={editData.warranty_expiry ? editData.warranty_expiry.slice(0, 10) : ''} onChange={(v) => handleEditChange('warranty_expiry', v)} theme="dark" />
                   </div>
                   <DatePicker label="Production Date" value={editData.specs?.production_date ? editData.specs.production_date.slice(0, 10) : (editData.specs?.finish_date ? editData.specs.finish_date.slice(0, 10) : '')} onChange={(v) => handleEditChange('specs.production_date', v)} theme="dark" />
+                  <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '0.8rem', color: 'var(--color-space-grey)', fontWeight: 600 }}>Foto Utama Unit</label>
+                    {editData.specs?.photo_gallery && editData.specs.photo_gallery.split(',').filter(Boolean).length > 0 && (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', marginBottom: '6px' }}>
+                        {editData.specs.photo_gallery.split(',').filter(Boolean).map((url: string, idx: number) => (
+                          <div key={idx} style={{ position: 'relative' }}>
+                            <img src={url} alt={`Foto ${idx + 1}`} style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: '6px', display: 'block' }} />
+                            <button type="button" onClick={() => { const c = editData.specs.photo_gallery.split(',').filter(Boolean); c.splice(idx, 1); handleEditChange('specs.photo_gallery', c.join(',')); }} style={{ position: 'absolute', top: '3px', right: '3px', background: 'rgba(239,68,68,0.85)', border: 'none', borderRadius: '50%', width: '18px', height: '18px', cursor: 'pointer', color: '#fff', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', border: '1px dashed rgba(0,31,63,0.15)', borderRadius: '8px', padding: '10px 14px', cursor: photoGalleryUploading ? 'not-allowed' : 'pointer', color: 'var(--color-space-grey)', fontSize: '0.82rem', background: 'var(--color-light-tech-grey)', opacity: photoGalleryUploading ? 0.6 : 1 }}>
+                      <ImageIcon size={16} />{photoGalleryUploading ? 'Mengupload...' : 'Upload foto unit (bisa pilih banyak)'}
+                      <input type="file" accept=".jpg,.jpeg,.png,.webp" multiple style={{ display: 'none' }} disabled={photoGalleryUploading} onChange={(e) => { if (e.target.files?.length) handlePhotoGalleryUpload(e.target.files); }} />
+                    </label>
+                  </div>
                 </div>
               ) : (<>
                 <div className={styles.specItem}><span className={styles.specLabel}>Model</span><span className={styles.specValue}>{unit.model_name}</span></div>
@@ -216,21 +308,201 @@ export default function QrPassportPage() {
             </div>
           </section>
 
-          {/* Slide 2: Layanan & Dukungan */}
-          <section className={`${styles.card} ${styles.actionCard} ${styles.carouselSlide}`}>
-            <div className={styles.cardHeader}><div className={styles.cardHeaderLeft}><Phone size={16} color="#8bb2ff" /><h2>Layanan &amp; Dukungan</h2></div></div>
-            <div className={styles.cardContent} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', justifyContent: 'center' }}>
-              {(isGuest || hasClientRestriction) && (
-                <div className={styles.publicPrompt}>
-                  <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}><div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.1)' }}><Lock size={20} color="#8f9bb3" /></div></div>
-                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '8px' }}>{hasClientRestriction ? 'Akses Terbatas' : 'Layanan & Dukungan'}</h3>
-                  <p className={styles.restrictedText} style={{ fontSize: '0.85rem', color: '#8f9bb3', marginBottom: '24px', lineHeight: 1.5 }}>{hasClientRestriction ? 'Anda tidak berwenang melihat riwayat servis lengkap untuk unit milik franchise lain.' : 'Laporkan masalah teknis ke tim servis kami atau login untuk melihat riwayat servis lengkap.'}</p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
-                    <button className={styles.btnEmergency} onClick={() => setShowServiceModal(true)}>Laporkan Masalah / Request Service</button>
-                    {isGuest && (<><button className={styles.btnPrimary} onClick={() => router.push(`/login?redirect=/id/${token}`)}><Lock size={16} /> Sign In (Manajemen Klien)</button><p className={styles.guestNote} style={{ fontSize: '0.75rem', marginTop: '12px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '12px' }}>Pemilik unit, teknisi, atau mitra resmi Holicindo — masuk untuk melihat informasi lebih lengkap.</p></>)}
+          {/* Slide 5: Manuals */}
+          <section className={`${styles.panel} ${styles.iotPanel}`} style={{ background: "#E8EAEE", border: "none", boxShadow: "-6px -6px 10px rgba(255,255,255,0.72), 6px 6px 12px rgba(0,31,63,0.14)", borderRadius: "20px", backdropFilter: "none" }}>
+            <div className={styles.panelHeader}>
+              <div className={styles.panelHeaderLeft}><BookOpen size={16} color="var(--color-cobalt-blue)" /><h2>Manuals</h2></div>
+              {isAdmin && (<div style={{ display: 'flex', gap: '8px' }}>
+                {editBlocks.manuals && <button className={styles.btnCancel} onClick={() => cancelEdit('manuals')}>Batal</button>}
+                <button className={editBlocks.manuals ? styles.btnSave : styles.btnRevise} onClick={() => toggleEdit('manuals')}>{editBlocks.manuals ? (isSaving ? 'Menyimpan…' : 'Simpan') : 'Revisi'}</button>
+              </div>)}
+            </div>
+            <div className={styles.mediaSingleItem} style={{ padding: '16px' }}>
+              {editBlocks.manuals ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--color-space-grey)', lineHeight: 1.5 }}>Upload diagram sirkular udara (JPG, PNG, atau PDF).</p>
+                  {(() => { const urls = editData.specs?.manuals_urls ? editData.specs.manuals_urls.split(',').filter(Boolean) : []; return urls.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {urls.map((url: string, idx: number) => (<div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', background: 'var(--color-light-tech-grey)', borderRadius: '8px', border: 'var(--border-card)' }}>
+                        <FileText size={14} color="var(--color-cobalt-blue)" /><span style={{ flex: 1, fontSize: '0.78rem', color: 'var(--color-space-grey)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{url.includes('pdf') ? `Diagram PDF ${idx + 1}` : `Diagram Gambar ${idx + 1}`}</span>
+                        <button type="button" onClick={() => window.open(url, '_blank')} style={{ background: 'none', border: 'none', color: 'var(--color-cobalt-blue)', cursor: 'pointer', fontSize: '0.72rem', textDecoration: 'underline' }}>Lihat</button>
+                        <button type="button" onClick={() => { const c = (editData.specs?.manuals_urls || '').split(',').filter(Boolean); c.splice(idx, 1); handleEditChange('specs.manuals_urls', c.join(',')); }} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.72rem' }}>Hapus</button>
+                      </div>))}
+                    </div>) : null; })()}
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', border: '1px dashed rgba(0,31,63,0.12)', borderRadius: '8px', padding: '10px 14px', cursor: manualsUploading ? 'not-allowed' : 'pointer', color: 'var(--color-space-grey)', fontSize: '0.82rem', background: 'var(--color-light-tech-grey)', opacity: manualsUploading ? 0.6 : 1 }}>
+                    <ImageIcon size={16} />{manualsUploading ? 'Mengupload...' : 'Klik untuk upload diagram (JPG/PNG/PDF)'}
+                    <input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" multiple style={{ display: 'none' }} disabled={manualsUploading} onChange={(e) => { if (e.target.files?.length) handleManualsUpload(e.target.files); }} />
+                  </label>
+                  {/* YouTube Link Upload */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '0.8rem', color: 'var(--color-space-grey)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="#ef4444"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                      Link Video YouTube (Opsional)
+                    </label>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input
+                        type="url"
+                        placeholder="https://youtube.com/watch?v=..."
+                        style={{ flex: 1, padding: '10px 12px', background: 'var(--color-light-tech-grey)', border: 'var(--border-card)', borderRadius: '8px', color: 'var(--color-deep-navy)', fontSize: '0.82rem', fontFamily: 'inherit', outline: 'none' }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const val = (e.target as HTMLInputElement).value.trim();
+                            if (val && (val.includes('youtube.com') || val.includes('youtu.be'))) {
+                              const existing = editData.specs?.manuals_urls ? editData.specs.manuals_urls.split(',').filter(Boolean) : [];
+                              handleEditChange('specs.manuals_urls', [...existing, val].join(','));
+                              (e.target as HTMLInputElement).value = '';
+                            }
+                          }
+                        }}
+                        id="youtube-link-input"
+                      />
+                      <button type="button" style={{ padding: '10px 14px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '8px', color: '#ef4444', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 700, fontFamily: 'inherit', whiteSpace: 'nowrap' }}
+                        onClick={() => {
+                          const inp = document.getElementById('youtube-link-input') as HTMLInputElement;
+                          const val = inp?.value.trim();
+                          if (val && (val.includes('youtube.com') || val.includes('youtu.be'))) {
+                            const existing = editData.specs?.manuals_urls ? editData.specs.manuals_urls.split(',').filter(Boolean) : [];
+                            handleEditChange('specs.manuals_urls', [...existing, val].join(','));
+                            inp.value = '';
+                          }
+                        }}
+                      >+ Tambah</button>
+                    </div>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--color-space-grey)' }}>Tekan Enter atau klik Tambah untuk menyimpan link</span>
                   </div>
                 </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {(() => { const urls = unit?.specs?.manuals_urls ? String(unit.specs.manuals_urls).split(',').filter(Boolean) : [];
+                    if (urls.length === 0) return (<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 16px', gap: '10px', background: 'var(--color-light-tech-grey)', borderRadius: '10px', border: '1px dashed rgba(0,31,63,0.12)' }}><BookOpen size={28} color="var(--color-space-grey)" /><p style={{ color: 'var(--color-space-grey)', fontSize: '0.82rem', textAlign: 'center' }}>Belum ada diagram</p></div>);
+                    return urls.map((url: string, idx: number) => { const isPdf = url.includes('pdf'); const isImage = /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(url); const isYoutube = url.includes('youtube.com') || url.includes('youtu.be'); return (
+                      <div key={idx}>
+                        {isYoutube ? (
+                          <button className={styles.btnPrimary} style={{ justifyContent: 'space-between', padding: '12px 16px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', color: 'var(--color-deep-navy)', fontFamily: 'inherit' }} onClick={() => window.open(url, '_blank')}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="#ef4444"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                              Video YouTube {idx + 1}
+                            </span>
+                            <ExternalLink size={15} color="var(--color-space-grey)" style={{ flexShrink: 0 }} />
+                          </button>
+                        ) : isImage ? <div onClick={() => window.open(url, '_blank')} style={{ cursor: 'pointer', borderRadius: '10px', overflow: 'hidden', border: 'var(--border-card)' }}><img src={url} alt={`Diagram ${idx + 1}`} style={{ width: '100%', display: 'block', objectFit: 'contain', maxHeight: '280px', background: 'var(--color-light-tech-grey)' }} /><div style={{ padding: '8px 12px', background: 'var(--color-light-tech-grey)', fontSize: '0.72rem', color: 'var(--color-space-grey)', display: 'flex', alignItems: 'center', gap: '6px' }}><ImageIcon size={12} /> Diagram {idx + 1}</div></div>
+                        : <button className={styles.btnPrimary} style={{ justifyContent: 'space-between', padding: '12px 16px', background: 'var(--color-light-tech-grey)', color: 'var(--color-deep-navy)', border: 'var(--border-card)' }} onClick={() => window.open(url, '_blank')}><span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><FileText size={16} />{isPdf ? `Diagram PDF ${idx + 1}` : `File Diagram ${idx + 1}`}</span><ExternalLink size={16} color="var(--color-space-grey)" /></button>}
+                      </div>); });
+                  })()}
+                </div>
               )}
+            </div>
+          </section>
+
+          {/* Slide 6: Ownership */}
+          <section className={`${styles.panel} ${styles.iotPanel}`} style={{ background: "#E8EAEE", border: "none", boxShadow: "-6px -6px 10px rgba(255,255,255,0.72), 6px 6px 12px rgba(0,31,63,0.14)", borderRadius: "20px", backdropFilter: "none" }}>
+            <div className={styles.panelHeader}>
+              <div className={styles.panelHeaderLeft}><UserCheck size={16} color="var(--color-cobalt-blue)" /><h2>Ownership</h2></div>
+              {isAdmin && (<div style={{ display: 'flex', gap: '8px' }}>
+                {editBlocks.ownership && <button className={styles.btnCancel} onClick={() => cancelEdit('ownership')}>Batal</button>}
+                <button className={editBlocks.ownership ? styles.btnSave : styles.btnRevise} onClick={() => toggleEdit('ownership')}>{editBlocks.ownership ? (isSaving ? 'Menyimpan…' : 'Simpan') : 'Revisi'}</button>
+              </div>)}
+            </div>
+            <div className={styles.panelContent}>
+              {editBlocks.ownership ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingBottom: '16px' }}>
+                  <EditField label="Customer Name" value={editData.current_client?.company_name || ''} onChange={(v) => handleEditChange('current_client.company_name', v)} />
+                  <EditField label="HQ Address (Pusat)" value={editData.specs?.hq_address || ''} onChange={(v) => handleEditChange('specs.hq_address', v)} />
+                  <EditField label="SO Number" value={editData.specs?.so_number || ''} onChange={(v) => handleEditChange('specs.so_number', v)} />
+                  <EditField label="DO Number" value={editData.specs?.do_number || ''} onChange={(v) => handleEditChange('specs.do_number', v)} />
+                  <DatePicker label="Delivery Date" value={editData.specs?.delivery_date ? editData.specs.delivery_date.slice(0, 10) : ''} onChange={(v) => handleEditChange('specs.delivery_date', v)} theme="dark" />
+                  
+                  <div style={{ marginTop: '12px', marginBottom: '8px', paddingBottom: '4px', borderBottom: 'var(--border-card)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-cobalt-blue)' }}>Lokasi Unit (Branch)</div>
+                  <EditField label="Outlet Branch" value={editData.outlet_branch || ''} onChange={(v) => handleEditChange('outlet_branch', v)} />
+                  <EditField label="Branch Address (Jalan)" value={editData.specs?.branch_address || ''} onChange={(v) => handleEditChange('specs.branch_address', v)} />
+                  <div className={styles.editRow}><div className={styles.editGroup}>
+                    <span className={styles.editLabel}>Kota (City)</span>
+                    <select className={styles.editInput} value={editData.city || ''} onChange={(e) => handleEditChange('city', e.target.value)}>
+                      <option value="">-- Pilih Kota --</option>
+                      {Object.entries(INDONESIA_CITIES.reduce((acc: Record<string, string[]>, item) => { if (!acc[item.province]) acc[item.province] = []; acc[item.province].push(item.city); return acc; }, {})).map(([province, cities]) => (<optgroup key={province} label={province}>{(cities as string[]).map(city => <option key={city} value={city}>{city}</option>)}</optgroup>))}
+                    </select>
+                  </div></div>
+                </div>
+              ) : (<>
+                <div className={styles.specItem}><span className={styles.specLabel}>Customer Name</span><span className={styles.specValue}>{unit.current_client?.company_name || '—'}</span></div>
+                <div className={styles.specItem}><span className={styles.specLabel}>HQ Address</span><span className={styles.specValue}>{unit.specs?.hq_address || '—'}</span></div>
+                <div className={styles.specItem}><span className={styles.specLabel}>SO Number</span><span className={styles.specValue}>{unit.specs?.so_number || '—'}</span></div>
+                <div className={styles.specItem}><span className={styles.specLabel}>DO Number</span><span className={styles.specValue}>{unit.specs?.do_number || '—'}</span></div>
+                <div className={styles.specItem}><span className={styles.specLabel}>Delivery Date</span><span className={styles.specValue}>{unit.specs?.delivery_date ? new Date(unit.specs.delivery_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'}</span></div>
+                
+                <div style={{ marginTop: '12px', padding: '4px 16px', fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-cobalt-blue)', textTransform: 'uppercase', letterSpacing: '0.05em', background: 'rgba(46,91,255,0.06)' }}>Lokasi Unit (Branch)</div>
+                <div className={styles.specItem}><span className={styles.specLabel}>Outlet Branch</span><span className={styles.specValue}>{unit.outlet_branch || '—'}</span></div>
+                <div className={styles.specItem}><span className={styles.specLabel}>Branch Address</span><span className={styles.specValue}>{unit.specs?.branch_address || '—'}</span></div>
+                <div className={styles.specItem} style={{ borderBottom: 'none' }}><span className={styles.specLabel}>City & Province</span><span className={styles.specValue}>{unit.city ? (() => { const m = INDONESIA_CITIES.find(c => c.city === unit.city); return m ? `${unit.city}, ${m.province}` : unit.city; })() : '—'}</span></div>
+              </>)}
+            </div>
+          </section>
+
+          {/* Riwayat Servis */}
+          <ServiceHistorySection serviceLogs={unit.service_logs || []} />
+
+          </div>{/* ── END passportLeft ── */}
+
+          {/* ── KOLOM KANAN: Layanan + QC + Manuals + Ownership + IoT ── */}
+          <div className={styles.passportRight} ref={rightColRef}>
+
+            {/* Baris atas: Layanan & Dukungan + QR Card (desktop: 2 kolom) */}
+            <div className={styles.topRowGrid}>
+              {/* Layanan & Dukungan */}
+              <section className={`${styles.panel} ${styles.actionPanel}`} style={{ background: '#E8EAEE', border: 'none', boxShadow: '-6px -6px 10px rgba(255,255,255,0.72), 6px 6px 12px rgba(0,31,63,0.14)', borderRadius: '18px', backdropFilter: 'none' }}>
+                <div className={styles.panelHeader}><div className={styles.panelHeaderLeft}><Phone size={16} color="var(--color-cobalt-blue)" /><h2>Layanan &amp; Dukungan</h2></div></div>
+                <div className={styles.panelContent} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', justifyContent: 'center' }}>
+                  {(isGuest || hasClientRestriction) && (
+                  <div className={styles.publicPrompt}>
+                  <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}><div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(0,31,63,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(0,31,63,0.12)' }}><Lock size={20} color="var(--color-space-grey)" /></div></div>
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '8px', color: 'var(--color-deep-navy)' }}>{hasClientRestriction ? 'Akses Terbatas' : 'Layanan & Dukungan'}</h3>
+                  <p className={styles.restrictedText} style={{ fontSize: '0.85rem', marginBottom: '24px', lineHeight: 1.5 }}>{hasClientRestriction ? 'Anda tidak berwenang melihat riwayat servis lengkap untuk unit milik franchise lain.' : 'Laporkan masalah teknis ke tim servis kami atau login untuk melihat riwayat servis lengkap.'}</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
+                    <button className={styles.btnEmergency} onClick={() => setShowServiceModal(true)}>Laporkan Masalah / Request Service</button>
+                    {isGuest && (
+                      <>
+                        {/* Login buttons untuk upgrade akses */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
+                          {/* Untuk Klien / Franchise Owner */}
+                          <button
+                            className={styles.btnPrimary}
+                            onClick={() => router.push(`/login?redirect=/id/${Array.isArray(token) ? token[0] : (token ?? '')}`)}
+                          >
+                            <UserCheck size={16} /> Masuk sebagai Pemilik Unit
+                          </button>
+                          {/* Untuk Teknisi / Partner */}
+                          <button
+                            style={{
+                              width: '100%',
+                              background: 'linear-gradient(135deg, #059669, #047857)',
+                              color: '#fff',
+                              border: 'none',
+                              padding: '14px 20px',
+                              borderRadius: 'var(--radius-md)',
+                              fontFamily: 'var(--font-heading)',
+                              fontWeight: 800,
+                              fontSize: '0.92rem',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '8px',
+                              boxShadow: '-3px -3px 8px rgba(255,255,255,0.12), 3px 3px 10px rgba(0,0,0,0.2), 0 4px 15px rgba(5,150,105,0.4)',
+                            }}
+                            onClick={() => router.push(`/login?redirect=/id/${Array.isArray(token) ? token[0] : (token ?? '')}&role=partner`)}
+                          >
+                            <Wrench size={16} /> Masuk sebagai Teknisi
+                          </button>
+                        </div>
+                        <p className={styles.guestNote} style={{ fontSize: '0.72rem', marginTop: '8px', borderTop: 'var(--border-card)', paddingTop: '12px', lineHeight: 1.6 }}>
+                          Pemilik unit, teknisi, atau mitra resmi Holicindo —<br/>masuk untuk mengakses informasi lengkap unit ini.
+                        </p>
+                      </>
+                    )}
+                  </div>
+                  </div>
+                  )}
               {isClient && belongsToClient && (
                 <div className={styles.clientActions} style={{ width: '100%', textAlign: 'left' }}>
                   <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}><div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(59,130,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(59,130,246,0.2)' }}><UserCheck size={20} color="#3b82f6" /></div></div>
@@ -269,37 +541,17 @@ export default function QrPassportPage() {
             </div>
           </section>
 
-          {/* Slide 3: Stats Card */}
-          <section className={`${styles.card} ${styles.carouselSlide}`}>
-            <div className={styles.cardHeader}><div className={styles.cardHeaderLeft}><Settings size={16} color="#8bb2ff" /><h2>Stats Card</h2></div></div>
-            <div className={styles.statsCardGrid}>
-              {[
-                { tip: 'Kondisi operasional unit saat ini.', icon: <CheckCircle2 size={24} />, cls: styles.success, title: 'Status Unit', status: 'Normal', color: 'var(--color-cobalt-blue)', sub: 'Unit beroperasi dengan baik' },
-                { tip: 'Masa garansi resmi dari Holicindo.', icon: <ShieldAlert size={24} />, cls: isWarrantyActive ? styles.success : styles.warning, title: 'Garansi', status: isWarrantyActive ? 'Aktif' : 'Kedaluwarsa', color: isWarrantyActive ? 'var(--color-cobalt-blue)' : '#f59e0b', sub: isWarrantyActive ? `Hingga ${expiryDate?.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) || ''}` : 'Hubungi support' },
-                { tip: 'Tanggal terakhir unit diservis.', icon: <Wrench size={24} />, cls: styles.info, title: 'Last Service', status: 'Belum Ada', color: '#336bd9ff', sub: 'Belum pernah diservis' },
-                { tip: 'Estimasi jadwal servis berikutnya.', icon: <Clock size={24} />, cls: styles.info, title: 'Next Service', status: 'Disarankan', color: '#3b82f6', sub: 'Dalam 180 hari' },
-                { tip: 'Status keaslian unit.', icon: <CheckCircle2 size={24} />, cls: styles.success, title: 'Verifikasi', status: 'Asli', color: 'var(--color-cobalt-blue)', sub: 'Unit terverifikasi Holicindo' },
-              ].map((s) => (
-                <div key={s.title} className={styles.statusCard} style={{ position: 'relative' }}>
-                  <span className={styles.statTooltipAnchor}><HelpCircle size={12} className={styles.statTooltipIcon} /><span className={styles.statTooltip}>{s.tip}</span></span>
-                  <div className={`${styles.statusIcon} ${s.cls}`}>{s.icon}</div>
-                  <div className={styles.statusText}>
-                    <h3>{s.title}</h3>
-                    <p style={{ color: s.color }}>{s.status}</p>
-                    <span>{s.sub}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
+              {/* QR Card — di sebelah Layanan & Dukungan */}
+              {isAdmin && <QrCard token={Array.isArray(token) ? token[0] : (token ?? '')} serialNumber={unit.serial_number} modelName={unit.model_name} />}
+            </div>{/* end topRowGrid */}
 
-          {/* Slide 4: QC Reports - kept inline due to complex edit closures */}
-          <section className={`${styles.card} ${styles.carouselSlide}`}>
-            <div className={styles.cardHeader}>
-              <div className={styles.cardHeaderLeft}><FileText size={16} color="#8bb2ff" /><h2>QC Reports</h2></div>
+          {/* QC Reports */}
+          <section className={styles.panel} style={{ background: '#E8EAEE', border: 'none', boxShadow: '-6px -6px 10px rgba(255,255,255,0.72), 6px 6px 12px rgba(0,31,63,0.14)', borderRadius: '18px', backdropFilter: 'none' }}>
+            <div className={styles.panelHeader}>
+              <div className={styles.panelHeaderLeft}><FileText size={16} color="var(--color-cobalt-blue)" /><h2>QC Reports</h2></div>
               {isAdmin && (<div style={{ display: 'flex', gap: '8px' }}>
-                {editBlocks.qc && <button className={styles.btnRevise} onClick={() => cancelEdit('qc')} style={{ background: '#64748b' }}>Cancel</button>}
-                <button className={styles.btnRevise} onClick={() => toggleEdit('qc')} style={editBlocks.qc ? { background: '#10b981' } : {}}>{editBlocks.qc ? (isSaving ? 'Saving…' : 'Save') : 'Revise'}</button>
+                {editBlocks.qc && <button className={styles.btnCancel} onClick={() => cancelEdit('qc')}>Batal</button>}
+                <button className={editBlocks.qc ? styles.btnSave : styles.btnRevise} onClick={() => toggleEdit('qc')}>{editBlocks.qc ? (isSaving ? 'Menyimpan…' : 'Simpan') : 'Revisi'}</button>
               </div>)}
             </div>
             <div className={styles.mediaSingleItem} style={{ padding: '16px' }}>
@@ -412,24 +664,6 @@ export default function QrPassportPage() {
                     <DatePicker label="Tanggal" value={editData.specs?.pic_date || ''} onChange={(v) => handleEditChange('specs.pic_date', v)} theme="dark" />
                     <EditField label="Catatan" value={editData.specs?.pic_notes || ''} onChange={(v) => handleEditChange('specs.pic_notes', v)} />
                   </div>
-                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }} />
-                  <div>
-                    <p style={{ fontSize: '0.72rem', fontWeight: 700, color: '#8f9bb3', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '10px' }}>Galeri Foto</p>
-                    {editData.specs?.photo_gallery && (
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', marginBottom: '10px' }}>
-                        {editData.specs.photo_gallery.split(',').filter(Boolean).map((url: string, idx: number) => (
-                          <div key={idx} style={{ position: 'relative' }}>
-                            <img src={url} alt={`Foto ${idx + 1}`} style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: '6px', display: 'block' }} />
-                            <button type="button" onClick={() => { const c = editData.specs.photo_gallery.split(',').filter(Boolean); c.splice(idx, 1); handleEditChange('specs.photo_gallery', c.join(',')); }} style={{ position: 'absolute', top: '3px', right: '3px', background: 'rgba(239,68,68,0.85)', border: 'none', borderRadius: '50%', width: '18px', height: '18px', cursor: 'pointer', color: '#fff', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', border: '1px dashed rgba(255,255,255,0.2)', borderRadius: '8px', padding: '10px 14px', cursor: 'pointer', color: '#8f9bb3', fontSize: '0.82rem', background: 'rgba(255,255,255,0.02)', opacity: photoGalleryUploading ? 0.6 : 1 }}>
-                      <ImageIcon size={16} />{photoGalleryUploading ? 'Mengupload...' : 'Klik untuk upload foto (bisa pilih banyak)'}
-                      <input type="file" accept=".jpg,.jpeg,.png,.webp" multiple style={{ display: 'none' }} disabled={photoGalleryUploading} onChange={(e) => { if (e.target.files?.length) handlePhotoGalleryUpload(e.target.files); }} />
-                    </label>
-                  </div>
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -488,160 +722,58 @@ export default function QrPassportPage() {
                       </div>
                       {has && <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '0 0 8px 8px', padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>{pn && <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Nama: <strong style={{ color: '#e2e8f0' }}>{pn}</strong></span>}{pd && <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Tanggal: <strong style={{ color: '#e2e8f0' }}>{new Date(pd + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</strong></span>}{pnt && <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Catatan: <strong style={{ color: '#e2e8f0' }}>{pnt}</strong></span>}</div>}
                     </div>); })()}
-                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', margin: '4px 0' }} />
-                  {/* Photo Gallery */}
-                  {(() => { const photos = unit?.specs?.photo_gallery ? String(unit.specs.photo_gallery).split(',').filter(Boolean) : []; return (
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: photos.length > 0 ? '8px 8px 0 0' : '8px' }}>
-                        <ImageIcon size={15} color="#8bb2ff" /><span style={{ flex: 1, fontSize: '0.85rem' }}>Photo Gallery</span>
-                        {photos.length > 0 ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(16,185,129,0.12)', color: '#10b981', borderRadius: '20px', padding: '2px 8px', fontSize: '0.72rem', fontWeight: 700 }}><Check size={11} /> {photos.length} foto</span> : <span style={{ background: 'rgba(255,255,255,0.06)', color: '#64748b', borderRadius: '20px', padding: '2px 8px', fontSize: '0.72rem', fontWeight: 600 }}>Belum ada foto</span>}
-                      </div>
-                      {photos.length > 0 && <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '0 0 8px 8px', padding: '8px 10px' }}><div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>{photos.map((url: string, idx: number) => <img key={idx} src={url} alt={`Foto unit ${idx + 1}`} onClick={() => window.open(url, '_blank')} style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: '6px', cursor: 'pointer', display: 'block' }} />)}</div></div>}
-                    </div>); })()}
                 </div>
               )}
             </div>
           </section>
 
-          {/* Slide 5: Manuals */}
-          <section className={`${styles.card} ${styles.carouselSlide}`}>
-            <div className={styles.cardHeader}>
-              <div className={styles.cardHeaderLeft}><BookOpen size={16} color="#8bb2ff" /><h2>Manuals</h2></div>
-              {isAdmin && (<div style={{ display: 'flex', gap: '8px' }}>
-                {editBlocks.manuals && <button className={styles.btnRevise} onClick={() => cancelEdit('manuals')} style={{ background: '#64748b' }}>Cancel</button>}
-                <button className={styles.btnRevise} onClick={() => toggleEdit('manuals')} style={editBlocks.manuals ? { background: '#10b981' } : {}}>{editBlocks.manuals ? (isSaving ? 'Saving…' : 'Save') : 'Revise'}</button>
-              </div>)}
-            </div>
-            <div className={styles.mediaSingleItem} style={{ padding: '16px' }}>
-              {editBlocks.manuals ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <p style={{ fontSize: '0.75rem', color: '#64748b', lineHeight: 1.5 }}>Upload diagram sirkular udara (JPG, PNG, atau PDF).</p>
-                  {(() => { const urls = editData.specs?.manuals_urls ? editData.specs.manuals_urls.split(',').filter(Boolean) : []; return urls.length > 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      {urls.map((url: string, idx: number) => (<div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                        <FileText size={14} color="#8bb2ff" /><span style={{ flex: 1, fontSize: '0.78rem', color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{url.includes('pdf') ? `Diagram PDF ${idx + 1}` : `Diagram Gambar ${idx + 1}`}</span>
-                        <button type="button" onClick={() => window.open(url, '_blank')} style={{ background: 'none', border: 'none', color: '#8bb2ff', cursor: 'pointer', fontSize: '0.72rem', textDecoration: 'underline' }}>Lihat</button>
-                        <button type="button" onClick={() => { const c = (editData.specs?.manuals_urls || '').split(',').filter(Boolean); c.splice(idx, 1); handleEditChange('specs.manuals_urls', c.join(',')); }} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.72rem' }}>Hapus</button>
-                      </div>))}
-                    </div>) : null; })()}
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', border: '1px dashed rgba(255,255,255,0.2)', borderRadius: '8px', padding: '10px 14px', cursor: manualsUploading ? 'not-allowed' : 'pointer', color: '#8f9bb3', fontSize: '0.82rem', background: 'rgba(255,255,255,0.02)', opacity: manualsUploading ? 0.6 : 1 }}>
-                    <ImageIcon size={16} />{manualsUploading ? 'Mengupload...' : 'Klik untuk upload diagram (JPG/PNG/PDF)'}
-                    <input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" multiple style={{ display: 'none' }} disabled={manualsUploading} onChange={(e) => { if (e.target.files?.length) handleManualsUpload(e.target.files); }} />
-                  </label>
-                  {/* YouTube Link Upload */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <label style={{ fontSize: '0.8rem', color: 'var(--color-space-grey)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="#ef4444"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-                      Link Video YouTube (Opsional)
-                    </label>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <input
-                        type="url"
-                        placeholder="https://youtube.com/watch?v=..."
-                        style={{ flex: 1, padding: '10px 12px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#f8fafc', fontSize: '0.82rem', fontFamily: 'inherit', outline: 'none' }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            const val = (e.target as HTMLInputElement).value.trim();
-                            if (val && (val.includes('youtube.com') || val.includes('youtu.be'))) {
-                              const existing = editData.specs?.manuals_urls ? editData.specs.manuals_urls.split(',').filter(Boolean) : [];
-                              handleEditChange('specs.manuals_urls', [...existing, val].join(','));
-                              (e.target as HTMLInputElement).value = '';
-                            }
-                          }
-                        }}
-                        id="youtube-link-input"
-                      />
-                      <button type="button" style={{ padding: '10px 14px', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '8px', color: '#ef4444', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 700, fontFamily: 'inherit', whiteSpace: 'nowrap' }}
-                        onClick={() => {
-                          const inp = document.getElementById('youtube-link-input') as HTMLInputElement;
-                          const val = inp?.value.trim();
-                          if (val && (val.includes('youtube.com') || val.includes('youtu.be'))) {
-                            const existing = editData.specs?.manuals_urls ? editData.specs.manuals_urls.split(',').filter(Boolean) : [];
-                            handleEditChange('specs.manuals_urls', [...existing, val].join(','));
-                            inp.value = '';
-                          }
-                        }}
-                      >+ Tambah</button>
-                    </div>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Tekan Enter atau klik Tambah untuk menyimpan link</span>
+            {/* IoT Sensor Real-Time */}
+            {(isClient || isPartner || isAdmin) && unit.id && (
+              <section className={`${styles.panel} ${styles.iotPanel}`} style={{ background: '#E8EAEE', border: 'none', boxShadow: '-6px -6px 10px rgba(255,255,255,0.72), 6px 6px 12px rgba(0,31,63,0.14)', borderRadius: '20px', backdropFilter: 'none' }}>
+                <div className={styles.panelHeader}>
+                  <div className={styles.panelHeaderLeft}>
+                    <span style={{ fontSize: '1rem' }}>📡</span>
+                    <h2>Sensor Real-Time</h2>
                   </div>
+                  <span style={{ fontSize: '0.65rem', fontWeight: 700, background: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.25)', borderRadius: '20px', padding: '3px 8px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#10b981', display: 'inline-block', animation: 'pulse 1.5s infinite' }} />
+                    LIVE
+                  </span>
                 </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {(() => { const urls = unit?.specs?.manuals_urls ? String(unit.specs.manuals_urls).split(',').filter(Boolean) : [];
-                    if (urls.length === 0) return (<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 16px', gap: '10px', background: 'rgba(255,255,255,0.02)', borderRadius: '10px', border: '1px dashed rgba(255,255,255,0.1)' }}><BookOpen size={28} color="#3d4f6e" /><p style={{ color: '#64748b', fontSize: '0.82rem', textAlign: 'center' }}>Belum ada diagram</p></div>);
-                    return urls.map((url: string, idx: number) => { const isPdf = url.includes('pdf'); const isImage = /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(url); const isYoutube = url.includes('youtube.com') || url.includes('youtu.be'); return (
-                      <div key={idx}>
-                        {isYoutube ? (
-                          <button className={styles.btnPrimary} style={{ justifyContent: 'space-between', padding: '12px 16px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', color: '#fff', fontFamily: 'inherit' }} onClick={() => window.open(url, '_blank')}>
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="#ef4444"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-                              Video YouTube {idx + 1}
-                            </span>
-                            <ExternalLink size={15} color="rgba(255,255,255,0.7)" style={{ flexShrink: 0 }} />
-                          </button>
-                        ) : isImage ? <div onClick={() => window.open(url, '_blank')} style={{ cursor: 'pointer', borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}><img src={url} alt={`Diagram ${idx + 1}`} style={{ width: '100%', display: 'block', objectFit: 'contain', maxHeight: '280px', background: '#0a0e1a' }} /><div style={{ padding: '8px 12px', background: 'rgba(255,255,255,0.03)', fontSize: '0.72rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '6px' }}><ImageIcon size={12} /> Diagram {idx + 1}</div></div>
-                        : <button className={styles.btnPrimary} style={{ justifyContent: 'space-between', padding: '12px 16px', background: 'rgba(255,255,255,0.05)', color: 'var(--color-primary-text)' }} onClick={() => window.open(url, '_blank')}><span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><FileText size={16} />{isPdf ? `Diagram PDF ${idx + 1}` : `File Diagram ${idx + 1}`}</span><ExternalLink size={16} color="#8f9bb3" /></button>}
-                      </div>); });
-                  })()}
+                <div className={styles.panelContent}>
+                  <IotTelemetryWidget unitId={unit.id} isDark={isDark} />
                 </div>
-              )}
-            </div>
-          </section>
+              </section>
+            )}
 
-          {/* Slide 6: Ownership */}
-          <section className={`${styles.card} ${styles.carouselSlide}`}>
-            <div className={styles.cardHeader}>
-              <div className={styles.cardHeaderLeft}><UserCheck size={16} color="#8bb2ff" /><h2>Ownership</h2></div>
-              {isAdmin && (<div style={{ display: 'flex', gap: '8px' }}>
-                {editBlocks.ownership && <button className={styles.btnRevise} onClick={() => cancelEdit('ownership')} style={{ background: '#64748b' }}>Cancel</button>}
-                <button className={styles.btnRevise} onClick={() => toggleEdit('ownership')} style={editBlocks.ownership ? { background: '#10b981' } : {}}>{editBlocks.ownership ? (isSaving ? 'Saving…' : 'Save') : 'Revise'}</button>
-              </div>)}
-            </div>
-            <div className={styles.cardContent}>
-              {editBlocks.ownership ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingBottom: '16px' }}>
-                  <EditField label="Customer Name" value={editData.current_client?.company_name || ''} onChange={(v) => handleEditChange('current_client.company_name', v)} />
-                  <EditField label="HQ Address (Pusat)" value={editData.specs?.hq_address || ''} onChange={(v) => handleEditChange('specs.hq_address', v)} />
-                  <EditField label="SO Number" value={editData.specs?.so_number || ''} onChange={(v) => handleEditChange('specs.so_number', v)} />
-                  <EditField label="DO Number" value={editData.specs?.do_number || ''} onChange={(v) => handleEditChange('specs.do_number', v)} />
-                  <DatePicker label="Delivery Date" value={editData.specs?.delivery_date ? editData.specs.delivery_date.slice(0, 10) : ''} onChange={(v) => handleEditChange('specs.delivery_date', v)} theme="dark" />
-                  
-                  <div style={{ marginTop: '12px', marginBottom: '8px', paddingBottom: '4px', borderBottom: '1px solid rgba(255,255,255,0.1)', fontSize: '0.85rem', fontWeight: 600, color: '#8bb2ff' }}>Lokasi Unit (Branch)</div>
-                  <EditField label="Outlet Branch" value={editData.outlet_branch || ''} onChange={(v) => handleEditChange('outlet_branch', v)} />
-                  <EditField label="Branch Address (Jalan)" value={editData.specs?.branch_address || ''} onChange={(v) => handleEditChange('specs.branch_address', v)} />
-                  <div className={styles.editRow}><div className={styles.editGroup}>
-                    <span className={styles.editLabel}>Kota (City)</span>
-                    <select className={styles.editInput} value={editData.city || ''} onChange={(e) => handleEditChange('city', e.target.value)} style={{ background: '#1e293b', color: '#f8fafc' }}>
-                      <option value="">-- Pilih Kota --</option>
-                      {Object.entries(INDONESIA_CITIES.reduce((acc: Record<string, string[]>, item) => { if (!acc[item.province]) acc[item.province] = []; acc[item.province].push(item.city); return acc; }, {})).map(([province, cities]) => (<optgroup key={province} label={province}>{(cities as string[]).map(city => <option key={city} value={city}>{city}</option>)}</optgroup>))}
-                    </select>
-                  </div></div>
-                </div>
-              ) : (<>
-                <div className={styles.specItem}><span className={styles.specLabel}>Customer Name</span><span className={styles.specValue}>{unit.current_client?.company_name || '—'}</span></div>
-                <div className={styles.specItem}><span className={styles.specLabel}>HQ Address</span><span className={styles.specValue}>{unit.specs?.hq_address || '—'}</span></div>
-                <div className={styles.specItem}><span className={styles.specLabel}>SO Number</span><span className={styles.specValue}>{unit.specs?.so_number || '—'}</span></div>
-                <div className={styles.specItem}><span className={styles.specLabel}>DO Number</span><span className={styles.specValue}>{unit.specs?.do_number || '—'}</span></div>
-                <div className={styles.specItem}><span className={styles.specLabel}>Delivery Date</span><span className={styles.specValue}>{unit.specs?.delivery_date ? new Date(unit.specs.delivery_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'}</span></div>
-                
-                <div style={{ marginTop: '12px', padding: '4px 16px', fontSize: '0.75rem', fontWeight: 700, color: '#8bb2ff', textTransform: 'uppercase', letterSpacing: '0.05em', background: 'rgba(59,130,246,0.1)' }}>Lokasi Unit (Branch)</div>
-                <div className={styles.specItem}><span className={styles.specLabel}>Outlet Branch</span><span className={styles.specValue}>{unit.outlet_branch || '—'}</span></div>
-                <div className={styles.specItem}><span className={styles.specLabel}>Branch Address</span><span className={styles.specValue}>{unit.specs?.branch_address || '—'}</span></div>
-                <div className={styles.specItem} style={{ borderBottom: 'none' }}><span className={styles.specLabel}>City & Province</span><span className={styles.specValue}>{unit.city ? (() => { const m = INDONESIA_CITIES.find(c => c.city === unit.city); return m ? `${unit.city}, ${m.province}` : unit.city; })() : '—'}</span></div>
-              </>)}
-            </div>
-          </section>
+            {/* Stats Card dipindah ke bawah layout — full width */}
 
-          {/* Slide 7: Riwayat Servis */}
-          <div className={styles.carouselSlide}>
-            <ServiceHistorySection serviceLogs={unit.service_logs || []} />
+          </div>{/* end passportRight */}
+        </div>{/* end passportLayout */}
+
+        {/* Stats Card — full width di bawah dua kolom */}
+        <section className={`${styles.panel} ${styles.statsFullWidth}`} style={{ background: '#E8EAEE', border: 'none', boxShadow: '-6px -6px 10px rgba(255,255,255,0.72), 6px 6px 12px rgba(0,31,63,0.14)', borderRadius: '20px', backdropFilter: 'none' }}>
+          <div className={styles.panelHeader}><div className={styles.panelHeaderLeft}><Settings size={16} color="var(--color-cobalt-blue)" /><h2>Stats Card</h2></div></div>
+          <div className={`${styles.statsGrid} ${styles.panelContent}`}>
+            {[
+              { tip: 'Kondisi operasional unit saat ini.', icon: <CheckCircle2 size={24} />, cls: styles.success, title: 'Status Unit', status: 'Normal', color: 'var(--color-cobalt-blue)', sub: 'Unit beroperasi dengan baik' },
+              { tip: 'Masa garansi resmi dari Holicindo.', icon: <ShieldAlert size={24} />, cls: isWarrantyActive ? styles.success : styles.warning, title: 'Garansi', status: isWarrantyActive ? 'Aktif' : 'Kedaluwarsa', color: isWarrantyActive ? 'var(--color-cobalt-blue)' : '#f59e0b', sub: isWarrantyActive ? `Hingga ${expiryDate?.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) || ''}` : 'Hubungi support' },
+              { tip: 'Tanggal terakhir unit diservis.', icon: <Wrench size={24} />, cls: styles.info, title: 'Last Service', status: 'Belum Ada', color: '#336bd9ff', sub: 'Belum pernah diservis' },
+              { tip: 'Estimasi jadwal servis berikutnya.', icon: <Clock size={24} />, cls: styles.info, title: 'Next Service', status: 'Disarankan', color: '#3b82f6', sub: 'Dalam 180 hari' },
+              { tip: 'Status keaslian unit.', icon: <CheckCircle2 size={24} />, cls: styles.success, title: 'Verifikasi', status: 'Asli', color: 'var(--color-cobalt-blue)', sub: 'Unit terverifikasi Holicindo' },
+            ].map((s) => (
+              <div key={s.title} className={styles.statusItem} style={{ position: 'relative' }}>
+                <span className={styles.statTooltipAnchor}><HelpCircle size={12} className={styles.statTooltipIcon} /><span className={styles.statTooltip}>{s.tip}</span></span>
+                <div className={`${styles.statusIcon} ${s.cls}`}>{s.icon}</div>
+                <div className={styles.statusText}>
+                  <h3>{s.title}</h3>
+                  <p style={{ color: s.color }}>{s.status}</p>
+                  <span>{s.sub}</span>
+                </div>
+              </div>
+            ))}
           </div>
-
-          </div>
-          <button className={`${styles.carouselNavBtn} ${styles.nextBtn}`} onClick={() => { if (carouselRef.current) carouselRef.current.scrollBy({ left: carouselRef.current.clientWidth, behavior: 'smooth' }); }}>&rsaquo;</button>
-        </div>
+        </section>
 
         {/* Media Modal */}
         {selectedMedia && (

@@ -23,6 +23,7 @@ api.interceptors.request.use((config) => {
 export const authApi = {
   login: (credentials: any) => api.post('/auth/login', credentials),
   register: (data: any) => api.post('/auth/register', data),
+  updateProfile: (data: { name?: string }) => api.patch('/auth/me', data),
 };
 
 export const unitApi = {
@@ -106,4 +107,9 @@ export const messageApi = {
 
 export const userApi = {
   findAll: () => api.get('/auth/users'),
+};
+
+export const iotApi = {
+  getLatest: (unitId: string) => api.get(`/units/${unitId}/telemetry/latest`),
+  getHistory: (unitId: string, hours: number = 24) => api.get(`/units/${unitId}/telemetry/history?hours=${hours}`),
 };

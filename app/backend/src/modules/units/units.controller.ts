@@ -58,8 +58,13 @@ export class UnitsController {
   @Roles(UserRole.CLIENT, UserRole.PARTNER, UserRole.ADMIN)
   @ApiBearerAuth()
   @Get(':id')
-  @ApiOperation({ summary: 'Get full unit detail by ID' })
-  findOne(@Param('id') id: string) {
+  @ApiOperation({ summary: 'Get unit detail by ID (CLIENT: ownership-checked)' })
+  findOne(@Param('id') id: string, @Request() req: any) {
+    // CLIENT hanya boleh akses unit milik mereka sendiri
+    if (req.user?.role === UserRole.CLIENT && req.user?.client_id) {
+      return this.unitsService.findOneForClient(id, req.user.client_id);
+    }
+    // PARTNER & ADMIN bisa akses semua
     return this.unitsService.findOne(id);
   }
 

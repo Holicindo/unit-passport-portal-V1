@@ -66,6 +66,35 @@ export class Unit {
   @Column({ default: 'ACTIVE' })
   status!: string;
 
+  // --- IoT Real-Time State ---
+  // Diisi oleh Admin saat mendaftarkan alat IoT ke unit ini (Contoh: "HC-0001")
+  @Column({ nullable: true })
+  iot_unit_id?: string;
+
+  @Column({ type: 'float', nullable: true })
+  last_temp_cabinet?: number;
+
+  @Column({ type: 'float', nullable: true })
+  last_temp_evaporator?: number;
+
+  @Column({ type: 'float', nullable: true })
+  last_temp_condenser?: number;
+
+  @Column({ type: 'float', nullable: true })
+  last_voltage?: number;
+
+  @Column({ type: 'float', nullable: true })
+  last_power?: number;
+
+  @Column({ nullable: true })
+  is_door1_open?: boolean;
+
+  @Column({ nullable: true })
+  is_door2_open?: boolean;
+
+  @Column({ type: 'timestamp', nullable: true })
+  last_seen_at?: Date;
+
   @OneToMany(() => ServiceLog, (log) => log.unit)
   service_logs!: ServiceLog[];
 

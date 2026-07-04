@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { reportApi } from '@/lib/api';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Printer, FileDown, Camera, Loader2 } from 'lucide-react';
+import { ArrowLeft, Camera, Loader2 } from 'lucide-react';
 import styles from '../../ClientPortal.module.css';
 
 // Reuse the same report template renderers as the admin view
@@ -84,8 +84,6 @@ export default function ClientReportDetail() {
     if (id) fetchReport();
   }, [id, router]);
 
-  const handlePrint = () => window.print();
-
   if (loading) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px', gap: '16px' }}>
@@ -153,10 +151,9 @@ export default function ClientReportDetail() {
 
   return (
     <div>
-      {/* Toolbar — stacked layout on mobile */}
+      {/* Toolbar — back button + report info */}
       <div style={{ marginBottom: '16px' }}>
-        {/* Row 1: back + report info */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <button
             onClick={() => router.back()}
             style={{
@@ -182,39 +179,15 @@ export default function ClientReportDetail() {
             </div>
           </div>
         </div>
-        {/* Row 2: action buttons full width */}
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button
-            onClick={handlePrint}
-            style={{
-              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-              padding: '9px 12px', borderRadius: '8px',
-              border: '1px solid var(--brand-border)',
-              background: 'white', cursor: 'pointer',
-              fontFamily: 'var(--font-body)', fontSize: '0.82rem', fontWeight: 600,
-              color: 'var(--brand-deep-navy)',
-            }}
-          >
-            <Printer size={14} /> Cetak / Print
-          </button>
-          <button
-            onClick={handlePrint}
-            style={{
-              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-              padding: '9px 12px', borderRadius: '8px',
-              border: 'none',
-              background: 'var(--brand-cobalt-blue)', cursor: 'pointer',
-              fontFamily: 'var(--font-body)', fontSize: '0.82rem', fontWeight: 600,
-              color: 'white',
-            }}
-          >
-            <FileDown size={14} /> Simpan PDF
-          </button>
-        </div>
       </div>
 
-      {/* Report preview — scaled to fit mobile screen, no horizontal scroll */}
-      <div style={{ background: 'white', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
+      {/* Report preview — neumorphic card wrapper */}
+      <div style={{
+        background: 'var(--neu-base)',
+        borderRadius: '18px',
+        overflow: 'hidden',
+        boxShadow: 'var(--neu-shadow)',
+      }}>
         <div ref={reportContainerRef} style={{ position: 'relative' }}>
           <div id="report-print-area" ref={reportWrapperRef} className="reportScaleWrapper">
             {renderTemplate()}
@@ -223,21 +196,23 @@ export default function ClientReportDetail() {
 
         {/* Photo documentation */}
         {report.photo_urls && report.photo_urls.length > 0 && report.form_type !== 'COMMISSIONING' && (
-          <div style={{ padding: '24px', borderTop: '1px solid #e2e8f0' }} className="photoContainerPrintExclude">
+          <div style={{ padding: '24px', borderTop: '1px solid rgba(0,31,63,0.06)' }} className="photoContainerPrintExclude">
             <h4 style={{
-              fontSize: '11px', fontWeight: 800, color: '#475569',
+              fontSize: '11px', fontWeight: 800, color: 'var(--brand-space-grey)',
               textTransform: 'uppercase', letterSpacing: '0.05em',
               margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: '6px',
+              fontFamily: 'var(--font-heading)',
             }}>
-              <Camera size={14} style={{ color: '#2e5bff' }} />
+              <Camera size={14} style={{ color: 'var(--brand-cobalt-blue)' }} />
               Lampiran Foto Dokumentasi QC
             </h4>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
               {report.photo_urls.map((url: string, index: number) => (
                 <div key={index} style={{
                   width: '100px', height: '100px', flexShrink: 0,
-                  borderRadius: '6px', border: '1px solid #edf1f5',
+                  borderRadius: '10px',
                   overflow: 'hidden',
+                  boxShadow: 'var(--neu-shadow-sm)',
                 }}>
                   <img
                     src={url}
@@ -252,22 +227,14 @@ export default function ClientReportDetail() {
       </div>
 
       <style dangerouslySetInnerHTML={{ __html: `
-        @media print {
-          .photoContainerPrintExclude { display: none !important; }
-          nav, header, footer, aside { display: none !important; }
-          .reportScaleWrapper { transform: none !important; width: auto !important; }
-        }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
         /* Mobile: scale A4 template to fit viewport width */
         @media (max-width: 768px) {
           .reportScaleWrapper {
-            /* A4 content is ~794px wide. Scale it to viewport width */
             transform-origin: top left;
             transform: scale(calc((100vw - 32px) / 794));
             width: 794px;
-            /* height collapses because transform doesn't affect layout flow */
-            /* Use JS-based height or padding-bottom trick via CSS custom property */
           }
           .reportScaleWrapper + .scaleHeightCompensator {
             display: block;

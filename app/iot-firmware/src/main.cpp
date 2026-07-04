@@ -8,8 +8,8 @@
 
 // --- KONFIGURASI WIFI & MQTT ---
 // Ganti bagian ini nanti sesuai dengan WiFi yang Anda pakai untuk testing
-const char* ssid = "bahagia";
-const char* password = "ceria123";
+const char* ssid = "HDA";
+const char* password = "Kerjadulu2026";
 const char* mqtt_server = "broker.hivemq.com"; // MQTT Publik gratis untuk tes POC
 const int mqtt_port = 1883;
 

@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": "../../../../.."
+		},
+		{
+			"name": "iot-firmware",
+			"path": "../../../../iot-firmware"
+		}
+	],
+	"settings": {}
+}

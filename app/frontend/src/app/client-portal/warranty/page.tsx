@@ -141,27 +141,33 @@ export default function ClientWarranty() {
         </p>
       </div>
 
-      {/* Summary Cards — angka semua Deep Navy */}
+      {/* Summary Cards */}
       <div className={styles.statsGrid} style={{ marginBottom: 24 }}>
-        <div className={styles.statCard}>
+        <div className={`${styles.statCard} ${styles.statCardGreen}`}>
           <div className={styles.statCardLabel}>Garansi Aktif</div>
           <div className={styles.statCardValue}>{activeCount}</div>
           <div className={styles.statCardFooter}>
-            <span className={styles.statBadgeUp}><ShieldCheck size={11} /> Aman</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(3,86,197,0.35)', color: '#93C5FD', padding: '2px 8px', borderRadius: 20, fontSize: '0.72rem', fontWeight: 700, fontFamily: 'var(--font-heading)' }}>
+              <ShieldCheck size={11} /> Aman
+            </span>
           </div>
         </div>
-        <div className={styles.statCard}>
+        <div className={`${styles.statCard} ${styles.statCardOrange}`}>
           <div className={styles.statCardLabel}>Segera Habis</div>
           <div className={styles.statCardValue}>{expiringCount}</div>
           <div className={styles.statCardFooter}>
-            <span className={styles.statBadgeWarn}><AlertTriangle size={11} /> Dalam 30 hari</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(255,107,0,0.25)', color: '#FCA5A5', padding: '2px 8px', borderRadius: 20, fontSize: '0.72rem', fontWeight: 700, fontFamily: 'var(--font-heading)' }}>
+              <AlertTriangle size={11} /> Dalam 30 hari
+            </span>
           </div>
         </div>
-        <div className={styles.statCard}>
+        <div className={`${styles.statCard} ${styles.statCardBlue}`}>
           <div className={styles.statCardLabel}>Garansi Habis</div>
           <div className={styles.statCardValue}>{expiredCount}</div>
           <div className={styles.statCardFooter}>
-            <span className={styles.statBadgeDown}><ShieldAlert size={11} /> Perlu perhatian</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(239,68,68,0.25)', color: '#FCA5A5', padding: '2px 8px', borderRadius: 20, fontSize: '0.72rem', fontWeight: 700, fontFamily: 'var(--font-heading)' }}>
+              <ShieldAlert size={11} /> Perlu perhatian
+            </span>
           </div>
         </div>
       </div>
@@ -198,13 +204,12 @@ export default function ClientWarranty() {
                     <tr key={unit.id}>
                       <td data-label="Serial Number">
                         <Link 
-                          href={`/id/${unit.qr_token || unit.id}`}
+                          href={`/client-portal/units/${unit.id}`}
                           style={{
                             fontWeight: 700,
-                            color: 'var(--brand-ocean-blue)',
+                            color: 'var(--brand-cobalt-blue)',
                             fontFamily: 'var(--font-heading)',
-                            textDecoration: 'underline',
-                            textUnderlineOffset: '2px',
+                            textDecoration: 'none',
                           }}>
                           {unit.serial_number}
                         </Link>

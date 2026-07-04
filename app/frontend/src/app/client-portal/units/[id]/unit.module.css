@@ -1,6 +1,6 @@
 /* ============================================================
-   CLIENT PORTAL — Unit Detail Page
-   Brand Identity Holicindo
+   CLIENT PORTAL — Unit Detail Page — Neumorphism Theme
+   Base: #E4E6EF | Holicindo Brand Identity
    ============================================================ */
 
 /* Tombol kembali */
@@ -40,20 +40,22 @@
   gap: 16px;
 }
 
-/* Kotak ikon unit — Deep Navy */
+/* Kotak ikon unit — neumorphic deep navy */
 .unitIconBox {
   width: 56px;
   height: 56px;
-  border-radius: 14px;
+  border-radius: 16px;
   background: var(--brand-deep-navy);
   color: var(--brand-optic-white);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow:
+    -4px -4px 8px rgba(255, 255, 255, 0.55),
+     4px  4px 8px rgba(0, 31, 63, 0.35);
 }
 
-/* Serial number — Montserrat Bold */
 .unitSerial {
   font-size: 1.5rem;
   font-weight: 800;
@@ -77,15 +79,18 @@
   flex-wrap: wrap;
 }
 
-/* Badge jumlah catatan */
+/* Badge jumlah catatan — neumorphic pill */
 .countBadge {
   font-size: 0.75rem;
   font-weight: 700;
   color: var(--brand-space-grey);
-  background: var(--brand-light-grey);
+  background: var(--neu-base);
   padding: 3px 10px;
   border-radius: 20px;
   font-family: var(--font-heading);
+  box-shadow:
+    inset 2px 2px 4px rgba(0, 31, 63, 0.06),
+    inset -2px -2px 4px rgba(255, 255, 255, 0.90);
 }
 
 /* ── Log Servis ── */
@@ -98,7 +103,7 @@
 .logItem {
   display: flex;
   gap: 0;
-  border-bottom: 1px solid var(--brand-light-grey);
+  border-bottom: 1px solid rgba(0, 31, 63, 0.05);
 }
 
 .logItem:last-child {
@@ -181,25 +186,31 @@
   font-weight: 600;
   color: var(--brand-cobalt-blue);
   text-decoration: none;
-  padding: 3px 10px;
-  border-radius: 6px;
-  border: 1px solid rgba(46, 91, 255, 0.2);
-  background: rgba(46, 91, 255, 0.05);
-  transition: all 0.15s;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: none;
+  background: var(--neu-base);
+  box-shadow:
+    -2px -2px 4px rgba(255, 255, 255, 0.72),
+     2px  2px 4px rgba(0, 31, 63, 0.12);
+  transition: all 0.2s;
   font-family: var(--font-body);
 }
 
 .attachLink:hover {
-  background: rgba(46, 91, 255, 0.1);
-  border-color: var(--brand-cobalt-blue);
+  box-shadow:
+    -3px -3px 6px rgba(255, 255, 255, 0.80),
+     3px  3px 6px rgba(0, 31, 63, 0.18);
+  transform: translateY(-1px);
 }
 
-/* ── Modal Request Servis ── */
+/* ── Modal Request Servis — Neumorphic ── */
 .modalOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 31, 63, 0.4);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 31, 63, 0.35);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   z-index: 500;
   display: flex;
   align-items: center;
@@ -208,11 +219,14 @@
 }
 
 .modal {
-  background: var(--brand-optic-white);
-  border-radius: 20px;
+  background: #E4E6EF;
+  border-radius: 22px;
   width: 100%;
   max-width: 480px;
-  box-shadow: 0 20px 60px rgba(0, 31, 63, 0.2);
+  box-shadow:
+    -10px -10px 20px rgba(255, 255, 255, 0.72),
+     10px  10px 24px rgba(0, 31, 63, 0.18),
+     0 4px 10px rgba(0, 31, 63, 0.08);
   overflow: hidden;
 }
 
@@ -221,7 +235,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 20px 24px;
-  border-bottom: 1px solid var(--brand-border);
+  border-bottom: 1px solid rgba(0, 31, 63, 0.06);
 }
 
 .modalTitle {
@@ -232,25 +246,37 @@
   font-family: var(--font-heading);
 }
 
+/* Tombol tutup — neumorphic */
 .modalClose {
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  border: 1px solid var(--brand-border);
-  background: var(--brand-optic-white);
+  border: none;
+  background: var(--neu-base);
   color: var(--brand-space-grey);
   font-size: 1.2rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s;
+  transition: all 0.2s;
   line-height: 1;
+  box-shadow:
+    -2px -2px 5px rgba(255, 255, 255, 0.72),
+     2px  2px 5px rgba(0, 31, 63, 0.12);
 }
 
 .modalClose:hover {
-  background: var(--brand-light-grey);
   color: var(--brand-deep-navy);
+  box-shadow:
+    -3px -3px 7px rgba(255, 255, 255, 0.80),
+     3px  3px 7px rgba(0, 31, 63, 0.18);
+}
+
+.modalClose:active {
+  box-shadow:
+    inset 2px 2px 4px rgba(0, 31, 63, 0.07),
+    inset -2px -2px 4px rgba(255, 255, 255, 0.92);
 }
 
 .modalForm {
@@ -275,25 +301,30 @@
   font-family: var(--font-heading);
 }
 
+/* Form input — neumorphic inset */
 .formInput,
 .formTextarea {
-  border: 1px solid var(--brand-border);
-  border-radius: 8px;
+  border: none;
+  border-radius: 10px;
   padding: 10px 14px;
   font-size: 0.875rem;
   color: var(--brand-deep-navy);
-  background: var(--brand-light-grey);
+  background: #E4E6EF;
   outline: none;
-  transition: all 0.15s;
+  transition: all 0.2s;
   font-family: var(--font-body);
   width: 100%;
+  box-shadow:
+    inset 3px 3px 7px rgba(0, 31, 63, 0.07),
+    inset -3px -3px 7px rgba(255, 255, 255, 0.92);
 }
 
 .formInput:focus,
 .formTextarea:focus {
-  border-color: var(--brand-cobalt-blue);
-  background: var(--brand-optic-white);
-  box-shadow: 0 0 0 3px rgba(46, 91, 255, 0.1);
+  box-shadow:
+    inset 4px 4px 8px rgba(0, 31, 63, 0.09),
+    inset -4px -4px 8px rgba(255, 255, 255, 0.95),
+    0 0 0 2px rgba(46, 91, 255, 0.18);
 }
 
 .formTextarea {

@@ -30,8 +30,8 @@ export function useAdminActions(
     const noChange =
       editData.model_name === (unit?.model_name || '') &&
       editData.serial_number === (unit?.serial_number || '') &&
-      editData.warranty_expiry === (unit?.warranty_expiry || '') &&
-      editData.diagram_image_url === (unit?.diagram_image_url || '') &&
+      editData.outlet_branch === (unit?.outlet_branch || '') &&
+      editData.city === (unit?.city || '') &&
       JSON.stringify(editData.specs) === JSON.stringify(unit?.specs);
 
     if (noChange) { showToast('Tidak ada perubahan', 'info'); return; }
@@ -39,22 +39,56 @@ export function useAdminActions(
     setIsSaving(true);
     try {
       if (unit?.id) {
-        const payload: any = {
-          current_client_id: editData.current_client?.id,
-          outlet_branch: editData.outlet_branch,
-          city: editData.city,
-        };
-        if (editData.model_name !== undefined) payload.model_name = editData.model_name;
-        if (editData.specs !== undefined) payload.specs = editData.specs;
-        if (editData.diagram_image_url !== undefined) payload.diagram_image_url = editData.diagram_image_url;
-        if (editData.warranty_expiry !== undefined) payload.warranty_expiry = editData.warranty_expiry;
+        const payload: any = {};
+
+        // Spesifikasi block: model_name, specs, warranty_expiry, diagram_image_url
+        if (block === 'spesifikasi') {
+          if (editData.model_name !== undefined) payload.model_name = editData.model_name;
+          if (editData.specs !== undefined) {
+            // Sanitize: hapus field undefined, JSON.parse(JSON.stringify()) untuk clean
+            const cleanSpecs = JSON.parse(JSON.stringify(editData.specs, (_, v) => v === undefined ? null : v));
+            payload.specs = cleanSpecs;
+          }
+          if (editData.diagram_image_url !== undefined) payload.diagram_image_url = editData.diagram_image_url;
+          if (editData.warranty_expiry && editData.warranty_expiry.length >= 10) {
+            payload.warranty_expiry = editData.warranty_expiry;
+          }
+        }
+
+        // QC block: only specs
+        if (block === 'qc') {
+          if (editData.specs !== undefined) {
+            const cleanSpecs = JSON.parse(JSON.stringify(editData.specs, (_, v) => v === undefined ? null : v));
+            payload.specs = cleanSpecs;
+          }
+        }
+
+        // Manuals block: only specs
+        if (block === 'manuals') {
+          if (editData.specs !== undefined) {
+            const cleanSpecs = JSON.parse(JSON.stringify(editData.specs, (_, v) => v === undefined ? null : v));
+            payload.specs = cleanSpecs;
+          }
+        }
+
+        // Ownership block: client, location fields
+        if (block === 'ownership') {
+          if (editData.outlet_branch !== undefined) payload.outlet_branch = editData.outlet_branch;
+          if (editData.city !== undefined) payload.city = editData.city;
+          if (editData.current_client?.id) payload.current_client_id = editData.current_client.id;
+          if (editData.specs !== undefined) {
+            const cleanSpecs = JSON.parse(JSON.stringify(editData.specs, (_, v) => v === undefined ? null : v));
+            payload.specs = cleanSpecs;
+          }
+        }
+
         await unitApi.update(unit.id, payload);
         showToast('Perubahan berhasil disimpan!', 'success');
         loadUnitData();
       }
     } catch (err: any) {
       const msg = err?.response?.data?.message || err?.message || 'Gagal menyimpan perubahan.';
-      showToast(msg, 'error');
+      showToast(Array.isArray(msg) ? msg.join(', ') : msg, 'error');
     } finally {
       setIsSaving(false);
     }
@@ -99,8 +133,24 @@ export function useAdminActions(
     try {
       const { data } = await unitApi.uploadMedia(Array.from(files));
       const urls: string[] = Array.isArray(data) ? data.map((d: any) => d?.url || d).filter(Boolean) : (data?.urls || []);
-      const existing = editData.specs?.photo_gallery ? editData.specs.photo_gallery.split(',').filter(Boolean) : [];
-      handleEditChange('specs.photo_gallery', [...existing, ...urls].join(','));
+      const existing = editData.specs?.photo_gallery ? editData.specs.photo_gallery.split(',').filter(Boolean) : (unit?.specs?.photo_gallery ? unit.specs.photo_gallery.split(',').filter(Boolean) : []);
+      const allUrls = [...existing, ...urls].join(',');
+      handleEditChange('specs.photo_gallery', allUrls);
+
+      // Auto-save langsung setelah upload berhasil
+      if (unit?.id) {
+        const baseSpecs = { ...(unit?.specs || {}), ...(editData.specs || {}) };
+        baseSpecs.photo_gallery = allUrls;
+        const cleanSpecs = JSON.parse(JSON.stringify(baseSpecs, (_, v) => v === undefined ? null : v));
+        try {
+          await unitApi.update(unit.id, { specs: cleanSpecs });
+          showToast('Foto berhasil diupload dan disimpan.', 'success');
+          loadUnitData();
+        } catch (saveErr: any) {
+          const msg = saveErr?.response?.data?.message || 'Foto terupload tapi gagal disimpan.';
+          showToast(Array.isArray(msg) ? msg.join(', ') : msg, 'error');
+        }
+      }
     } catch { showToast('Gagal mengupload foto.', 'error'); }
     finally { setPhotoGalleryUploading(false); }
   };

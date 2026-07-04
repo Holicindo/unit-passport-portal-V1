@@ -4,7 +4,7 @@
   /* Brand Identity Colors */
   --color-space-grey: #717378;      /* Headers, icons, sidebar */
   --color-deep-navy: #001F3F;       /* Footers, badges, text */
-  --color-light-tech-grey: #F2F4F7; /* Main background */
+  --color-light-tech-grey: #E8EAEE; /* Main background — warm grey untuk neumorphism */
   --color-optic-white: #FFFFFF;     /* Cards, content */
   --color-cobalt-blue: #2E5BFF;     /* Buttons, links, actions */
   --color-safety-orange: #FF6B00;   /* Warning, emergency */
@@ -28,6 +28,31 @@
   --glass-blur: blur(24px) saturate(180%);
   --glass-shadow: 0 8px 32px rgba(0, 31, 63, 0.06), 0 2px 8px rgba(46, 91, 255, 0.04);
   --glass-shadow-hover: 0 16px 48px rgba(0, 31, 63, 0.1), 0 4px 12px rgba(46, 91, 255, 0.08);
+
+  /* Neumorphism Card Tokens — untuk halaman passport dan portal */
+  --shadow-card-neu:
+    -5px -5px 12px rgba(255, 255, 255, 0.9),
+     5px  5px 12px rgba(0, 31, 63, 0.12),
+     0 1px 3px rgba(0, 31, 63, 0.06);
+  --border-card: 1px solid rgba(0, 31, 63, 0.05);
+  --shadow-card-inset: inset 3px 3px 7px rgba(0, 31, 63, 0.07), inset -3px -3px 7px rgba(255, 255, 255, 0.92);
+
+  /* Neumorphism tokens — shorthand untuk client portal dan komponen lain */
+  --neu-base:          #E4E6EF;
+  --neu-shadow:
+    -6px -6px 10px rgba(255, 255, 255, 0.72),
+     6px  6px 12px rgba(0, 31, 63, 0.14),
+     0 1px 3px rgba(0, 31, 63, 0.05);
+  --neu-shadow-sm:
+    -3px -3px 6px rgba(255, 255, 255, 0.72),
+     3px  3px 6px rgba(0, 31, 63, 0.14);
+  --neu-shadow-inset:
+    inset 3px 3px 7px rgba(0, 31, 63, 0.07),
+    inset -3px -3px 7px rgba(255, 255, 255, 0.92);
+  --neu-shadow-hover:
+    -8px -8px 14px rgba(255, 255, 255, 0.80),
+     8px  8px 16px rgba(0, 31, 63, 0.18),
+     0 2px 5px rgba(0, 31, 63, 0.07);
 
   /* Background Gradient - Subtle frosted aurora glow from sidebar */
   --bg-gradient-image: 
@@ -81,6 +106,12 @@ html, body {
 @keyframes bodyGradientFlow {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes passportBgFlow {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
 
@@ -482,6 +513,11 @@ a {
   --glass-blur: blur(20px) saturate(180%);
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   --glass-shadow-hover: 0 16px 48px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+
+  /* Neumorphism Card Tokens — dark mode override */
+  --shadow-card-neu: 0 8px 32px rgba(46, 91, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --border-card: 1px solid rgba(46, 91, 255, 0.2);
+  --shadow-card-inset: inset 4px 4px 12px rgba(0, 0, 0, 0.2), inset -4px -4px 8px rgba(46, 91, 255, 0.05);
 }
 
 /* ── LOGIN-STYLE Background Grid & Dots for Admin Dark Mode ── */
@@ -1595,22 +1631,76 @@ a {
 
 /* Sidebar - always #001F3F (no light mode override needed) */
 
-/* Cards - Optic White glass with brand shadows */
-:root:not([data-theme="dark"]) [class*="Card_"]:not([class*="modal"]):not([class*="Modal"]),
-:root:not([data-theme="dark"]) [class*="card_"]:not([class*="modal"]):not([class*="Modal"]),
-:root:not([data-theme="dark"]) [class*="Card"]:not([class*="modal"]):not([class*="Modal"]),
-:root:not([data-theme="dark"]) [class*="card"]:not([class*="modal"]):not([class*="Modal"]),
-html:not([data-theme="dark"]) [class*="Card_"]:not([class*="modal"]):not([class*="Modal"]),
-html:not([data-theme="dark"]) [class*="card_"]:not([class*="modal"]):not([class*="Modal"]),
-html:not([data-theme="dark"]) [class*="Card"]:not([class*="modal"]):not([class*="Modal"]),
-html:not([data-theme="dark"]) [class*="card"]:not([class*="modal"]):not([class*="Modal"]) {
-  background: rgba(255, 255, 255, 0.92) !important;  /* Optic White glass */
-  border: 1px solid rgba(113, 115, 120, 0.1) !important;  /* Space Grey border */
+/* Cards - Optic White glass with brand shadows (tidak berlaku di passport page & client portal) */
+:root:not([data-theme="dark"]) [class*="Card_"]:not([class*="modal"]):not([class*="Modal"]):not([class*="ClientPortal"]),
+:root:not([data-theme="dark"]) [class*="card_"]:not([class*="modal"]):not([class*="Modal"]):not([class*="ClientPortal"]),
+:root:not([data-theme="dark"]) [class*="Card"]:not([class*="modal"]):not([class*="Modal"]):not([class*="ClientPortal"]),
+:root:not([data-theme="dark"]) [class*="card"]:not([class*="modal"]):not([class*="Modal"]):not([class*="ClientPortal"]),
+html:not([data-theme="dark"]) [class*="Card_"]:not([class*="modal"]):not([class*="Modal"]):not([class*="ClientPortal"]),
+html:not([data-theme="dark"]) [class*="card_"]:not([class*="modal"]):not([class*="Modal"]):not([class*="ClientPortal"]),
+html:not([data-theme="dark"]) [class*="Card"]:not([class*="modal"]):not([class*="Modal"]):not([class*="ClientPortal"]),
+html:not([data-theme="dark"]) [class*="card"]:not([class*="modal"]):not([class*="Modal"]):not([class*="ClientPortal"]) {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border: 1px solid rgba(113, 115, 120, 0.1) !important;
   box-shadow: 0 8px 32px rgba(0, 31, 63, 0.05), 0 2px 8px rgba(46, 91, 255, 0.03) !important;
   backdrop-filter: blur(20px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-  color: var(--color-deep-navy) !important;  /* Deep Navy text */
+  color: var(--color-deep-navy) !important;
   border-radius: 16px !important;
+}
+
+/* ── Passport page: BATALKAN glass override, pakai neumorphism ── */
+/* Selector ini identik dengan di atas + [data-page="passport"] sehingga source order menang */
+html:not([data-theme="dark"]) [data-page="passport"] [class*="Card_"],
+html:not([data-theme="dark"]) [data-page="passport"] [class*="card_"],
+html:not([data-theme="dark"]) [data-page="passport"] [class*="Card"],
+html:not([data-theme="dark"]) [data-page="passport"] [class*="card"],
+html:not([data-theme="dark"]) [data-page="passport"] section,
+:root:not([data-theme="dark"]) [data-page="passport"] [class*="Card_"],
+:root:not([data-theme="dark"]) [data-page="passport"] [class*="card_"],
+:root:not([data-theme="dark"]) [data-page="passport"] [class*="Card"],
+:root:not([data-theme="dark"]) [data-page="passport"] [class*="card"],
+:root:not([data-theme="dark"]) [data-page="passport"] section {
+  background: #E8EAEE !important;
+  border: none !important;
+  box-shadow:
+    -6px -6px 10px rgba(255, 255, 255, 0.72),
+     6px  6px 12px rgba(0, 31, 63, 0.14),
+     0 1px 3px rgba(0, 31, 63, 0.05) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-radius: 18px !important;
+  color: var(--color-deep-navy) !important;
+}
+:root:not([data-theme="dark"]) [data-page="passport"] [class*="card_"],
+:root:not([data-theme="dark"]) [data-page="passport"] [class*="Card"],
+:root:not([data-theme="dark"]) [data-page="passport"] [class*="card"],
+html:not([data-theme="dark"]) [data-page="passport"] section,
+:root:not([data-theme="dark"]) [data-page="passport"] section {
+  background: #E8EAEE !important;
+  border: none !important;
+  box-shadow:
+    -8px -8px 16px rgba(255, 255, 255, 0.78),
+     8px  8px 18px rgba(0, 31, 63, 0.16),
+     0 2px 4px rgba(0, 31, 63, 0.06) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-radius: 20px !important;
+  color: var(--color-deep-navy) !important;
+}
+
+/* ── Passport page: force animated neumorphism background ── */
+[data-page="passport"] {
+  background: linear-gradient(
+    135deg,
+    #dde0e6 0%,
+    #eceef2 25%,
+    #e4e7ec 50%,
+    #d8dbe2 75%,
+    #e8eaee 100%
+  ) !important;
+  background-size: 300% 300% !important;
+  animation: passportBgFlow 8s ease infinite !important;
 }
 
 /* Dashboard chart/list cards */

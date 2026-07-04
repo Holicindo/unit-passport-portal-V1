@@ -37,6 +37,16 @@ export class UnitsService {
     });
   }
 
+  // L2 Client — Single unit detail with ownership check
+  async findOneForClient(id: string, clientId: string) {
+    const unit = await this.unitRepo.findOne({
+      where: { id, current_client: { id: clientId } },
+      relations: ['current_client', 'warranties', 'service_logs'],
+    });
+    if (!unit) throw new NotFoundException('Unit tidak ditemukan atau tidak terdaftar atas nama perusahaan Anda.');
+    return unit;
+  }
+
   // L3 Partner — Technical view
   async findTechnicalById(id: string) {
     const unit = await this.unitRepo.findOne({

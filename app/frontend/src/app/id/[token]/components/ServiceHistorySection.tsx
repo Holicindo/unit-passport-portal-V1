@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { Wrench } from 'lucide-react';
 import styles from '../id.module.css';
@@ -10,8 +10,8 @@ interface ServiceHistorySectionProps {
 const TASK_LABEL: Record<string, string> = { CORRECTIVE: 'Perbaikan', PREVENTIVE: 'Perawatan', INSTALLATION: 'Instalasi' };
 const TASK_COLOR: Record<string, { bg: string; color: string }> = {
   CORRECTIVE: { bg: 'rgba(255,87,34,0.15)', color: '#FF5722' },
-  PREVENTIVE: { bg: 'var(--task-preventive-bg, rgba(0,71,171,0.15))', color: 'var(--task-preventive-color, #8bb2ff)' },
-  INSTALLATION: { bg: 'rgba(16,185,129,0.15)', color: '#10b981' },
+  PREVENTIVE: { bg: 'var(--task-preventive-bg, rgba(0,71,171,0.15))', color: 'var(--color-cobalt-blue)' },
+  INSTALLATION: { bg: 'rgba(16,185,129,0.15)', color: 'var(--color-success)' },
 };
 
 export default function ServiceHistorySection({ serviceLogs }: ServiceHistorySectionProps) {
@@ -21,18 +21,18 @@ export default function ServiceHistorySection({ serviceLogs }: ServiceHistorySec
   );
 
   return (
-    <section className={styles.sectionCard} style={{ marginTop: '40px', marginBottom: '40px' }}>
-      <div className={styles.cardHeader}>
-        <div className={styles.cardHeaderLeft}>
-          <Wrench size={16} color="#8bb2ff" />
+    <section className={styles.sectionPanel}>
+      <div className={styles.panelHeader}>
+        <div className={styles.panelHeaderLeft}>
+          <Wrench size={16} color="var(--color-cobalt-blue)" />
           <h2>Riwayat Servis</h2>
         </div>
       </div>
-      <div className={styles.cardContent} style={{ padding: '24px' }}>
+      <div className={styles.panelContent} style={{ padding: '24px' }}>
         {sorted.length === 0 ? (
           <div className={styles.emptyState}>
-            <Wrench size={40} style={{ marginBottom: '16px', color: '#8f9bb3', opacity: 0.6 }} />
-            <p style={{ color: '#8f9bb3', textAlign: 'center' }}>Belum ada riwayat servis</p>
+            <Wrench size={40} style={{ marginBottom: '16px', color: 'var(--color-space-grey)', opacity: 0.6 }} />
+            <p style={{ color: 'var(--color-space-grey)', textAlign: 'center' }}>Belum ada riwayat servis</p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -40,7 +40,7 @@ export default function ServiceHistorySection({ serviceLogs }: ServiceHistorySec
               const taskType = log.task_type || 'CORRECTIVE';
               const tc = TASK_COLOR[taskType] || TASK_COLOR.CORRECTIVE;
               return (
-                <div key={log.id || idx} className={styles.historyCard}>
+                <div key={log.id || idx} className={styles.historyItem}>
                   {/* Row 1: Call ID, Jenis, Tanggal, Status */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
@@ -57,7 +57,7 @@ export default function ServiceHistorySection({ serviceLogs }: ServiceHistorySec
                           : '—'}
                       </span>
                       {log.scheduled_date && log.scheduled_date !== log.service_date && (
-                        <span style={{ fontSize: '0.68rem', color: '#8bb2ff', fontWeight: 600 }}>
+                        <span style={{ fontSize: '0.68rem', color: 'var(--color-cobalt-blue)', fontWeight: 600 }}>
                           Jadwal: {new Date(log.scheduled_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                         </span>
                       )}
@@ -76,7 +76,7 @@ export default function ServiceHistorySection({ serviceLogs }: ServiceHistorySec
                   <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
                     <div className={styles.historyTech}>Teknisi: {log.technician_name || '—'}</div>
                     {log.delivery_date && (
-                      <span style={{ fontSize: '0.68rem', color: '#10b981', fontWeight: 600 }}>
+                      <span style={{ fontSize: '0.68rem', color: 'var(--color-success)', fontWeight: 600 }}>
                         📦 Delivery: {new Date(log.delivery_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </span>
                     )}

@@ -24,11 +24,11 @@ const StyledInput = ({
       onBlur={() => setFocused(false)}
       onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
       style={{
-        background: 'rgba(255,255,255,0.06)',
-        border: focused ? '1px solid rgba(139,178,255,0.55)' : '1px solid rgba(255,255,255,0.15)',
+        background: 'var(--color-light-tech-grey)',
+        border: focused ? '1px solid rgba(139,178,255,0.55)' : '1px solid rgba(0,31,63,0.12)',
         borderRadius: '8px',
         padding: '10px 14px',
-        color: 'inherit',
+        color: 'var(--color-deep-navy)',
         fontSize: '0.88rem',
         width: '100%',
         outline: 'none',

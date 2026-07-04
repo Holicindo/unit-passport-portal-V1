@@ -3,11 +3,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { unitApi } from '@/lib/api';
 import Link from 'next/link';
-import { Search, Eye, Package, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Eye, Package, RefreshCw, ChevronLeft, ChevronRight, Wrench } from 'lucide-react';
 import styles from '../ClientPortal.module.css';
 
 const PAGE_SIZE = 10;
-// Jumlah tombol halaman yang ditampilkan di tengah
 const WINDOW = 2;
 
 function StatusBadge({ status }: { status: string }) {
@@ -15,6 +14,17 @@ function StatusBadge({ status }: { status: string }) {
   if (s === 'ACTIVE')      return <span className={styles.badgeActive}>Aktif</span>;
   if (s === 'MAINTENANCE') return <span className={styles.badgeMaintenance}>Maintenance</span>;
   return <span className={styles.badgeInactive}>{status || 'Tidak Aktif'}</span>;
+}
+
+// Hitung tanggal servis terakhir dari service_logs
+function getLastServiceDate(unit: any): string | null {
+  const logs: any[] = unit.service_logs || [];
+  if (logs.length === 0) return null;
+  const sorted = [...logs].sort((a, b) =>
+    new Date(b.service_date || b.created_at || 0).getTime() -
+    new Date(a.service_date || a.created_at || 0).getTime()
+  );
+  return sorted[0]?.service_date || sorted[0]?.created_at || null;
 }
 
 // ── Komponen Pagination yang bersih tanpa bug key ──
@@ -116,11 +126,12 @@ function Pagination({
 }
 
 export default function ClientFleet() {
-  const [fleet, setFleet]     = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState('');
-  const [search, setSearch]   = useState('');
-  const [page, setPage]       = useState(1);
+  const [fleet, setFleet]       = useState<any[]>([]);
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState('');
+  const [search, setSearch]     = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [page, setPage]         = useState(1);
 
   const fetchFleet = useCallback(async () => {
     setLoading(true);
@@ -140,23 +151,26 @@ export default function ClientFleet() {
   // Filter client-side
   const filtered = fleet.filter(u => {
     const q = search.toLowerCase();
-    return (
+    const matchSearch =
       u.serial_number?.toLowerCase().includes(q) ||
       u.model_name?.toLowerCase().includes(q) ||
       u.current_client?.city?.toLowerCase().includes(q) ||
-      u.specs?.city?.toLowerCase().includes(q)
-    );
+      u.specs?.city?.toLowerCase().includes(q);
+    const matchStatus = statusFilter === '' || u.status?.toUpperCase() === statusFilter;
+    return matchSearch && matchStatus;
   });
 
+  // Hitung per-status untuk chips
+  const countActive      = fleet.filter(u => u.status?.toUpperCase() === 'ACTIVE').length;
+  const countMaintenance = fleet.filter(u => u.status?.toUpperCase() === 'MAINTENANCE').length;
+  const countInactive    = fleet.filter(u => !u.status || u.status?.toUpperCase() === 'INACTIVE').length;
+
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  // Pastikan page tidak melebihi totalPages setelah filter berubah
   const safePage   = Math.min(page, totalPages);
   const paginated  = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
-  const handleSearch = (val: string) => {
-    setSearch(val);
-    setPage(1);
-  };
+  const handleSearch = (val: string) => { setSearch(val); setPage(1); };
+  const handleStatus = (val: string) => { setStatusFilter(val); setPage(1); };
 
   return (
     <div>
@@ -184,11 +198,31 @@ export default function ClientFleet() {
           </div>
           <div className={styles.filterChips}>
             <button
-              className={`${styles.filterChip} ${search === '' ? styles.filterChipActive : ''}`}
-              onClick={() => handleSearch('')}
+              className={`${styles.filterChip} ${statusFilter === '' ? styles.filterChipActive : ''}`}
+              onClick={() => handleStatus('')}
             >
               Semua ({fleet.length})
             </button>
+            <button
+              className={`${styles.filterChip} ${statusFilter === 'ACTIVE' ? styles.filterChipActive : ''}`}
+              onClick={() => handleStatus('ACTIVE')}
+            >
+              Aktif ({countActive})
+            </button>
+            <button
+              className={`${styles.filterChip} ${statusFilter === 'MAINTENANCE' ? styles.filterChipActive : ''}`}
+              onClick={() => handleStatus('MAINTENANCE')}
+            >
+              Maintenance ({countMaintenance})
+            </button>
+            {countInactive > 0 && (
+              <button
+                className={`${styles.filterChip} ${statusFilter === 'INACTIVE' ? styles.filterChipActive : ''}`}
+                onClick={() => handleStatus('INACTIVE')}
+              >
+                Tidak Aktif ({countInactive})
+              </button>
+            )}
           </div>
         </div>
 
@@ -232,60 +266,79 @@ export default function ClientFleet() {
                       <th>Serial Number</th>
                       <th>Model</th>
                       <th>Lokasi / Kota</th>
-                      <th>Tgl. Produksi</th>
                       <th>Garansi Habis</th>
+                      <th>Servis Terakhir</th>
                       <th>Status</th>
                       <th style={{ textAlign: 'right' }}>Aksi</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {paginated.map(unit => (
-                      <tr key={unit.id}>
-                        <td data-label="Serial Number">
-                          <Link 
-                            href={`/id/${unit.qr_token || unit.id}`}
-                            style={{
-                              fontWeight: 700,
-                              color: 'var(--brand-ocean-blue)',
-                              fontFamily: 'var(--font-heading)',
-                              textDecoration: 'underline',
-                              textUnderlineOffset: '2px',
-                            }}>
-                            {unit.serial_number}
-                          </Link>
-                        </td>
-                        <td data-label="Model">{unit.model_name || '-'}</td>
-                        <td data-label="Lokasi" style={{ color: 'var(--brand-space-grey)' }}>
-                          {unit.current_client?.city || unit.specs?.city || '-'}
-                        </td>
-                        <td data-label="Tgl. Produksi" style={{ color: 'var(--brand-space-grey)' }}>
-                          {unit.production_date
-                            ? new Date(unit.production_date).toLocaleDateString('id-ID', {
-                                day: 'numeric', month: 'short', year: 'numeric',
-                              })
-                            : '-'}
-                        </td>
-                        <td data-label="Garansi Habis" style={{ color: 'var(--brand-space-grey)' }}>
-                          {unit.warranty_expiry
-                            ? new Date(unit.warranty_expiry).toLocaleDateString('id-ID', {
-                                day: 'numeric', month: 'short', year: 'numeric',
-                              })
-                            : '-'}
-                        </td>
-                        <td data-label="Status">
-                          <StatusBadge status={unit.status} />
-                        </td>
-                        <td data-label="Aksi" style={{ textAlign: 'right' }}>
-                          <Link
-                            href={`/client-portal/units/${unit.id}`}
-                            className={styles.cardAction}
-                            style={{ gap: 4 }}
-                          >
-                            Lihat <Eye size={13} />
-                          </Link>
-                        </td>
-                      </tr>
-                    ))}
+                    {paginated.map(unit => {
+                      const lastService = getLastServiceDate(unit);
+                      const warrantyExp = unit.warranty_expiry;
+                      const today = new Date();
+                      const in30 = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+                      const isWarrantyExpiring = warrantyExp && new Date(warrantyExp) > today && new Date(warrantyExp) <= in30;
+                      const isWarrantyExpired  = warrantyExp && new Date(warrantyExp) <= today;
+
+                      return (
+                        <tr key={unit.id}>
+                          <td data-label="Serial Number">
+                            <Link
+                              href={`/id/${unit.qr_token || unit.id}`}
+                              style={{
+                                fontWeight: 700,
+                                color: 'var(--brand-cobalt-blue)',
+                                fontFamily: 'var(--font-heading)',
+                                textDecoration: 'none',
+                              }}>
+                              {unit.serial_number}
+                            </Link>
+                          </td>
+                          <td data-label="Model">{unit.model_name || '-'}</td>
+                          <td data-label="Lokasi" style={{ color: 'var(--brand-space-grey)' }}>
+                            {unit.current_client?.city || unit.specs?.city || '-'}
+                          </td>
+                          <td data-label="Garansi Habis">
+                            {warrantyExp ? (
+                              <span style={{
+                                color: isWarrantyExpired ? 'var(--brand-danger)'
+                                  : isWarrantyExpiring ? 'var(--brand-safety-orange)'
+                                  : 'var(--brand-space-grey)',
+                                fontWeight: isWarrantyExpired || isWarrantyExpiring ? 700 : 400,
+                                fontSize: '0.82rem',
+                              }}>
+                                {new Date(warrantyExp).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                {isWarrantyExpiring && ' ⚠'}
+                                {isWarrantyExpired && ' ✕'}
+                              </span>
+                            ) : <span style={{ color: 'var(--brand-space-grey)' }}>-</span>}
+                          </td>
+                          <td data-label="Servis Terakhir">
+                            {lastService ? (
+                              <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--brand-space-grey)', fontSize: '0.82rem' }}>
+                                <Wrench size={12} style={{ flexShrink: 0 }} />
+                                {new Date(lastService).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                              </span>
+                            ) : (
+                              <span style={{ color: 'var(--brand-space-grey)', fontSize: '0.78rem', fontStyle: 'italic' }}>Belum ada</span>
+                            )}
+                          </td>
+                          <td data-label="Status">
+                            <StatusBadge status={unit.status} />
+                          </td>
+                          <td data-label="Aksi" style={{ textAlign: 'right' }}>
+                            <Link
+                              href={`/client-portal/units/${unit.id}`}
+                              className={styles.cardAction}
+                              style={{ gap: 4 }}
+                            >
+                              Lihat <Eye size={13} />
+                            </Link>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

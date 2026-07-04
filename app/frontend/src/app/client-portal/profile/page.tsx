@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { User, Mail, Building2, MapPin, Phone, LogOut, ShieldCheck, Edit3, Save, X } from 'lucide-react';
+import { User, Mail, Building2, MapPin, Phone, LogOut, ShieldCheck, Edit3, Save, X, AlertCircle } from 'lucide-react';
 import styles from '../ClientPortal.module.css';
+import { authApi } from '@/lib/api';
 
 export default function ClientProfile() {
   const router = useRouter();
@@ -11,6 +12,8 @@ export default function ClientProfile() {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', phone: '', company_name: '', city: '' });
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   useEffect(() => {
     try {
@@ -42,14 +45,29 @@ export default function ClientProfile() {
     }
   }, [user]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!user) return;
-    const updated = { ...user, ...form };
-    localStorage.setItem('user', JSON.stringify(updated));
-    setUser(updated);
-    setEditing(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    setSaving(true);
+    setSaveError('');
+    setSaved(false);
+    try {
+      // Hit backend untuk update nama (field yang bisa diubah via API)
+      const { data } = await authApi.updateProfile({ name: form.name });
+      // Merge hasil API dengan data lokal (phone, company_name, city hanya lokal sementara)
+      const updated = { ...user, ...form, name: data.name || form.name };
+      localStorage.setItem('user', JSON.stringify(updated));
+      setUser(updated);
+      setEditing(false);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (error: any) {
+      // Set error message jika gagal
+      const errorMsg = error?.response?.data?.message || error?.message || 'Gagal menyimpan perubahan. Silakan coba lagi.';
+      setSaveError(errorMsg);
+      setTimeout(() => setSaveError(''), 5000);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCancel = () => {
@@ -83,12 +101,25 @@ export default function ClientProfile() {
 
       {saved && (
         <div style={{
-          marginBottom: '16px', padding: '12px 16px', borderRadius: '10px',
-          background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)',
+          marginBottom: '16px', padding: '12px 16px', borderRadius: '12px',
+          background: 'rgba(16,185,129,0.10)',
+          boxShadow: 'inset 2px 2px 5px rgba(0,31,63,0.05), inset -2px -2px 5px rgba(255,255,255,0.80)',
           color: '#059669', fontWeight: 600, fontSize: '0.875rem', fontFamily: 'var(--font-body)',
           display: 'flex', alignItems: 'center', gap: '8px',
         }}>
           <ShieldCheck size={16} /> Perubahan berhasil disimpan.
+        </div>
+      )}
+
+      {saveError && (
+        <div style={{
+          marginBottom: '16px', padding: '12px 16px', borderRadius: '12px',
+          background: 'rgba(239,68,68,0.10)',
+          boxShadow: 'inset 2px 2px 5px rgba(0,31,63,0.05), inset -2px -2px 5px rgba(255,255,255,0.80)',
+          color: 'var(--brand-danger)', fontWeight: 600, fontSize: '0.875rem', fontFamily: 'var(--font-body)',
+          display: 'flex', alignItems: 'center', gap: '8px',
+        }}>
+          <AlertCircle size={16} /> {saveError}
         </div>
       )}
 
@@ -99,10 +130,11 @@ export default function ClientProfile() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '24px' }}>
             <div style={{
               width: '72px', height: '72px', borderRadius: '50%',
-              background: 'var(--brand-deep-navy)', color: 'white',
+              background: 'var(--brand-deep-navy)', color: 'var(--brand-optic-white)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '1.8rem', fontWeight: 800, fontFamily: 'var(--font-heading)',
               flexShrink: 0,
+              boxShadow: '-4px -4px 8px rgba(255,255,255,0.55), 4px 4px 8px rgba(0,31,63,0.35)',
             }}>
               {initial}
             </div>
@@ -152,19 +184,22 @@ export default function ClientProfile() {
                     value={form[key as keyof typeof form]}
                     onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
                     style={{
-                      width: '100%', border: '1px solid var(--brand-border)', borderRadius: '8px',
+                      width: '100%', border: 'none', borderRadius: '10px',
                       padding: '9px 12px', fontSize: '0.875rem', fontFamily: 'var(--font-body)',
                       color: 'var(--brand-deep-navy)', outline: 'none',
-                      background: key === 'email' ? 'var(--brand-light-grey)' : 'var(--brand-optic-white)',
+                      background: 'var(--neu-base)',
+                      boxShadow: 'inset 3px 3px 7px rgba(0,31,63,0.07), inset -3px -3px 7px rgba(255,255,255,0.92)',
                       boxSizing: 'border-box',
                       cursor: key === 'email' ? 'not-allowed' : 'text',
+                      opacity: key === 'email' ? 0.6 : 1,
                     }}
                     disabled={key === 'email'}
                   />
                 ) : (
                   <div style={{
-                    padding: '9px 12px', borderRadius: '8px',
-                    background: 'var(--brand-light-grey)',
+                    padding: '9px 12px', borderRadius: '10px',
+                    background: 'var(--neu-base)',
+                    boxShadow: 'inset 2px 2px 5px rgba(0,31,63,0.06), inset -2px -2px 5px rgba(255,255,255,0.90)',
                     fontSize: '0.875rem', fontWeight: 600,
                     color: value ? 'var(--brand-deep-navy)' : 'var(--brand-space-grey)',
                     fontFamily: 'var(--font-body)',
@@ -181,10 +216,27 @@ export default function ClientProfile() {
           <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
             {editing ? (
               <>
-                <button onClick={handleSave} className={styles.btnPrimary} style={{ flex: 1 }}>
-                  <Save size={15} /> Simpan Perubahan
+                <button 
+                  onClick={handleSave} 
+                  className={styles.btnPrimary} 
+                  style={{ 
+                    flex: 1,
+                    opacity: saving ? 0.6 : 1,
+                    cursor: saving ? 'not-allowed' : 'pointer',
+                  }}
+                  disabled={saving}
+                >
+                  <Save size={15} /> {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
                 </button>
-                <button onClick={handleCancel} className={styles.btnSecondary}>
+                <button 
+                  onClick={handleCancel} 
+                  className={styles.btnSecondary}
+                  disabled={saving}
+                  style={{
+                    opacity: saving ? 0.6 : 1,
+                    cursor: saving ? 'not-allowed' : 'pointer',
+                  }}
+                >
                   <X size={15} />
                 </button>
               </>
@@ -210,11 +262,16 @@ export default function ClientProfile() {
             onClick={handleLogout}
             style={{
               display: 'flex', alignItems: 'center', gap: '8px',
-              padding: '10px 18px', borderRadius: '8px',
-              border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.06)',
+              padding: '10px 18px', borderRadius: '10px',
+              border: 'none',
+              background: 'var(--neu-base)',
+              boxShadow: '-3px -3px 6px rgba(255,255,255,0.72), 3px 3px 6px rgba(0,31,63,0.14)',
               color: 'var(--brand-danger)', cursor: 'pointer',
               fontWeight: 700, fontFamily: 'var(--font-heading)', fontSize: '0.875rem',
+              transition: 'all 0.2s',
             }}
+            onMouseEnter={e => (e.currentTarget.style.boxShadow = '-4px -4px 8px rgba(255,255,255,0.80), 4px 4px 10px rgba(0,31,63,0.18)')}
+            onMouseLeave={e => (e.currentTarget.style.boxShadow = '-3px -3px 6px rgba(255,255,255,0.72), 3px 3px 6px rgba(0,31,63,0.14)')}
           >
             <LogOut size={15} /> Keluar
           </button>

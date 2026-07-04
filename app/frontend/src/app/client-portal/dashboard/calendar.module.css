@@ -1,0 +1,122 @@
+/* ============================================================
+   Calendar Event Styles — Neumorphism Theme
+   ============================================================ */
+
+/* Day cell yang punya event */
+.hasEvent {
+  position: relative;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+/* Pressed/active state saat diklik */
+.eventActive {
+  background: rgba(255, 255, 255, 0.10) !important;
+  box-shadow:
+    inset 2px 2px 5px rgba(0, 0, 0, 0.35),
+    inset -2px -2px 5px rgba(3, 86, 197, 0.25) !important;
+}
+
+/* Dot indicator di bawah angka tanggal */
+.eventDot {
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  display: block;
+}
+
+/* Legend di bawah kalender */
+.legend {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.68rem;
+  color: rgba(160, 200, 255, 0.55);
+  font-family: var(--font-body);
+}
+
+.legendDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Tooltip */
+.tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 220px;
+  background: #E4E6EF;
+  border-radius: 14px;
+  box-shadow:
+    -6px -6px 10px rgba(255, 255, 255, 0.72),
+     6px  6px 12px rgba(0, 31, 63, 0.18),
+     0 2px 6px rgba(0, 31, 63, 0.10);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.tooltipHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-family: var(--font-heading);
+  border-bottom: 1px solid rgba(0, 31, 63, 0.06);
+}
+
+.tooltipList {
+  padding: 8px 0;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.tooltipUnit {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px 14px;
+}
+
+.tooltipUnit:not(:last-child) {
+  border-bottom: 1px solid rgba(0, 31, 63, 0.04);
+}
+
+.tooltipSerial {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--brand-deep-navy);
+  font-family: var(--font-heading);
+}
+
+.tooltipModel {
+  font-size: 0.68rem;
+  color: var(--brand-space-grey);
+  font-family: var(--font-body);
+}
+
+.tooltipMore {
+  padding: 4px 14px 6px;
+  font-size: 0.68rem;
+  color: var(--brand-space-grey);
+  font-style: italic;
+  font-family: var(--font-body);
+}

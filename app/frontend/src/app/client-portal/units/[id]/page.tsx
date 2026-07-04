@@ -37,7 +37,7 @@ function ServiceRequestModal({
   onClose,
 }: {
   unitId: string;
-  onClose: () => void;
+  onClose: (submitted?: boolean) => void;
 }) {
   const [form, setForm]       = useState({ city: '', notes: '', contact_name: '', contact_phone: '' });
   const [loading, setLoading] = useState(false);
@@ -70,7 +70,7 @@ function ServiceRequestModal({
           <div className={unitStyles.modalSuccess}>
             <ShieldCheck size={40} color="var(--brand-cobalt-blue)" />
             <p>Permintaan servis berhasil dikirim. Tim Holicindo akan segera menghubungi Anda.</p>
-            <button className={styles.btnPrimary} onClick={onClose}>Tutup</button>
+            <button className={styles.btnPrimary} onClick={() => onClose(true)}>Tutup</button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className={unitStyles.modalForm}>
@@ -242,22 +242,19 @@ export default function ClientUnitDetail() {
       {/* ── Info Cards ── */}
       <div className={styles.unitDetailGrid} style={{ marginBottom: 24 }}>
 
-        {/* Spesifikasi Teknis */}
+        {/* Info Dasar Unit */}
         <div className={styles.card}>
           <div className={styles.cardHeader}>
             <h2 className={styles.cardTitle}>
               <Box size={16} style={{ display: 'inline', marginRight: 8, color: 'var(--brand-cobalt-blue)' }} />
-              Spesifikasi Teknis
+              Informasi Unit
             </h2>
           </div>
           <div style={{ padding: '0 24px' }}>
             {[
-              { label: 'Dimensi',          value: unit.specs?.dimension },
-              { label: 'Kapasitas',        value: unit.specs?.capacity },
-              { label: 'Kompresor',        value: unit.specs?.compressor },
-              { label: 'Refrigeran',       value: unit.specs?.refrigerant },
-              { label: 'Suhu Operasional', value: unit.specs?.temperature_range },
-              { label: 'Tipe',             value: unit.specs?.type },
+              { label: 'Serial Number', value: unit.serial_number },
+              { label: 'Model',         value: unit.model_name },
+              { label: 'Tipe',          value: unit.specs?.type },
             ].map(({ label, value }) => (
               <div key={label} className={styles.infoRow}>
                 <span className={styles.infoLabel}>{label}</span>
@@ -336,9 +333,13 @@ export default function ClientUnitDetail() {
                     {log.partner?.partner_name && (
                       <span className={unitStyles.logMetaItem}>Mitra: {log.partner.partner_name}</span>
                     )}
-                    <span className={`${styles.badgeActive} ${log.status === 'PENDING' ? styles.badgeMaintenance : ''}`}>
-                      {log.status}
-                    </span>
+                    {(() => {
+                      const s = (log.status || '').toUpperCase();
+                      if (s === 'COMPLETED') return <span className={styles.badgeActive}>{log.status}</span>;
+                      if (s === 'PENDING')   return <span className={styles.badgeMaintenance}>{log.status}</span>;
+                      if (s === 'CANCELLED') return <span className={styles.badgeInactive}>{log.status}</span>;
+                      return <span className={styles.badgeInactive}>{log.status}</span>;
+                    })()}
                   </div>
                   {log.attachments?.length > 0 && (
                     <div className={unitStyles.attachments}>
@@ -422,9 +423,9 @@ export default function ClientUnitDetail() {
       {showModal && (
         <ServiceRequestModal
           unitId={id as string}
-          onClose={() => {
+          onClose={(submitted?: boolean) => {
             setShowModal(false);
-            setServiceRequested(true);
+            if (submitted) setServiceRequested(true);
           }}
         />
       )}
