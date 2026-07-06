@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -159,8 +159,17 @@ export default function QrPassportPage() {
           </div>
         </header>
 
-        {/* 2-COLUMN LAYOUT */}
-        <div className={styles.passportLayout}>
+        {/* 2-COLUMN LAYOUT / CAROUSEL DI MOBILE */}
+        <div className={styles.carouselWrapper} style={{ position: 'relative' }}>
+          {/* Tombol navigasi Mobile (kiri/kanan) */}
+          <button className={`${styles.carouselNavBtn} ${styles.prevBtn}`} aria-label="Geser Kiri" onClick={() => carouselRef.current?.scrollBy({ left: -window.innerWidth * 0.85, behavior: 'smooth' })}>
+            <ChevronLeft size={20} />
+          </button>
+          <button className={`${styles.carouselNavBtn} ${styles.nextBtn}`} aria-label="Geser Kanan" onClick={() => carouselRef.current?.scrollBy({ left: window.innerWidth * 0.85, behavior: 'smooth' })}>
+            <ChevronRight size={20} />
+          </button>
+
+          <div className={styles.passportLayout} ref={carouselRef}>
 
           {/* ── KOLOM KIRI: Spesifikasi Utama + Stats ── */}
           <div className={styles.passportLeft} ref={leftColRef}>
@@ -746,34 +755,33 @@ export default function QrPassportPage() {
               </section>
             )}
 
-            {/* Stats Card dipindah ke bawah layout — full width */}
+            {/* Stats Card — full width di desktop, jadi item carousel di mobile */}
+            <section className={`${styles.panel} ${styles.statsFullWidth}`} style={{ gridColumn: '1 / -1', background: '#E8EAEE', border: 'none', boxShadow: '-6px -6px 10px rgba(255,255,255,0.72), 6px 6px 12px rgba(0,31,63,0.14)', borderRadius: '20px', backdropFilter: 'none', margin: 0 }}>
+              <div className={styles.panelHeader}><div className={styles.panelHeaderLeft}><Settings size={16} color="var(--color-cobalt-blue)" /><h2>Stats Card</h2></div></div>
+              <div className={`${styles.statsGrid} ${styles.panelContent}`}>
+                {[
+                  { tip: 'Kondisi operasional unit saat ini.', icon: <CheckCircle2 size={24} />, cls: styles.success, title: 'Status Unit', status: 'Normal', color: 'var(--color-cobalt-blue)', sub: 'Unit beroperasi dengan baik' },
+                  { tip: 'Masa garansi resmi dari Holicindo.', icon: <ShieldAlert size={24} />, cls: isWarrantyActive ? styles.success : styles.warning, title: 'Garansi', status: isWarrantyActive ? 'Aktif' : 'Kedaluwarsa', color: isWarrantyActive ? 'var(--color-cobalt-blue)' : '#f59e0b', sub: isWarrantyActive ? `Hingga ${expiryDate?.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) || ''}` : 'Hubungi support' },
+                  { tip: 'Tanggal terakhir unit diservis.', icon: <Wrench size={24} />, cls: styles.info, title: 'Last Service', status: 'Belum Ada', color: '#336bd9ff', sub: 'Belum pernah diservis' },
+                  { tip: 'Estimasi jadwal servis berikutnya.', icon: <Clock size={24} />, cls: styles.info, title: 'Next Service', status: 'Disarankan', color: '#3b82f6', sub: 'Dalam 180 hari' },
+                  { tip: 'Status keaslian unit.', icon: <CheckCircle2 size={24} />, cls: styles.success, title: 'Verifikasi', status: 'Asli', color: 'var(--color-cobalt-blue)', sub: 'Unit terverifikasi Holicindo' },
+                ].map((s) => (
+                  <div key={s.title} className={styles.statusItem} style={{ position: 'relative' }}>
+                    <span className={styles.statTooltipAnchor}><HelpCircle size={12} className={styles.statTooltipIcon} /><span className={styles.statTooltip}>{s.tip}</span></span>
+                    <div className={`${styles.statusIcon} ${s.cls}`}>{s.icon}</div>
+                    <div className={styles.statusText}>
+                      <h3>{s.title}</h3>
+                      <p style={{ color: s.color }}>{s.status}</p>
+                      <span>{s.sub}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
 
           </div>{/* end passportRight */}
         </div>{/* end passportLayout */}
-
-        {/* Stats Card — full width di bawah dua kolom */}
-        <section className={`${styles.panel} ${styles.statsFullWidth}`} style={{ background: '#E8EAEE', border: 'none', boxShadow: '-6px -6px 10px rgba(255,255,255,0.72), 6px 6px 12px rgba(0,31,63,0.14)', borderRadius: '20px', backdropFilter: 'none' }}>
-          <div className={styles.panelHeader}><div className={styles.panelHeaderLeft}><Settings size={16} color="var(--color-cobalt-blue)" /><h2>Stats Card</h2></div></div>
-          <div className={`${styles.statsGrid} ${styles.panelContent}`}>
-            {[
-              { tip: 'Kondisi operasional unit saat ini.', icon: <CheckCircle2 size={24} />, cls: styles.success, title: 'Status Unit', status: 'Normal', color: 'var(--color-cobalt-blue)', sub: 'Unit beroperasi dengan baik' },
-              { tip: 'Masa garansi resmi dari Holicindo.', icon: <ShieldAlert size={24} />, cls: isWarrantyActive ? styles.success : styles.warning, title: 'Garansi', status: isWarrantyActive ? 'Aktif' : 'Kedaluwarsa', color: isWarrantyActive ? 'var(--color-cobalt-blue)' : '#f59e0b', sub: isWarrantyActive ? `Hingga ${expiryDate?.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) || ''}` : 'Hubungi support' },
-              { tip: 'Tanggal terakhir unit diservis.', icon: <Wrench size={24} />, cls: styles.info, title: 'Last Service', status: 'Belum Ada', color: '#336bd9ff', sub: 'Belum pernah diservis' },
-              { tip: 'Estimasi jadwal servis berikutnya.', icon: <Clock size={24} />, cls: styles.info, title: 'Next Service', status: 'Disarankan', color: '#3b82f6', sub: 'Dalam 180 hari' },
-              { tip: 'Status keaslian unit.', icon: <CheckCircle2 size={24} />, cls: styles.success, title: 'Verifikasi', status: 'Asli', color: 'var(--color-cobalt-blue)', sub: 'Unit terverifikasi Holicindo' },
-            ].map((s) => (
-              <div key={s.title} className={styles.statusItem} style={{ position: 'relative' }}>
-                <span className={styles.statTooltipAnchor}><HelpCircle size={12} className={styles.statTooltipIcon} /><span className={styles.statTooltip}>{s.tip}</span></span>
-                <div className={`${styles.statusIcon} ${s.cls}`}>{s.icon}</div>
-                <div className={styles.statusText}>
-                  <h3>{s.title}</h3>
-                  <p style={{ color: s.color }}>{s.status}</p>
-                  <span>{s.sub}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+        </div>{/* end carouselWrapper */}
 
         {/* Media Modal */}
         {selectedMedia && (
