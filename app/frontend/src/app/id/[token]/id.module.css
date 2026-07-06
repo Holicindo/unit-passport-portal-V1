@@ -673,12 +673,32 @@
 
 @media (max-width: 768px) {
   .container { padding: 20px 16px 40px; width: 100%; }
-  /* Layout 2 kolom → single column di mobile */
-  .passportLayout { grid-template-columns: 1fr; gap: 0; }
-  .passportLeft { position: static; max-height: none; overflow-y: visible; gap: 16px; padding-bottom: 0; }
-  .passportLeft > *:last-child { flex: 0 0 auto; }
-  .passportLeft > *:last-child .panelContent { flex: 0 0 auto; }
-  .passportRight { gap: 0; }
+  /* Layout 2 kolom → carousel horizontal di mobile menggunakan display: contents */
+  .passportLayout {
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 16px;
+    padding-bottom: 16px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .passportLayout::-webkit-scrollbar { display: none; }
+
+  .passportLeft, .passportRight, .topRowGrid { 
+    display: contents; 
+  }
+
+  .passportLayout > *,
+  .passportLeft > *,
+  .passportRight > *,
+  .topRowGrid > * {
+    min-width: 85vw !important;
+    scroll-snap-align: center;
+    flex-shrink: 0;
+  }
+  
   .header { flex-direction: column; gap: 12px; margin-bottom: 18px; }
   .headerRight { align-items: flex-start; flex-direction: row; flex-wrap: wrap; gap: 8px; }
   .serialNumber { font-size: 1.8rem; letter-spacing: -0.02em; }
@@ -722,9 +742,25 @@
     padding: 0;
   }
   .dotIndicators { display: flex; justify-content: center; gap: 6px; margin-top: 12px; }
+  
+  /* Stats grid carousel mobile */
   .statsGrid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .statsFullWidth { margin-top: 16px; }
-  .statsFullWidth .statsGrid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .statsFullWidth .statsGrid { 
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 12px;
+    padding-bottom: 12px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .statsFullWidth .statsGrid::-webkit-scrollbar { display: none; }
+  .statsFullWidth .statsGrid > * {
+    min-width: 65vw;
+    scroll-snap-align: center;
+    flex-shrink: 0;
+  }
   .desktopOnly, .desktopOnlyBlock { display: none !important; }
   .mobileOnly       { display: inline-block !important; }
   .mobileOnlyFlex   { display: flex !important; }
