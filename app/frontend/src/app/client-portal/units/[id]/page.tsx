@@ -59,11 +59,11 @@ function ServiceRequestModal({
   };
 
   return (
-    <div className={unitStyles.modalOverlay} onClick={onClose}>
+    <div className={unitStyles.modalOverlay} onClick={() => onClose()}>
       <div className={unitStyles.modal} onClick={e => e.stopPropagation()}>
         <div className={unitStyles.modalHeader}>
           <h3 className={unitStyles.modalTitle}>Permintaan Servis</h3>
-          <button className={unitStyles.modalClose} onClick={onClose}>×</button>
+          <button className={unitStyles.modalClose} onClick={() => onClose()}>×</button>
         </div>
 
         {success ? (
@@ -119,7 +119,7 @@ function ServiceRequestModal({
             </div>
             {error && <p className={unitStyles.formError}>{error}</p>}
             <div className={unitStyles.modalActions}>
-              <button type="button" className={styles.btnSecondary} onClick={onClose}>
+              <button type="button" className={styles.btnSecondary} onClick={() => onClose()}>
                 Batal
               </button>
               {/* Tombol Request Service — Safety Orange */}
