@@ -68,6 +68,7 @@ function SensorLineChart({ data }: { data: HistoryPoint[] }) {
   const domainRange = domainMax - domainMin;
 
   function xOf(i: number) {
+    if (data.length <= 1) return PAD_LEFT + chartW / 2;
     return PAD_LEFT + (i / (data.length - 1)) * chartW;
   }
   function yOf(val: number) {
