@@ -56,15 +56,18 @@ export class AuthService {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('User tidak ditemukan');
 
-    if (dto.name !== undefined)  user.name = dto.name;
-    // phone dan city bisa ditambah ke entity nanti jika belum ada
-    // untuk sekarang hanya update name
+    if (dto.name  !== undefined) user.name  = dto.name;
+    if (dto.phone !== undefined) user.phone = dto.phone;
+    if (dto.city  !== undefined) user.city  = dto.city;
+
     const saved = await this.userRepository.save(user);
 
     return {
       id: saved.id,
       email: saved.email,
       name: saved.name,
+      phone: saved.phone,
+      city: saved.city,
       role: saved.role,
       client_id: saved.client_id,
       partner_id: saved.partner_id,

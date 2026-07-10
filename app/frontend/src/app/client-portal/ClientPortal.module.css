@@ -331,6 +331,27 @@
   margin-bottom: 28px;
 }
 
+/* ── PAGE BACK BUTTON (mobile & desktop) ── */
+.pageBackBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--brand-space-grey);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.82rem;
+  padding: 0;
+  margin-bottom: 10px;
+  transition: color 0.15s;
+  font-family: var(--font-body);
+}
+
+.pageBackBtn:hover {
+  color: var(--brand-cobalt-blue);
+}
+
 .pageTitle {
   font-size: 1.6rem;
   font-weight: 800;
@@ -514,7 +535,7 @@
 }
 
 .cardTitle {
-  font-size: 1.1rem;
+  font-size: 0.875rem;
   font-weight: 700;
   color: var(--brand-deep-navy) !important;
   margin: 0;
@@ -735,7 +756,6 @@
   border-color: rgba(255, 255, 255, 0.25);
 }
 
-/* Calendar header — transparan, teks putih */
 .calendarHeader {
   background: transparent;
   padding: 16px 20px 12px;
@@ -744,6 +764,13 @@
   align-items: center;
   margin-bottom: 0;
   border-bottom: 1px solid rgba(0, 31, 63, 0.07);
+}
+
+.calendarBody {
+  padding: 16px 20px 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .calendarMonth {
@@ -1163,7 +1190,7 @@
   gap: 7px;
   padding: 10px 20px;
   background: linear-gradient(135deg, #2E5BFF 0%, #1e47e6 100%);
-  color: var(--brand-optic-white);
+  color: #FFFFFF !important;
   border: none;
   border-radius: 10px;
   font-size: 0.875rem;
@@ -1197,6 +1224,7 @@
 
 .btnPrimary:hover {
   background: linear-gradient(135deg, #1e47e6 0%, #0f2a99 100%);
+  color: #FFFFFF !important;
   transform: translateY(-1px);
   box-shadow:
     -4px -4px 8px rgba(255, 255, 255, 0.25),
@@ -1447,6 +1475,185 @@
 }
 
 /* ── RESPONSIVE ── */
+/* ── NEW HERO CARD ── */
+.heroCard {
+  background: linear-gradient(135deg, var(--brand-deep-navy), var(--brand-cobalt-blue));
+  border-radius: 16px;
+  padding: 24px;
+  color: white;
+  box-shadow: 0 10px 30px rgba(0, 31, 63, 0.15);
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+.heroCard::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.heroHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.heroHeading {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #FFFFFF !important;
+}
+.heroTotal {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #FFFFFF !important;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 4px 12px;
+  border-radius: 20px;
+  backdrop-filter: blur(4px);
+}
+.heroStatsRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.heroStatItem {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+.heroStatValue {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #FFFFFF !important;
+}
+.heroStatLabel {
+  font-size: 0.72rem;
+  font-weight: 500;
+  opacity: 0.85;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #FFFFFF !important;
+}
+.heroStatDivider {
+  width: 1px;
+  height: 30px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* ── QUICK ACTIONS ── */
+.quickActions {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.actionBtn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+}
+.actionIcon {
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 12px rgba(0, 31, 63, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brand-deep-navy);
+  transition: all 0.2s ease;
+}
+.actionBtn:hover .actionIcon {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 31, 63, 0.08);
+  background: #fff;
+  color: var(--brand-cobalt-blue);
+}
+.actionLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--brand-deep-navy);
+  text-align: center;
+}
+
+/* ── UNIT LIST VIEW ── */
+.unitList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.unitListItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 14px;
+  box-shadow: 0 2px 6px rgba(0, 31, 63, 0.03);
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+.unitListItem:hover {
+  background: rgba(255, 255, 255, 0.9);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 31, 63, 0.05);
+}
+.unitListIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(46, 91, 255, 0.08);
+  color: var(--brand-cobalt-blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.unitListContent {
+  flex: 1;
+  min-width: 0;
+}
+.unitListTitle {
+  font-weight: 700;
+  color: var(--brand-deep-navy);
+  font-size: 0.9rem;
+  margin-bottom: 2px;
+  font-family: var(--font-heading);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.unitListSub {
+  font-size: 0.72rem;
+  color: var(--brand-space-grey);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.unitListStatus {
+  flex-shrink: 0;
+}
+
 @media (max-width: 1024px) {
   .twoCol {
     grid-template-columns: 1fr;
@@ -1483,27 +1690,44 @@
   }
 
   .mainContent {
-    padding: 16px;
-    padding-bottom: 88px;
-    margin-top: 60px;
+    padding: 84px 16px 96px;
+    margin-top: 0;
   }
 
-  .statsGrid {
+  .dashboardContainer {
     display: flex;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    gap: 12px;
-    padding-bottom: 12px;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
+    flex-direction: column;
+    gap: 8px;
   }
-  .statsGrid::-webkit-scrollbar {
-    display: none;
+
+  .pageHeader {
+    order: 1;
+    margin-bottom: 0;
   }
-  .statsGrid > * {
-    min-width: 65vw;
-    scroll-snap-align: center;
-    flex-shrink: 0;
+
+  .twoCol {
+    display: contents;
+  }
+
+  .heroCard {
+    order: 2;
+    margin-bottom: 0;
+  }
+
+  .quickActions {
+    order: 3;
+    margin-bottom: 8px;
+  }
+
+  .twoColLeft {
+    order: 4;
+  }
+
+  .twoColRight {
+    order: 5;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
   }
 
   .statCard {
@@ -1519,22 +1743,9 @@
   }
 
   .unitDetailGrid {
-    display: flex;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
+    display: grid;
+    grid-template-columns: 1fr;
     gap: 16px;
-    padding-bottom: 12px;
-    -webkit-overflow-scrolling: touch;
-    /* Hilangkan scrollbar agar lebih rapi di HP */
-    scrollbar-width: none;
-  }
-  .unitDetailGrid::-webkit-scrollbar {
-    display: none;
-  }
-  .unitDetailGrid > * {
-    min-width: 85vw;
-    scroll-snap-align: center;
-    flex-shrink: 0;
   }
 
   /* Table: card layout on mobile */
@@ -1568,26 +1779,21 @@
     flex-shrink: 0;
   }
 
-  .twoCol {
-    display: flex;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    gap: 16px;
-    padding-bottom: 12px;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  .twoCol::-webkit-scrollbar {
-    display: none;
-  }
-  .twoCol > * {
-    min-width: 85vw;
-    scroll-snap-align: center;
-    flex-shrink: 0;
+  .pageTitle {
+    font-size: 1.45rem;
+    margin-bottom: 4px;
   }
 
-  .pageTitle {
-    font-size: 1.35rem;
+  .cardTitle {
+    font-size: 0.82rem;
+  }
+
+  .emptyStateTitle {
+    font-size: 0.75rem !important;
+  }
+
+  .calendarMonth {
+    font-size: 0.85rem;
   }
 
   .pageDescription {
@@ -1623,7 +1829,15 @@
   }
 
   .calendarWidget {
-    padding: 14px;
+    /* removed padding override */
+  }
+  
+  .calendarHeader {
+    padding: 12px 8px 10px;
+  }
+  
+  .calendarBody {
+    padding: 12px 8px 16px;
   }
 
   .upcomingItem {
@@ -1648,10 +1862,7 @@
 }
 
 @media (max-width: 480px) {
-  .statsGrid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-  }
+  /* Removed grid override for mobile since we use flex horizontal scroll */
 
   .statCard {
     padding: 12px;
@@ -1666,8 +1877,8 @@
   }
 
   .mainContent {
-    padding: 12px;
-    padding-bottom: 88px;
+    padding: 72px 12px 88px;
+    margin-top: 0;
   }
 
   .pageTitle {

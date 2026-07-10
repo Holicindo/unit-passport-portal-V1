@@ -34,18 +34,23 @@ export class StorageService {
     const key = `${folder}/${fileName}`;
 
     if (this.isS3Enabled && this.s3Client) {
-      await this.s3Client.send(
-        new PutObjectCommand({
-          Bucket: this.bucketName,
-          Key: key,
-          Body: file.buffer,
-          ContentType: file.mimetype,
-        }),
-      );
-      const url = `https://${this.bucketName}.s3.${this.configService.get('AWS_REGION')}.amazonaws.com/${key}`;
-      return { url, key };
-    } else {
-      // Local Storage Fallback
+      try {
+        await this.s3Client.send(
+          new PutObjectCommand({
+            Bucket: this.bucketName,
+            Key: key,
+            Body: file.buffer,
+            ContentType: file.mimetype,
+          }),
+        );
+        const url = `https://${this.bucketName}.s3.${this.configService.get('AWS_REGION')}.amazonaws.com/${key}`;
+        return { url, key };
+      } catch (err) {
+        console.error(`[StorageService] S3 Upload failed, falling back to local storage:`, err);
+      }
+    }
+
+    // Local Storage Fallback
       const uploadDir = path.join(process.cwd(), 'uploads', folder);
       if (!fs.existsSync(uploadDir)) {
         fs.mkdirSync(uploadDir, { recursive: true });
@@ -67,7 +72,6 @@ export class StorageService {
       const url = `http://localhost:3001/uploads/${folder}/${fileName}`;
       return { url, key };
     }
-  }
 
   async getPresignedUrl(key: string): Promise<string> {
     if (!this.isS3Enabled || !this.s3Client) {

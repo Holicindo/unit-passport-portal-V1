@@ -172,14 +172,19 @@ export class UnitsController {
     limits: { fileSize: 20 * 1024 * 1024 },
   }))
   async uploadMedia(@UploadedFiles() files: Express.Multer.File[]) {
-    if (!files || files.length === 0) {
-      return [];
+    try {
+      if (!files || files.length === 0) {
+        return [];
+      }
+      const results: { url: string; key: string; originalName: string }[] = [];
+      for (const file of files) {
+        const result = await this.storageService.uploadFile(file, 'unit-media');
+        results.push({ ...result, originalName: file.originalname });
+      }
+      return results;
+    } catch (err: any) {
+      console.error(err);
+      throw new Error(`Upload error: ${err.message} - Stack: ${err.stack}`);
     }
-    const results: { url: string; key: string; originalName: string }[] = [];
-    for (const file of files) {
-      const result = await this.storageService.uploadFile(file, 'unit-media');
-      results.push({ ...result, originalName: file.originalname });
-    }
-    return results;
   }
 }

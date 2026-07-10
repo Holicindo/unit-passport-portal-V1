@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { unitApi, serviceLogApi } from '@/lib/api';
-import { TrendingUp, AlertTriangle, ChevronRight, Wrench, Package } from 'lucide-react';
+import { TrendingUp, AlertTriangle, ChevronRight, Wrench, Package, QrCode, ShieldCheck, FileText, Calendar, LifeBuoy } from 'lucide-react';
 import styles from '../ClientPortal.module.css';
 import Link from 'next/link';
 import { useGreeting, MiniCalendar, StatusBadge, SkeletonCard, type CalendarEvents } from './components';
@@ -80,7 +80,7 @@ export default function ClientDashboard() {
   const companyName = user?.company_name || '';
 
   return (
-    <div>
+    <div className={styles.dashboardContainer}>
       <div className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>{greeting}{firstName ? `, ${firstName}` : ''}</h1>
         <p className={styles.pageDescription}>
@@ -88,88 +88,72 @@ export default function ClientDashboard() {
         </p>
       </div>
 
-      <div className={styles.statsGrid}>
-        {loading ? (
-          <><SkeletonCard /><SkeletonCard /><SkeletonCard /><SkeletonCard /></>
-        ) : (
-          <>
-            <div className={`${styles.statCard} ${styles.statCardBlue}`}>
-              <div className={styles.statCardLabel}>Total Unit</div>
-              <div className={styles.statCardContent}>
-                <div className={styles.statCardValue}>{totalUnits}</div>
-                <div className={styles.statCardFooter}>
-                  <span style={{ color: 'var(--brand-space-grey)', fontSize: '0.78rem', fontFamily: 'var(--font-body)', fontWeight: 600 }}>
-                    Seluruh aset terdaftar
-                  </span>
-                </div>
+      {loading ? (
+        <><SkeletonCard /><SkeletonCard /></>
+      ) : (
+        <>
+          {/* ── HERO CARD (Gopay-style Saldo) ── */}
+          <div className={styles.heroCard}>
+            <div className={styles.heroHeader}>
+              <span className={styles.heroHeading}>Kesehatan Fleet</span>
+              <span className={styles.heroTotal}>{totalUnits} Unit</span>
+            </div>
+            <div className={styles.heroStatsRow}>
+              <div className={styles.heroStatItem}>
+                <span className={styles.heroStatValue}>{activeUnits}</span>
+                <span className={styles.heroStatLabel}>Aktif Beroperasi</span>
+              </div>
+              <div className={styles.heroStatDivider} />
+              <div className={styles.heroStatItem}>
+                <span className={styles.heroStatValue} style={{ color: maintUnits > 0 ? '#FFA07A' : 'inherit' }}>
+                  {maintUnits}
+                </span>
+                <span className={styles.heroStatLabel}>Perlu Servis</span>
+              </div>
+              <div className={styles.heroStatDivider} />
+              <div className={styles.heroStatItem}>
+                <span className={styles.heroStatValue} style={{ color: expiringWarr > 0 ? '#FFA07A' : 'inherit' }}>
+                  {expiringWarr}
+                </span>
+                <span className={styles.heroStatLabel}>Garansi Kritis</span>
               </div>
             </div>
-            <div className={`${styles.statCard} ${styles.statCardGreen}`}>
-              <div className={styles.statCardLabel}>Unit Aktif</div>
-              <div className={styles.statCardContent}>
-                <div className={styles.statCardValue}>{activeUnits}</div>
-                <div className={styles.statCardFooter}>
-                  {totalUnits > 0 && (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(16,185,129,0.12)', color: '#059669', padding: '2px 8px', borderRadius: 20, fontSize: '0.72rem', fontWeight: 700, fontFamily: 'var(--font-heading)' }}>
-                      <TrendingUp size={11} />{Math.round((activeUnits / totalUnits) * 100)}%
-                    </span>
-                  )}
-                  <span style={{ color: 'var(--brand-space-grey)', fontSize: '0.78rem', fontFamily: 'var(--font-body)', fontWeight: 600 }}>
-                    dari total unit
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div className={`${styles.statCard} ${styles.statCardOrange}`}>
-              <div className={styles.statCardLabel}>Perlu Servis</div>
-              <div className={styles.statCardContent}>
-                <div className={styles.statCardValue}>{maintUnits}</div>
-                <div className={styles.statCardFooter}>
-                  {maintUnits > 0 ? (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(255,107,0,0.15)', color: 'var(--brand-safety-orange)', padding: '2px 8px', borderRadius: 20, fontSize: '0.72rem', fontWeight: 700, fontFamily: 'var(--font-heading)' }}>
-                      <AlertTriangle size={11} /> Perhatian
-                    </span>
-                  ) : (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(16,185,129,0.12)', color: '#059669', padding: '2px 8px', borderRadius: 20, fontSize: '0.72rem', fontWeight: 700, fontFamily: 'var(--font-heading)' }}>
-                      Semua OK
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className={`${styles.statCard} ${styles.statCardNavy}`}>
-              <div className={styles.statCardLabel}>Garansi Aktif</div>
-              <div className={styles.statCardContent}>
-                <div className={styles.statCardValue}>{activeWarr}</div>
-                <div className={styles.statCardFooter}>
-                  {expiringWarr > 0 ? (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(239,68,68,0.12)', color: 'var(--brand-danger)', padding: '2px 8px', borderRadius: 20, fontSize: '0.72rem', fontWeight: 700, fontFamily: 'var(--font-heading)' }}>
-                      <AlertTriangle size={11} /> {expiringWarr} segera habis
-                    </span>
-                  ) : (
-                    <span style={{ color: 'var(--brand-space-grey)', fontSize: '0.78rem', fontFamily: 'var(--font-body)', fontWeight: 600 }}>
-                      Tidak ada yang akan habis
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
+          </div>
+
+          {/* ── QUICK ACTIONS (Menu Bulat) ── */}
+          <div className={styles.quickActions}>
+            <Link href="/client-portal/fleet" className={styles.actionBtn}>
+              <div className={styles.actionIcon}><Package size={22} /></div>
+              <span className={styles.actionLabel}>Daftar Unit</span>
+            </Link>
+            <Link href="/client-portal/service-request" className={styles.actionBtn}>
+              <div className={styles.actionIcon}><Calendar size={22} /></div>
+              <span className={styles.actionLabel}>Jadwal Servis</span>
+            </Link>
+            <Link href="/client-portal/units/scan" className={styles.actionBtn}>
+              <div className={styles.actionIcon}><QrCode size={22} /></div>
+              <span className={styles.actionLabel}>Scan QR</span>
+            </Link>
+            <Link href="/client-portal/messages" className={styles.actionBtn}>
+              <div className={styles.actionIcon}><LifeBuoy size={22} /></div>
+              <span className={styles.actionLabel}>Bantuan</span>
+            </Link>
+          </div>
+        </>
+      )}
 
       <div className={styles.twoCol}>
-        {/* Kolom kiri — stretch tinggi mengikuti kolom kanan */}
+        {/* Kolom kiri — Unit Terdaftar (List View) */}
         <div className={styles.twoColLeft}>
           <div className={`${styles.card} ${styles.cardStretch}`}>
             <div className={styles.cardHeader}>
               <h2 className={styles.cardTitle}>Unit Terdaftar</h2>
               <Link href="/client-portal/fleet" className={styles.cardAction}>Lihat Semua <ChevronRight size={14} /></Link>
             </div>
-            <div className={styles.cardBody}>
+            <div className={styles.cardBody} style={{ padding: '0 16px 16px' }}>
               {loading ? (
                 <div>
-                  {[1,2,3,4].map(i => (
+                  {[1,2,3].map(i => (
                     <div key={i} style={{ marginBottom: 16 }}>
                       <div className={styles.skeleton} style={{ height: 13, width: '75%', marginBottom: 6 }} />
                       <div className={styles.skeleton} style={{ height: 11, width: '45%' }} />
@@ -177,55 +161,48 @@ export default function ClientDashboard() {
                   ))}
                 </div>
               ) : fleet.length === 0 ? (
-                <div className={styles.emptyState} style={{ flex: 1 }}>
+                <div className={styles.emptyState} style={{ flex: 1, marginTop: '20px' }}>
                   <div className={styles.emptyStateIcon}><Package size={28} /></div>
                   <div className={styles.emptyStateTitle}>Belum ada unit terdaftar</div>
-                  <div className={styles.emptyStateDesc}>Unit yang terdaftar atas nama perusahaan Anda akan muncul di sini.</div>
+                  <div className={styles.emptyStateDesc}>
+                    Unit yang terdaftar atas nama perusahaan Anda akan muncul di sini. Jika merasa ini adalah kesalahan, silakan hubungi tim Holicindo melalui menu Pesan.
+                  </div>
                 </div>
               ) : (
-                <>
-                  <div style={{ flex: 1 }}>
-                    <table className={styles.dataTable}>
-                      <thead>
-                        <tr><th>Serial Number</th><th>Model</th><th>Lokasi</th><th>Status</th></tr>
-                      </thead>
-                      <tbody>
-                        {fleet.slice(0, 8).map(unit => (
-                          <tr key={unit.id}>
-                            <td data-label="Serial Number">
-                              <Link href={`/client-portal/units/${unit.id}`}
-                                style={{ color: 'var(--brand-cobalt-blue)', fontWeight: 700, textDecoration: 'none', fontFamily: 'var(--font-heading)' }}>
-                                {unit.serial_number}
-                              </Link>
-                            </td>
-                            <td data-label="Model">{unit.model_name || '-'}</td>
-                            <td data-label="Lokasi" style={{ color: 'var(--brand-space-grey)' }}>
-                              {unit.current_client?.city || unit.specs?.city || '-'}
-                            </td>
-                            <td data-label="Status"><StatusBadge status={unit.status} /></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  {fleet.length > 8 && (
-                    <div className={styles.pagination}>
-                      <span className={styles.paginationInfo}>Menampilkan 8 dari {fleet.length} unit</span>
-                      <Link href="/client-portal/fleet" className={styles.cardAction}>Lihat semua</Link>
+                <div className={styles.unitList}>
+                  {fleet.slice(0, 6).map(unit => (
+                    <Link href={`/client-portal/units/${unit.id}`} key={unit.id} className={styles.unitListItem}>
+                      <div className={styles.unitListIcon}>
+                        <Package size={20} />
+                      </div>
+                      <div className={styles.unitListContent}>
+                        <div className={styles.unitListTitle}>{unit.serial_number}</div>
+                        <div className={styles.unitListSub}>{unit.model_name || 'Tidak diketahui'} • {unit.current_client?.city || unit.specs?.city || 'Lokasi TBA'}</div>
+                      </div>
+                      <div className={styles.unitListStatus}>
+                        <StatusBadge status={unit.status} />
+                      </div>
+                    </Link>
+                  ))}
+                  {fleet.length > 6 && (
+                    <div style={{ textAlign: 'center', marginTop: '8px' }}>
+                      <Link href="/client-portal/fleet" className={styles.cardAction} style={{ fontSize: '0.85rem' }}>
+                        Lihat {fleet.length - 6} unit lainnya
+                      </Link>
                     </div>
                   )}
-                </>
+                </div>
               )}
             </div>
           </div>
         </div>
 
-        {/* Kolom kanan — kalender + servis terbaru stretch penuh */}
+        {/* Kolom kanan — kalender + servis terbaru */}
         <div className={styles.twoColRight}>
           <MiniCalendar events={calendarEvents} />
           <div className={styles.card}>
             <div className={styles.cardHeader}><h2 className={styles.cardTitle}>Servis Terbaru</h2></div>
-            <div className={styles.cardBody}>
+            <div className={styles.cardBody} style={{ paddingTop: 0 }}>
               {recentLogs.length === 0 ? (
                 <div className={styles.emptyState} style={{ flex: 1, padding: '12px' }}>
                   <div className={styles.emptyStateIcon}><Wrench size={22} /></div>

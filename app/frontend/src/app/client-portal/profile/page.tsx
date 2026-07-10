@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { User, Mail, Building2, MapPin, Phone, LogOut, ShieldCheck, Edit3, Save, X, AlertCircle } from 'lucide-react';
+import { User, Mail, Building2, MapPin, Phone, LogOut, ShieldCheck, Edit3, Save, X, AlertCircle, ArrowLeft } from 'lucide-react';
 import styles from '../ClientPortal.module.css';
 import { authApi } from '@/lib/api';
 
@@ -51,17 +51,26 @@ export default function ClientProfile() {
     setSaveError('');
     setSaved(false);
     try {
-      // Hit backend untuk update nama (field yang bisa diubah via API)
-      const { data } = await authApi.updateProfile({ name: form.name });
-      // Merge hasil API dengan data lokal (phone, company_name, city hanya lokal sementara)
-      const updated = { ...user, ...form, name: data.name || form.name };
+      // Kirim name, phone, dan city ke backend
+      const { data } = await authApi.updateProfile({
+        name: form.name,
+        phone: form.phone,
+        city: form.city,
+      });
+      // Merge response API dengan data lokal (company_name tetap dari localStorage)
+      const updated = {
+        ...user,
+        ...form,
+        name: data.name || form.name,
+        phone: data.phone ?? form.phone,
+        city: data.city ?? form.city,
+      };
       localStorage.setItem('user', JSON.stringify(updated));
       setUser(updated);
       setEditing(false);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (error: any) {
-      // Set error message jika gagal
       const errorMsg = error?.response?.data?.message || error?.message || 'Gagal menyimpan perubahan. Silakan coba lagi.';
       setSaveError(errorMsg);
       setTimeout(() => setSaveError(''), 5000);
@@ -94,6 +103,12 @@ export default function ClientProfile() {
 
   return (
     <div>
+      <button
+        className={styles.pageBackBtn}
+        onClick={() => router.push('/client-portal/dashboard')}
+      >
+        <ArrowLeft size={15} /> Dashboard
+      </button>
       <div className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>Profil Saya</h1>
         <p className={styles.pageDescription}>Informasi akun dan perusahaan Anda.</p>

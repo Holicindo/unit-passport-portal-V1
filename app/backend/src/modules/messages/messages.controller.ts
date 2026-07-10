@@ -22,6 +22,12 @@ export class MessagesController {
     return this.messagesService.findOrCreateConversation(req.user.userId, targetUserId);
   }
 
+  @Post('conversations/start-support')
+  @ApiOperation({ summary: 'Mulai atau cari obrolan dengan admin/support Holicindo' })
+  startSupportConversation(@Request() req: any) {
+    return this.messagesService.findOrCreateSupportConversation(req.user.userId);
+  }
+
   @Get('conversations/:id')
   @ApiOperation({ summary: 'Dapatkan riwayat chat dari satu obrolan' })
   getChatHistory(@Param('id') id: string, @Request() req: any) {

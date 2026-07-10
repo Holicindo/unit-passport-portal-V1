@@ -22,6 +22,7 @@ import AdminTransferModal from './components/AdminTransferModal';
 import AllSpecsModal from './components/AllSpecsModal';
 import ServiceHistorySection from './components/ServiceHistorySection';
 import IotTelemetryWidget from './components/IotTelemetryWidget';
+import IotHistoryWidget from './components/IotHistoryWidget';
 import QrCard from './components/QrCard';
 import { INDONESIA_CITIES, getUnitType, UNIT_TYPE_LABELS, UNIT_TYPE_COLORS } from './constants';
 import styles from './id.module.css';
@@ -738,7 +739,7 @@ export default function QrPassportPage() {
 
             {/* IoT Sensor Real-Time */}
             {(isClient || isPartner || isAdmin) && unit.id && (
-              <section className={`${styles.panel} ${styles.iotPanel}`} style={{ background: '#E8EAEE', border: 'none', boxShadow: '-6px -6px 10px rgba(255,255,255,0.72), 6px 6px 12px rgba(0,31,63,0.14)', borderRadius: '20px', backdropFilter: 'none' }}>
+              <section className={`${styles.panel} ${styles.iotPanel}`}>
                 <div className={styles.panelHeader}>
                   <div className={styles.panelHeaderLeft}>
                     <span style={{ fontSize: '1rem' }}>📡</span>
@@ -750,13 +751,31 @@ export default function QrPassportPage() {
                   </span>
                 </div>
                 <div className={styles.panelContent}>
-                  <IotTelemetryWidget unitId={unit.id} isDark={isDark} />
+                  <IotTelemetryWidget unitId={unit.id} unitModel={unit.model_name} isDark={isDark} />
+                </div>
+              </section>
+            )}
+
+            {/* IoT Sensor History */}
+            {(isClient || isPartner || isAdmin) && unit.id && (
+              <section className={`${styles.panel} ${styles.iotPanel}`}>
+                <div className={styles.panelHeader}>
+                  <div className={styles.panelHeaderLeft}>
+                    <span style={{ fontSize: '1rem' }}>📊</span>
+                    <h2>Riwayat Sensor</h2>
+                  </div>
+                  <span style={{ fontSize: '0.65rem', fontWeight: 700, background: 'rgba(46,91,255,0.1)', color: '#2E5BFF', border: '1px solid rgba(46,91,255,0.2)', borderRadius: '20px', padding: '3px 8px' }}>
+                    Histori & Avg
+                  </span>
+                </div>
+                <div className={styles.panelContent}>
+                  <IotHistoryWidget unitId={unit.id} isDark={isDark} />
                 </div>
               </section>
             )}
 
             {/* Stats Card — full width di desktop, jadi item carousel di mobile */}
-            <section className={`${styles.panel} ${styles.statsFullWidth}`} style={{ gridColumn: '1 / -1', background: '#E8EAEE', border: 'none', boxShadow: '-6px -6px 10px rgba(255,255,255,0.72), 6px 6px 12px rgba(0,31,63,0.14)', borderRadius: '20px', backdropFilter: 'none', margin: 0 }}>
+            <section className={`${styles.panel} ${styles.statsFullWidth}`} style={{ gridColumn: '1 / -1', margin: 0 }}>
               <div className={styles.panelHeader}><div className={styles.panelHeaderLeft}><Settings size={16} color="var(--color-cobalt-blue)" /><h2>Stats Card</h2></div></div>
               <div className={`${styles.statsGrid} ${styles.panelContent}`}>
                 {[

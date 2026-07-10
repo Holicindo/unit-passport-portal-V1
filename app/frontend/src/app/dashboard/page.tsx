@@ -34,7 +34,7 @@ export default function DashboardPage() {
   const {
     loading, syncing, liveTime, statsData, chartData,
     activeClients, frequentUnits, recentActivities, upcomingPMs,
-    frequentCallIds, overdueCallIds, warrantyCategories,
+    frequentCallIds, overdueCallIds, warrantyCategories, newServiceRequests,
     fetchDashboardData,
   } = useDashboardData();
 
@@ -86,6 +86,7 @@ export default function DashboardPage() {
           frequentCallIds={frequentCallIds}
           overdueCallIds={overdueCallIds}
           warrantyCategories={warrantyCategories}
+          newServiceRequests={newServiceRequests}
         />
       </div>
     </div>

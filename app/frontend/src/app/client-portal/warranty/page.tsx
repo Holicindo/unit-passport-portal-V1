@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { unitApi } from '@/lib/api';
-import { ShieldCheck, ShieldAlert, AlertTriangle, ChevronRight, ChevronLeft } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, AlertTriangle, ChevronRight, ChevronLeft, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import styles from '../ClientPortal.module.css';
 
@@ -106,6 +107,7 @@ function WarrantyBadge({ expiry }: { expiry: string | null }) {
 }
 
 export default function ClientWarranty() {
+  const router = useRouter();
   const [fleet, setFleet]     = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage]       = useState(1);
@@ -134,6 +136,12 @@ export default function ClientWarranty() {
 
   return (
     <div>
+      <button
+        className={styles.pageBackBtn}
+        onClick={() => router.push('/client-portal/dashboard')}
+      >
+        <ArrowLeft size={15} /> Dashboard
+      </button>
       <div className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>Status Garansi</h1>
         <p className={styles.pageDescription}>

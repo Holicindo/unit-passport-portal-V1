@@ -35,4 +35,15 @@ export class ClientsService {
   async findOne(id: string) {
     return this.clientRepo.findOne({ where: { id }, relations: ['units'] });
   }
+
+  async update(id: string, data: Partial<Client>) {
+    await this.clientRepo.update(id, data);
+    return this.findOne(id);
+  }
+
+  async delete(id: string) {
+    await this.clientRepo.manager.query(`UPDATE units SET "currentClientId" = NULL WHERE "currentClientId" = $1`, [id]);
+    await this.clientRepo.delete(id);
+    return { success: true };
+  }
 }

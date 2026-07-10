@@ -45,6 +45,6 @@ export class IotTelemetryLog {
   @Column({ nullable: true })
   is_door2_open?: boolean;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   recorded_at!: Date;
 }

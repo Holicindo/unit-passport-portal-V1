@@ -23,7 +23,7 @@ api.interceptors.request.use((config) => {
 export const authApi = {
   login: (credentials: any) => api.post('/auth/login', credentials),
   register: (data: any) => api.post('/auth/register', data),
-  updateProfile: (data: { name?: string }) => api.patch('/auth/me', data),
+  updateProfile: (data: { name?: string; phone?: string; city?: string }) => api.patch('/auth/me', data),
 };
 
 export const unitApi = {
@@ -92,6 +92,22 @@ export const partnerApi = {
   toggleActive: (id: string, is_active: boolean) => api.patch(`/partners/${id}`, { is_active }),
 };
 
+export const clientApi = {
+  findAll: (limit = 200) => api.get(`/clients?limit=${limit}`),
+  create: (data: any) => api.post('/clients', data),
+  update: (id: string, data: any) => api.patch(`/clients/${id}`, data),
+  delete: (id: string) => api.delete(`/clients/${id}`),
+  bulkUpload: (file: File, mode: 'upsert' | 'replace' = 'upsert') => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('mode', mode);
+    return api.post('/clients/bulk-upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 300000,
+    });
+  },
+};
+
 export const notificationApi = {
   getAlerts: () => api.get('/notifications/alerts'),
   getMessages: () => api.get('/notifications/messages'),
@@ -101,6 +117,7 @@ export const notificationApi = {
 export const messageApi = {
   getConversations: () => api.get('/messages/conversations'),
   startConversation: (targetUserId: string) => api.post('/messages/conversations/start', { targetUserId }),
+  startSupportConversation: () => api.post('/messages/conversations/start-support'),
   getChatHistory: (id: string) => api.get(`/messages/conversations/${id}`),
   sendMessage: (id: string, content: string) => api.post(`/messages/conversations/${id}/send`, { content }),
 };

@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Conversation } from './entities/conversation.entity';
 import { ChatMessage } from './entities/chat-message.entity';
+import { User, UserRole } from '../auth/entities/user.entity';
 
 @Injectable()
 export class MessagesService {
@@ -11,6 +12,8 @@ export class MessagesService {
     private convRepo: Repository<Conversation>,
     @InjectRepository(ChatMessage)
     private msgRepo: Repository<ChatMessage>,
+    @InjectRepository(User)
+    private userRepo: Repository<User>,
   ) {}
 
   // Get active conversations for a user
@@ -88,5 +91,15 @@ export class MessagesService {
     }
 
     return conv;
+  }
+
+  // Find or create a conversation with the first available ADMIN (support)
+  async findOrCreateSupportConversation(userId: string) {
+    // Cari admin yang tersedia
+    const admin = await this.userRepo.findOne({ where: { role: UserRole.ADMIN } });
+    if (!admin) {
+      throw new NotFoundException('Tim support tidak tersedia saat ini. Silakan coba lagi nanti.');
+    }
+    return this.findOrCreateConversation(userId, admin.id);
   }
 }

@@ -428,7 +428,7 @@
   cursor: not-allowed;
 }
 
-/* ── Responsive — tata letak mobile tidak berubah ── */
+/* ── Responsive — tata letak mobile ── */
 @media (max-width: 768px) {
   .chatLayout {
     grid-template-columns: 1fr;
@@ -445,4 +445,49 @@
   .chatMessages {
     min-height: 300px;
   }
+
+  /* Tampilkan back button di chat header hanya pada mobile */
+  .chatBackBtn {
+    display: flex;
+  }
+}
+
+/* ── Back button di page header ── */
+.pageBackBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--brand-space-grey);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.82rem;
+  padding: 0;
+  margin-bottom: 8px;
+  transition: color 0.15s;
+  font-family: var(--font-body);
+}
+
+.pageBackBtn:hover { color: var(--brand-cobalt-blue); }
+
+/* ── Back button di chat header (mobile only) ── */
+.chatBackBtn {
+  display: none;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: none;
+  color: var(--brand-deep-navy);
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  flex-shrink: 0;
+  transition: background 0.15s;
+  margin-right: 4px;
+}
+
+.chatBackBtn:hover {
+  background: rgba(0, 31, 63, 0.06);
 }

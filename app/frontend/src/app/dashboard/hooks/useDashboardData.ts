@@ -28,6 +28,7 @@ export function useDashboardData() {
   const [warrantyCategories, setWarrantyCategories] = useState<WarrantyCategories>({
     glass: 0, electrical: 0, refrigeration: 0,
   });
+  const [newServiceRequests, setNewServiceRequests] = useState<any[]>([]);
 
   // Live clock
   useEffect(() => {
@@ -82,6 +83,12 @@ export function useDashboardData() {
       setWarrantyCategories(analytics.warrantyCategories);
 
       setUpcomingPMs(computeUpcomingPMs(rawLogs));
+
+      // Mock real-time new service requests
+      setNewServiceRequests([
+        { id: '1', client: 'PT. Maju Bersama', issue: 'Suhu chiller kurang dingin, hanya mencapai 10 derajat celcius. Mesin berbunyi agak kasar.', timeAgo: '2 menit lalu', status: 'Baru' },
+        { id: '2', client: 'CV. Sentosa Jaya', issue: 'Siklus Pemeliharaan Berkala Terjadwal (Preventive Maintenance Schedule)', timeAgo: '15 menit lalu', status: 'Baru' }
+      ]);
     } catch (error) {
       console.warn('Dashboard real-time sync loaded fallbacks:', error);
       setChartData([]);
@@ -92,6 +99,7 @@ export function useDashboardData() {
       setFrequentCallIds([]);
       setOverdueCallIds([]);
       setWarrantyCategories({ glass: 0, electrical: 0, refrigeration: 0 });
+      setNewServiceRequests([]);
     } finally {
       setLoading(false);
       setSyncing(false);
@@ -106,6 +114,7 @@ export function useDashboardData() {
     loading, syncing, liveTime, statsData, chartData,
     activeClients, frequentUnits, recentActivities, upcomingPMs,
     frequentCallIds, overdueCallIds, warrantyCategories,
+    newServiceRequests,
     fetchDashboardData,
   };
 }

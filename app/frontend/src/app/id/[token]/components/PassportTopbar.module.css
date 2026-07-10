@@ -131,7 +131,7 @@
   border-radius: 50px;
   font-family: var(--font-heading);
   font-size: 0.68rem;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   white-space: nowrap;
@@ -139,6 +139,52 @@
   color: var(--color-cobalt-blue);
   background-color: rgba(46, 91, 255, 0.08);
   border: 1px solid rgba(46, 91, 255, 0.2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.topbarBadge:hover {
+  background-color: rgba(46, 91, 255, 0.12);
+}
+
+.badgeDesktop { display: inline; }
+.badgeMobile { display: none; }
+.toggleText { display: inline; }
+
+.badgePopover {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  width: 220px;
+  background: var(--color-deep-navy, #001F3F);
+  color: var(--color-optic-white, #FFFFFF);
+  padding: 14px 16px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 31, 63, 0.2);
+  z-index: 999;
+  font-family: var(--font-body);
+  animation: fadeUp 0.2s ease forwards;
+}
+
+.badgePopover strong {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+  color: #7ba7ff;
+}
+
+.badgePopover p {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  opacity: 0.85;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* ── Dark mode ─────────────────────────────────────────────────────────── */
@@ -181,11 +227,37 @@
 
 /* ── Responsive ────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .topbar { height: 52px; padding: 0 16px; }
+  .topbar { height: 52px; padding: 0 12px; }
 
-  .topbarLogoText { font-size: 0.88rem; letter-spacing: 0.08em; }
+  .topbarLogoText { display: none; } /* Sembunyikan teks HOLICINDO agar badge tidak terpotong */
 
-  .topbarBadge { font-size: 0.58rem; padding: 0 8px; height: 24px; }
+  .topbarBadge,
+  .badgeLv1,
+  .badgeLv2,
+  .badgeLv3,
+  .badgeLv4 { 
+    font-size: 0.65rem; 
+    padding: 0 10px; 
+    height: 26px; 
+    min-height: unset;
+    white-space: nowrap;
+  }
+  
+  /* Sembunyikan versi desktop, tampilkan singkatan (LV 4) */
+  .badgeDesktop { display: none; }
+  .badgeMobile { display: inline; font-weight: 800; }
+  
+  /* Sembunyikan teks Dark/Light, sisakan icon saja */
+  .toggleText { display: none; }
+  
+  /* Tombol Dark Mode jadi bulat kecil */
+  .iconBtn { 
+    padding: 0; 
+    width: 26px; 
+    height: 26px; 
+    justify-content: center; 
+    border-radius: 50%;
+  }
 
-  .divider { margin: 0 4px; }
+  .divider { margin: 0 6px; }
 }

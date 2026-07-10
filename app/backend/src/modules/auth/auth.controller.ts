@@ -49,10 +49,10 @@ export class AuthController {
   @Patch('me')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Update own profile (name)' })
+  @ApiOperation({ summary: 'Update own profile (name, phone, city)' })
   async updateProfile(
     @Request() req: any,
-    @Body() body: { name?: string },
+    @Body() body: { name?: string; phone?: string; city?: string },
   ) {
     return this.authService.updateProfile(req.user.sub, body);
   }

@@ -21,4 +21,18 @@ export class CreateClientDto {
   @IsUrl()
   @IsOptional()
   logo_url?: string;
+
+  @ApiProperty({ example: 'Jakarta', required: false })
+  @IsString()
+  @IsOptional()
+  city?: string;
+
+  @ApiProperty({ example: 'contact@example.com', required: false })
+  @IsString()
+  @IsOptional()
+  email?: string;
+
+  @ApiProperty({ example: 10, required: false })
+  @IsOptional()
+  unit_count?: number;
 }

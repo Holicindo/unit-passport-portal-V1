@@ -159,8 +159,8 @@ export class IotService {
    * Mengambil riwayat data sensor dalam N jam terakhir (untuk grafik tren).
    */
   async getTelemetryHistory(unitId: string, hours: number = 24) {
-    const since = new Date();
-    since.setHours(since.getHours() - hours);
+    // Gunakan milidetik agar mendukung nilai desimal seperti 0.5 jam (30 menit)
+    const since = new Date(Date.now() - hours * 60 * 60 * 1000);
 
     return this.telemetryLogRepo
       .createQueryBuilder('log')

@@ -496,16 +496,21 @@ export default function ClientPortalLayout({ children }: { children: React.React
             );
           })}
 
-          {/* Keluar */}
-          <button
-            className={`${styles.mobileNavItem} ${styles.mobileNavItemDanger}`}
-            onClick={handleLogout}
-          >
-            <div className={styles.mobileNavIconWrap}>
-              <LogOut size={20} />
-            </div>
-            Keluar
-          </button>
+          {/* Profil — gantikan Keluar di mobile nav */}
+          {(() => {
+            const isActive = pathname === '/client-portal/profile';
+            return (
+              <Link
+                href="/client-portal/profile"
+                className={`${styles.mobileNavItem} ${isActive ? styles.mobileNavItemActive : ''}`}
+              >
+                <div className={styles.mobileNavIconWrap}>
+                  <User size={20} />
+                </div>
+                Profil
+              </Link>
+            );
+          })()}
 
         </div>
       </nav>

@@ -1,5 +1,6 @@
-﻿'use client';
+'use client';
 
+import { useState } from 'react';
 import { Sun, Moon, QrCode } from 'lucide-react';
 import styles from './PassportTopbar.module.css';
 
@@ -45,26 +46,28 @@ export interface PassportTopbarProps extends AccessState {
   token: string;
 }
 
-export type BadgeConfig = { text: string };
+export type BadgeConfig = { text: string; shortText: string };
 export function getBadgeConfig(access: AccessState): BadgeConfig {
-  if (access.isAdmin)              return { text: 'LEVEL 4: ADMINISTRATOR' };
-  if (access.isPartner)            return { text: 'LEVEL 3: TECHNICAL PARTNER' };
-  if (access.hasClientRestriction) return { text: 'LEVEL 2: RESTRICTED' };
-  if (access.isClient && access.belongsToClient) return { text: 'LEVEL 2: FLEET OWNER' };
-  return { text: 'LEVEL 1: PUBLIC SCAN' }; // fallback / isGuest
+  if (access.isAdmin)              return { text: 'LEVEL 4: ADMINISTRATOR', shortText: 'LV 4' };
+  if (access.isPartner)            return { text: 'LEVEL 3: TECHNICAL PARTNER', shortText: 'LV 3' };
+  if (access.hasClientRestriction) return { text: 'LEVEL 2: RESTRICTED', shortText: 'LV 2' };
+  if (access.isClient && access.belongsToClient) return { text: 'LEVEL 2: FLEET OWNER', shortText: 'LV 2' };
+  return { text: 'LEVEL 1: PUBLIC SCAN', shortText: 'LV 1' }; // fallback / isGuest
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 interface TopbarBadgeProps {
-  text: string;
+  config: BadgeConfig;
+  onClick: () => void;
 }
 
-function TopbarBadge({ text }: TopbarBadgeProps) {
+function TopbarBadge({ config, onClick }: TopbarBadgeProps) {
   return (
-    <span className={styles.topbarBadge} aria-label={`Access level: ${text}`}>
-      {text}
-    </span>
+    <button className={styles.topbarBadge} onClick={onClick} aria-label={`Access level: ${config.text}`} type="button">
+      <span className={styles.badgeDesktop}>{config.text}</span>
+      <span className={styles.badgeMobile}>{config.shortText}</span>
+    </button>
   );
 }
 
@@ -82,7 +85,7 @@ function DarkLightToggle({ isDark, setIsDark }: { isDark: boolean; setIsDark: (f
       type="button"
     >
       {isDark ? <Sun size={14} /> : <Moon size={14} />}
-      {isDark ? 'Light' : 'Dark'}
+      <span className={styles.toggleText}>{isDark ? 'Light' : 'Dark'}</span>
     </button>
   );
 }
@@ -150,6 +153,8 @@ export default function PassportTopbar({
     hasClientRestriction,
   });
 
+  const [showBadgeInfo, setShowBadgeInfo] = useState(false);
+
   return (
     <header className={styles.topbar} role="banner">
       {/* Left: brand logo */}
@@ -158,11 +163,19 @@ export default function PassportTopbar({
         <span className={styles.topbarLogoText}>HOLICINDO</span>
       </div>
 
-      {/* Right: toggle → badge (QR sudah dipindah ke QrCard) */}
+      {/* Right: toggle → badge */}
       <div className={styles.topbarRight}>
         <DarkLightToggle isDark={isDark} setIsDark={setIsDark} />
         <span className={styles.divider} aria-hidden="true" />
-        <TopbarBadge text={badge.text} />
+        <div style={{ position: 'relative' }}>
+          <TopbarBadge config={badge} onClick={() => setShowBadgeInfo(!showBadgeInfo)} />
+          {showBadgeInfo && (
+            <div className={styles.badgePopover}>
+              <strong>{badge.text}</strong>
+              <p>Tingkat akses Anda saat ini.</p>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );

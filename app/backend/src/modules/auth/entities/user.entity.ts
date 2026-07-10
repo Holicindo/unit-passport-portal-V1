@@ -44,6 +44,14 @@ export class User {
 
   @ApiProperty({ required: false })
   @Column({ nullable: true })
+  phone?: string;
+
+  @ApiProperty({ required: false })
+  @Column({ nullable: true })
+  city?: string;
+
+  @ApiProperty({ required: false })
+  @Column({ nullable: true })
   client_id?: string;
 
   @ManyToOne(() => Client)

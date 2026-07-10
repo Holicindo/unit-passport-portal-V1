@@ -4,62 +4,139 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 64px;
-  background: #001F3F;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
   z-index: 1000;
-  justify-content: space-around;
-  align-items: center;
-  padding: 0 12px;
+  background: rgba(232, 234, 238, 0.95);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border-top: none;
+  box-shadow:
+    0 -4px 16px rgba(0, 31, 63, 0.10),
+    0 -1px 0 rgba(255, 255, 255, 0.65);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+.bottomNavInner {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-evenly;
+  width: 100%;
+  height: 68px;
+  padding: 0 0 4px;
+  position: relative;
+}
+
+/* Regular nav item */
 .navItem {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  color: rgba(255, 255, 255, 0.6);
+  justify-content: flex-end;
+  gap: 3px;
+  padding: 8px 0;
+  color: var(--brand-space-grey);
   text-decoration: none;
-  font-size: 11px;
+  font-size: 0.65rem;
   font-weight: 600;
-  gap: 4px;
-  width: 20%;
-  height: 100%;
-  transition: color 0.2s, transform 0.15s ease;
-  position: relative;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  font-family: var(--font-heading);
+  letter-spacing: 0.2px;
+  transition: color 0.2s;
+  flex: 1;
+  text-align: center;
 }
 
-.icon {
+/* Icon wrap — neumorphic pill saat aktif */
+.navIconWrap {
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.7;
-  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border-radius: 8px;
+  transition: all 0.2s;
 }
 
-.label {
-  font-family: var(--font-body);
+/* Active state */
+.navItemActive {
+  color: var(--brand-deep-navy);
 }
 
-.active {
-  color: #ffffff;
+.navItemActive .navIconWrap {
+  background: var(--neu-base);
+  box-shadow: var(--neu-shadow-inset);
+  color: var(--brand-deep-navy);
 }
 
-.active .icon {
-  transform: translateY(-2px) scale(1.1);
-  opacity: 1;
+.navItemActive svg {
+  color: var(--brand-deep-navy);
 }
 
-.active::after {
-  content: '';
+/* CENTER FAB — Servis */
+.navCenter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+  padding: 0 0 8px;
+  flex: 1;
+  position: relative;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  font-family: var(--font-heading);
+  text-align: center;
+}
+
+.navCenterFab {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--brand-deep-navy);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brand-optic-white);
+  /* Neumorphic FAB — raised dengan highlight */
+  box-shadow:
+    -4px -4px 10px rgba(255, 255, 255, 0.65),
+     4px  4px 10px rgba(0, 31, 63, 0.40),
+     0 6px 20px rgba(0, 31, 63, 0.30);
   position: absolute;
-  top: 4px;
-  width: 16px;
-  height: 3px;
-  background: #5B8AFF;
-  border-radius: 2px;
-  box-shadow: 0 2px 8px rgba(46, 91, 255, 0.4);
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 3px solid rgba(255, 255, 255, 0.50);
+}
+
+.navCenter:hover .navCenterFab,
+.navCenterActive .navCenterFab {
+  transform: translateX(-50%) translateY(-3px);
+  box-shadow:
+    -5px -5px 12px rgba(255, 255, 255, 0.70),
+     5px  5px 14px rgba(0, 31, 63, 0.50),
+     0 10px 28px rgba(0, 31, 63, 0.36);
+}
+
+.navCenterActive .navCenterFab {
+  background: linear-gradient(135deg, #001F3F 0%, #003870 100%);
+}
+
+.navCenterLabel {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--brand-space-grey);
+  letter-spacing: 0.2px;
+  padding-top: 38px;
+  font-family: var(--font-heading);
+}
+
+.navCenterActive .navCenterLabel {
+  color: var(--brand-deep-navy);
 }
 
 @media (max-width: 768px) {

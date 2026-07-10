@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { messageApi } from '@/lib/api';
-import { MessageSquare, Send, User, Plus, HeadphonesIcon } from 'lucide-react';
+import { MessageSquare, Send, User, Plus, HeadphonesIcon, ArrowLeft } from 'lucide-react';
 import styles from '../ClientPortal.module.css';
 import msgStyles from './messages.module.css';
 
 export default function ClientMessages() {
+  const router = useRouter();
   const [conversations, setConversations] = useState<any[]>([]);
   const [activeConv, setActiveConv]       = useState<any>(null);
   const [messages, setMessages]           = useState<any[]>([]);
@@ -88,7 +90,8 @@ export default function ClientMessages() {
   const handleStartConversation = async () => {
     setStarting(true);
     try {
-      const { data } = await messageApi.startConversation('support');
+      // Gunakan endpoint khusus support — tidak perlu tahu UUID admin
+      const { data } = await messageApi.startSupportConversation();
       const newConv = data?.conversation || data;
       if (newConv?.id) {
         setConversations(prev => {
@@ -113,7 +116,6 @@ export default function ClientMessages() {
           if (convs.length > 0) setActiveConv(convs[0]);
         } catch { /* silent */ }
       }
-      // Untuk error lain tidak block UI, cukup log
     } finally {
       setStarting(false);
     }
@@ -129,6 +131,12 @@ export default function ClientMessages() {
   return (
     <div>
       <div className={styles.pageHeader}>
+        <button
+          className={msgStyles.pageBackBtn}
+          onClick={() => router.push('/client-portal/dashboard')}
+        >
+          <ArrowLeft size={16} /> Dashboard
+        </button>
         <h1 className={styles.pageTitle}>Pesan</h1>
         <p className={styles.pageDescription}>
           Komunikasi langsung dengan tim Holicindo untuk dukungan unit Anda.
@@ -232,6 +240,14 @@ export default function ClientMessages() {
             <>
               {/* Header chat */}
               <div className={msgStyles.chatHeader}>
+                {/* Back button — hanya tampil di mobile untuk kembali ke list */}
+                <button
+                  className={msgStyles.chatBackBtn}
+                  onClick={() => setActiveConv(null)}
+                  aria-label="Kembali ke daftar percakapan"
+                >
+                  <ArrowLeft size={18} />
+                </button>
                 <div className={msgStyles.chatHeaderAvatar}>
                   {getInitial(getPartnerName(activeConv))}
                 </div>

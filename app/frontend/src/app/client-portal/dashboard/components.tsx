@@ -41,7 +41,7 @@ export function MiniCalendar({ events = {} }: { events?: CalendarEvents }) {
   const tooltipRef = useRef<HTMLDivElement>(null);
 
   const MONTH_NAMES = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-  const DAY_NAMES = ['Sen','Sel','Rab','Kam','Jum','Sab','Min'];
+  const DAY_NAMES = ['S','S','R','K','J','S','M']; // Sen, Sel, Rab, Kam, Jum, Sab, Min
 
   const firstDayOfWeek = new Date(current.year, current.month, 1).getDay();
   const offset = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
@@ -104,11 +104,11 @@ export function MiniCalendar({ events = {} }: { events?: CalendarEvents }) {
         </button>
       </div>
 
-      <div style={{ padding: '16px 20px 20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <div className={styles.calendarBody}>
         {/* Grid */}
         <div className={styles.calendarGrid}>
-          {DAY_NAMES.map(d => (
-            <div key={d} className={styles.calendarDayName}>{d}</div>
+          {DAY_NAMES.map((d, i) => (
+            <div key={i} className={styles.calendarDayName}>{d}</div>
           ))}
           {cells.map((d, i) => {
             if (d === null) return <div key={i} className={styles.calendarDayEmpty} />;

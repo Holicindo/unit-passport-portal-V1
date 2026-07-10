@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { unitApi } from '@/lib/api';
 import Link from 'next/link';
-import { Search, Eye, Package, RefreshCw, ChevronLeft, ChevronRight, Wrench } from 'lucide-react';
+import { Search, Eye, Package, RefreshCw, ChevronLeft, ChevronRight, Wrench, ArrowLeft } from 'lucide-react';
 import styles from '../ClientPortal.module.css';
 
 const PAGE_SIZE = 10;
@@ -126,6 +127,7 @@ function Pagination({
 }
 
 export default function ClientFleet() {
+  const router = useRouter();
   const [fleet, setFleet]       = useState<any[]>([]);
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState('');
@@ -174,6 +176,12 @@ export default function ClientFleet() {
 
   return (
     <div>
+      <button
+        className={styles.pageBackBtn}
+        onClick={() => router.push('/client-portal/dashboard')}
+      >
+        <ArrowLeft size={15} /> Dashboard
+      </button>
       <div className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>My Fleet</h1>
         <p className={styles.pageDescription}>

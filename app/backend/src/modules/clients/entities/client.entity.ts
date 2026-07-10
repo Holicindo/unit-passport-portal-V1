@@ -26,6 +26,15 @@ export class Client {
   @Column({ nullable: true })
   logo_url!: string;
 
+  @Column({ nullable: true })
+  city!: string;
+
+  @Column({ nullable: true })
+  email!: string;
+
+  @Column({ type: 'int', default: 0 })
+  unit_count!: number;
+
   @OneToMany(() => Unit, (unit) => unit.current_client)
   units!: Unit[];
 
