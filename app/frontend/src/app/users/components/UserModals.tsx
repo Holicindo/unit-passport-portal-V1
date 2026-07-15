@@ -1,17 +1,18 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserPlus, X, Eye, EyeOff } from 'lucide-react';
 import { CustomSelect } from '@/components/ui/CustomSelect';
+import { clientApi, partnerApi } from '@/lib/api';
 import styles from '../users.module.css';
 
 type UserRole = 'SUPER_ADMIN' | 'PARTNER' | 'MECHANIC' | 'CLIENT';
 type UserStatus = 'ACTIVE' | 'SUSPENDED';
 
 interface UserFormModalProps {
-  editingUser: { id: string; name: string; email: string; role: UserRole; status: UserStatus } | null;
+  editingUser: { id: string; name: string; email: string; role: UserRole; status: UserStatus; client_id?: string; partner_id?: string } | null;
   onClose: () => void;
-  onSave: (data: { name: string; email: string; role: UserRole; status: UserStatus; password: string }) => void;
+  onSave: (data: { name: string; email: string; role: UserRole; status: UserStatus; password: string; client_id?: string; partner_id?: string }) => void;
 }
 
 export function UserFormModal({ editingUser, onClose, onSave }: UserFormModalProps) {
@@ -21,10 +22,39 @@ export function UserFormModal({ editingUser, onClose, onSave }: UserFormModalPro
   const [formStatus, setFormStatus] = useState<UserStatus>(editingUser?.status || 'ACTIVE');
   const [formPassword, setFormPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [formClientId, setFormClientId] = useState(editingUser?.client_id || '');
+  const [formPartnerId, setFormPartnerId] = useState(editingUser?.partner_id || '');
+
+  const [clients, setClients] = useState<{id: string, company_name: string}[]>([]);
+  const [partners, setPartners] = useState<{id: string, company_name: string}[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [clientRes, partnerRes] = await Promise.all([
+          clientApi.findAll(200),
+          partnerApi.findAll()
+        ]);
+        if (clientRes.data) setClients(clientRes.data.data || clientRes.data);
+        if (partnerRes.data) setPartners(partnerRes.data);
+      } catch (err) {
+        console.error('Failed to fetch relations:', err);
+      }
+    };
+    fetchData();
+  }, []);
 
   const handleSave = () => {
     if (!formName || !formEmail) return;
-    onSave({ name: formName, email: formEmail, role: formRole, status: formStatus, password: formPassword });
+    onSave({ 
+      name: formName, 
+      email: formEmail, 
+      role: formRole, 
+      status: formStatus, 
+      password: formPassword,
+      client_id: formRole === 'CLIENT' ? (formClientId || undefined) : undefined,
+      partner_id: formRole === 'PARTNER' ? (formPartnerId || undefined) : undefined
+    });
   };
 
   return (
@@ -85,6 +115,36 @@ export function UserFormModal({ editingUser, onClose, onSave }: UserFormModalPro
                 ]} />
             </div>
           </div>
+
+          {formRole === 'CLIENT' && (
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Hubungkan ke Klien (Opsional)</label>
+              <CustomSelect 
+                value={formClientId} 
+                onChange={setFormClientId}
+                placeholder="Pilih Klien (Otomatis buat baru jika kosong)"
+                options={[
+                  { value: '', label: 'Buat Klien Baru (Otomatis)' },
+                  ...clients.map(c => ({ value: c.id, label: c.company_name }))
+                ]} 
+              />
+            </div>
+          )}
+
+          {formRole === 'PARTNER' && (
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Hubungkan ke Mitra/Partner (Opsional)</label>
+              <CustomSelect 
+                value={formPartnerId} 
+                onChange={setFormPartnerId}
+                placeholder="Pilih Mitra/Partner"
+                options={[
+                  { value: '', label: 'Pilih Mitra/Partner...' },
+                  ...partners.map(p => ({ value: p.id, label: p.company_name }))
+                ]} 
+              />
+            </div>
+          )}
         </div>
 
         <div className={styles.modalFooter}>

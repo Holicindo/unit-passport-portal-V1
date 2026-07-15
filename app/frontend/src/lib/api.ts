@@ -124,6 +124,7 @@ export const messageApi = {
 
 export const userApi = {
   findAll: () => api.get('/auth/users'),
+  deleteBulk: (ids: string[]) => api.post('/auth/users/bulk-delete', { ids }),
 };
 
 export const iotApi = {

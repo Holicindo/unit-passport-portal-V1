@@ -23,6 +23,7 @@ import AllSpecsModal from './components/AllSpecsModal';
 import ServiceHistorySection from './components/ServiceHistorySection';
 import IotTelemetryWidget from './components/IotTelemetryWidget';
 import IotHistoryWidget from './components/IotHistoryWidget';
+import CustomerHealthWidget from './components/CustomerHealthWidget';
 import QrCard from './components/QrCard';
 import { INDONESIA_CITIES, getUnitType, UNIT_TYPE_LABELS, UNIT_TYPE_COLORS } from './constants';
 import styles from './id.module.css';
@@ -737,8 +738,27 @@ export default function QrPassportPage() {
             </div>
           </section>
 
-            {/* IoT Sensor Real-Time */}
-            {(isClient || isPartner || isAdmin) && unit.id && (
+            {/* IoT — Customer: Health Index Widget (mock data, no raw sensor values) */}
+            {isClient && !isAdmin && !isPartner && unit.id && (
+              <section className={`${styles.panel} ${styles.iotPanel}`}>
+                <div className={styles.panelHeader}>
+                  <div className={styles.panelHeaderLeft}>
+                    <span style={{ fontSize: '1rem' }}>📡</span>
+                    <h2>Kesehatan Unit</h2>
+                  </div>
+                  <span style={{ fontSize: '0.65rem', fontWeight: 700, background: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.25)', borderRadius: '20px', padding: '3px 8px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#10b981', display: 'inline-block', animation: 'pulse 1.5s infinite' }} />
+                    LIVE
+                  </span>
+                </div>
+                <div className={styles.panelContent}>
+                  <CustomerHealthWidget isDark={isDark} />
+                </div>
+              </section>
+            )}
+
+            {/* IoT — Admin/Partner: Raw Sensor Real-Time */}
+            {(isPartner || isAdmin) && unit.id && (
               <section className={`${styles.panel} ${styles.iotPanel}`}>
                 <div className={styles.panelHeader}>
                   <div className={styles.panelHeaderLeft}>
@@ -756,8 +776,8 @@ export default function QrPassportPage() {
               </section>
             )}
 
-            {/* IoT Sensor History */}
-            {(isClient || isPartner || isAdmin) && unit.id && (
+            {/* IoT Sensor History — Admin/Partner only */}
+            {(isPartner || isAdmin) && unit.id && (
               <section className={`${styles.panel} ${styles.iotPanel}`}>
                 <div className={styles.panelHeader}>
                   <div className={styles.panelHeaderLeft}>

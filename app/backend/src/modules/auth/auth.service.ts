@@ -4,12 +4,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User, UserRole } from './entities/user.entity';
+import { Client } from '../clients/entities/client.entity';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    @InjectRepository(Client)
+    private clientRepository: Repository<Client>,
     private jwtService: JwtService,
   ) {}
 
@@ -20,12 +23,24 @@ export class AuthService {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Auto-create Client entity if user is CLIENT and no clientId provided
+    let finalClientId = clientId;
+    if (role === UserRole.CLIENT && !finalClientId) {
+      const newClient = this.clientRepository.create({
+        company_name: name || email,
+        email: email,
+      });
+      const savedClient = await this.clientRepository.save(newClient);
+      finalClientId = savedClient.id;
+    }
+
     const user = this.userRepository.create({
       email,
       password: hashedPassword,
       name: name || 'Unknown User',
       role: role || UserRole.CLIENT,
-      client_id: clientId,
+      client_id: finalClientId,
       partner_id: partnerId,
       status: 'ACTIVE',
     });
@@ -72,6 +87,34 @@ export class AuthService {
       client_id: saved.client_id,
       partner_id: saved.partner_id,
     };
+  }
+
+  async deleteBulk(ids: string[]) {
+    if (!ids || ids.length === 0) return { success: true, deletedCount: 0 };
+    const manager = this.userRepository.manager;
+    // 1. Null out service_reports.created_by_id
+    await manager.query(
+      `UPDATE service_reports SET created_by_id = NULL WHERE created_by_id = ANY($1)`,
+      [ids],
+    );
+    // 2. Delete notifications
+    await manager.query(
+      `DELETE FROM notifications WHERE user_id = ANY($1)`,
+      [ids],
+    );
+    // 3. Delete chat_messages sent by these users
+    await manager.query(
+      `DELETE FROM chat_messages WHERE sender_id = ANY($1)`,
+      [ids],
+    );
+    // 4. Delete conversations involving these users (chat_messages cascade-deleted via FK)
+    await manager.query(
+      `DELETE FROM conversations WHERE participant_1_id = ANY($1) OR participant_2_id = ANY($1)`,
+      [ids],
+    );
+    // 5. Finally delete the users
+    await this.userRepository.delete(ids);
+    return { success: true, deletedCount: ids.length };
   }
 
   async login(email: string, password: string) {

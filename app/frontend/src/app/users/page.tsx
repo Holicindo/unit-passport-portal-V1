@@ -17,6 +17,8 @@ interface User {
   email: string;
   role: UserRole;
   status: UserStatus;
+  client_id?: string;
+  partner_id?: string;
   lastLogin?: string;
   created_at?: string;
 }
@@ -36,6 +38,8 @@ export default function UsersPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [pageSize, setPageSize] = useState(10);
 
   const fetchUsers = async () => {
@@ -55,18 +59,26 @@ export default function UsersPage() {
   const openAddModal = () => { setEditingUser(null); setShowModal(true); };
   const openEditModal = (user: User) => { setEditingUser(user); setShowModal(true); };
 
-  const handleSave = async (data: { name: string; email: string; role: UserRole; status: UserStatus; password: string }) => {
+  const handleSave = async (data: { name: string; email: string; role: UserRole; status: UserStatus; password: string; client_id?: string; partner_id?: string }) => {
     try {
       if (editingUser) {
+        // TODO: Implement actual API update logic if needed
         setUsers(prev => prev.map(u => u.id === editingUser.id ? {
-          ...u, name: data.name, email: data.email, role: data.role, status: data.status
+          ...u, name: data.name, email: data.email, role: data.role, status: data.status, client_id: data.client_id, partner_id: data.partner_id
         } : u));
       } else {
         const token = localStorage.getItem('token');
         const res = await fetch(`/api/auth/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-          body: JSON.stringify({ name: data.name, email: data.email, password: data.password || 'password123', role: data.role }),
+          body: JSON.stringify({ 
+            name: data.name, 
+            email: data.email, 
+            password: data.password || 'password123', 
+            role: data.role,
+            client_id: data.client_id,
+            partner_id: data.partner_id
+          }),
         });
         if (!res.ok) {
           const err = await res.json();
@@ -81,9 +93,26 @@ export default function UsersPage() {
     }
   };
 
-  const handleDelete = (id: string) => {
-    setUsers(prev => prev.filter(u => u.id !== id));
-    setShowDeleteConfirm(null);
+  const handleDelete = async (id: string) => {
+    try {
+      await userApi.deleteBulk([id]);
+      setUsers(prev => prev.filter(u => u.id !== id));
+      setShowDeleteConfirm(null);
+      setSelectedIds(prev => prev.filter(selectedId => selectedId !== id));
+    } catch (err) {
+      alert('Gagal menghapus pengguna.');
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    try {
+      await userApi.deleteBulk(selectedIds);
+      setUsers(prev => prev.filter(u => !selectedIds.includes(u.id)));
+      setSelectedIds([]);
+      setShowBulkDeleteConfirm(false);
+    } catch (err) {
+      alert('Gagal menghapus pengguna.');
+    }
   };
 
   const handleToggleStatus = (id: string) => {
@@ -133,6 +162,15 @@ export default function UsersPage() {
             ]} value={filterRole} onChange={(val) => setFilterRole(val)} placeholder="Filter Role..." />
           </div>
           <div className="dtToolbarRight">
+            {selectedIds.length > 0 && (
+              <button
+                className={styles.dangerBtn}
+                style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '8px 18px', fontSize: '0.82rem' }}
+                onClick={() => setShowBulkDeleteConfirm(true)}
+              >
+                <Trash2 size={14} strokeWidth={2.5} /> Hapus {selectedIds.length} Dipilih
+              </button>
+            )}
             <div className="dtToolbarSearch">
               <input type="text" placeholder="Search Admin..." className="dtToolbarSearchInput"
                 value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
@@ -147,12 +185,28 @@ export default function UsersPage() {
         <table className={styles.table}>
           <thead>
             <tr>
+              <th style={{ width: 40, textAlign: 'center' }}>
+                <input 
+                  type="checkbox" 
+                  checked={filteredUsers.length > 0 && selectedIds.length === filteredUsers.length}
+                  onChange={(e) => setSelectedIds(e.target.checked ? filteredUsers.map(u => u.id) : [])}
+                  style={{ cursor: 'pointer' }}
+                />
+              </th>
               <th>Pengguna</th><th>Role / Hak Akses</th><th>Status</th><th>Terakhir Login</th><th className={styles.tableThRight}>Aksi</th>
             </tr>
           </thead>
           <tbody>
             {filteredUsers.map((user) => (
               <tr key={user.id}>
+                <td style={{ textAlign: 'center' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={selectedIds.includes(user.id)}
+                    onChange={(e) => setSelectedIds(prev => e.target.checked ? [...prev, user.id] : prev.filter(id => id !== user.id))}
+                    style={{ cursor: 'pointer' }}
+                  />
+                </td>
                 <td><div className={styles.userText}><span>{user.name}</span><span className={styles.userEmail}>{user.email}</span></div></td>
                 <td>{roleLabels[user.role]}</td>
                 <td>
@@ -174,10 +228,10 @@ export default function UsersPage() {
               </tr>
             ))}
             {loading && (
-              <tr><td colSpan={5} className={styles.emptyCell}><div className={styles.emptyWrapper}>Memuat data...</div></td></tr>
+              <tr><td colSpan={6} className={styles.emptyCell}><div className={styles.emptyWrapper}>Memuat data...</div></td></tr>
             )}
             {!loading && filteredUsers.length === 0 && (
-              <tr><td colSpan={5} className={styles.emptyCell}><div className={styles.emptyWrapper}>
+              <tr><td colSpan={6} className={styles.emptyCell}><div className={styles.emptyWrapper}>
                 <span className={styles.emptyIcon}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
                 Tidak ada pengguna ditemukan.
               </div></td></tr>
@@ -195,6 +249,14 @@ export default function UsersPage() {
           userName={users.find(u => u.id === showDeleteConfirm)?.name || ''}
           onClose={() => setShowDeleteConfirm(null)}
           onConfirm={() => handleDelete(showDeleteConfirm)}
+        />
+      )}
+
+      {showBulkDeleteConfirm && (
+        <DeleteConfirmModal
+          userName={`${selectedIds.length} pengguna yang dipilih`}
+          onClose={() => setShowBulkDeleteConfirm(false)}
+          onConfirm={handleBulkDelete}
         />
       )}
     </div>

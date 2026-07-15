@@ -23,7 +23,7 @@ export class AuthController {
 
   @Post('register')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Register a new user (Admin only)' })
   async register(@Body() registerDto: RegisterDto) {
@@ -39,11 +39,20 @@ export class AuthController {
 
   @Get('users')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all users (Admin only)' })
   async getUsers() {
     return this.authService.findAll();
+  }
+
+  @Post('users/bulk-delete')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Bulk delete users (Admin only)' })
+  async bulkDeleteUsers(@Body('ids') ids: string[]) {
+    return this.authService.deleteBulk(ids);
   }
 
   @Patch('me')

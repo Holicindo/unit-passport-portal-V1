@@ -6,8 +6,10 @@ import { generatePrefixedId } from '../../../common/utils/id-generator';
 
 export enum UserRole {
   ADMIN = 'ADMIN',
+  SUPER_ADMIN = 'SUPER_ADMIN',
   CLIENT = 'CLIENT',
   PARTNER = 'PARTNER',
+  MECHANIC = 'MECHANIC',
 }
 
 @Entity('users')

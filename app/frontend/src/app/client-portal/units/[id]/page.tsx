@@ -6,10 +6,11 @@ import { useParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft, Box, MapPin, Wrench, ShieldCheck,
   FileText, AlertTriangle, ExternalLink, Package,
-  TrendingUp, Calendar,
+  TrendingUp, Calendar, Activity
 } from 'lucide-react';
 import styles from '../../ClientPortal.module.css';
 import unitStyles from './unit.module.css';
+import UnitHealthWidget from '@/components/iot/UnitHealthWidget';
 
 // ── Status Badge ──
 function StatusBadge({ status }: { status: string }) {
@@ -154,8 +155,56 @@ export default function ClientUnitDetail() {
           reportApi.findByUnit(id as string),
         ]);
         if (unitRes.status === 'fulfilled') setUnit(unitRes.value.data);
-        if (logsRes.status === 'fulfilled')    setLogs(logsRes.value.data || []);
-        if (reportsRes.status === 'fulfilled') setReports(reportsRes.value.data || []);
+        
+        if (logsRes.status === 'fulfilled') {
+          let fetchedLogs = logsRes.value.data || [];
+          // MOCK DATA UNTUK DEMO PM JIKA KOSONG
+          if (fetchedLogs.length === 0) {
+            fetchedLogs = [
+              {
+                id: 'mock-log-1',
+                action_taken: 'Pembersihan Evaporator & Cek Freon',
+                issue_description: 'Suhu kurang maksimal, dilakukan pembersihan sirip evaporator.',
+                service_date: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+                technician_name: 'Budi Santoso',
+                partner: { partner_name: 'PT Pendingin Utama' },
+                status: 'COMPLETED'
+              },
+              {
+                id: 'mock-log-2',
+                action_taken: 'Inspeksi Rutin & Kalibrasi Sensor IoT',
+                issue_description: 'Pengecekan bulanan kompresor dan kalibrasi sensor suhu.',
+                service_date: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
+                technician_name: 'Agus Riyadi',
+                partner: { partner_name: 'Holicindo Tech Team' },
+                status: 'COMPLETED'
+              }
+            ];
+          }
+          setLogs(fetchedLogs);
+        }
+
+        if (reportsRes.status === 'fulfilled') {
+          let fetchedReports = reportsRes.value.data || [];
+          // MOCK DATA UNTUK DEMO PM JIKA KOSONG
+          if (fetchedReports.length === 0) {
+            fetchedReports = [
+              {
+                id: 'mock-report-1',
+                form_type: 'PREVENTIVE_MAINTENANCE',
+                created_at: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+                created_by: { name: 'Budi Santoso' }
+              },
+              {
+                id: 'mock-report-2',
+                form_type: 'ROUTINE_INSPECTION',
+                created_at: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
+                created_by: { name: 'Agus Riyadi' }
+              }
+            ];
+          }
+          setReports(fetchedReports);
+        }
       } catch (err) {
         console.error('Gagal memuat data unit:', err);
       } finally {
@@ -205,218 +254,213 @@ export default function ClientUnitDetail() {
   return (
     <div>
       {/* ── Breadcrumb ── */}
-      <button
-        className={unitStyles.backBtn}
-        onClick={() => router.push('/client-portal/fleet')}
-      >
-        <ArrowLeft size={16} /> Kembali ke Fleet
-      </button>
-
-      {/* ── Header Unit ── */}
-      <div className={unitStyles.unitHeader}>
-        <div className={unitStyles.unitHeaderLeft}>
-          <div className={unitStyles.unitIconBox}>
-            <Box size={28} />
+      <div className={styles.pageHeader}>
+        <button
+          className={styles.pageBackBtn}
+          onClick={() => router.push('/client-portal/fleet')}
+        >
+          <ArrowLeft size={16} /> Kembali ke Fleet
+        </button>
+        <div className={unitStyles.unitHeader}>
+          <div className={unitStyles.unitHeaderLeft}>
+            <div className={unitStyles.unitIconBox}>
+              <Box size={28} />
+            </div>
+            <div>
+              <h1 className={styles.pageTitle}>{unit.serial_number}</h1>
+              <p className={styles.pageDescription}>{unit.model_name}</p>
+            </div>
           </div>
-          <div>
-            <h1 className={unitStyles.unitSerial}>{unit.serial_number}</h1>
-            <p className={unitStyles.unitModel}>{unit.model_name}</p>
+          <div className={unitStyles.unitHeaderRight}>
+            <StatusBadge status={unit.status} />
+            {!serviceRequested ? (
+              <button
+                className={styles.btnWarning}
+                onClick={() => setShowModal(true)}
+              >
+                <Wrench size={16} /> Request Servis
+              </button>
+            ) : (
+              <span className={styles.badgeActive}>Permintaan Terkirim</span>
+            )}
           </div>
-        </div>
-        <div className={unitStyles.unitHeaderRight}>
-          <StatusBadge status={unit.status} />
-          {/* Tombol Request Service — Safety Orange */}
-          {!serviceRequested ? (
-            <button
-              className={styles.btnWarning}
-              onClick={() => setShowModal(true)}
-            >
-              <Wrench size={16} /> Request Servis
-            </button>
-          ) : (
-            <span className={styles.badgeActive}>Permintaan Terkirim</span>
-          )}
         </div>
       </div>
 
-      {/* ── Info Cards ── */}
-      <div className={styles.unitDetailGrid} style={{ marginBottom: 24 }}>
-
-        {/* Info Dasar Unit */}
-        <div className={styles.card}>
-          <div className={styles.cardHeader}>
-            <h2 className={styles.cardTitle}>
-              <Box size={16} style={{ display: 'inline', marginRight: 8, color: 'var(--brand-cobalt-blue)' }} />
-              Informasi Unit
-            </h2>
-          </div>
-          <div style={{ padding: '0 24px' }}>
-            {[
-              { label: 'Serial Number', value: unit.serial_number },
-              { label: 'Model',         value: unit.model_name },
-              { label: 'Tipe',          value: unit.specs?.type },
-            ].map(({ label, value }) => (
-              <div key={label} className={styles.infoRow}>
-                <span className={styles.infoLabel}>{label}</span>
-                <span className={styles.infoValue}>{value || '—'}</span>
+      <div className={styles.twoCol}>
+        
+        {/* KOLOM KIRI (Main Content) */}
+        <div className={styles.twoColLeft}>
+          
+          {/* Info Dasar Unit & Indeks Kesehatan (Flex Row) */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+            
+            {/* Info Dasar Unit */}
+            <div className={styles.card}>
+              <div className={styles.cardHeader}>
+                <h2 className={styles.cardTitle}>
+                  <Box size={16} style={{ display: 'inline', marginRight: 8, color: 'var(--brand-cobalt-blue)' }} />
+                  Informasi Unit
+                </h2>
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Detail Penempatan & Garansi */}
-        <div className={styles.card}>
-          <div className={styles.cardHeader}>
-            <h2 className={styles.cardTitle}>
-              <MapPin size={16} style={{ display: 'inline', marginRight: 8, color: 'var(--brand-cobalt-blue)' }} />
-              Penempatan & Garansi
-            </h2>
-          </div>
-          <div style={{ padding: '0 24px' }}>
-            {[
-              { label: 'Kota',            value: unit.current_client?.city || unit.specs?.city },
-              { label: 'Tgl. Produksi',   value: unit.production_date ? new Date(unit.production_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : null },
-              { label: 'Garansi Habis',   value: warrantyExpiry ? new Date(warrantyExpiry).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : null },
-            ].map(({ label, value }) => (
-              <div key={label} className={styles.infoRow}>
-                <span className={styles.infoLabel}>{label}</span>
-                <span className={styles.infoValue}>{value || '—'}</span>
+              <div className={styles.cardBody}>
+                {[
+                  { label: 'Serial Number', value: unit.serial_number },
+                  { label: 'Model',         value: unit.model_name },
+                  { label: 'Tipe',          value: unit.specs?.type },
+                ].map(({ label, value }) => (
+                  <div key={label} className={styles.infoRow} style={{ padding: '12px 0', borderBottom: '1px solid var(--brand-border)' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--brand-space-grey)', fontWeight: 600 }}>{label}</span>
+                    <span style={{ fontSize: '0.9rem', color: 'var(--brand-deep-navy)', fontWeight: 700, float: 'right' }}>{value || '—'}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-            <div className={styles.infoRow}>
-              <span className={styles.infoLabel}>Status Garansi</span>
-              <WarrantyBadge endDate={warrantyExpiry} />
+            </div>
+
+            {/* Indeks Kesehatan Unit (Simplified IoT) */}
+            <div className={styles.card}>
+              <div className={styles.cardHeader}>
+                <h2 className={styles.cardTitle}>
+                  <Activity size={16} style={{ display: 'inline', marginRight: 8, color: 'var(--brand-cobalt-blue)' }} />
+                  Indeks Kesehatan Unit
+                </h2>
+              </div>
+              <div className={styles.cardBody} style={{ padding: '0 16px 16px' }}>
+                <UnitHealthWidget unitId={unit.id} />
+              </div>
+            </div>
+
+          </div>
+
+          {/* ── Riwayat Servis ── */}
+          <div className={styles.cardStretch}>
+            <div className={styles.cardHeader}>
+              <h2 className={styles.cardTitle}>
+                <Wrench size={16} style={{ display: 'inline', marginRight: 8, color: 'var(--brand-cobalt-blue)' }} />
+                Riwayat Servis
+              </h2>
+              <span className={unitStyles.countBadge}>{logs.length} catatan</span>
+            </div>
+            <div className={styles.cardBody} style={{ padding: 0 }}>
+              {logs.length === 0 ? (
+                <div style={{ padding: '40px', textAlign: 'center' }}>
+                  <Wrench size={24} color="var(--brand-space-grey)" style={{ marginBottom: 12 }} />
+                  <div style={{ color: 'var(--brand-space-grey)', fontWeight: 600 }}>Belum ada riwayat servis</div>
+                </div>
+              ) : (
+                <div className={unitStyles.logList}>
+                  {logs.map((log: any) => (
+                    <div key={log.id} className={unitStyles.logItem}>
+                      <div className={unitStyles.logAccent} />
+                      <div className={unitStyles.logContent}>
+                        <div className={unitStyles.logTop}>
+                          <span className={unitStyles.logTitle}>
+                            {log.action_taken || log.issue_description || 'Servis'}
+                          </span>
+                          <span className={unitStyles.logDate}>
+                            <Calendar size={12} />
+                            {log.service_date
+                              ? new Date(log.service_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+                              : '—'}
+                          </span>
+                        </div>
+                        {log.issue_description && log.action_taken && (
+                          <p className={unitStyles.logDesc}>{log.issue_description}</p>
+                        )}
+                        <div className={unitStyles.logMeta}>
+                          {log.technician_name && (
+                            <span className={unitStyles.logMetaItem}>Teknisi: {log.technician_name}</span>
+                          )}
+                          {log.partner?.partner_name && (
+                            <span className={unitStyles.logMetaItem}>Mitra: {log.partner.partner_name}</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
-      </div>
 
-      {/* ── Riwayat Servis ── */}
-      <div className={styles.card} style={{ marginBottom: 24 }}>
-        <div className={styles.cardHeader}>
-          <h2 className={styles.cardTitle}>
-            <Wrench size={16} style={{ display: 'inline', marginRight: 8, color: 'var(--brand-cobalt-blue)' }} />
-            Riwayat Servis
-          </h2>
-          <span className={unitStyles.countBadge}>{logs.length} catatan</span>
-        </div>
-
-        {logs.length === 0 ? (
-          <div className={styles.emptyState} style={{ padding: '40px' }}>
-            <div className={styles.emptyStateIcon}><Wrench size={24} /></div>
-            <div className={styles.emptyStateTitle}>Belum ada riwayat servis</div>
-          </div>
-        ) : (
-          <div className={unitStyles.logList}>
-            {logs.map((log: any) => (
-              <div key={log.id} className={unitStyles.logItem}>
-                <div className={unitStyles.logAccent} />
-                <div className={unitStyles.logContent}>
-                  <div className={unitStyles.logTop}>
-                    <span className={unitStyles.logTitle}>
-                      {log.action_taken || log.issue_description || 'Servis'}
-                    </span>
-                    <span className={unitStyles.logDate}>
-                      <Calendar size={12} />
-                      {log.service_date
-                        ? new Date(log.service_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
-                        : '—'}
-                    </span>
-                  </div>
-                  {log.issue_description && log.action_taken && (
-                    <p className={unitStyles.logDesc}>{log.issue_description}</p>
-                  )}
-                  <div className={unitStyles.logMeta}>
-                    {log.technician_name && (
-                      <span className={unitStyles.logMetaItem}>Teknisi: {log.technician_name}</span>
-                    )}
-                    {log.partner?.partner_name && (
-                      <span className={unitStyles.logMetaItem}>Mitra: {log.partner.partner_name}</span>
-                    )}
-                    {(() => {
-                      const s = (log.status || '').toUpperCase();
-                      if (s === 'COMPLETED') return <span className={styles.badgeActive}>{log.status}</span>;
-                      if (s === 'PENDING')   return <span className={styles.badgeMaintenance}>{log.status}</span>;
-                      if (s === 'CANCELLED') return <span className={styles.badgeInactive}>{log.status}</span>;
-                      return <span className={styles.badgeInactive}>{log.status}</span>;
-                    })()}
-                  </div>
-                  {log.attachments?.length > 0 && (
-                    <div className={unitStyles.attachments}>
-                      {log.attachments.map((url: string, i: number) => (
-                        <a
-                          key={i}
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={unitStyles.attachLink}
-                        >
-                          <ExternalLink size={12} /> Lampiran {i + 1}
-                        </a>
-                      ))}
-                    </div>
-                  )}
-                </div>
+        {/* KOLOM KANAN (Sidebar) */}
+        <div className={styles.twoColRight}>
+          
+          {/* Detail Penempatan & Garansi */}
+          <div className={styles.card}>
+            <div className={styles.cardHeader}>
+              <h2 className={styles.cardTitle}>
+                <MapPin size={16} style={{ display: 'inline', marginRight: 8, color: 'var(--brand-cobalt-blue)' }} />
+                Garansi
+              </h2>
+            </div>
+            <div className={styles.cardBody}>
+              <div style={{ marginBottom: 16 }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--brand-space-grey)', fontWeight: 700, display: 'block', textTransform: 'uppercase' }}>Status Garansi</span>
+                <div style={{ marginTop: 8 }}><WarrantyBadge endDate={warrantyExpiry} /></div>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* ── Laporan Servis ── */}
-      <div className={styles.card}>
-        <div className={styles.cardHeader}>
-          <h2 className={styles.cardTitle}>
-            <FileText size={16} style={{ display: 'inline', marginRight: 8, color: 'var(--brand-cobalt-blue)' }} />
-            Laporan Servis
-          </h2>
-          <span className={unitStyles.countBadge}>{reports.length} laporan</span>
-        </div>
-
-        {reports.length === 0 ? (
-          <div className={styles.emptyState} style={{ padding: '40px' }}>
-            <div className={styles.emptyStateIcon}><FileText size={24} /></div>
-            <div className={styles.emptyStateTitle}>Belum ada laporan</div>
-          </div>
-        ) : (
-          <table className={styles.dataTable}>
-            <thead>
-              <tr>
-                <th>Tipe Laporan</th>
-                <th>Tanggal</th>
-                <th>Dibuat Oleh</th>
-                <th style={{ textAlign: 'right' }}>Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {reports.map((rep: any) => (
-                <tr key={rep.id}>
-                  <td data-label="Tipe Laporan">
-                    <span style={{ fontWeight: 700, color: 'var(--brand-deep-navy)', fontFamily: 'var(--font-heading)' }}>
-                      {rep.form_type?.replace(/_/g, ' ') || 'Laporan'}
-                    </span>
-                  </td>
-                  <td data-label="Tanggal" style={{ color: 'var(--brand-space-grey)' }}>
-                    {rep.created_at
-                      ? new Date(rep.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
-                      : '—'}
-                  </td>
-                  <td data-label="Dibuat Oleh" style={{ color: 'var(--brand-space-grey)' }}>
-                    {rep.created_by?.name || '—'}
-                  </td>
-                  <td data-label="Aksi" style={{ textAlign: 'right' }}>
-                    <a
-                      href={`/client-portal/reports/${rep.id}`}
-                      className={styles.cardAction}
-                    >
-                      Lihat Laporan <ExternalLink size={13} />
-                    </a>
-                  </td>
-                </tr>
+              {[
+                { label: 'Kota Penempatan', value: unit.current_client?.city || unit.specs?.city },
+                { label: 'Tgl. Produksi',   value: unit.production_date ? new Date(unit.production_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : null },
+                { label: 'Garansi Habis',   value: warrantyExpiry ? new Date(warrantyExpiry).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : null },
+              ].map(({ label, value }) => (
+                <div key={label} style={{ padding: '12px 0', borderTop: '1px solid var(--brand-border)' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--brand-space-grey)', fontWeight: 600, display: 'block', marginBottom: 4 }}>{label}</span>
+                  <span style={{ fontSize: '0.9rem', color: 'var(--brand-deep-navy)', fontWeight: 700 }}>{value || '—'}</span>
+                </div>
               ))}
-            </tbody>
-          </table>
-        )}
+            </div>
+          </div>
+
+          {/* ── Laporan Servis ── */}
+          <div className={styles.card}>
+            <div className={styles.cardHeader}>
+              <h2 className={styles.cardTitle}>
+                <FileText size={16} style={{ display: 'inline', marginRight: 8, color: 'var(--brand-cobalt-blue)' }} />
+                Laporan Terbaru
+              </h2>
+            </div>
+            <div className={styles.cardBody} style={{ padding: '0 0 16px 0' }}>
+              {reports.length === 0 ? (
+                <div style={{ padding: '24px', textAlign: 'center' }}>
+                  <div style={{ color: 'var(--brand-space-grey)', fontWeight: 600, fontSize: '0.85rem' }}>Belum ada laporan</div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  {reports.slice(0, 5).map((rep: any) => (
+                    <a
+                      key={rep.id}
+                      href={`/client-portal/reports/${rep.id}`}
+                      style={{ 
+                        padding: '12px 20px', 
+                        borderBottom: '1px solid var(--brand-border)', 
+                        textDecoration: 'none',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        transition: 'background 0.2s'
+                      }}
+                      onMouseOver={(e) => e.currentTarget.style.background = 'rgba(46, 91, 255, 0.05)'}
+                      onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--brand-deep-navy)', marginBottom: 2 }}>
+                          {rep.form_type?.replace(/_/g, ' ') || 'Laporan'}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--brand-space-grey)' }}>
+                          {rep.created_at ? new Date(rep.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
+                        </div>
+                      </div>
+                      <ExternalLink size={14} color="var(--brand-cobalt-blue)" />
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+        </div>
       </div>
 
       {/* ── Modal Request Servis ── */}
