@@ -35,67 +35,8 @@ export default function LoginForm({
   showPassword, setShowPassword,
   error, loading, onSubmit, onGoogleLogin, onForgot, onSwitchToSignup,
 }: LoginFormProps) {
-  const darkInputStyle: React.CSSProperties = {
-    WebkitAppearance: 'none',
-    appearance: 'none',
-    backgroundColor: '#101728',
-    color: '#ffffff',
-    border: 'none',
-    outline: 'none',
-    boxShadow: 'inset 8px 8px 16px rgba(0,0,0,0.7), inset -3px -3px 8px rgba(255,255,255,0.03)',
-    borderRadius: '30px',
-    width: '100%',
-    padding: '12px 14px 12px 42px',
-    fontSize: '0.9rem',
-    fontWeight: 500,
-    fontFamily: "var(--font-body, 'Inter', sans-serif)",
-    boxSizing: 'border-box' as const,
-    WebkitTextFillColor: '#ffffff',
-  };
-  const darkPasswordStyle: React.CSSProperties = {
-    ...darkInputStyle,
-    padding: '12px 46px 12px 42px',
-  };
   return (
     <>
-      <style>{`
-        #email, #password {
-          background-color: #101728 !important;
-          -webkit-text-fill-color: rgba(255,255,255,0.9) !important;
-          color: #ffffff !important;
-          border: none !important;
-          -webkit-appearance: none !important;
-          appearance: none !important;
-          -webkit-box-shadow:
-            inset 7px 7px 15px rgba(0, 0, 0, 0.75),
-            inset -5px -5px 12px rgba(255, 255, 255, 0.05),
-            inset 0 0 0 1000px #101728 !important;
-          box-shadow:
-            inset 7px 7px 15px rgba(0, 0, 0, 0.75),
-            inset -5px -5px 12px rgba(255, 255, 255, 0.05),
-            inset 0 0 0 1000px #101728 !important;
-        }
-        #email::placeholder, #password::placeholder {
-          color: rgba(255, 255, 255, 0.3) !important;
-          -webkit-text-fill-color: rgba(255, 255, 255, 0.3) !important;
-        }
-        #email:-webkit-autofill,
-        #email:-webkit-autofill:hover,
-        #email:-webkit-autofill:focus,
-        #password:-webkit-autofill,
-        #password:-webkit-autofill:hover,
-        #password:-webkit-autofill:focus {
-          -webkit-box-shadow:
-            inset 7px 7px 15px rgba(0, 0, 0, 0.75),
-            inset -5px -5px 12px rgba(255, 255, 255, 0.05),
-            inset 0 0 0 1000px #101728 !important;
-          box-shadow:
-            inset 7px 7px 15px rgba(0, 0, 0, 0.75),
-            inset -5px -5px 12px rgba(255, 255, 255, 0.05),
-            inset 0 0 0 1000px #101728 !important;
-          -webkit-text-fill-color: rgba(255,255,255,0.9) !important;
-        }
-      `}</style>
       <h1 className={styles.welcomeTitle}>Welcome Back</h1>
       <p className={styles.welcomeSubtitle}>Enter your credentials to continue</p>
 
@@ -105,7 +46,7 @@ export default function LoginForm({
           <div className={styles.inputWithIconNew}>
             <span className={styles.inputIcon}><Mail size={16} /></span>
             <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-              placeholder="name@company.com" required autoComplete="off" style={darkInputStyle}
+              placeholder="name@company.com" required autoComplete="off"
               suppressHydrationWarning />
           </div>
         </div>
@@ -116,7 +57,7 @@ export default function LoginForm({
             <span className={styles.lockIcon}><Lock size={16} /></span>
             <input id="password" type={showPassword ? 'text' : 'password'} value={password}
               onChange={(e) => setPassword(e.target.value)} placeholder="Enter your password"
-              required autoComplete="new-password" style={darkPasswordStyle}
+              required autoComplete="new-password"
               suppressHydrationWarning />
             <button type="button" className={styles.eyeBtn}
               onClick={() => setShowPassword(!showPassword)}
