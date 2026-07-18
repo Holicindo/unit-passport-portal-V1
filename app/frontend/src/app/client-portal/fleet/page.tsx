@@ -289,7 +289,7 @@ export default function ClientFleet() {
                 </div>
               </div>
             ) : (
-              <div style={{ overflowX: 'auto' }}>
+              <div className={styles.tableWrapper}>
                 <table className={styles.dataTable}>
                   <thead>
                     <tr>
@@ -314,26 +314,33 @@ export default function ClientFleet() {
 
                       return (
                         <tr key={unit.id}>
-                          <td data-label="Serial Number">
-                            <Link
-                              href={`/client-portal/units/${encodeURIComponent(unit.id)}`}
-                              style={{
-                                fontWeight: 700,
-                                color: 'var(--brand-cobalt-blue)',
-                                fontFamily: 'var(--font-heading)',
-                                textDecoration: 'none',
-                              }}>
-                              {unit.serial_number}
-                            </Link>
+                          {/* col-1: header = serial + badge sejajar */}
+                          <td data-label="Serial Number" className={styles.fleetCardHeaderCell}>
+                            <span className={styles.fleetCardHeaderRow}>
+                              <Link
+                                href={`/client-portal/units/${encodeURIComponent(unit.id)}`}
+                                className={styles.fleetCardSerial}
+                              >
+                                {unit.serial_number}
+                              </Link>
+                              <span className={styles.fleetCardBadgeCorner}>
+                                <StatusBadge status={unit.status} />
+                              </span>
+                            </span>
                           </td>
-                          <td data-label="Model">{unit.model_name || '-'}</td>
-                          <td data-label="Lokasi" style={{ color: 'var(--brand-space-grey)', fontSize: '0.8rem', maxWidth: '250px', whiteSpace: 'normal', lineHeight: '1.4' }}>
-                            {unit.outlet_branch || unit.current_client?.address || '-'}
+                          {/* col-2: model */}
+                          <td data-label="Model" className={styles.fleetCardModelCell}>
+                            {unit.model_name || '-'}
                           </td>
-                          <td data-label="Kota" style={{ color: 'var(--brand-space-grey)' }}>
+                          {/* col-3: kota */}
+                          <td data-label="Kota" className={styles.fleetCardCityCell}>
                             {unit.city || unit.specs?.city || unit.current_client?.city || '-'}
                           </td>
-                          <td data-label="Garansi Habis">
+                          {/* hidden on mobile */}
+                          <td className={styles.hiddenOnMobile} data-label="Lokasi" style={{ color: 'var(--brand-space-grey)', fontSize: '0.8rem', maxWidth: '250px', whiteSpace: 'normal', lineHeight: '1.4' }}>
+                            {unit.outlet_branch || unit.current_client?.address || '-'}
+                          </td>
+                          <td className={styles.hiddenOnMobile} data-label="Garansi Habis">
                             {warrantyExp ? (
                               <span style={{
                                 color: isWarrantyExpired ? 'var(--brand-danger)'
@@ -348,7 +355,7 @@ export default function ClientFleet() {
                               </span>
                             ) : <span style={{ color: 'var(--brand-space-grey)' }}>-</span>}
                           </td>
-                          <td data-label="Servis Terakhir">
+                          <td className={styles.hiddenOnMobile} data-label="Servis Terakhir">
                             {lastService ? (
                               <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--brand-space-grey)', fontSize: '0.82rem' }}>
                                 <Wrench size={12} style={{ flexShrink: 0 }} />
@@ -358,9 +365,11 @@ export default function ClientFleet() {
                               <span style={{ color: 'var(--brand-space-grey)', fontSize: '0.78rem', fontStyle: 'italic' }}>Belum ada</span>
                             )}
                           </td>
-                          <td data-label="Status">
+                          {/* status: visible on desktop, hidden on mobile (badge is already in header) */}
+                          <td className={styles.hiddenOnMobile} data-label="Status">
                             <StatusBadge status={unit.status} />
                           </td>
+                          {/* aksi */}
                           <td data-label="Aksi" style={{ textAlign: 'right' }}>
                             <Link
                               href={`/client-portal/units/${encodeURIComponent(unit.id)}`}

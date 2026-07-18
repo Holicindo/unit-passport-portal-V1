@@ -611,37 +611,8 @@ a {
   border-radius: 16px !important;
 }
 
-/* Mobile service modal — always clean white full-screen regardless of theme */
-@media (max-width: 768px) {
-  [class*="modalOverlay"] {
-    background: #ffffff !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    padding: 0 !important;
-    align-items: flex-start !important;
-  }
-  [class*="modalCard"] {
-    background: #ffffff !important;
-    border: none !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
-    width: 100% !important;
-    height: 100vh !important;
-    max-height: 100vh !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    color: #0f172a !important;
-    animation: none !important;
-  }
-  [class*="modalHeader"] {
-    background: #ffffff !important;
-    border-bottom: 1px solid #f1f5f9 !important;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important;
-  }
-  [class*="modalHeader"] h2 {
-    color: #001F3F !important;
-  }
-}
+/* Modal overlay mobile overrides handled in unit.module.css per-component */
+
 
 /* Header & Typography overrides */
 [data-theme="dark"] h1,

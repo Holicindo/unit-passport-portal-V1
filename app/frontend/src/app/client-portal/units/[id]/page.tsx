@@ -7,7 +7,7 @@ import {
   ArrowLeft, Box, MapPin, Wrench, ShieldCheck,
   FileText, AlertTriangle, ExternalLink, Package,
   TrendingUp, Calendar, Activity, ImageOff, Zap, Wind, Thermometer,
-  User, Briefcase
+  User, Briefcase, ChevronDown, ChevronUp
 } from 'lucide-react';
 import styles from '../../ClientPortal.module.css';
 import unitStyles from './unit.module.css';
@@ -232,6 +232,7 @@ export default function ClientUnitDetail() {
   const [showModal, setShowModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [serviceRequested, setServiceRequested] = useState(false);
+  const [expandedLogId, setExpandedLogId]       = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -355,18 +356,27 @@ export default function ClientUnitDetail() {
               <Box size={28} />
             </div>
             <div>
-              <h1 className={styles.pageTitle}>{unit.serial_number}</h1>
+              <h1 className={styles.pageTitle} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                {unit.serial_number}
+                {/* Badge for mobile, hidden on desktop */}
+                <div className={unitStyles.mobileBadgeOnly}>
+                  <StatusBadge status={unit.status} />
+                </div>
+              </h1>
               <p className={styles.pageDescription}>{unit.model_name}</p>
             </div>
           </div>
           <div className={unitStyles.unitHeaderRight}>
-            <StatusBadge status={unit.status} />
+            {/* Badge for desktop, hidden on mobile */}
+            <div className={unitStyles.desktopBadgeOnly}>
+              <StatusBadge status={unit.status} />
+            </div>
             {!serviceRequested ? (
               <button
-                className={styles.btnWarning}
+                className={`${styles.btnWarning} ${unitStyles.btnRequestMobile}`}
                 onClick={() => setShowModal(true)}
               >
-                <Wrench size={16} /> Request Servis
+                <Wrench size={14} /> Request Servis
               </button>
             ) : (
               <span className={styles.badgeActive}>Permintaan Terkirim</span>
@@ -572,7 +582,6 @@ export default function ClientUnitDetail() {
           <div 
             className={unitStyles.modal} 
             onClick={e => e.stopPropagation()} 
-            style={{ maxWidth: '600px', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}
           >
             <div className={unitStyles.modalHeader} style={{ flexShrink: 0 }}>
               <h2 className={unitStyles.modalTitle}>
@@ -582,83 +591,101 @@ export default function ClientUnitDetail() {
               <button className={unitStyles.modalClose} onClick={() => setShowHistoryModal(false)}>×</button>
             </div>
             
-            <div className={styles.cardBody} style={{ padding: 0, overflowY: 'auto' }}>
+            <div style={{ padding: 0, overflowY: 'auto', flexGrow: 1 }}>
               {logs.length === 0 ? (
                 <div style={{ padding: '40px', textAlign: 'center' }}>
                   <Wrench size={24} color="var(--brand-space-grey)" style={{ marginBottom: 12 }} />
                   <div style={{ color: 'var(--brand-space-grey)', fontWeight: 600 }}>Belum ada riwayat servis</div>
                 </div>
               ) : (
-                <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', position: 'relative' }}>
+                <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', position: 'relative' }}>
                   {/* Timeline vertical line */}
-                  <div style={{ position: 'absolute', left: '39px', top: '30px', bottom: '30px', width: '2px', background: 'var(--brand-border)', zIndex: 0 }} />
+                  <div style={{ position: 'absolute', left: '33px', top: '24px', bottom: '24px', width: '2px', background: 'var(--brand-border)', zIndex: 0 }} />
                   
-                  {logs.map((log: any, index: number) => (
-                    <div key={log.id} style={{ display: 'flex', gap: '20px', position: 'relative', zIndex: 1 }}>
+                  {logs.map((log: any, index: number) => {
+                    const isExpanded = expandedLogId === log.id;
+                    return (
+                    <div key={log.id} style={{ display: 'flex', gap: '16px', position: 'relative', zIndex: 1 }}>
                       {/* Timeline Dot */}
                       <div style={{ 
-                        width: '32px', height: '32px', borderRadius: '50%', background: '#fff', 
+                        width: '28px', height: '28px', borderRadius: '50%', background: '#fff', 
                         border: '2px solid var(--brand-cobalt-blue)', display: 'flex', alignItems: 'center', 
-                        justifyContent: 'center', flexShrink: 0, marginTop: '4px', boxShadow: '0 0 0 4px #fff' 
+                        justifyContent: 'center', flexShrink: 0, marginTop: '2px', boxShadow: '0 0 0 4px #fff' 
                       }}>
-                        <Wrench size={14} color="var(--brand-cobalt-blue)" />
+                        <Wrench size={12} color="var(--brand-cobalt-blue)" />
                       </div>
 
                       {/* Content Card */}
-                      <div style={{ 
-                        flex: 1, background: '#fff', border: '1px solid var(--brand-border)', 
-                        borderRadius: '12px', padding: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
-                        display: 'flex', flexDirection: 'column', gap: '10px'
-                      }}>
+                      <div 
+                        style={{ 
+                          flex: 1, background: 'var(--brand-bg-light)', border: '1px solid rgba(0, 31, 63, 0.05)', 
+                          borderRadius: '12px', padding: '12px 14px', boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+                          display: 'flex', flexDirection: 'column', gap: '8px',
+                          cursor: 'pointer', transition: 'all 0.2s'
+                        }}
+                        onClick={() => setExpandedLogId(isExpanded ? null : log.id)}
+                      >
                         
-                        {/* Header: Title & Date */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px', flexWrap: 'wrap' }}>
-                          <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: 'var(--brand-deep-navy)', lineHeight: 1.4 }}>
-                            {log.action_taken || log.issue_description || 'Servis & Pemeliharaan'}
-                          </h4>
-                          <span style={{ 
-                            background: 'var(--brand-bg-light)', color: 'var(--brand-cobalt-blue)', 
-                            padding: '6px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 700,
-                            display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0
-                          }}>
-                            <Calendar size={12} />
-                            {log.service_date
-                              ? new Date(log.service_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
-                              : '—'}
-                          </span>
+                        {/* Header: Title & Date & Toggle Icon */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 800, color: 'var(--brand-deep-navy)', lineHeight: 1.3 }}>
+                              {log.action_taken || log.issue_description || 'Servis & Pemeliharaan'}
+                            </h4>
+                            <span style={{ 
+                              background: 'rgba(46, 91, 255, 0.08)', color: 'var(--brand-cobalt-blue)', 
+                              padding: '3px 8px', borderRadius: '16px', fontSize: '0.65rem', fontWeight: 700,
+                              display: 'inline-flex', alignItems: 'center', gap: '4px', alignSelf: 'flex-start',
+                              border: '1px solid rgba(46, 91, 255, 0.1)'
+                            }}>
+                              <Calendar size={10} />
+                              {log.service_date
+                                ? new Date(log.service_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+                                : '—'}
+                            </span>
+                          </div>
+                          <div style={{ padding: '4px', color: 'var(--brand-space-grey)' }}>
+                            {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                          </div>
                         </div>
 
-                        {/* Description / Actions Taken */}
-                        {log.issue_description && (
-                          <div style={{ marginTop: '4px' }}>
-                            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--brand-space-grey)', lineHeight: 1.6 }}>
-                              {log.issue_description}
-                            </p>
+                        {/* Collapsible Content */}
+                        {isExpanded && (
+                          <div style={{ marginTop: '6px', paddingTop: '10px', borderTop: '1px dashed var(--brand-border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            {/* Description / Actions Taken */}
+                            {log.issue_description && (
+                              <div>
+                                <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--brand-slate)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Keterangan</span>
+                                <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--brand-space-grey)', lineHeight: 1.5 }}>
+                                  {log.issue_description}
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Footer Meta: Technician & Partner */}
+                            <div style={{ 
+                              display: 'flex', gap: '12px', flexWrap: 'wrap'
+                            }}>
+                              {log.technician_name && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.7rem', color: 'var(--brand-space-grey)' }}>
+                                  <User size={12} color="var(--brand-slate)" />
+                                  <span style={{ fontWeight: 600 }}>Teknisi:</span> {log.technician_name}
+                                </div>
+                              )}
+                              {log.partner?.partner_name && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.7rem', color: 'var(--brand-space-grey)' }}>
+                                  <Briefcase size={12} color="var(--brand-slate)" />
+                                  <span style={{ fontWeight: 600 }}>Mitra:</span> {log.partner.partner_name}
+                                </div>
+                              )}
+                            </div>
                           </div>
                         )}
 
-                        {/* Footer Meta: Technician & Partner */}
-                        <div style={{ 
-                          display: 'flex', gap: '16px', marginTop: '4px', paddingTop: '12px', 
-                          borderTop: '1px dashed var(--brand-border)', flexWrap: 'wrap'
-                        }}>
-                          {log.technician_name && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: 'var(--brand-space-grey)' }}>
-                              <User size={14} color="var(--brand-slate)" />
-                              <span style={{ fontWeight: 600 }}>Teknisi:</span> {log.technician_name}
-                            </div>
-                          )}
-                          {log.partner?.partner_name && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: 'var(--brand-space-grey)' }}>
-                              <Briefcase size={14} color="var(--brand-slate)" />
-                              <span style={{ fontWeight: 600 }}>Mitra:</span> {log.partner.partner_name}
-                            </div>
-                          )}
-                        </div>
-
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>

@@ -250,7 +250,8 @@
 .inputWithIconNew input:-webkit-autofill:active {
   transition: background-color 5000s ease-in-out 0s;
   -webkit-text-fill-color: #ffffff !important;
-  box-shadow: inset 8px 8px 16px rgba(0, 0, 0, 0.7), inset -8px -8px 16px rgba(255, 255, 255, 0.05);
+  -webkit-box-shadow: 0 0 0 1000px #101728 inset, inset 6px 6px 14px rgba(0, 0, 0, 0.7) !important;
+  box-shadow: 0 0 0 1000px #101728 inset, inset 6px 6px 14px rgba(0, 0, 0, 0.7) !important;
 }
 
 /* Password wrapper */
@@ -297,7 +298,8 @@
 .passwordWrapperNew input:-webkit-autofill:active {
   transition: background-color 5000s ease-in-out 0s;
   -webkit-text-fill-color: #ffffff !important;
-  box-shadow: inset 8px 8px 16px rgba(0, 0, 0, 0.7), inset -8px -8px 16px rgba(255, 255, 255, 0.05);
+  -webkit-box-shadow: 0 0 0 1000px #101728 inset, inset 6px 6px 14px rgba(0, 0, 0, 0.7) !important;
+  box-shadow: 0 0 0 1000px #101728 inset, inset 6px 6px 14px rgba(0, 0, 0, 0.7) !important;
 }
 
 .lockIcon {

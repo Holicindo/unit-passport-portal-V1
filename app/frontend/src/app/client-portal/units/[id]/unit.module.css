@@ -223,10 +223,10 @@
 .modalOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 31, 63, 0.35);
+  background: rgba(0, 31, 63, 0.45);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-  z-index: 500;
+  z-index: 2000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -237,7 +237,10 @@
   background: #FFFFFF;
   border-radius: 20px;
   width: 100%;
-  max-width: 480px;
+  max-width: 540px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
   box-shadow: 0 10px 40px rgba(0, 31, 63, 0.15);
   overflow: hidden;
 }
@@ -372,4 +375,54 @@
   color: var(--brand-space-grey);
   max-width: 320px;
   line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  /* Centered floating card — same feel as desktop */
+  .modalOverlay {
+    padding: 20px !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .modal {
+    border-radius: 18px !important;
+    max-width: 93% !important;
+    width: 100% !important;
+    max-height: 72vh !important;
+    box-shadow: 0 16px 48px rgba(0, 31, 63, 0.22) !important;
+  }
+
+  .modalHeader {
+    padding: 16px 18px !important;
+  }
+
+  .modalTitle {
+    font-size: 1rem !important;
+  }
+
+  .desktopBadgeOnly {
+    display: none !important;
+  }
+
+  .mobileBadgeOnly {
+    display: block !important;
+  }
+
+  .mobileBadgeOnly span {
+    font-size: 0.65rem !important;
+    padding: 3px 8px !important;
+  }
+
+  .btnRequestMobile {
+    padding: 6px 12px !important;
+    font-size: 0.72rem !important;
+    gap: 4px !important;
+    border-radius: 12px !important;
+  }
+}
+
+/* Base logic for mobile badge */
+.mobileBadgeOnly {
+  display: none;
 }

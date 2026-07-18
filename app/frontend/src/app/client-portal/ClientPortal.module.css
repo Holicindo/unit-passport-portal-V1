@@ -595,10 +595,21 @@
 }
 
 .twoColRight {
+  order: 5;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  grid-column: span 1;
+  gap: 12px;
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .twoCol {
+    grid-template-columns: 1fr;
+  }
+  .twoColLeft,
+  .twoColRight {
+    grid-column: span 1;
+  }
 }
 
 /* ── DATA TABLE ── */
@@ -869,6 +880,37 @@
 .calendarDayEmpty {
   cursor: default;
   color: rgba(113, 115, 120, 0.3) !important;
+}
+
+
+/* ── Neumorphic Dropdown Filter (Fleet & Service pages) ── */
+.filterSelect {
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 31, 63, 0.1);
+  background: rgba(255, 255, 255, 0.75);
+  color: var(--brand-deep-navy);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow:
+    -2px -2px 6px rgba(255, 255, 255, 0.6),
+     2px  2px 6px rgba(0, 31, 63, 0.08);
+  outline: none;
+  transition: all 0.2s;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230f172a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 16px;
+  padding-right: 40px;
+}
+.filterSelect:focus {
+  box-shadow: 0 0 0 2px rgba(46, 91, 255, 0.2);
+  border-color: var(--brand-cobalt-blue);
+  background: #ffffff;
 }
 
 /* ── UPCOMING ITEMS LIST ── */
@@ -1710,14 +1752,14 @@
   }
 
   .mainContent {
-    padding: 84px 16px 96px;
+    padding: 84px 20px 96px;
     margin-top: 0;
   }
 
   .dashboardContainer {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 16px;
   }
 
   .pageHeader {
@@ -1745,9 +1787,10 @@
 
   .twoColRight {
     order: 5;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
   }
 
   .statCard {
@@ -1773,30 +1816,65 @@
     display: none;
   }
 
+  .dataTable tbody {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 14px 16px 20px; /* horizontal padding so cards don't touch outer card edge */
+  }
+
   .dataTable tbody tr {
-    display: block;
-    padding: 12px 16px;
-    border-bottom: 1px solid rgba(0, 31, 63, 0.07);
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    padding-top: 36px; /* space for absolute badge */
+    background: #ffffff;
+    border: 1px solid rgba(0, 31, 63, 0.08);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    height: 100%;
+    box-sizing: border-box;
+    position: relative;
+    overflow: hidden;
   }
 
   .dataTable tbody td {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    align-items: flex-start;
     padding: 4px 0;
     border-bottom: none;
-    font-size: 0.8rem;
-    gap: 8px;
+    font-size: 0.75rem;
+    gap: 2px;
+  }
+
+  .dataTable tbody td:last-child {
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px solid rgba(0, 0, 0, 0.04);
+    align-items: center;
+    width: 100%;
+  }
+  
+  .dataTable tbody td:last-child a {
+    width: 100%;
+    justify-content: center;
+    background: rgba(46, 91, 255, 0.05);
+    border-radius: 6px;
+    padding: 6px;
   }
 
   .dataTable tbody td::before {
     content: attr(data-label);
-    font-weight: 700;
-    color: var(--brand-space-grey);
-    font-size: 0.72rem;
-    text-transform: uppercase;
-    font-family: var(--font-heading);
-    flex-shrink: 0;
+    font-weight: 600;
+    color: var(--brand-slate);
+    font-size: 0.65rem;
+    font-family: var(--font-body);
+    margin-bottom: 2px;
+  }
+
+  .dataTable tbody td:last-child::before {
+    display: none;
   }
 
   .pageTitle {
@@ -1874,8 +1952,9 @@
   .btnPrimary,
   .btnWarning,
   .btnSecondary {
-    min-height: 44px;
-    font-size: 0.85rem;
+    min-height: 38px;
+    padding: 6px 14px;
+    font-size: 0.8rem;
   }
 }
 
@@ -1895,7 +1974,7 @@
   }
 
   .mainContent {
-    padding: 72px 12px 88px;
+    padding: 76px 16px 88px;
     margin-top: 0;
   }
 
@@ -1961,10 +2040,185 @@
     flex-wrap: wrap;
     gap: 4px;
   }
+
+  /* Shrink filter chips on mobile — aggressively compact */
+  .filterChip {
+    padding: 4px 8px;
+    font-size: 0.62rem;
+    border-radius: 14px;
+    line-height: 1.3;
+  }
+
+  /* Shrink filterSelect dropdown */
+  .filterSelect {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    min-width: 110px;
+  }
+
+  /* Shrink Request Service button to badge size */
+  .btnWarning {
+    padding: 5px 12px;
+    font-size: 0.72rem;
+    gap: 4px;
+  }
 }
 
 /* Z-index bump to sit above acrylic glare layer */
 .statCard > *, .card > *, .calendarWidget > *, .cardStretch > * {
   position: relative;
   z-index: 1;
+}
+
+/* ── FLEET CARD — 2-Column Grid Layout ── */
+
+/* Desktop: these are just regular td, no special behavior */
+.fleetCardHeaderCell,
+.fleetCardModelCell,
+.fleetCardCityCell {
+  /* nothing special on desktop */
+}
+
+.fleetCardHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+}
+
+.fleetCardSerial {
+  font-weight: 700;
+  color: var(--brand-cobalt-blue);
+  font-family: var(--font-heading);
+  text-decoration: none;
+  font-size: inherit;
+}
+
+.fleetCardBadgeCorner {
+  /* visible only on mobile, hidden on desktop via mobile rule below */
+  display: none;
+}
+
+/* hiddenOnMobile: Lokasi, Garansi, Servis Terakhir, Status (desktop columns) */
+.hiddenOnMobile {
+  /* always show on desktop */
+}
+
+@media (max-width: 768px) {
+  /* Badge: absolute to card top-right, so it never affects layout */
+  .fleetCardBadgeCorner {
+    display: block;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    max-width: 90px;
+    text-align: right;
+  }
+
+  .fleetCardBadgeCorner span {
+    font-size: 0.58rem !important;
+    padding: 2px 6px !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 88px;
+    display: inline-block;
+  }
+
+  /* Header cell: only serial number, badge is absolute so no flex needed */
+  .dataTable tbody .fleetCardHeaderCell {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    border-bottom: 1px dashed rgba(0, 31, 63, 0.12) !important;
+    padding-bottom: 8px !important;
+    margin-bottom: 6px !important;
+    width: 100%;
+    /* Clip serial number so it doesn't reach the badge area */
+    padding-right: 8px;
+    box-sizing: border-box;
+  }
+
+  .dataTable tbody .fleetCardHeaderCell::before {
+    display: none !important;
+  }
+
+  /* Serial number link: bold, clip if too long */
+  .fleetCardSerial {
+    font-size: 0.82rem !important;
+    font-weight: 800;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    display: block;
+  }
+
+  /* fleetCardHeaderRow: just block, not flex — badge is absolute */
+  .fleetCardHeaderRow {
+    display: block;
+    width: 100%;
+  }
+
+  /* Model — muted small text */
+  .dataTable tbody .fleetCardModelCell {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    padding: 0 !important;
+    font-size: 0.7rem !important;
+    color: var(--brand-space-grey);
+    border-bottom: none !important;
+    gap: 1px !important;
+    margin-bottom: 8px;
+  }
+
+  .dataTable tbody .fleetCardModelCell::before {
+    display: none !important;
+  }
+
+  /* Kota — label uppercase micro, value slightly larger */
+  .dataTable tbody .fleetCardCityCell {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    padding: 0 !important;
+    border-bottom: none !important;
+    gap: 1px !important;
+    flex: 1;
+  }
+
+  .dataTable tbody .fleetCardCityCell::before {
+    content: 'Kota';
+    font-size: 0.58rem !important;
+    color: var(--brand-slate);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  /* city value (e.g. Semarang) — same size as model, semibold */
+  .dataTable tbody .fleetCardCityCell > * {
+    font-size: 0.72rem !important;
+    color: var(--brand-deep-navy) !important;
+    font-weight: 600;
+  }
+
+  /* Hide desktop-only columns */
+  .dataTable tbody .hiddenOnMobile {
+    display: none !important;
+  }
+}
+
+/* Base table wrapper for desktop scrolling */
+.tableWrapper {
+  overflow-x: auto;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  /* On mobile, remove the wrapper scrolling and stretch to edge */
+  .tableWrapper {
+    overflow-x: visible;
+    margin-left: -16px;
+    margin-right: -16px;
+  }
 }
