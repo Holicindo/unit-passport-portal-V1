@@ -63,10 +63,16 @@ export default function QrPassportPage() {
 
   useEffect(() => {
     if (!unit) return;
+
+    if (isClient) {
+      router.replace(`/client-portal/units/${encodeURIComponent(unit.id)}`);
+      return;
+    }
+
     const t = setTimeout(equalizeColumns, 100);
     window.addEventListener('resize', equalizeColumns);
     return () => { clearTimeout(t); window.removeEventListener('resize', equalizeColumns); };
-  }, [unit, equalizeColumns]);
+  }, [unit, isClient, router, equalizeColumns]);
 
   const admin = useAdminActions(unit, loadUnitData, showToast);
   const {
@@ -317,7 +323,7 @@ export default function QrPassportPage() {
                 </>)}
                 <div className={styles.specItem} style={{ borderBottom: 'none' }}><span className={styles.specLabel}>Production Date</span><span className={styles.specValue}>{(unit.specs?.production_date || unit.specs?.finish_date) ? new Date(unit.specs.production_date || unit.specs.finish_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'}</span></div>
               </>)}
-              {!editBlocks.spesifikasi && <button className={styles.btnViewAll} onClick={() => setShowAllSpecsModal(true)}>Lihat Semua Spesifikasi <span>›</span></button>}
+              {!editBlocks.spesifikasi && !isGuest && <button className={styles.btnViewAll} onClick={() => setShowAllSpecsModal(true)}>Lihat Semua Spesifikasi <span>›</span></button>}
             </div>
           </section>
 
@@ -830,6 +836,7 @@ export default function QrPassportPage() {
             )}
 
             {/* Stats Card — full width di desktop, jadi item carousel di mobile */}
+            {!isGuest && (
             <section className={`${styles.panel} ${styles.statsFullWidth}`} style={{ gridColumn: '1 / -1', margin: 0 }}>
               <div className={styles.panelHeader}><div className={styles.panelHeaderLeft}><Settings size={16} color="var(--color-cobalt-blue)" /><h2>Stats Card</h2></div></div>
               <div className={`${styles.statsGrid} ${styles.panelContent}`}>
@@ -852,6 +859,7 @@ export default function QrPassportPage() {
                 ))}
               </div>
             </section>
+            )}
 
           </div>{/* end passportRight */}
         </div>{/* end passportLayout */}

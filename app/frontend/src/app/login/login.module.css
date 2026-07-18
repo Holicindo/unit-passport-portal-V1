@@ -13,7 +13,7 @@
   overflow: hidden;
   
   /* Base dark background */
-  background: #020612;
+  background: linear-gradient(135deg, #0b1120 0%, #172a4d 100%);
   padding: 24px;
 }
 
@@ -596,11 +596,11 @@
 
   /* ── Form Area Bottom Sheet ── */
   .formArea {
-    background: #ffffff;
+    background: #f4f6f9; /* Off-white for softer contrast */
     flex: 1;
     border-radius: 36px 36px 0 0;
     padding: 32px 24px 40px;
-    box-shadow: 0 -10px 40px rgba(0,0,0,0.25);
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.15); /* Softer shadow */
     display: flex;
     flex-direction: column;
   }
