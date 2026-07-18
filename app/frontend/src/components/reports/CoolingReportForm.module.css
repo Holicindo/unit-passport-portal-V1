@@ -38,7 +38,7 @@
 .sectionTitleText {
   font-size: 15px;
   font-weight: 800;
-  color: #ffffff;
+  color: #fbbf24;
   letter-spacing: 0.03em;
 }
 
@@ -46,12 +46,11 @@
 .subSectionTitle {
   font-size: 13px;
   font-weight: 800;
-  color: #1e293b;
+  color: #ffffff;
   margin: 20px 0 8px;
   padding: 8px 14px;
-  background: #f1f5f9;
-  border-left: 4px solid #2e5bff;
-  border-radius: 0 6px 6px 0;
+  background: #2e5bff;
+  border-radius: 6px;
 }
 
 /* ── Card ── */

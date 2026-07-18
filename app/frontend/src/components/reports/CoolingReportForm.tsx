@@ -1,7 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import styles from './CoolingReportForm.module.css';
+import { CustomSelect } from '@/components/ui/CustomSelect';
+import { clientApi } from '@/lib/api';
 
 interface Props {
   data: any;
@@ -85,6 +87,29 @@ export default function CoolingReportForm({ data, onChange }: Props) {
   const cr = data.cooling_system?.right || {};
   const p = data.performance_inspection || {};
 
+  const [clients, setClients] = useState<any[]>([]);
+
+  useEffect(() => {
+    clientApi.findAll().then(res => {
+      const cls = Array.isArray(res.data) ? res.data[0] || res.data : (res.data?.data || []);
+      setClients(cls);
+    }).catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    // Auto-generate IDs if empty
+    if (!h.order_document) {
+      const yy = new Date().getFullYear().toString().slice(-2);
+      const rand = Math.floor(100 + Math.random() * 900);
+      onChange('header', { ...h, order_document: `ITR${yy}3${rand}` });
+    }
+    if (!h.production_code) {
+      const yy = new Date().getFullYear().toString().slice(-2);
+      const rand = Math.floor(100 + Math.random() * 900);
+      onChange('header', { ...h, production_code: `PRO${yy}31${rand}` });
+    }
+  }, []);
+
   const setH = (k: string, v: string) => onChange('header', { ...h, [k]: v });
   const setG = (k: string, v: string) => onChange('general_inspection', { ...g, [k]: v });
   const setCL = (k: string, v: any) => onChange('cooling_system', { ...data.cooling_system, left: { ...cl, [k]: v } });
@@ -106,10 +131,28 @@ export default function CoolingReportForm({ data, onChange }: Props) {
             <Input value={h.production_code || ''} onChange={v => setH('production_code', v)} placeholder="Kode produksi..." />
           </Field>
           <Field label="Nama Pelanggan">
-            <Input value={h.customer || ''} onChange={v => setH('customer', v)} placeholder="Nama pelanggan..." />
+            <CustomSelect
+              value={h.customer || ''}
+              onChange={v => setH('customer', v)}
+              options={[
+                { value: '', label: '— Pilih Pelanggan —' },
+                ...Array.from(new Set(clients.map(c => c.company_name))).filter(Boolean).map(name => ({ value: name, label: name }))
+              ]}
+            />
+          </Field>
+          <Field label="Branch / Cabang">
+            <Input value={h.branch || ''} onChange={v => setH('branch', v)} placeholder="Nama Cabang..." />
           </Field>
           <Field label="Kategori Unit">
-            <Input value={h.category || ''} onChange={v => setH('category', v)} placeholder="Contoh: Cold Case" />
+            <CustomSelect
+              value={h.category || ''}
+              onChange={v => setH('category', v)}
+              options={[
+                {value: '', label: '— Pilih Kategori —'},
+                {value: 'Showcase', label: 'Showcase'},
+                {value: 'Other Machinery', label: 'Other Machinery'}
+              ]}
+            />
           </Field>
           <Field label="Kode Item">
             <Input value={h.item_code || ''} onChange={v => setH('item_code', v)} placeholder="Kode item..." />
@@ -164,7 +207,7 @@ export default function CoolingReportForm({ data, onChange }: Props) {
 
       <div className={styles.subSectionTitle}>Kompresor (Compressor)</div>
       <div className={styles.sideBySide}>
-        <Card title="Sisi Kiri (Left)">
+        <Card title="Part A">
           <Field label="Tipe Kompresor">
             <Input value={cl.comp_type || ''} onChange={v => setCL('comp_type', v)} placeholder="Contoh: Embraco" />
           </Field>
@@ -194,7 +237,7 @@ export default function CoolingReportForm({ data, onChange }: Props) {
             </Field>
           </TwoCol>
         </Card>
-        <Card title="Sisi Kanan (Right)">
+        <Card title="Part B">
           <Field label="Tipe Kompresor">
             <Input value={cr.comp_type || ''} onChange={v => setCR('comp_type', v)} placeholder="Contoh: Embraco" />
           </Field>
@@ -228,21 +271,21 @@ export default function CoolingReportForm({ data, onChange }: Props) {
 
       <div className={styles.subSectionTitle}>Kondensor (Condensor)</div>
       <div className={styles.sideBySide}>
-        <Card title="Sisi Kiri (Left)">
+        <Card title="Part A">
           <Field label="Keterangan Kondensor">
-            <textarea className={styles.textarea} rows={2} value={cl.condensor || ''} onChange={e => setCL('condensor', e.target.value)} placeholder="Keterangan kondensor kiri..." />
+            <textarea className={styles.textarea} rows={2} value={cl.condensor || ''} onChange={e => setCL('condensor', e.target.value)} placeholder="Keterangan kondensor Part A..." />
           </Field>
         </Card>
-        <Card title="Sisi Kanan (Right)">
+        <Card title="Part B">
           <Field label="Keterangan Kondensor">
-            <textarea className={styles.textarea} rows={2} value={cr.condensor || ''} onChange={e => setCR('condensor', e.target.value)} placeholder="Keterangan kondensor kanan..." />
+            <textarea className={styles.textarea} rows={2} value={cr.condensor || ''} onChange={e => setCR('condensor', e.target.value)} placeholder="Keterangan kondensor Part B..." />
           </Field>
         </Card>
       </div>
 
       <div className={styles.subSectionTitle}>Evaporator</div>
       <div className={styles.sideBySide}>
-        <Card title="Sisi Kiri (Left)">
+        <Card title="Part A">
           <ThreeCol>
             <Field label="Diameter (Ø)"><Input value={cl.evap_dia || ''} onChange={v => setCL('evap_dia', v)} placeholder="mm" /></Field>
             <Field label="Panjang (x)"><Input value={cl.evap_length || ''} onChange={v => setCL('evap_length', v)} placeholder="mm" /></Field>
@@ -258,7 +301,7 @@ export default function CoolingReportForm({ data, onChange }: Props) {
             <CheckItem label="Menggunakan Expansion Valve" checked={cl.has_expansion || false} onChange={v => setCL('has_expansion', v)} />
           </div>
         </Card>
-        <Card title="Sisi Kanan (Right)">
+        <Card title="Part B">
           <ThreeCol>
             <Field label="Diameter (Ø)"><Input value={cr.evap_dia || ''} onChange={v => setCR('evap_dia', v)} placeholder="mm" /></Field>
             <Field label="Panjang (x)"><Input value={cr.evap_length || ''} onChange={v => setCR('evap_length', v)} placeholder="mm" /></Field>
@@ -278,15 +321,15 @@ export default function CoolingReportForm({ data, onChange }: Props) {
 
       <div className={styles.subSectionTitle}>Fan Evaporator & Fan Antimist</div>
       <div className={styles.sideBySide}>
-        <Card title="Sisi Kiri (Left)">
+        <Card title="Part A">
           <Field label="Model Fan Evaporator"><Input value={cl.fan_evap_model || ''} onChange={v => setCL('fan_evap_model', v)} placeholder="Contoh: EBM-Papst" /></Field>
           <Field label="Jumlah Fan Evap (PCS)"><Input value={cl.fan_evap_qty || ''} onChange={v => setCL('fan_evap_qty', v)} placeholder="Contoh: 2" /></Field>
-          <Field label="Keterangan Fan Antimist"><textarea className={styles.textarea} rows={2} value={cl.fan_antimist_notes || ''} onChange={e => setCL('fan_antimist_notes', e.target.value)} placeholder="Keterangan fan antimist kiri..." /></Field>
+          <Field label="Keterangan Fan Antimist"><textarea className={styles.textarea} rows={2} value={cl.fan_antimist_notes || ''} onChange={e => setCL('fan_antimist_notes', e.target.value)} placeholder="Keterangan fan antimist Part A..." /></Field>
         </Card>
-        <Card title="Sisi Kanan (Right)">
+        <Card title="Part B">
           <Field label="Model Fan Evaporator"><Input value={cr.fan_evap_model || ''} onChange={v => setCR('fan_evap_model', v)} placeholder="Contoh: EBM-Papst" /></Field>
           <Field label="Jumlah Fan Evap (PCS)"><Input value={cr.fan_evap_qty || ''} onChange={v => setCR('fan_evap_qty', v)} placeholder="Contoh: 2" /></Field>
-          <Field label="Keterangan Fan Antimist"><textarea className={styles.textarea} rows={2} value={cr.fan_antimist_notes || ''} onChange={e => setCR('fan_antimist_notes', e.target.value)} placeholder="Keterangan fan antimist kanan..." /></Field>
+          <Field label="Keterangan Fan Antimist"><textarea className={styles.textarea} rows={2} value={cr.fan_antimist_notes || ''} onChange={e => setCR('fan_antimist_notes', e.target.value)} placeholder="Keterangan fan antimist Part B..." /></Field>
         </Card>
       </div>
 
@@ -300,10 +343,10 @@ export default function CoolingReportForm({ data, onChange }: Props) {
         <TwoCol>
           <Field label="Evaporator Min (°C)"><Input value={p.evap_min || ''} onChange={v => setP('evap_min', v)} placeholder="°C" /></Field>
           <Field label="Evaporator Max (°C)"><Input value={p.evap_max || ''} onChange={v => setP('evap_max', v)} placeholder="°C" /></Field>
-          <Field label="Sisi Kiri Min (°C)"><Input value={p.evap_left_min || ''} onChange={v => setP('evap_left_min', v)} placeholder="°C" /></Field>
-          <Field label="Sisi Kiri Max (°C)"><Input value={p.evap_left_max || ''} onChange={v => setP('evap_left_max', v)} placeholder="°C" /></Field>
-          <Field label="Sisi Kanan Min (°C)"><Input value={p.evap_right_min || ''} onChange={v => setP('evap_right_min', v)} placeholder="°C" /></Field>
-          <Field label="Sisi Kanan Max (°C)"><Input value={p.evap_right_max || ''} onChange={v => setP('evap_right_max', v)} placeholder="°C" /></Field>
+          <Field label="Part A Min (°C)"><Input value={p.evap_left_min || ''} onChange={v => setP('evap_left_min', v)} placeholder="°C" /></Field>
+          <Field label="Part A Max (°C)"><Input value={p.evap_left_max || ''} onChange={v => setP('evap_left_max', v)} placeholder="°C" /></Field>
+          <Field label="Part B Min (°C)"><Input value={p.evap_right_min || ''} onChange={v => setP('evap_right_min', v)} placeholder="°C" /></Field>
+          <Field label="Part B Max (°C)"><Input value={p.evap_right_max || ''} onChange={v => setP('evap_right_max', v)} placeholder="°C" /></Field>
         </TwoCol>
       </Card>
 

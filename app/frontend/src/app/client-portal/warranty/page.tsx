@@ -153,27 +153,27 @@ export default function ClientWarranty() {
       <div className={styles.statsGrid} style={{ marginBottom: 24 }}>
         <div className={`${styles.statCard} ${styles.statCardGreen}`}>
           <div className={styles.statCardLabel}>Garansi Aktif</div>
-          <div className={styles.statCardValue}>{activeCount}</div>
-          <div className={styles.statCardFooter}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(3,86,197,0.35)', color: '#93C5FD', padding: '2px 8px', borderRadius: 20, fontSize: '0.72rem', fontWeight: 700, fontFamily: 'var(--font-heading)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '0 20px 20px' }}>
+            <div className={styles.statCardValue} style={{ margin: 0 }}>{activeCount}</div>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(16, 185, 129, 0.15)', color: '#059669', padding: '2px 8px', borderRadius: 20, fontSize: '0.72rem', fontWeight: 700, fontFamily: 'var(--font-heading)' }}>
               <ShieldCheck size={11} /> Aman
             </span>
           </div>
         </div>
         <div className={`${styles.statCard} ${styles.statCardOrange}`}>
           <div className={styles.statCardLabel}>Segera Habis</div>
-          <div className={styles.statCardValue}>{expiringCount}</div>
-          <div className={styles.statCardFooter}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(255,107,0,0.25)', color: '#FCA5A5', padding: '2px 8px', borderRadius: 20, fontSize: '0.72rem', fontWeight: 700, fontFamily: 'var(--font-heading)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '0 20px 20px' }}>
+            <div className={styles.statCardValue} style={{ margin: 0 }}>{expiringCount}</div>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(245, 158, 11, 0.15)', color: '#D97706', padding: '2px 8px', borderRadius: 20, fontSize: '0.72rem', fontWeight: 700, fontFamily: 'var(--font-heading)' }}>
               <AlertTriangle size={11} /> Dalam 30 hari
             </span>
           </div>
         </div>
         <div className={`${styles.statCard} ${styles.statCardBlue}`}>
           <div className={styles.statCardLabel}>Garansi Habis</div>
-          <div className={styles.statCardValue}>{expiredCount}</div>
-          <div className={styles.statCardFooter}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(239,68,68,0.25)', color: '#FCA5A5', padding: '2px 8px', borderRadius: 20, fontSize: '0.72rem', fontWeight: 700, fontFamily: 'var(--font-heading)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '0 20px 20px' }}>
+            <div className={styles.statCardValue} style={{ margin: 0 }}>{expiredCount}</div>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(239, 68, 68, 0.15)', color: '#DC2626', padding: '2px 8px', borderRadius: 20, fontSize: '0.72rem', fontWeight: 700, fontFamily: 'var(--font-heading)' }}>
               <ShieldAlert size={11} /> Perlu perhatian
             </span>
           </div>
@@ -212,7 +212,7 @@ export default function ClientWarranty() {
                     <tr key={unit.id}>
                       <td data-label="Serial Number">
                         <Link 
-                          href={`/client-portal/units/${unit.id}`}
+                          href={`/client-portal/units/${encodeURIComponent(unit.id)}`}
                           style={{
                             fontWeight: 700,
                             color: 'var(--brand-cobalt-blue)',

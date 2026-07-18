@@ -173,6 +173,29 @@ export default function PassportTopbar({
             <div className={styles.badgePopover}>
               <strong>{badge.text}</strong>
               <p>Tingkat akses Anda saat ini.</p>
+              {!isGuest && (
+                <button
+                  onClick={() => {
+                    localStorage.removeItem('user');
+                    localStorage.removeItem('token');
+                    window.location.reload();
+                  }}
+                  style={{
+                    marginTop: '8px',
+                    width: '100%',
+                    padding: '6px',
+                    background: '#ef4444',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '4px',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  Logout / Bersihkan Sesi
+                </button>
+              )}
             </div>
           )}
         </div>

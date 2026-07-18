@@ -5,8 +5,7 @@
 /* Day cell yang punya event */
 .hasEvent {
   position: relative;
-  font-weight: 700;
-  color: #FFFFFF;
+  font-weight: 800;
 }
 
 /* Pressed/active state saat diklik */
@@ -17,17 +16,7 @@
     inset -2px -2px 5px rgba(3, 86, 197, 0.25) !important;
 }
 
-/* Dot indicator di bawah angka tanggal */
-.eventDot {
-  position: absolute;
-  bottom: 3px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  display: block;
-}
+/* Dot indicator di bawah angka tanggal (diganti warna teks) */
 
 /* Legend di bawah kalender */
 .legend {
@@ -43,8 +32,8 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.68rem;
-  color: rgba(160, 200, 255, 0.55);
+  font-size: 0.72rem;
+  color: #6B7280;
   font-family: var(--font-body);
 }
 

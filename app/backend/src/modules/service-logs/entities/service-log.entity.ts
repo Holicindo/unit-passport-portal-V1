@@ -26,7 +26,7 @@ export class ServiceLog {
   @BeforeInsert()
   generateId() {
     if (!this.id) {
-      this.id = generatePrefixedId('LOG');
+      this.id = generatePrefixedId('ID');
     }
     if (!this.call_id) {
       this.call_id = this.id;
@@ -71,6 +71,9 @@ export class ServiceLog {
 
   @Column({ type: 'text', nullable: true })
   planning_notes!: string;
+
+  @Column({ type: 'text', nullable: true })
+  replaced_sparepart!: string;
 
   @Column({ default: false })
   is_allocated!: boolean;

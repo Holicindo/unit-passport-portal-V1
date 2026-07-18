@@ -67,4 +67,9 @@ export class CreateServiceLogDto {
   @IsBoolean()
   @IsOptional()
   is_allocated?: boolean;
+
+  @ApiProperty({ example: 'Ganti Lampu; Ganti Thermostat', required: false })
+  @IsString()
+  @IsOptional()
+  replaced_sparepart?: string;
 }

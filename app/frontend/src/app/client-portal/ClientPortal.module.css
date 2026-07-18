@@ -739,7 +739,7 @@
     inset 0 1px 0 rgba(255, 255, 255, 1);
   padding: 0;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   width: 100%;
   box-sizing: border-box;
   transition: box-shadow 0.22s ease, transform 0.22s ease;
@@ -829,7 +829,7 @@
   text-align: center;
   padding: 0;
   font-size: 0.72rem;
-  color: var(--brand-deep-navy) !important;
+  color: var(--brand-deep-navy);
   border-radius: 5px;
   cursor: pointer;
   transition: all 0.15s;
@@ -930,14 +930,14 @@
 
 .upcomingMeta {
   font-size: 0.78rem;
-  color: rgba(150, 190, 255, 0.75);
+  color: #6B7280;
   font-family: var(--font-body);
 }
 
 .upcomingDate {
   font-size: 0.78rem;
   font-weight: 600;
-  color: rgba(150, 190, 255, 0.75);
+  color: #6B7280;
   white-space: nowrap;
   flex-shrink: 0;
   font-family: var(--font-body);
@@ -968,7 +968,7 @@
 }
 
 .searchInput::placeholder {
-  color: rgba(150, 190, 255, 0.5);
+  color: #9CA3AF;
 }
 
 .searchInput:focus {
@@ -998,14 +998,34 @@
   flex-wrap: wrap;
 }
 
+.filterSelect {
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border: 1px solid rgba(0, 31, 63, 0.1);
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--brand-deep-navy);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font-body);
+  outline: none;
+  min-width: 140px;
+}
+
+.filterSelect:focus {
+  border-color: var(--brand-cobalt-blue);
+  box-shadow: 0 0 0 2px rgba(46, 91, 255, 0.15);
+}
+
 .filterChip {
   padding: 6px 14px;
   border-radius: 20px;
   font-size: 0.8rem;
   font-weight: 600;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(180, 210, 255, 0.85);
+  border: 1px solid rgba(0, 31, 63, 0.12);
+  background: rgba(0, 31, 63, 0.04);
+  color: var(--brand-space-grey);
   cursor: pointer;
   transition: all 0.2s;
   font-family: var(--font-body);
@@ -1013,8 +1033,8 @@
 }
 
 .filterChip:hover {
-  color: #FFFFFF;
-  background: rgba(255, 255, 255, 0.14);
+  color: var(--brand-deep-navy);
+  background: rgba(0, 31, 63, 0.08);
   transform: translateY(-1px);
 }
 
@@ -1050,9 +1070,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(150, 190, 255, 0.8);
+  color: #9CA3AF;
   margin-bottom: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(0, 31, 63, 0.08);
   box-shadow: none;
 }
 
@@ -1828,9 +1848,7 @@
     font-size: 0.68rem;
   }
 
-  .calendarWidget {
-    /* removed padding override */
-  }
+
   
   .calendarHeader {
     padding: 12px 8px 10px;

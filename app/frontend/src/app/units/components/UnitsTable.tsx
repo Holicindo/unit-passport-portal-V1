@@ -24,7 +24,7 @@ export function TableSkeleton({ pageSize }: { pageSize: number }) {
 
 /* ── Helpers ── */
 function handleDownloadQR(serialNumber: string, qrToken: string) {
-  const targetUrl = `${window.location.origin}/id/${qrToken}`;
+  const targetUrl = `https://portal.holicindo.com/id/${qrToken}`;
   const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(targetUrl)}`;
   window.open(qrApiUrl, '_blank');
 }

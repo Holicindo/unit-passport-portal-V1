@@ -57,23 +57,71 @@ export default function ClientDashboard() {
     return e > today && e <= in30Days;
   }).length;
 
-  // ── Build calendar events dari warranty_expiry fleet ──
+  // ── Build calendar events dari warranty_expiry dan next_service_date fleet ──
   const calendarEvents: CalendarEvents = {};
   fleet.forEach(u => {
-    if (!u.warranty_expiry) return;
-    const exp = new Date(u.warranty_expiry);
-    // Key: YYYY-MM-DD (local date)
-    const key = `${exp.getFullYear()}-${String(exp.getMonth() + 1).padStart(2, '0')}-${String(exp.getDate()).padStart(2, '0')}`;
-    const type = exp < today ? 'warranty-expired' : exp <= in30Days ? 'warranty-expiring' : 'warranty-expiring';
-    if (!calendarEvents[key]) {
-      calendarEvents[key] = { type, units: [] };
+    // 1. Cek Garansi
+    if (u.warranty_expiry) {
+      const exp = new Date(u.warranty_expiry);
+      // Key: YYYY-MM-DD (local date)
+      const key = `${exp.getFullYear()}-${String(exp.getMonth() + 1).padStart(2, '0')}-${String(exp.getDate()).padStart(2, '0')}`;
+      const type = exp < today ? 'warranty-expired' : exp <= in30Days ? 'warranty-expiring' : 'warranty-expiring';
+      if (!calendarEvents[key]) {
+        calendarEvents[key] = { type, units: [] };
+      }
+      calendarEvents[key].units.push({
+        id: u.id,
+        serial: u.serial_number || '—',
+        model: u.model_name || '—',
+      });
+      // Prioritize expired > expiring
+      if (exp < today) calendarEvents[key].type = 'warranty-expired';
     }
-    calendarEvents[key].units.push({
-      serial: u.serial_number || '—',
-      model: u.model_name || '—',
-    });
-    // Prioritize expired > expiring
-    if (exp < today) calendarEvents[key].type = 'warranty-expired';
+
+    // 2. Cek Jadwal Servis (real-time dari backend jika field sudah ditambahkan)
+    if (u.next_service_date) {
+      const srv = new Date(u.next_service_date);
+      const key = `${srv.getFullYear()}-${String(srv.getMonth() + 1).padStart(2, '0')}-${String(srv.getDate()).padStart(2, '0')}`;
+      if (!calendarEvents[key]) {
+        calendarEvents[key] = { type: 'service', units: [] };
+      }
+      // Hindari menimpa status kritis (merah/oranye) dengan status servis jika tanggal sama
+      if (calendarEvents[key].type !== 'warranty-expired' && calendarEvents[key].type !== 'warranty-expiring') {
+        calendarEvents[key].type = 'service';
+      }
+      // Hindari duplikasi push unit jika unit yang sama punya garansi habis & jadwal servis di hari yang sama
+      if (!calendarEvents[key].units.some(existing => existing.id === u.id)) {
+        calendarEvents[key].units.push({
+          id: u.id,
+          serial: u.serial_number || '—',
+          model: u.model_name || '—',
+        });
+      }
+    }
+  });
+
+  // ── MOCK DATA PENGINGAT (REMINDERS) UNTUK DEMO ──
+  // Menambahkan jadwal servis dan pengingat di sekitar tanggal hari ini
+  const mockDates = [
+    { offset: 2, type: 'service' as const, id: 'demo1', serial: 'A26051860', model: 'Cold Case CX3-1500 [GOLD]' },
+    { offset: 5, type: 'warranty-expiring' as const, id: 'demo2', serial: 'B99201991', model: 'Showcase Cooler V2' },
+    { offset: -3, type: 'service' as const, id: 'demo3', serial: 'C10293847', model: 'Freezer Max 300L' },
+  ];
+
+  mockDates.forEach(mock => {
+    const d = new Date(today.getTime() + mock.offset * 24 * 60 * 60 * 1000);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    if (!calendarEvents[key]) {
+      calendarEvents[key] = { type: mock.type, units: [] };
+    }
+    // Jika tidak ada unit aslinya di tanggal tersebut, atau untuk memperkaya data:
+    if (!calendarEvents[key].units.some(u => u.serial === mock.serial)) {
+      calendarEvents[key].units.push({
+        id: mock.id,
+        serial: mock.serial,
+        model: mock.model,
+      });
+    }
   });
 
   const firstName = user?.name?.split(' ')[0] || '';
@@ -171,7 +219,7 @@ export default function ClientDashboard() {
               ) : (
                 <div className={styles.unitList}>
                   {fleet.slice(0, 6).map(unit => (
-                    <Link href={`/client-portal/units/${unit.id}`} key={unit.id} className={styles.unitListItem}>
+                    <Link href={`/client-portal/units/${encodeURIComponent(unit.id)}`} key={unit.id} className={styles.unitListItem}>
                       <div className={styles.unitListIcon}>
                         <Package size={20} />
                       </div>

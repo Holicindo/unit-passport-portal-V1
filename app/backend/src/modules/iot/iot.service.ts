@@ -66,8 +66,8 @@ export class IotService {
       voltage: payload.voltage,
       current: payload.current,
       power: payload.power,
-      is_door1_open: payload.isDoor1Open,
-      is_door2_open: payload.isDoor2Open,
+      is_door1_open: false, // Sensor pintu belum terpasang — hardcode tertutup
+      is_door2_open: false, // Sensor pintu belum terpasang — hardcode tertutup
     });
     await this.telemetryLogRepo.save(log);
 
@@ -79,8 +79,8 @@ export class IotService {
       last_voltage: payload.voltage,
       last_power: payload.power,
       last_seen_at: new Date(),
-      is_door1_open: payload.isDoor1Open,
-      is_door2_open: payload.isDoor2Open,
+      is_door1_open: false, // Sensor pintu belum terpasang — hardcode tertutup
+      is_door2_open: false, // Sensor pintu belum terpasang — hardcode tertutup
     } as any);
 
     this.logger.debug(`✅ Data tersimpan untuk unit ${unit.id} (${payload.unitId})`);

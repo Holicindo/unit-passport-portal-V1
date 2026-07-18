@@ -124,10 +124,12 @@ function TempCard({ label, rawValue, min, max, offset, icon: Icon, isWarning, wa
 }
 
 function DoorStatus({ label, isOpen }: { label: string; isOpen: boolean | null }) {
-  const unknown = isOpen === null;
-  const statusColor = unknown ? '#94a3b8' : isOpen ? '#d97706' : '#059669';
-  const bg    = unknown ? 'rgba(148,163,184,0.07)' : isOpen ? 'rgba(245,158,11,0.16)' : 'rgba(16,185,129,0.16)';
-  const bdr   = unknown ? 'rgba(148,163,184,0.2)' : isOpen ? 'rgba(217,119,6,0.55)' : 'rgba(5,150,105,0.5)';
+  // Sensor pintu belum terpasang — force TUTUP sampai sensor fisik dipasang
+  // Ubah baris ini ke `isOpen === true` saat sensor sudah terpasang
+  const actuallyOpen = false;
+  const statusColor = actuallyOpen ? '#d97706' : '#059669';
+  const bg    = actuallyOpen ? 'rgba(245,158,11,0.16)' : 'rgba(16,185,129,0.16)';
+  const bdr   = actuallyOpen ? 'rgba(217,119,6,0.55)' : 'rgba(5,150,105,0.5)';
 
   return (
     <div style={{
@@ -136,7 +138,7 @@ function DoorStatus({ label, isOpen }: { label: string; isOpen: boolean | null }
       background: bg,
       border: `2px solid ${bdr}`,
       borderRadius: '12px',
-      boxShadow: unknown ? 'none' : isOpen
+      boxShadow: actuallyOpen
         ? '0 2px 10px rgba(217,119,6,0.15)'
         : '0 2px 10px rgba(5,150,105,0.15)',
     }}>
@@ -147,12 +149,12 @@ function DoorStatus({ label, isOpen }: { label: string; isOpen: boolean | null }
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         flexShrink: 0,
       }}>
-        {unknown ? <DoorClosed size={18} color="#94a3b8" /> : isOpen ? <DoorOpen size={18} color="#f59e0b" /> : <DoorClosed size={18} color="#10b981" />}
+        {actuallyOpen ? <DoorOpen size={18} color="#f59e0b" /> : <DoorClosed size={18} color="#10b981" />}
       </div>
       <div style={{ flex: 1 }}>
         <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>{label}</div>
         <div style={{ fontSize: '0.95rem', fontWeight: 800, color: statusColor }}>
-          {unknown ? 'Tidak ada data' : isOpen ? 'OPEN' : 'CLOSE'}
+          {actuallyOpen ? 'BUKA' : 'TUTUP'}
         </div>
       </div>
     </div>

@@ -93,6 +93,8 @@ export default function QrPassportPage() {
     selectedMedia, setSelectedMedia,
   } = routing;
 
+  const [showAllPicModal, setShowAllPicModal] = useState(false);
+
   if (loading) return <div className={styles.loadingContainer}><Loader2 className={styles.spinner} size={48} /><p>Memindai QR Passport...</p></div>;
   if (error || !unit) return (
     <div className={styles.errorContainer}><div className={styles.errorCard}>
@@ -320,6 +322,7 @@ export default function QrPassportPage() {
           </section>
 
           {/* Slide 5: Manuals */}
+          {(isAdmin || isPartner) && (
           <section className={`${styles.panel} ${styles.iotPanel}`} style={{ background: "#E8EAEE", border: "none", boxShadow: "-6px -6px 10px rgba(255,255,255,0.72), 6px 6px 12px rgba(0,31,63,0.14)", borderRadius: "20px", backdropFilter: "none" }}>
             <div className={styles.panelHeader}>
               <div className={styles.panelHeaderLeft}><BookOpen size={16} color="var(--color-cobalt-blue)" /><h2>Manuals</h2></div>
@@ -405,8 +408,10 @@ export default function QrPassportPage() {
               )}
             </div>
           </section>
+          )}
 
           {/* Slide 6: Ownership */}
+          {(!isGuest && !hasClientRestriction) && (
           <section className={`${styles.panel} ${styles.iotPanel}`} style={{ background: "#E8EAEE", border: "none", boxShadow: "-6px -6px 10px rgba(255,255,255,0.72), 6px 6px 12px rgba(0,31,63,0.14)", borderRadius: "20px", backdropFilter: "none" }}>
             <div className={styles.panelHeader}>
               <div className={styles.panelHeaderLeft}><UserCheck size={16} color="var(--color-cobalt-blue)" /><h2>Ownership</h2></div>
@@ -449,9 +454,12 @@ export default function QrPassportPage() {
               </>)}
             </div>
           </section>
+          )}
 
           {/* Riwayat Servis */}
-          <ServiceHistorySection serviceLogs={unit.service_logs || []} />
+          {(!isGuest && !hasClientRestriction) && (
+            <ServiceHistorySection serviceLogs={unit.service_logs || []} />
+          )}
 
           </div>{/* ── END passportLeft ── */}
 
@@ -557,6 +565,7 @@ export default function QrPassportPage() {
             </div>{/* end topRowGrid */}
 
           {/* QC Reports */}
+          {(!isGuest && !hasClientRestriction) && (
           <section className={styles.panel} style={{ background: '#E8EAEE', border: 'none', boxShadow: '-6px -6px 10px rgba(255,255,255,0.72), 6px 6px 12px rgba(0,31,63,0.14)', borderRadius: '18px', backdropFilter: 'none' }}>
             <div className={styles.panelHeader}>
               <div className={styles.panelHeaderLeft}><FileText size={16} color="var(--color-cobalt-blue)" /><h2>QC Reports</h2></div>
@@ -662,19 +671,7 @@ export default function QrPassportPage() {
                     </div>
                   </div>
                   <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }} />
-                  <div>
-                    <p style={{ fontSize: '0.72rem', fontWeight: 700, color: '#8f9bb3', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '10px' }}>Dimensi Kaca</p>
-                    <EditField label="Lebar (cm)" value={editData.specs?.glass_width || ''} onChange={(v) => handleEditChange('specs.glass_width', v)} />
-                    <EditField label="Tinggi (cm)" value={editData.specs?.glass_height || ''} onChange={(v) => handleEditChange('specs.glass_height', v)} />
-                    <EditField label="Ketebalan (mm)" value={editData.specs?.glass_thickness || ''} onChange={(v) => handleEditChange('specs.glass_thickness', v)} />
-                  </div>
-                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }} />
-                  <div>
-                    <p style={{ fontSize: '0.72rem', fontWeight: 700, color: '#8f9bb3', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '10px' }}>PIC Produksi</p>
-                    <EditField label="Nama PIC" value={editData.specs?.pic_name || ''} onChange={(v) => handleEditChange('specs.pic_name', v)} />
-                    <DatePicker label="Tanggal" value={editData.specs?.pic_date || ''} onChange={(v) => handleEditChange('specs.pic_date', v)} theme="dark" />
-                    <EditField label="Catatan" value={editData.specs?.pic_notes || ''} onChange={(v) => handleEditChange('specs.pic_notes', v)} />
-                  </div>
+                  {/* Glass Dimension dan PIC telah dipindahkan. Data ditarik dari Laporan Inspeksi (Read Only). */}
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -715,28 +712,66 @@ export default function QrPassportPage() {
                     });
                   })()}
                   <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', margin: '4px 0' }} />
-                  {/* Glass Dimension */}
-                  {(() => { const gw = unit?.specs?.glass_width; const gh = unit?.specs?.glass_height; const gt = unit?.specs?.glass_thickness; const has = gw || gh || gt; return (
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: has ? '8px 8px 0 0' : '8px' }}>
-                        <FileText size={15} color="#8bb2ff" /><span style={{ flex: 1, fontSize: '0.85rem' }}>Glass Dimension</span>
-                        {has ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(16,185,129,0.12)', color: '#10b981', borderRadius: '20px', padding: '2px 8px', fontSize: '0.72rem', fontWeight: 700 }}><Check size={11} /> Ada</span> : <span style={{ background: 'rgba(255,255,255,0.06)', color: '#64748b', borderRadius: '20px', padding: '2px 8px', fontSize: '0.72rem', fontWeight: 600 }}>Belum ada data</span>}
-                      </div>
-                      {has && <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '0 0 8px 8px', padding: '8px 12px', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>{gw && <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Lebar: <strong style={{ color: '#e2e8f0' }}>{gw} cm</strong></span>}{gh && <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Tinggi: <strong style={{ color: '#e2e8f0' }}>{gh} cm</strong></span>}{gt && <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Tebal: <strong style={{ color: '#e2e8f0' }}>{gt} mm</strong></span>}</div>}
-                    </div>); })()}
-                  {/* Production PIC */}
-                  {(() => { const pn = unit?.specs?.pic_name; const pd = unit?.specs?.pic_date; const pnt = unit?.specs?.pic_notes; const has = pn || pd || pnt; return (
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: has ? '8px 8px 0 0' : '8px' }}>
-                        <FileText size={15} color="#8bb2ff" /><span style={{ flex: 1, fontSize: '0.85rem' }}>Production PIC</span>
-                        {has ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(16,185,129,0.12)', color: '#10b981', borderRadius: '20px', padding: '2px 8px', fontSize: '0.72rem', fontWeight: 700 }}><Check size={11} /> Ada</span> : <span style={{ background: 'rgba(255,255,255,0.06)', color: '#64748b', borderRadius: '20px', padding: '2px 8px', fontSize: '0.72rem', fontWeight: 600 }}>Belum ada data</span>}
-                      </div>
-                      {has && <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '0 0 8px 8px', padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>{pn && <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Nama: <strong style={{ color: '#e2e8f0' }}>{pn}</strong></span>}{pd && <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Tanggal: <strong style={{ color: '#e2e8f0' }}>{new Date(pd + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</strong></span>}{pnt && <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Catatan: <strong style={{ color: '#e2e8f0' }}>{pnt}</strong></span>}</div>}
-                    </div>); })()}
+                  {(() => {
+                    const inspReport = unitReports.find((r: any) => r.form_type === 'INSPECTION');
+                    const inspData = inspReport?.data || {};
+                    const kaca = inspData.dimensions?.kaca || {};
+                    const works = inspData.works || [];
+                    const filledWorks = works.filter((w: any) => w.name && w.name.trim() !== '');
+                    const hasKaca = Object.values(kaca).some(v => v);
+                    const hasWorks = filledWorks.length > 0;
+                    return (
+                      <>
+                        {/* Glass Dimension */}
+                        <div style={{ marginBottom: '8px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: hasKaca ? '8px 8px 0 0' : '8px' }}>
+                            <FileText size={15} color="#8bb2ff" /><span style={{ flex: 1, fontSize: '0.85rem' }}>Glass Dimension (Source: Inspection Report)</span>
+                            {hasKaca ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(16,185,129,0.12)', color: '#10b981', borderRadius: '20px', padding: '2px 8px', fontSize: '0.72rem', fontWeight: 700 }}><Check size={11} /> Ada</span> : <span style={{ background: 'rgba(255,255,255,0.06)', color: '#64748b', borderRadius: '20px', padding: '2px 8px', fontSize: '0.72rem', fontWeight: 600 }}>Belum ada data</span>}
+                          </div>
+                          {hasKaca && (
+                            <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '0 0 8px 8px', padding: '8px 12px', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                              {kaca.depan && <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Depan: <strong style={{ color: '#e2e8f0' }}>{kaca.depan}</strong></span>}
+                              {kaca.samping && <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Samping: <strong style={{ color: '#e2e8f0' }}>{kaca.samping}</strong></span>}
+                              {kaca.atas && <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Atas: <strong style={{ color: '#e2e8f0' }}>{kaca.atas}</strong></span>}
+                              {kaca.pintu && <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Pintu: <strong style={{ color: '#e2e8f0' }}>{kaca.pintu}</strong></span>}
+                              {kaca.tingkatan && <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Rak: <strong style={{ color: '#e2e8f0' }}>{kaca.tingkatan}</strong></span>}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Production PIC */}
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: hasWorks ? '8px 8px 0 0' : '8px' }}>
+                            <UserCheck size={15} color="#8bb2ff" /><span style={{ flex: 1, fontSize: '0.85rem' }}>Production PIC (Source: Inspection Report)</span>
+                            {hasWorks ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(16,185,129,0.12)', color: '#10b981', borderRadius: '20px', padding: '2px 8px', fontSize: '0.72rem', fontWeight: 700 }}><Check size={11} /> {filledWorks.length} Personil</span> : <span style={{ background: 'rgba(255,255,255,0.06)', color: '#64748b', borderRadius: '20px', padding: '2px 8px', fontSize: '0.72rem', fontWeight: 600 }}>Belum ada data</span>}
+                          </div>
+                          {hasWorks && (
+                            <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '0 0 8px 8px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                              {filledWorks.slice(0, 3).map((w: any, idx: number) => (
+                                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: idx < 2 ? '1px solid rgba(255,255,255,0.05)' : 'none', paddingBottom: idx < 2 ? '8px' : 0 }}>
+                                  <span style={{ fontSize: '0.78rem', color: '#94a3b8', width: '45%' }}>{w.label}</span>
+                                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                                    <span style={{ fontSize: '0.78rem', color: '#e2e8f0', fontWeight: 600 }}>{w.name}</span>
+                                    {w.time && <span style={{ fontSize: '0.68rem', color: '#64748b' }}>Waktu: {w.time} hari</span>}
+                                  </div>
+                                </div>
+                              ))}
+                              {filledWorks.length > 3 && (
+                                <button type="button" onClick={() => setShowAllPicModal(true)} style={{ marginTop: '4px', width: '100%', padding: '8px', background: 'rgba(46,91,255,0.1)', border: '1px solid rgba(46,91,255,0.2)', borderRadius: '6px', color: '#8bb2ff', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', textAlign: 'center' }}>
+                                  Lihat Seluruh PIC Produksi ({filledWorks.length}) <span>›</span>
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
               )}
             </div>
           </section>
+          )}
 
             {/* IoT — Customer: Health Index Widget (mock data, no raw sensor values) */}
             {isClient && !isAdmin && !isPartner && unit.id && (
@@ -836,6 +871,34 @@ export default function QrPassportPage() {
             </div>
           </div>
         )}
+
+        {/* Modal All PIC Produksi */}
+        {showAllPicModal && (() => {
+          const inspReport = unitReports.find((r: any) => r.form_type === 'INSPECTION');
+          const works = inspReport?.data?.works || [];
+          const filledWorks = works.filter((w: any) => w.name && w.name.trim() !== '');
+          return (
+            <div className={styles.modalOverlay} onClick={() => setShowAllPicModal(false)}>
+              <div className={styles.modalContent} style={{ maxWidth: '600px', width: '90%', padding: '24px', background: 'var(--color-slate-900)', border: '1px solid rgba(255,255,255,0.1)' }} onClick={e => e.stopPropagation()}>
+                <div className={styles.modalHeader} style={{ marginBottom: '20px' }}>
+                  <h2 style={{ color: '#fff', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '8px' }}><UserCheck size={20} color="#8bb2ff" /> Seluruh Personil Produksi</h2>
+                  <button className={styles.closeBtn} onClick={() => setShowAllPicModal(false)} style={{ color: '#fff' }}>×</button>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '60vh', overflowY: 'auto' }}>
+                  {filledWorks.map((w: any, idx: number) => (
+                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <span style={{ fontSize: '0.85rem', color: '#94a3b8', width: '50%' }}>{w.label}</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                        <span style={{ fontSize: '0.9rem', color: '#e2e8f0', fontWeight: 700 }}>{w.name}</span>
+                        {w.time && <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Waktu: {w.time} hari</span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Modals */}
         <ServiceRequestModal show={showServiceModal} onClose={closeServiceModal} onSubmit={handleServiceRequest} loading={routingLoading} routingResult={routingResult}

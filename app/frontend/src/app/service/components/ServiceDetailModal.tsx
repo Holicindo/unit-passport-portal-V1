@@ -119,12 +119,8 @@ export default function ServiceDetailModal({ log, partners, onClose, onUpdate, s
                   <input type="text" value={editTechnician} onChange={(e) => setEditTechnician(e.target.value)}
                     style={{ width: '100%', marginTop: '4px', padding: '10px 14px', borderRadius: '10px', border: '1px solid #E2E8F0', fontSize: '0.9rem', color: 'var(--color-deep-navy)', outline: 'none' }} />
                 </div>
-                <div className={styles.detailItem}><span className={styles.detailLabel}>Tanggal Jadwal Servis</span>
+                <div className={styles.detailItem}><span className={styles.detailLabel}>Scheduled Date</span>
                   <input type="date" value={editScheduledDate} onChange={(e) => setEditScheduledDate(e.target.value)}
-                    style={{ width: '100%', marginTop: '4px', padding: '10px 14px', borderRadius: '10px', border: '1px solid #E2E8F0', fontSize: '0.9rem', color: 'var(--color-deep-navy)', outline: 'none' }} />
-                </div>
-                <div className={styles.detailItem}><span className={styles.detailLabel}>Tanggal Delivery</span>
-                  <input type="date" value={editDeliveryDate} onChange={(e) => setEditDeliveryDate(e.target.value)}
                     style={{ width: '100%', marginTop: '4px', padding: '10px 14px', borderRadius: '10px', border: '1px solid #E2E8F0', fontSize: '0.9rem', color: 'var(--color-deep-navy)', outline: 'none' }} />
                 </div>
                 <div className={styles.detailItemFull}><span className={styles.detailLabel}>Status Servis</span>
@@ -163,8 +159,7 @@ export default function ServiceDetailModal({ log, partners, onClose, onUpdate, s
                   ) : <span className={styles.detailValue} style={{ fontStyle: 'italic', color: 'var(--color-space-grey)' }}>HQ (Manual Routing)</span>}
                 </div>
                 <div className={styles.detailItem}><span className={styles.detailLabel}>Nama Teknisi</span><span className={styles.detailValue}>{log.technician_name || 'Menunggu Alokasi'}</span></div>
-                <div className={styles.detailItem}><span className={styles.detailLabel}>Tanggal Jadwal</span><span className={styles.detailValue}>{formatDate(log.scheduled_date || log.service_date)}</span></div>
-                {log.delivery_date && <div className={styles.detailItem}><span className={styles.detailLabel}>Tanggal Delivery</span><span className={styles.detailValue} style={{ color: 'var(--color-cobalt-blue)' }}>{formatDate(log.delivery_date)}</span></div>}
+                <div className={styles.detailItem}><span className={styles.detailLabel}>Scheduled Date</span><span className={styles.detailValue}>{formatDate(log.scheduled_date || log.service_date)}</span></div>
                 <div className={styles.detailItemFull}><span className={styles.detailLabel}>Tindakan / Hasil Servis</span><span className={styles.detailValue}>{log.action_taken || 'Menunggu peninjauan teknisi.'}</span></div>
                 {log.planning_notes && <div className={styles.detailItemFull}><span className={styles.detailLabel}>Catatan Internal</span><span className={styles.detailValue} style={{ color: 'var(--color-space-grey)' }}>{log.planning_notes}</span></div>}
               </>)}

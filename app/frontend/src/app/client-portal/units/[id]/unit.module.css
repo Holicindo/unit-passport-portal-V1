@@ -24,6 +24,21 @@
   color: var(--brand-cobalt-blue);
 }
 
+/* Responsive Grid untuk konten dalam */
+.innerGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+  align-items: stretch;
+}
+
+@media (max-width: 900px) {
+  .innerGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Header unit */
 .unitHeader {
   display: flex;
@@ -219,14 +234,11 @@
 }
 
 .modal {
-  background: #E4E6EF;
-  border-radius: 22px;
+  background: #FFFFFF;
+  border-radius: 20px;
   width: 100%;
   max-width: 480px;
-  box-shadow:
-    -10px -10px 20px rgba(255, 255, 255, 0.72),
-     10px  10px 24px rgba(0, 31, 63, 0.18),
-     0 4px 10px rgba(0, 31, 63, 0.08);
+  box-shadow: 0 10px 40px rgba(0, 31, 63, 0.15);
   overflow: hidden;
 }
 

@@ -56,9 +56,9 @@ export default function UnitHealthWidget({ unitId }: UnitHealthWidgetProps) {
               if (data.voltage > 240) score -= 15;
             }
 
-            // Status Pintu
-            if (data.is_door1_open) score -= 5;
-            if (data.is_door2_open) score -= 5;
+            // Status Pintu (dinonaktifkan — sensor pintu belum terpasang)
+            // if (data.is_door1_open) score -= 5;
+            // if (data.is_door2_open) score -= 5;
 
             setHealthScore(Math.max(0, Math.min(100, score)));
           }

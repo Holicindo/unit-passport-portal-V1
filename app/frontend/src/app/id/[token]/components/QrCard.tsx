@@ -10,9 +10,7 @@ interface QrCardProps {
 }
 
 export default function QrCard({ token, serialNumber, modelName }: QrCardProps) {
-  const qrUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/id/${token}`
-    : `/id/${token}`;
+  const qrUrl = `https://portal.holicindo.com/id/${token}`;
 
   const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=10&data=${encodeURIComponent(qrUrl)}`;
   const qrPrintUrl = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=20&data=${encodeURIComponent(qrUrl)}`;

@@ -35,6 +35,8 @@ export default function ServicePage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [selectedDetailLog, setSelectedDetailLog] = useState<any | null>(null);
   const [expandedCallIds, setExpandedCallIds] = useState<Record<string, boolean>>({});
+  const [quickStatusLog, setQuickStatusLog] = useState<any | null>(null);
+  const [quickStatusValue, setQuickStatusValue] = useState<string>('');
 
   // Form states
   const [selectedUnitId, setSelectedUnitId] = useState('');
@@ -114,6 +116,16 @@ export default function ServicePage() {
     setExpandedCallIds(prev => ({ ...prev, [cid]: !prev[cid] }));
   };
 
+  const handleQuickStatusSave = async () => {
+    if (!quickStatusLog || !quickStatusValue) return;
+    try {
+      const { serviceLogApi } = await import('@/lib/api');
+      await serviceLogApi.update(quickStatusLog.id, { status: quickStatusValue });
+      await fetchData();
+    } catch { alert('Gagal mengubah status.'); }
+    finally { setQuickStatusLog(null); setQuickStatusValue(''); }
+  };
+
   return (
     <div className={styles.container}>
       <header className={styles.pageHeader}>
@@ -164,7 +176,7 @@ export default function ServicePage() {
         {/* Desktop Table */}
         <div className={`${styles.tableContainer} ${styles.desktopView}`}>
           <table className={styles.table}>
-            <thead><tr><th>CALL ID</th><th>Jenis</th><th>Unit / Mesin</th><th>Deskripsi Kendala</th><th>Tgl Jadwal</th><th>Status</th></tr></thead>
+            <thead><tr><th>CALL ID</th><th>Jenis</th><th>Unit / Mesin</th><th>Deskripsi Kendala</th><th>Tgl Created</th><th>Replaced Sparepart</th><th>Status</th></tr></thead>
             <tbody>
               {groupedLogs.map(({ mainLog, history }) => {
                 const cid = mainLog.call_id || mainLog.id;
@@ -180,10 +192,10 @@ export default function ServicePage() {
                           {cid}
                         </div>
                       </td>
-                      <td>
+                    <td>
                         {(() => {
                           const tType = mainLog.task_type || 'CORRECTIVE';
-                          const tLabel: Record<string,string> = { CORRECTIVE: 'Perbaikan', PREVENTIVE: 'Perawatan', INSTALLATION: 'Instalasi' };
+                          const tLabel: Record<string,string> = { CORRECTIVE: 'Service', PREVENTIVE: 'Maintenance', INSTALLATION: 'Installation' };
                           const tColor: Record<string,{bg:string,color:string}> = {
                             CORRECTIVE: { bg: 'rgba(255,87,34,0.1)', color: '#FF5722' },
                             PREVENTIVE: { bg: 'rgba(0,71,171,0.1)', color: '#0047AB' },
@@ -201,22 +213,31 @@ export default function ServicePage() {
                       </td>
                       <td>{(() => { const { issue, contact } = parseIssueDescription(mainLog.issue_description); return (<div className={styles.issueCell}><span className={styles.issueTextMain} title={issue}>{issue}</span>{contact && <span className={styles.issueContactSub}>{contact.name} ({contact.phone})</span>}</div>); })()}</td>
                       <td>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                          <span style={{ fontWeight: 600, color: 'var(--color-deep-navy)', fontSize: '0.8rem' }}>
-                            {formatDate(mainLog.scheduled_date || mainLog.service_date)}
-                          </span>
-                          {mainLog.delivery_date && (
-                            <span style={{ fontSize: '0.7rem', color: 'var(--color-cobalt-blue)', fontWeight: 600 }}>
-                              📦 {formatDate(mainLog.delivery_date)}
-                            </span>
-                          )}
-                        </div>
+                        <span style={{ fontWeight: 600, color: 'var(--color-deep-navy)', fontSize: '0.8rem' }}>
+                          {formatDate(mainLog.created_at)}
+                        </span>
                       </td>
-                      <td><span className={`${styles.badge} ${mainLog.status === 'PENDING' ? styles.badgePending : mainLog.status === 'IN PROGRESS' ? styles.badgeInProgress : mainLog.status === 'COMPLETED' ? styles.badgeCompleted : styles.badgeCancelled}`}>{mainLog.status}</span></td>
+                      <td onClick={(e) => e.stopPropagation()}>
+                        {mainLog.replaced_sparepart ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                            {String(mainLog.replaced_sparepart).split(';').filter(Boolean).map((item: string, idx: number) => (
+                              <span key={idx} style={{ fontSize: '0.72rem', background: 'rgba(100,116,139,0.1)', color: 'var(--color-space-grey)', borderRadius: '4px', padding: '1px 6px', whiteSpace: 'nowrap' }}>{item.trim()}</span>
+                            ))}
+                          </div>
+                        ) : <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontStyle: 'italic' }}>—</span>}
+                      </td>
+                      <td onClick={(e) => e.stopPropagation()}>
+                        <span
+                          className={`${styles.badge} ${mainLog.status === 'PENDING' ? styles.badgePending : mainLog.status === 'IN PROGRESS' ? styles.badgeInProgress : mainLog.status === 'COMPLETED' ? styles.badgeCompleted : styles.badgeCancelled}`}
+                          style={{ cursor: 'pointer' }}
+                          title="Klik untuk ubah status"
+                          onClick={() => { setQuickStatusLog(mainLog); setQuickStatusValue(mainLog.status); }}
+                        >{mainLog.status}</span>
+                      </td>
                     </tr>
                     {isExpanded && (
                       <tr>
-                        <td colSpan={6} style={{ padding: 0, background: '#f8fafc', borderBottom: '1px solid #f0f0f4' }}>
+                        <td colSpan={7} style={{ padding: 0, background: '#f8fafc', borderBottom: '1px solid #f0f0f4' }}>
                           <div style={{ padding: '16px 24px 16px 48px' }}>
                             <h4 style={{ fontSize: '0.8rem', color: 'var(--color-space-grey)', marginBottom: '12px', textTransform: 'uppercase' }}>Riwayat Status ({cid})</h4>
                             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
@@ -294,6 +315,29 @@ export default function ServicePage() {
           onUpdate={async (updated) => { await fetchData(); setSelectedDetailLog(null); }}
           submitting={submitting} setSubmitting={setSubmitting}
         />
+      )}
+      {/* Quick Status Modal */}
+      {quickStatusLog && (
+        <div className={styles.modalOverlay} onClick={() => setQuickStatusLog(null)}>
+          <div className={styles.modalCard} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px', padding: '28px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <h3 className={styles.modalTitle}>Ubah Status</h3>
+            <p style={{ fontSize: '0.9rem', color: 'var(--color-space-grey)' }}>Call ID: <strong>{quickStatusLog.call_id || quickStatusLog.id}</strong></p>
+            <select
+              value={quickStatusValue}
+              onChange={(e) => setQuickStatusValue(e.target.value)}
+              style={{ padding: '10px 14px', borderRadius: '10px', border: '1px solid #E2E8F0', fontSize: '0.9rem', color: 'var(--color-deep-navy)', outline: 'none', width: '100%' }}
+            >
+              <option value="PENDING">PENDING</option>
+              <option value="IN PROGRESS">IN PROGRESS</option>
+              <option value="COMPLETED">COMPLETED</option>
+              <option value="CANCELED">CANCELED</option>
+            </select>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '8px' }}>
+              <button className={styles.cancelBtn} onClick={() => setQuickStatusLog(null)}>Batal</button>
+              <button className={styles.saveBtn} onClick={handleQuickStatusSave}>Ya, Ubah Status</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

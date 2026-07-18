@@ -13,7 +13,7 @@ const WINDOW = 2;
 function StatusBadge({ status }: { status: string }) {
   const s = status?.toUpperCase();
   if (s === 'ACTIVE')      return <span className={styles.badgeActive}>Aktif</span>;
-  if (s === 'MAINTENANCE') return <span className={styles.badgeMaintenance}>Maintenance</span>;
+  if (s === 'MAINTENANCE') return <span className={styles.badgeMaintenance}>Dalam Perawatan</span>;
   return <span className={styles.badgeInactive}>{status || 'Tidak Aktif'}</span>;
 }
 
@@ -133,7 +133,8 @@ export default function ClientFleet() {
   const [error, setError]       = useState('');
   const [search, setSearch]     = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [page, setPage]         = useState(1);
+  const [cityFilter, setCityFilter]     = useState('');
+  const [page, setPage]                 = useState(1);
 
   const fetchFleet = useCallback(async () => {
     setLoading(true);
@@ -157,10 +158,19 @@ export default function ClientFleet() {
       u.serial_number?.toLowerCase().includes(q) ||
       u.model_name?.toLowerCase().includes(q) ||
       u.current_client?.city?.toLowerCase().includes(q) ||
-      u.specs?.city?.toLowerCase().includes(q);
+      u.specs?.city?.toLowerCase().includes(q) ||
+      u.outlet_branch?.toLowerCase().includes(q);
     const matchStatus = statusFilter === '' || u.status?.toUpperCase() === statusFilter;
-    return matchSearch && matchStatus;
+    
+    // Determine city
+    const unitCity = u.city || u.specs?.city || u.current_client?.city || '';
+    const matchCity = cityFilter === '' || unitCity.toLowerCase() === cityFilter.toLowerCase();
+
+    return matchSearch && matchStatus && matchCity;
   });
+
+  // Unique cities for filter
+  const uniqueCities = Array.from(new Set(fleet.map(u => u.city || u.specs?.city || u.current_client?.city || '').filter(Boolean))).sort();
 
   // Hitung per-status untuk chips
   const countActive      = fleet.filter(u => u.status?.toUpperCase() === 'ACTIVE').length;
@@ -180,10 +190,10 @@ export default function ClientFleet() {
         className={styles.pageBackBtn}
         onClick={() => router.push('/client-portal/dashboard')}
       >
-        <ArrowLeft size={15} /> Dashboard
+        <ArrowLeft size={15} /> Beranda
       </button>
       <div className={styles.pageHeader}>
-        <h1 className={styles.pageTitle}>My Fleet</h1>
+        <h1 className={styles.pageTitle}>Fleet Saya</h1>
         <p className={styles.pageDescription}>
           Kelola dan pantau seluruh unit mesin di semua lokasi Anda.
         </p>
@@ -199,11 +209,23 @@ export default function ClientFleet() {
             <input
               type="text"
               className={styles.searchInput}
-              placeholder="Cari serial number, model, atau kota..."
+              placeholder="Cari serial number, model, atau alamat..."
               value={search}
               onChange={e => handleSearch(e.target.value)}
             />
           </div>
+          
+          <select 
+            value={cityFilter}
+            onChange={(e) => { setCityFilter(e.target.value); setPage(1); }}
+            className={styles.filterSelect}
+          >
+            <option value="">Semua Kota</option>
+            {uniqueCities.map(city => (
+              <option key={city as string} value={city as string}>{city as string}</option>
+            ))}
+          </select>
+
           <div className={styles.filterChips}>
             <button
               className={`${styles.filterChip} ${statusFilter === '' ? styles.filterChipActive : ''}`}
@@ -221,7 +243,7 @@ export default function ClientFleet() {
               className={`${styles.filterChip} ${statusFilter === 'MAINTENANCE' ? styles.filterChipActive : ''}`}
               onClick={() => handleStatus('MAINTENANCE')}
             >
-              Maintenance ({countMaintenance})
+              Dalam Perawatan ({countMaintenance})
             </button>
             {countInactive > 0 && (
               <button
@@ -273,7 +295,8 @@ export default function ClientFleet() {
                     <tr>
                       <th>Serial Number</th>
                       <th>Model</th>
-                      <th>Lokasi / Kota</th>
+                      <th>Lokasi</th>
+                      <th>Kota</th>
                       <th>Garansi Habis</th>
                       <th>Servis Terakhir</th>
                       <th>Status</th>
@@ -293,7 +316,7 @@ export default function ClientFleet() {
                         <tr key={unit.id}>
                           <td data-label="Serial Number">
                             <Link
-                              href={`/id/${unit.qr_token || unit.id}`}
+                              href={`/client-portal/units/${encodeURIComponent(unit.id)}`}
                               style={{
                                 fontWeight: 700,
                                 color: 'var(--brand-cobalt-blue)',
@@ -304,8 +327,11 @@ export default function ClientFleet() {
                             </Link>
                           </td>
                           <td data-label="Model">{unit.model_name || '-'}</td>
-                          <td data-label="Lokasi" style={{ color: 'var(--brand-space-grey)' }}>
-                            {unit.current_client?.city || unit.specs?.city || '-'}
+                          <td data-label="Lokasi" style={{ color: 'var(--brand-space-grey)', fontSize: '0.8rem', maxWidth: '250px', whiteSpace: 'normal', lineHeight: '1.4' }}>
+                            {unit.outlet_branch || unit.current_client?.address || '-'}
+                          </td>
+                          <td data-label="Kota" style={{ color: 'var(--brand-space-grey)' }}>
+                            {unit.city || unit.specs?.city || unit.current_client?.city || '-'}
                           </td>
                           <td data-label="Garansi Habis">
                             {warrantyExp ? (
@@ -337,7 +363,7 @@ export default function ClientFleet() {
                           </td>
                           <td data-label="Aksi" style={{ textAlign: 'right' }}>
                             <Link
-                              href={`/client-portal/units/${unit.id}`}
+                              href={`/client-portal/units/${encodeURIComponent(unit.id)}`}
                               className={styles.cardAction}
                               style={{ gap: 4 }}
                             >

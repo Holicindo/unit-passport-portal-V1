@@ -41,8 +41,8 @@ function HolicLogo({ size = 20 }: { size?: number }) {
 }
 
 const navItems = [
-  { href: '/client-portal/dashboard', label: 'Dashboard',  icon: LayoutDashboard },
-  { href: '/client-portal/fleet',     label: 'Fleet',      icon: Truck },
+  { href: '/client-portal/dashboard', label: 'Beranda',    icon: LayoutDashboard },
+  { href: '/client-portal/fleet',     label: 'Fleet Saya', icon: Truck },
   { href: '/client-portal/warranty',  label: 'Garansi',    icon: ShieldCheck, isCenter: true },
   { href: '/client-portal/messages',  label: 'Pesan',      icon: MessageSquare },
 ];
@@ -289,7 +289,7 @@ export default function ClientPortalLayout({ children }: { children: React.React
                       searchResults.map(u => (
                         <button
                           key={u.id}
-                          onClick={() => { router.push(`/client-portal/units/${u.id}`); setSearchOpen(false); setSearchQuery(''); }}
+                          onClick={() => { router.push(`/client-portal/units/${encodeURIComponent(u.id)}`); setSearchOpen(false); setSearchQuery(''); }}
                           style={{
                             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                             width: '100%', padding: '12px 16px', border: 'none',

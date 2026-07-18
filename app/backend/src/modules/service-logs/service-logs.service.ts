@@ -90,6 +90,7 @@ export class ServiceLogsService {
       log.delivery_date = data.delivery_date ? new Date(data.delivery_date) : null;
     }
     if (data.planning_notes !== undefined) log.planning_notes = data.planning_notes;
+    if (data.replaced_sparepart !== undefined) log.replaced_sparepart = data.replaced_sparepart;
     if (data.is_allocated !== undefined) log.is_allocated = data.is_allocated;
     if (data.task_type !== undefined) log.task_type = data.task_type;
     if (data.status === 'COMPLETED') {
