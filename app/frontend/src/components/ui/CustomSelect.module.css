@@ -51,17 +51,11 @@
 }
 
 .dropdownMenu {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
-  width: 100%;
-  min-width: max-content;
   background: #ECEEF2;
   border: none;
   border-radius: 16px;
   box-shadow: -8px -8px 20px rgba(255, 255, 255, 0.9), 8px 8px 20px rgba(0, 31, 63, 0.15);
   padding: 8px;
-  z-index: 100;
   animation: slideDown 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 

@@ -6,6 +6,7 @@ import { unitApi } from '@/lib/api';
 import Link from 'next/link';
 import { Search, Eye, Package, RefreshCw, ChevronLeft, ChevronRight, Wrench, ArrowLeft } from 'lucide-react';
 import styles from '../ClientPortal.module.css';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 
 const PAGE_SIZE = 10;
 const WINDOW = 2;
@@ -169,8 +170,10 @@ export default function ClientFleet() {
     return matchSearch && matchStatus && matchCity;
   });
 
-  // Unique cities for filter
-  const uniqueCities = Array.from(new Set(fleet.map(u => u.city || u.specs?.city || u.current_client?.city || '').filter(Boolean))).sort();
+  // Unique cities for filter — sorted alphabetically
+  const uniqueCities = Array.from(
+    new Set(fleet.map(u => u.city || u.specs?.city || u.current_client?.city || '').filter(Boolean))
+  ).sort((a, b) => (a as string).localeCompare(b as string, 'id'));
 
   // Hitung per-status untuk chips
   const countActive      = fleet.filter(u => u.status?.toUpperCase() === 'ACTIVE').length;
@@ -215,16 +218,16 @@ export default function ClientFleet() {
             />
           </div>
           
-          <select 
+          <CustomSelect
             value={cityFilter}
-            onChange={(e) => { setCityFilter(e.target.value); setPage(1); }}
-            className={styles.filterSelect}
-          >
-            <option value="">Semua Kota</option>
-            {uniqueCities.map(city => (
-              <option key={city as string} value={city as string}>{city as string}</option>
-            ))}
-          </select>
+            onChange={(val) => { setCityFilter(val); setPage(1); }}
+            options={[
+              { value: '', label: 'Semua Kota' },
+              ...uniqueCities.map(city => ({ value: city as string, label: city as string })),
+            ]}
+            placeholder="Semua Kota"
+            showSearch
+          />
 
           <div className={styles.filterChips}>
             <button
