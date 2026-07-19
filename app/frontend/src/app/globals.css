@@ -1684,14 +1684,12 @@ html:not([data-theme="dark"]) [class*="listCard"] {
   box-shadow: 0 8px 32px rgba(0, 31, 63, 0.05) !important;
 }
 
-/* Dropdowns - Optic White glass */
+/* Dropdowns - Solid White (no glassmorphism per request) */
 :root:not([data-theme="dark"]) [class*="dropdownMenu"],
 html:not([data-theme="dark"]) [class*="dropdownMenu"] {
-  background: rgba(255, 255, 255, 0.95) !important;
-  border: 1px solid rgba(113, 115, 120, 0.12) !important;
+  background: #ffffff !important;
+  border: 1px solid rgba(113, 115, 120, 0.15) !important;
   box-shadow: 0 8px 32px rgba(0, 31, 63, 0.08), 0 4px 12px rgba(46, 91, 255, 0.04) !important;
-  backdrop-filter: blur(20px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
 }
 
 :root:not([data-theme="dark"]) [class*="dropdownEmail"],
@@ -1728,11 +1726,11 @@ html:not([data-theme="dark"]) [class*="notificationHeader"] {
 
 /* Search box - always on #001F3F TopBar, no light mode override needed */
 
-/* Form inputs - Optic White glass (exclude TopBar search) */
-:root:not([data-theme="dark"]) input:not([class*="searchInput"]),
+/* Form inputs - Optic White glass (exclude TopBar search and login page dark inputs) */
+:root:not([data-theme="dark"]) input:not([class*="searchInput"]):not(.login-input-field):not([class*="otpInput"]),
 :root:not([data-theme="dark"]) select,
 :root:not([data-theme="dark"]) textarea,
-html:not([data-theme="dark"]) input:not([class*="searchInput"]),
+html:not([data-theme="dark"]) input:not([class*="searchInput"]):not(.login-input-field):not([class*="otpInput"]),
 html:not([data-theme="dark"]) select,
 html:not([data-theme="dark"]) textarea {
   background: rgba(255, 255, 255, 0.95) !important;
@@ -1740,10 +1738,10 @@ html:not([data-theme="dark"]) textarea {
   color: var(--color-deep-navy) !important;
 }
 
-:root:not([data-theme="dark"]) input:not([class*="searchInput"]):focus,
+:root:not([data-theme="dark"]) input:not([class*="searchInput"]):not(.login-input-field):not([class*="otpInput"]):focus,
 :root:not([data-theme="dark"]) select:focus,
 :root:not([data-theme="dark"]) textarea:focus,
-html:not([data-theme="dark"]) input:not([class*="searchInput"]):focus,
+html:not([data-theme="dark"]) input:not([class*="searchInput"]):not(.login-input-field):not([class*="otpInput"]):focus,
 html:not([data-theme="dark"]) select:focus,
 html:not([data-theme="dark"]) textarea:focus {
   border-color: var(--color-cobalt-blue) !important;

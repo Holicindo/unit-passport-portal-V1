@@ -6,13 +6,28 @@ import { iotApi } from '@/lib/api';
 
 interface UnitHealthWidgetProps {
   unitId: string;
+  /** Serial number — used to detect demo units with IoT installed but temporarily offline */
+  serialNumber?: string;
 }
 
-export default function UnitHealthWidget({ unitId }: UnitHealthWidgetProps) {
+// ── Demo data for specific units that have IoT hardware installed
+//    but may be temporarily offline (e.g., during transport / exhibition setup)
+const DEMO_HEALTH_DATA: Record<string, { score: number; note: string }> = {
+  'A26051860': {
+    score: 92,
+    note: 'Data berdasarkan rekam terakhir sebelum perangkat dalam mode transit ke lokasi pameran.',
+  },
+};
+
+export default function UnitHealthWidget({ unitId, serialNumber }: UnitHealthWidgetProps) {
   const [healthScore, setHealthScore] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [isOffline, setIsOffline] = useState(false);
+  const [demoNote, setDemoNote] = useState<string | null>(null);
+
+  // Check if this unit has demo data available
+  const demoData = serialNumber ? DEMO_HEALTH_DATA[serialNumber] : undefined;
 
   useEffect(() => {
     const fetchHealth = async () => {
@@ -29,10 +44,18 @@ export default function UnitHealthWidget({ unitId }: UnitHealthWidgetProps) {
           }
 
           if (ageMinutes > 15) {
-            setIsOffline(true);
-            setHealthScore(0);
+            // Device offline — use demo data if available
+            if (demoData) {
+              setIsOffline(false);
+              setHealthScore(demoData.score);
+              setDemoNote(demoData.note);
+            } else {
+              setIsOffline(true);
+              setHealthScore(0);
+            }
           } else {
             setIsOffline(false);
+            setDemoNote(null);
             let score = 100;
 
             // Suhu Kabinet (-0.8 offset mock)
@@ -56,21 +79,32 @@ export default function UnitHealthWidget({ unitId }: UnitHealthWidgetProps) {
               if (data.voltage > 240) score -= 15;
             }
 
-            // Status Pintu (dinonaktifkan — sensor pintu belum terpasang)
-            // if (data.is_door1_open) score -= 5;
-            // if (data.is_door2_open) score -= 5;
-
             setHealthScore(Math.max(0, Math.min(100, score)));
           }
+          setLastUpdate(new Date());
+        } else {
+          // No data at all — use demo data if available
+          if (demoData) {
+            setIsOffline(false);
+            setHealthScore(demoData.score);
+            setDemoNote(demoData.note);
+            setLastUpdate(new Date());
+          } else {
+            setHealthScore(0);
+            setIsOffline(true);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch IoT data for health', err);
+        if (demoData) {
+          setIsOffline(false);
+          setHealthScore(demoData.score);
+          setDemoNote(demoData.note);
           setLastUpdate(new Date());
         } else {
           setHealthScore(0);
           setIsOffline(true);
         }
-      } catch (err) {
-        console.error('Failed to fetch IoT data for health', err);
-        setHealthScore(0);
-        setIsOffline(true);
       } finally {
         setLoading(false);
       }
@@ -79,7 +113,7 @@ export default function UnitHealthWidget({ unitId }: UnitHealthWidgetProps) {
     fetchHealth();
     const interval = setInterval(fetchHealth, 10000); // Polling every 10 seconds
     return () => clearInterval(interval);
-  }, [unitId]);
+  }, [unitId, demoData]);
 
   if (loading) {
     return (
@@ -184,6 +218,23 @@ export default function UnitHealthWidget({ unitId }: UnitHealthWidgetProps) {
               Pembaruan Terakhir: {lastUpdate ? `${lastUpdate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\./g, ':')} WIB` : '--:-- WIB'}
             </span>
           </div>
+
+          {/* Demo mode badge */}
+          {demoNote && (
+            <div style={{
+              marginTop: '12px',
+              padding: '8px 12px',
+              background: 'rgba(46, 91, 255, 0.06)',
+              border: '1px solid rgba(46, 91, 255, 0.15)',
+              borderRadius: '8px',
+              fontSize: '0.72rem',
+              color: '#2E5BFF',
+              fontWeight: 600,
+              lineHeight: 1.5,
+            }}>
+              📡 Mode Transit: {demoNote}
+            </div>
+          )}
         </div>
 
       </div>

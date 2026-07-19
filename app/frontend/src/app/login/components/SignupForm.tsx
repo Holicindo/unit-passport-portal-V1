@@ -41,6 +41,7 @@ export default function SignupForm({
             <span className={styles.inputIcon}><User size={16} /></span>
             <input id="signup-name" type="text" value={signupName}
               onChange={(e) => setSignupName(e.target.value)} placeholder="John Doe" required
+              className="login-input-field"
               autoComplete="off" />
           </div>
         </div>
@@ -51,6 +52,7 @@ export default function SignupForm({
             <span className={styles.inputIcon}><Mail size={16} /></span>
             <input id="signup-email" type="email" value={email}
               onChange={(e) => setEmail(e.target.value)} placeholder="name@company.com" required
+              className="login-input-field"
               autoComplete="off" />
           </div>
         </div>
@@ -61,6 +63,7 @@ export default function SignupForm({
             <span className={styles.lockIcon}><Lock size={16} /></span>
             <input id="signup-password" type={showPassword ? 'text' : 'password'} value={password}
               onChange={(e) => setPassword(e.target.value)} placeholder="Create a password" required
+              className="login-input-field"
               autoComplete="new-password" />
             <button type="button" className={styles.eyeBtn}
               onClick={() => setShowPassword(!showPassword)}>

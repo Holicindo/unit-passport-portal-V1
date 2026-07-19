@@ -460,7 +460,7 @@ export default function ClientUnitDetail() {
                 </h2>
               </div>
               <div className={styles.cardBody} style={{ padding: '0 16px 16px' }}>
-                <UnitHealthWidget unitId={unit.id} />
+                <UnitHealthWidget unitId={unit.id} serialNumber={unit.serial_number} />
               </div>
             </div>
 
