@@ -25,7 +25,7 @@ export default function ClientDashboard() {
         if (data) {
           // If we also want to fetch company_name from client, we could, but let's just update user for now.
           // In user table, the name might be what they edited.
-          setUser(prev => {
+          setUser((prev: any) => {
             const updated = { ...prev, ...data };
             localStorage.setItem('user', JSON.stringify(updated));
             return updated;
