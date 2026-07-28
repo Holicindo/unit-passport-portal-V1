@@ -6,7 +6,7 @@ import {
   ShieldAlert, Wrench, FileText, CheckCircle2,
   ExternalLink, Phone, ArrowLeft, Loader2,
   Lock, Check, UserCheck, Settings, BookOpen, Clock, Image as ImageIcon,
-  HelpCircle, Package, ChevronLeft, ChevronRight,
+  HelpCircle, Package, ChevronLeft, ChevronRight, Activity, BarChart2,
 } from 'lucide-react';
 import PassportTopbar from './components/PassportTopbar';
 import { CustomSelect } from '@/components/ui/CustomSelect';
@@ -784,7 +784,7 @@ export default function QrPassportPage() {
               <section className={`${styles.panel} ${styles.iotPanel}`}>
                 <div className={styles.panelHeader}>
                   <div className={styles.panelHeaderLeft}>
-                    <span style={{ fontSize: '1rem' }}>📡</span>
+                    <Activity size={16} color="var(--color-cobalt-blue)" />
                     <h2>Kesehatan Unit</h2>
                   </div>
                   <span style={{ fontSize: '0.65rem', fontWeight: 700, background: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.25)', borderRadius: '20px', padding: '3px 8px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
@@ -803,7 +803,7 @@ export default function QrPassportPage() {
               <section className={`${styles.panel} ${styles.iotPanel}`}>
                 <div className={styles.panelHeader}>
                   <div className={styles.panelHeaderLeft}>
-                    <span style={{ fontSize: '1rem' }}>📡</span>
+                    <Activity size={16} color="var(--color-cobalt-blue)" />
                     <h2>Sensor Real-Time</h2>
                   </div>
                   <span style={{ fontSize: '0.65rem', fontWeight: 700, background: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.25)', borderRadius: '20px', padding: '3px 8px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
@@ -812,7 +812,7 @@ export default function QrPassportPage() {
                   </span>
                 </div>
                 <div className={styles.panelContent}>
-                  <IotTelemetryWidget unitId={unit.id} unitModel={unit.model_name} isDark={isDark} />
+                  <IotTelemetryWidget unitId={unit.id} unitModel={unit.model_name} isDark={isDark} unit={unit} />
                 </div>
               </section>
             )}
@@ -822,7 +822,7 @@ export default function QrPassportPage() {
               <section className={`${styles.panel} ${styles.iotPanel}`}>
                 <div className={styles.panelHeader}>
                   <div className={styles.panelHeaderLeft}>
-                    <span style={{ fontSize: '1rem' }}>📊</span>
+                    <BarChart2 size={16} color="var(--color-cobalt-blue)" />
                     <h2>Riwayat Sensor</h2>
                   </div>
                   <span style={{ fontSize: '0.65rem', fontWeight: 700, background: 'rgba(46,91,255,0.1)', color: '#2E5BFF', border: '1px solid rgba(46,91,255,0.2)', borderRadius: '20px', padding: '3px 8px' }}>
@@ -830,7 +830,7 @@ export default function QrPassportPage() {
                   </span>
                 </div>
                 <div className={styles.panelContent}>
-                  <IotHistoryWidget unitId={unit.id} isDark={isDark} />
+                  <IotHistoryWidget unitId={unit.id} isDark={isDark} unit={unit} onUnitUpdate={loadUnitData} />
                 </div>
               </section>
             )}

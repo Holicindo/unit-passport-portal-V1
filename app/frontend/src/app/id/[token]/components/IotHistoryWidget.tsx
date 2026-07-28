@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { BarChart2, TableProperties, RefreshCw, TrendingDown, TrendingUp, Minus, Download, ChevronDown } from 'lucide-react';
-import { iotApi } from '@/lib/api';
+import { BarChart2, TableProperties, RefreshCw, TrendingDown, TrendingUp, Minus, Download, ChevronDown, Settings2, X, Check } from 'lucide-react';
+import { iotApi, unitApi } from '@/lib/api';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface HistoryPoint {
@@ -255,15 +255,62 @@ const TIME_RANGES = [
 interface IotHistoryWidgetProps {
   unitId: string;
   isDark?: boolean;
+  unit?: any; // To access specs and update them
+  onUnitUpdate?: (newUnit: any) => void;
 }
 
-export default function IotHistoryWidget({ unitId, isDark = false }: IotHistoryWidgetProps) {
+export default function IotHistoryWidget({ unitId, isDark = false, unit, onUnitUpdate }: IotHistoryWidgetProps) {
   const [view, setView] = useState<'chart' | 'table'>('chart');
   const [rangeIdx, setRangeIdx] = useState(0); // default 30 Menit (mudah lihat data terbaru)
   const [data, setData] = useState<HistoryPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showAllRows, setShowAllRows] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  
+  // Settings State
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [tempLimits, setTempLimits] = useState({
+    cabinet: { min: 0, max: 15 },
+    evaporator: { min: -25, max: 10 },
+    condenser: { min: 25, max: 65 },
+  });
+
+  // Initialize limits from unit.specs or defaults
+  useEffect(() => {
+    if (unit?.specs?.iot_limits) {
+      setTempLimits(unit.specs.iot_limits);
+    } else {
+      const isCX3 = unit?.model_name?.includes('CX3');
+      setTempLimits(isCX3 ? {
+        cabinet: { min: 0.0, max: 60.0 },
+        evaporator: { min: -15.0, max: 20.0 },
+        condenser: { min: 30.0, max: 42.0 },
+      } : {
+        cabinet: { min: 0.0, max: 15.0 },
+        evaporator: { min: -25.0, max: 10.0 },
+        condenser: { min: 25.0, max: 65.0 },
+      });
+    }
+  }, [unit]);
+
+  const saveSettings = async () => {
+    if (!unit) return;
+    setSavingSettings(true);
+    try {
+      const updatedSpecs = { ...unit.specs, iot_limits: tempLimits };
+      await unitApi.update(unit.id, { specs: updatedSpecs });
+      if (onUnitUpdate) {
+        onUnitUpdate({ ...unit, specs: updatedSpecs });
+      }
+      setShowSettings(false);
+    } catch (err) {
+      console.error('Failed to save IoT settings:', err);
+      alert('Gagal menyimpan pengaturan suhu');
+    } finally {
+      setSavingSettings(false);
+    }
+  };
 
   const downsampleTo5Minutes = (points: HistoryPoint[]) => {
     if (!points || points.length === 0) return [];
@@ -377,6 +424,18 @@ export default function IotHistoryWidget({ unitId, isDark = false }: IotHistoryW
               </button>
             ))}
           </div>
+          
+          {/* Settings Button */}
+          {unit && (
+            <button onClick={() => setShowSettings(true)} style={{
+              padding: '5px 10px', borderRadius: '8px', border: '1px solid rgba(0,31,63,0.1)',
+              background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px',
+              fontSize: '0.72rem', fontWeight: 700, color: '#475569', fontFamily: 'inherit',
+            }}>
+              <Settings2 size={12} />
+              Atur Suhu
+            </button>
+          )}
 
           {/* Refresh & Export */}
           <button onClick={() => fetchHistory(true)} disabled={refreshing || loading} style={{
@@ -525,6 +584,76 @@ export default function IotHistoryWidget({ unitId, isDark = false }: IotHistoryW
             </div>
           )}
         </>
+      )}
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,15,30,0.6)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 9999, padding: '20px'
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: '16px', width: '100%', maxWidth: '420px',
+            boxShadow: '0 10px 40px rgba(0,0,0,0.2)', overflow: 'hidden'
+          }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(0,0,0,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Settings2 size={18} color="#2E5BFF" />
+                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--color-deep-navy)' }}>Atur Batas Suhu (Threshold)</h3>
+              </div>
+              <button onClick={() => setShowSettings(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}><X size={18} color="#64748b" /></button>
+            </div>
+            
+            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <p style={{ fontSize: '0.8rem', color: '#64748b', margin: 0, lineHeight: 1.5 }}>
+                Atur nilai batas minimum dan maksimum suhu. Nilai ini akan digunakan untuk indikator peringatan pada dashboard monitoring real-time.
+              </p>
+              
+              {[
+                { key: 'cabinet', label: 'Suhu Kabinet (°C)', color: '#10b981' },
+                { key: 'evaporator', label: 'Suhu Evaporator (°C)', color: '#2E5BFF' },
+                { key: 'condenser', label: 'Suhu Kondensor (°C)', color: '#ef4444' },
+              ].map(({ key, label, color }) => (
+                <div key={key} style={{ background: 'rgba(0,0,0,0.02)', padding: '12px 14px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.05)' }}>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-deep-navy)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: color }} />
+                    {label}
+                  </div>
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 600, color: '#64748b', marginBottom: '4px' }}>Min</label>
+                      <input 
+                        type="number" 
+                        value={tempLimits[key as keyof typeof tempLimits].min}
+                        onChange={e => setTempLimits(prev => ({ ...prev, [key]: { ...prev[key as keyof typeof tempLimits], min: Number(e.target.value) } }))}
+                        style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.9rem', fontFamily: 'monospace', fontWeight: 600, outline: 'none' }}
+                      />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 600, color: '#64748b', marginBottom: '4px' }}>Max</label>
+                      <input 
+                        type="number" 
+                        value={tempLimits[key as keyof typeof tempLimits].max}
+                        onChange={e => setTempLimits(prev => ({ ...prev, [key]: { ...prev[key as keyof typeof tempLimits], max: Number(e.target.value) } }))}
+                        style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.9rem', fontFamily: 'monospace', fontWeight: 600, outline: 'none' }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(0,0,0,0.08)', background: '#f8fafc', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button onClick={() => setShowSettings(false)} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: 'transparent', color: '#64748b', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}>Batal</button>
+              <button onClick={saveSettings} disabled={savingSettings} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: '#2E5BFF', color: '#fff', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                {savingSettings ? <RefreshCw size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Check size={14} />}
+                {savingSettings ? 'Menyimpan...' : 'Simpan Pengaturan'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

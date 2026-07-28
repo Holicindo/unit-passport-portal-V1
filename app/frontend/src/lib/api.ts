@@ -24,6 +24,7 @@ export const authApi = {
   login: (credentials: any) => api.post('/auth/login', credentials),
   register: (data: any) => api.post('/auth/register', data),
   updateProfile: (data: { name?: string; phone?: string; city?: string }) => api.patch('/auth/me', data),
+  getMe: () => api.get('/auth/me'),
 };
 
 export const unitApi = {
@@ -124,6 +125,7 @@ export const messageApi = {
 
 export const userApi = {
   findAll: () => api.get('/auth/users'),
+  update: (id: string, data: any) => api.patch(`/auth/users/${id}`, data),
   deleteBulk: (ids: string[]) => api.post('/auth/users/bulk-delete', { ids }),
 };
 

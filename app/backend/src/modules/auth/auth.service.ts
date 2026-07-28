@@ -67,6 +67,15 @@ export class AuthService {
     return users;
   }
 
+  async findById(id: string): Promise<Omit<User, 'password'>> {
+    const user = await this.userRepository.findOne({
+      where: { id },
+      select: ['id', 'name', 'email', 'role', 'status', 'client_id', 'partner_id', 'created_at', 'updated_at'],
+    });
+    if (!user) throw new NotFoundException('User not found');
+    return user;
+  }
+
   async updateProfile(userId: string, dto: { name?: string; phone?: string; city?: string }) {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('User tidak ditemukan');
@@ -87,6 +96,31 @@ export class AuthService {
       client_id: saved.client_id,
       partner_id: saved.partner_id,
     };
+  }
+
+  async updateUser(id: string, dto: { name?: string; email?: string; role?: UserRole; status?: string; client_id?: string; partner_id?: string; password?: string }) {
+    const user = await this.userRepository.findOne({ where: { id } });
+    if (!user) throw new NotFoundException('User not found');
+
+    if (dto.email && dto.email !== user.email) {
+      const existingUser = await this.userRepository.findOne({ where: { email: dto.email } });
+      if (existingUser) throw new ConflictException('Email already exists');
+      user.email = dto.email;
+    }
+
+    if (dto.name !== undefined) user.name = dto.name;
+    if (dto.role !== undefined) user.role = dto.role;
+    if (dto.status !== undefined) user.status = dto.status;
+    if (dto.client_id !== undefined) user.client_id = dto.client_id;
+    if (dto.partner_id !== undefined) user.partner_id = dto.partner_id;
+    
+    if (dto.password) {
+      user.password = await bcrypt.hash(dto.password, 10);
+    }
+
+    const saved = await this.userRepository.save(user);
+    const { password, ...result } = saved;
+    return result;
   }
 
   async deleteBulk(ids: string[]) {

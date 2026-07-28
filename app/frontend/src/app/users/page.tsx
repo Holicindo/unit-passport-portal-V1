@@ -62,10 +62,8 @@ export default function UsersPage() {
   const handleSave = async (data: { name: string; email: string; role: UserRole; status: UserStatus; password: string; client_id?: string; partner_id?: string }) => {
     try {
       if (editingUser) {
-        // TODO: Implement actual API update logic if needed
-        setUsers(prev => prev.map(u => u.id === editingUser.id ? {
-          ...u, name: data.name, email: data.email, role: data.role, status: data.status, client_id: data.client_id, partner_id: data.partner_id
-        } : u));
+        await userApi.update(editingUser.id, data);
+        await fetchUsers();
       } else {
         const token = localStorage.getItem('token');
         const res = await fetch(`/api/auth/register`, {

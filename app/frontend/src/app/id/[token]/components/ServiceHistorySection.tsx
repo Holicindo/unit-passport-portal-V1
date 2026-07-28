@@ -1,5 +1,6 @@
-﻿'use client';
+'use client';
 
+import { useState } from 'react';
 import { Wrench } from 'lucide-react';
 import styles from '../id.module.css';
 
@@ -20,6 +21,9 @@ export default function ServiceHistorySection({ serviceLogs }: ServiceHistorySec
     (a, b) => new Date(b.created_at || b.service_date || 0).getTime() - new Date(a.created_at || a.service_date || 0).getTime()
   );
 
+  const [showAll, setShowAll] = useState(false);
+  const displayedLogs = showAll ? sorted : sorted.slice(0, 5);
+
   return (
     <section className={styles.sectionPanel}>
       <div className={styles.panelHeader}>
@@ -36,7 +40,7 @@ export default function ServiceHistorySection({ serviceLogs }: ServiceHistorySec
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {sorted.map((log: any, idx: number) => {
+            {displayedLogs.map((log: any, idx: number) => {
               const taskType = log.task_type || 'CORRECTIVE';
               const tc = TASK_COLOR[taskType] || TASK_COLOR.CORRECTIVE;
               return (
@@ -99,6 +103,55 @@ export default function ServiceHistorySection({ serviceLogs }: ServiceHistorySec
                 </div>
               );
             })}
+            
+            {!showAll && sorted.length > 5 && (
+              <button 
+                onClick={() => setShowAll(true)}
+                style={{
+                  marginTop: '12px', width: '100%', padding: '12px', 
+                  background: 'rgba(0,31,63,0.05)', 
+                  border: 'none', 
+                  borderRadius: '10px', 
+                  color: 'var(--color-cobalt-blue)', 
+                  fontSize: '0.85rem', fontWeight: 700, 
+                  cursor: 'pointer', textAlign: 'center',
+                  transition: 'all 0.2s',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = 'rgba(0,31,63,0.08)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = 'rgba(0,31,63,0.05)';
+                }}
+              >
+                Lihat Semua Riwayat Servis ({sorted.length}) <span>›</span>
+              </button>
+            )}
+            {showAll && sorted.length > 5 && (
+              <button 
+                onClick={() => setShowAll(false)}
+                style={{
+                  marginTop: '12px', width: '100%', padding: '12px', 
+                  background: 'rgba(0,31,63,0.05)', 
+                  border: 'none', 
+                  borderRadius: '10px', 
+                  color: 'var(--color-cobalt-blue)', 
+                  fontSize: '0.85rem', fontWeight: 700, 
+                  cursor: 'pointer', textAlign: 'center',
+                  transition: 'all 0.2s',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = 'rgba(0,31,63,0.08)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = 'rgba(0,31,63,0.05)';
+                }}
+              >
+                Sembunyikan <span>‹</span>
+              </button>
+            )}
           </div>
         )}
       </div>

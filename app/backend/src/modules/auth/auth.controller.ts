@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Patch, Body, Request, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Body, Request, HttpCode, HttpStatus, UseGuards, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -55,6 +55,15 @@ export class AuthController {
     return this.authService.deleteBulk(ids);
   }
 
+  @Patch('users/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update a user (Admin only)' })
+  async updateUser(@Param('id') id: string, @Body() body: any) {
+    return this.authService.updateUser(id, body);
+  }
+
   @Patch('me')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -64,5 +73,13 @@ export class AuthController {
     @Body() body: { name?: string; phone?: string; city?: string },
   ) {
     return this.authService.updateProfile(req.user.sub, body);
+  }
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get current user profile' })
+  async getMe(@Request() req: any) {
+    return this.authService.findById(req.user.sub);
   }
 }

@@ -235,3 +235,4 @@ void loop() {
     client.publish(mqtt_topic, jsonBuffer);
   }
 }
+XAJ

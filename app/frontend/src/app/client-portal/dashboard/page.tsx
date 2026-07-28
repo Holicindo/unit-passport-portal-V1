@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { unitApi, serviceLogApi } from '@/lib/api';
+import { unitApi, serviceLogApi, authApi } from '@/lib/api';
 import { TrendingUp, AlertTriangle, ChevronRight, Wrench, Package, QrCode, ShieldCheck, FileText, Calendar, LifeBuoy } from 'lucide-react';
 import styles from '../ClientPortal.module.css';
 import Link from 'next/link';
@@ -15,10 +15,27 @@ export default function ClientDashboard() {
   const greeting = useGreeting();
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem('user');
-      if (raw) setUser(JSON.parse(raw));
-    } catch {}
+    const initUser = async () => {
+      try {
+        const raw = localStorage.getItem('user');
+        if (raw) setUser(JSON.parse(raw));
+
+        // Fetch latest from backend
+        const { data } = await authApi.getMe();
+        if (data) {
+          // If we also want to fetch company_name from client, we could, but let's just update user for now.
+          // In user table, the name might be what they edited.
+          setUser(prev => {
+            const updated = { ...prev, ...data };
+            localStorage.setItem('user', JSON.stringify(updated));
+            return updated;
+          });
+        }
+      } catch (err) {
+        console.error('Failed to fetch latest user data:', err);
+      }
+    };
+    initUser();
   }, []);
 
   useEffect(() => {

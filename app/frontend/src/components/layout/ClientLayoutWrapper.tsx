@@ -9,12 +9,13 @@ import BottomNav from '@/components/layout/BottomNav';
 export default function ClientLayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isLoginPage     = pathname === '/login';
+  const isHomePage      = pathname === '/';
   const isPassportPage  = pathname?.startsWith('/id/');
   const isClientPortal  = pathname?.startsWith('/client-portal');
   const isPartnerPortal = pathname?.startsWith('/partner-portal');
 
   // Pages that render completely standalone — no admin sidebar/topbar/bottomnav
-  const hideLayout = isLoginPage || isPassportPage || isClientPortal || isPartnerPortal;
+  const hideLayout = isLoginPage || isHomePage || isPassportPage || isClientPortal || isPartnerPortal;
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);

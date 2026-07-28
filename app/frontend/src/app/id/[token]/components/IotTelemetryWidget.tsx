@@ -23,6 +23,7 @@ interface IotTelemetryWidgetProps {
   unitId: string;
   unitModel?: string;
   isDark?: boolean;
+  unit?: any;
 }
 
 function TempCard({ label, rawValue, min, max, offset, icon: Icon, isWarning, warningLabel }: { label: string; rawValue: number | null; min: number; max: number; offset: number; icon: React.ElementType; isWarning?: boolean; warningLabel?: string; }) {
@@ -161,7 +162,7 @@ function DoorStatus({ label, isOpen }: { label: string; isOpen: boolean | null }
   );
 }
 
-export default function IotTelemetryWidget({ unitId, unitModel, isDark = false }: IotTelemetryWidgetProps) {
+export default function IotTelemetryWidget({ unitId, unitModel, isDark = false, unit }: IotTelemetryWidgetProps) {
   const [data, setData] = useState<TelemetryData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -169,9 +170,9 @@ export default function IotTelemetryWidget({ unitId, unitModel, isDark = false }
   const [lastFetched, setLastFetched] = useState<Date | null>(null);
   const [tick, setTick] = useState(0); // ticks every second to update the "X dtk lalu" counter
 
-  // Configuration limits based on unitModel
+  // Configuration limits based on unit.specs or defaults
   const isCX3 = unitModel?.includes('CX3');
-  const limits = isCX3 ? {
+  const limits = unit?.specs?.iot_limits || (isCX3 ? {
     cabinet: { min: 0.0, max: 60.0 },
     evaporator: { min: -15.0, max: 20.0 },
     condenser: { min: 30.0, max: 42.0 },
@@ -180,7 +181,7 @@ export default function IotTelemetryWidget({ unitId, unitModel, isDark = false }
     cabinet: { min: 0.0, max: 15.0 },
     evaporator: { min: -25.0, max: 10.0 },
     condenser: { min: 25.0, max: 65.0 },
-  };
+  });
 
   // Mocked Calibration Offsets (This would normally come from the DB)
   const offsets = {
