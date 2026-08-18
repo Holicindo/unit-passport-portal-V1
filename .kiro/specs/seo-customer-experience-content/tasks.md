@@ -25,7 +25,7 @@ Rencana ini mencakup 9 tugas untuk memproduksi **aset konten SEO siap pakai** â€
     - Contoh nyata untuk setiap aturan
   - _Requirements: 7.1, 7.2, 7.6_
 
-- [ ] 2. Konten Blog â€” Kelompok A: Pencahayaan (5 Artikel)
+- [x] 2. Konten Blog â€” Kelompok A: Pencahayaan (5 Artikel)
   - Buat file `content/02-blog-lighting.md`
   - Untuk setiap artikel tulis semua elemen berikut secara lengkap:
     - **Judul artikel** (sesuai 5 judul Kelompok A di design.md)
@@ -44,7 +44,7 @@ Rencana ini mencakup 9 tugas untuk memproduksi **aset konten SEO siap pakai** â€
     5. "Kesalahan Pencahayaan yang Tanpa Sadar Menurunkan Kepuasan Customer"
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6_
 
-- [ ] 3. Konten Blog â€” Kelompok B: Suhu Ruangan (5 Artikel)
+- [x] 3. Konten Blog â€” Kelompok B: Suhu Ruangan (5 Artikel)
   - Buat file `content/03-blog-temperature.md`
   - Format sama dengan Task 2 (title tag, meta description, H1, H2/H3, outline, internal links, CTA)
   - Setiap artikel **wajib menyertakan studi kasus atau contoh implementasi nyata** (bisnis riil atau skenario konkret) sebagai bagian tersendiri dalam outline
@@ -56,7 +56,7 @@ Rencana ini mencakup 9 tugas untuk memproduksi **aset konten SEO siap pakai** â€
     5. "Suhu Ideal vs Suhu Aktual: Cara Mengukur Kenyamanan Termal Customer"
   - _Requirements: 2.1, 2.3, 2.4, 2.5_
 
-- [ ] 4. Konten Blog â€” Kelompok C: Detail Pelayanan (5 Artikel)
+- [x] 4. Konten Blog â€” Kelompok C: Detail Pelayanan (5 Artikel)
   - Buat file `content/04-blog-service.md`
   - Format sama dengan Task 2 (title tag, meta description, H1, H2/H3, outline, internal links, CTA)
   - Setiap artikel **wajib menyertakan daftar tips praktis** yang dapat langsung diterapkan pembaca
@@ -123,7 +123,7 @@ Rencana ini mencakup 9 tugas untuk memproduksi **aset konten SEO siap pakai** â€
     - Channel yang disarankan (WhatsApp, email follow-up, QR code, dll.)
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7_
 
-- [ ] 8. Kalender Konten 30 Hari
+- [x] 8. Kalender Konten 30 Hari
   - Buat file `content/08-content-calendar.md`
   - Tabel lengkap dengan kolom: **Hari | Tanggal | Platform | Judul Konten | Kata Kunci Utama | Status**
   - 30 entri mencakup semua konten yang diproduksi di Task 2â€“7, dengan jadwal sesuai design.md:
@@ -137,7 +137,7 @@ Rencana ini mencakup 9 tugas untuk memproduksi **aset konten SEO siap pakai** â€
   - Sertakan ringkasan di akhir tabel: jumlah konten per platform
   - _Requirements: 7.3_
 
-- [ ] 9. Matriks Konten
+- [x] 9. Matriks Konten
   - Buat file `content/09-content-matrix.md`
   - Tabel ringkasan dengan kolom: **No | Topik | Platform | Kata Kunci Utama | Status Publikasi**
   - Mencakup semua 30 item konten yang diproduksi (15 blog + 5 LinkedIn + 5 YouTube + 3 template review + 1 panduan review + 1 strategi timing)

@@ -31,7 +31,10 @@ import { IotModule } from './modules/iot/iot.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({ 
+      isGlobal: true, 
+      envFilePath: __dirname.includes('dist') ? require('path').join(__dirname, '../../.env') : require('path').join(__dirname, '../.env')
+    }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

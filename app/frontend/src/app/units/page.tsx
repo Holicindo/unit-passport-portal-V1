@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { unitApi } from '@/lib/api';
-import { Search, ShieldCheck, Upload, Plus } from 'lucide-react';
+import { Search, ShieldCheck, Upload, Plus, Trash2 } from 'lucide-react';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import BulkUploadModal from './components/BulkUploadModal';
 import { DesktopTable, Pagination, MobileCards } from './components/UnitsTable';
@@ -12,6 +12,9 @@ import styles from './units.module.css';
 function UnitsPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [units, setUnits] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -124,6 +127,30 @@ function UnitsPageInner() {
 
   useEffect(() => { loadUnits(1); }, [searchTerm, loadUnits]);
 
+  const handleDelete = async (id: string) => {
+    try {
+      await unitApi.delete(id);
+      setUnits(prev => prev.filter(u => u.id !== id));
+      setShowDeleteConfirm(null);
+      setSelectedIds(prev => prev.filter(selectedId => selectedId !== id));
+      setTotalCount(prev => prev - 1);
+    } catch (err) {
+      alert('Gagal menghapus unit.');
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    try {
+      await Promise.all(selectedIds.map(id => unitApi.delete(id)));
+      setUnits(prev => prev.filter(u => !selectedIds.includes(u.id)));
+      setTotalCount(prev => prev - selectedIds.length);
+      setSelectedIds([]);
+      setShowBulkDeleteConfirm(false);
+    } catch (err) {
+      alert('Gagal menghapus unit secara massal.');
+    }
+  };
+
   return (
     <div className={styles.container}>
       <header className={styles.pageHeader}>
@@ -192,6 +219,15 @@ function UnitsPageInner() {
               <input type="text" placeholder="Search serial number..." value={searchTerm} onChange={handleSearch} className="dtToolbarSearchInput" />
               <Search size={16} className="dtToolbarSearchIcon" />
             </div>
+            {selectedIds.length > 0 && (
+              <button
+                className="dtToolbarCreateBtn"
+                style={{ background: '#E11D48', marginRight: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                onClick={() => setShowBulkDeleteConfirm(true)}
+              >
+                <Trash2 size={15} strokeWidth={2.5} /> Hapus {selectedIds.length} Dipilih
+              </button>
+            )}
             <button className="dtToolbarCreateBtn" onClick={() => setBulkModalOpen(true)} style={{ background: '#001F3F', marginRight: '8px' }}>
               <Upload size={15} strokeWidth={2.5} /> Bulk Upload
             </button>
@@ -201,12 +237,85 @@ function UnitsPageInner() {
           </div>
         </div>
 
-        <DesktopTable units={displayedUnits} loading={loading} pageSize={pageSize} />
+        <DesktopTable 
+          units={displayedUnits} 
+          loading={loading} 
+          pageSize={pageSize} 
+          selectedIds={selectedIds}
+          setSelectedIds={setSelectedIds}
+          onDeleteClick={(id) => setShowDeleteConfirm(id)}
+        />
         <Pagination currentPage={currentPage} totalPages={totalPages} loading={loading} effectiveTotal={effectiveTotal} pageSize={pageSize} onPageChange={setCurrentPage} />
         <MobileCards units={displayedUnits} loading={loading} currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
       </div>
 
       <BulkUploadModal open={bulkModalOpen} onClose={() => setBulkModalOpen(false)} onSuccess={() => loadUnits(1)} />
+
+      {showDeleteConfirm && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px',
+        }} onClick={() => setShowDeleteConfirm(null)}>
+          <div style={{
+            background: '#fff', borderRadius: '16px', width: '100%', maxWidth: '400px',
+            boxShadow: '0 24px 60px rgba(0,0,0,0.2)', padding: '24px', textAlign: 'center'
+          }} onClick={(e) => e.stopPropagation()}>
+            <div style={{
+              width: '48px', height: '48px', borderRadius: '50%', background: '#fee2e2',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px'
+            }}>
+              <Trash2 size={24} color="#dc2626" />
+            </div>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', marginBottom: '8px' }}>Hapus Unit?</h3>
+            <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '24px', lineHeight: 1.5 }}>
+              Tindakan ini tidak dapat dibatalkan. Unit dengan Serial Number <strong>{units.find(u => u.id === showDeleteConfirm)?.serial_number}</strong> akan dihapus permanen.
+            </p>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button onClick={() => setShowDeleteConfirm(null)} style={{
+                flex: 1, padding: '11px', borderRadius: '10px', border: '1px solid #e2e8f0',
+                background: '#fff', fontSize: '0.875rem', fontWeight: 600, color: '#64748b', cursor: 'pointer'
+              }}>Batal</button>
+              <button onClick={() => handleDelete(showDeleteConfirm)} style={{
+                flex: 1, padding: '11px', borderRadius: '10px', border: 'none',
+                background: '#dc2626', color: '#fff', fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer'
+              }}>Ya, Hapus</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showBulkDeleteConfirm && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px',
+        }} onClick={() => setShowBulkDeleteConfirm(false)}>
+          <div style={{
+            background: '#fff', borderRadius: '16px', width: '100%', maxWidth: '400px',
+            boxShadow: '0 24px 60px rgba(0,0,0,0.2)', padding: '24px', textAlign: 'center'
+          }} onClick={(e) => e.stopPropagation()}>
+            <div style={{
+              width: '48px', height: '48px', borderRadius: '50%', background: '#fee2e2',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px'
+            }}>
+              <Trash2 size={24} color="#dc2626" />
+            </div>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', marginBottom: '8px' }}>Hapus {selectedIds.length} Unit?</h3>
+            <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '24px', lineHeight: 1.5 }}>
+              Tindakan ini tidak dapat dibatalkan. {selectedIds.length} unit yang dipilih akan dihapus permanen dari sistem.
+            </p>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button onClick={() => setShowBulkDeleteConfirm(false)} style={{
+                flex: 1, padding: '11px', borderRadius: '10px', border: '1px solid #e2e8f0',
+                background: '#fff', fontSize: '0.875rem', fontWeight: 600, color: '#64748b', cursor: 'pointer'
+              }}>Batal</button>
+              <button onClick={handleBulkDelete} style={{
+                flex: 1, padding: '11px', borderRadius: '10px', border: 'none',
+                background: '#dc2626', color: '#fff', fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer'
+              }}>Ya, Hapus</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

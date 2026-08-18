@@ -20,6 +20,24 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Interceptor to handle global 401/403 responses
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+      if (typeof window !== 'undefined') {
+        // Only redirect if not already on login page to avoid redirect loops
+        if (window.location.pathname !== '/login') {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          window.location.href = '/login';
+        }
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const authApi = {
   login: (credentials: any) => api.post('/auth/login', credentials),
   register: (data: any) => api.post('/auth/register', data),
@@ -41,6 +59,7 @@ export const unitApi = {
   requestService: (id: string, data: any) => api.post(`/units/${id}/request-service`, data),
   create: (data: any) => api.post('/units', data),
   update: (id: string, data: any) => api.patch(`/units/${id}`, data),
+  delete: (id: string) => api.delete(`/units/${id}`),
   uploadMedia: (files: File[]) => {
     const formData = new FormData();
     files.forEach(f => formData.append('files', f));

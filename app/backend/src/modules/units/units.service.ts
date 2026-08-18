@@ -223,4 +223,20 @@ export class UnitsService {
       results,
     };
   }
+
+  async remove(id: string) {
+    const unit = await this.unitRepo.findOne({ where: { id } });
+    if (!unit) throw new NotFoundException('Unit tidak ditemukan');
+
+    await this.unitRepo.manager.transaction(async (manager) => {
+      // Delete related records first to avoid foreign key constraints
+      await manager.delete('service_logs', { unit: { id } });
+      await manager.delete('warranties', { unit: { id } });
+      await manager.delete('ownership_history', { unit: { id } });
+      // Finally, delete the unit
+      await manager.delete(Unit, id);
+    });
+
+    return { success: true, message: 'Unit berhasil dihapus' };
+  }
 }

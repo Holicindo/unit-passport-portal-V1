@@ -1,5 +1,5 @@
 
-import { Controller, Get, Post, Patch, Param, Body, UseGuards, Request, Query, UploadedFiles, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards, Request, Query, UploadedFiles, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiConsumes } from '@nestjs/swagger';
 import { FilesInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
@@ -114,6 +114,15 @@ export class UnitsController {
     @Body() updateUnitDto: UpdateUnitDto,
   ) {
     return this.unitsService.update(id, updateUnitDto);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @Delete(':id')
+  @ApiOperation({ summary: 'Admin: Delete a unit' })
+  remove(@Param('id') id: string) {
+    return this.unitsService.remove(id);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

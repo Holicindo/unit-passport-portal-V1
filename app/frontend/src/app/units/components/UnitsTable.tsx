@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { QrCode, ChevronRight, ChevronLeft, FileEdit, Eye } from 'lucide-react';
+import { QrCode, ChevronRight, ChevronLeft, FileEdit, Eye, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import styles from '../units.module.css';
 
@@ -11,10 +11,12 @@ export function TableSkeleton({ pageSize }: { pageSize: number }) {
     <tbody>
       {Array.from({ length: pageSize }).map((_, i) => (
         <tr key={i} className={styles.skeletonRow}>
+          <td><div className={styles.skeletonCell} style={{ width: '20px' }} /></td>
           <td><div className={styles.skeletonCell} style={{ width: '110px' }} /></td>
           <td><div className={styles.skeletonCell} style={{ width: '150px' }} /></td>
           <td><div className={styles.skeletonCell} style={{ width: '130px' }} /></td>
           <td><div className={styles.skeletonCell} style={{ width: '150px' }} /></td>
+          <td><div className={styles.skeletonCell} style={{ width: '40px' }} /></td>
           <td><div className={styles.skeletonCell} style={{ width: '40px' }} /></td>
         </tr>
       ))}
@@ -34,15 +36,26 @@ interface TableProps {
   units: any[];
   loading: boolean;
   pageSize: number;
+  selectedIds?: string[];
+  setSelectedIds?: React.Dispatch<React.SetStateAction<string[]>>;
+  onDeleteClick?: (id: string) => void;
 }
 
-export function DesktopTable({ units, loading, pageSize }: TableProps) {
+export function DesktopTable({ units, loading, pageSize, selectedIds, setSelectedIds, onDeleteClick }: TableProps) {
   return (
     <div className={styles.desktopView}>
       <div className={styles.tableWrapper}>
         <table className={styles.table}>
           <thead>
             <tr>
+              <th style={{ width: 40, textAlign: 'center' }}>
+                <input 
+                  type="checkbox" 
+                  checked={units.length > 0 && selectedIds?.length === units.length}
+                  onChange={(e) => setSelectedIds && setSelectedIds(e.target.checked ? units.map(u => u.id) : [])}
+                  style={{ cursor: 'pointer' }}
+                />
+              </th>
               <th>Serial Number</th>
               <th>Model</th>
               <th>Outlet Branch</th>
@@ -54,11 +67,19 @@ export function DesktopTable({ units, loading, pageSize }: TableProps) {
           {loading ? (
             <TableSkeleton pageSize={pageSize} />
           ) : units.length === 0 ? (
-            <tbody><tr><td colSpan={6} className={styles.emptyState}>No units found.</td></tr></tbody>
+            <tbody><tr><td colSpan={7} className={styles.emptyState}>No units found.</td></tr></tbody>
           ) : (
             <tbody>
               {units.map((unit) => (
                 <tr key={unit.id} className={styles.dataRow}>
+                  <td style={{ textAlign: 'center' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={selectedIds?.includes(unit.id) || false}
+                      onChange={(e) => setSelectedIds && setSelectedIds(prev => e.target.checked ? [...prev, unit.id] : prev.filter(id => id !== unit.id))}
+                      style={{ cursor: 'pointer' }}
+                    />
+                  </td>
                   <td>
                     <Link 
                       href={`/id/${unit.qr_token}`} 
@@ -76,6 +97,16 @@ export function DesktopTable({ units, loading, pageSize }: TableProps) {
                       <Link href={`/id/${unit.qr_token}`} title="Lihat Detail" className={styles.actionIconBtn}>
                         <Eye size={18} />
                       </Link>
+                      {selectedIds?.includes(unit.id) && (
+                        <button 
+                          onClick={() => onDeleteClick && onDeleteClick(unit.id)} 
+                          title="Hapus Unit" 
+                          className={styles.actionIconBtn}
+                          style={{ color: '#E11D48' }}
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

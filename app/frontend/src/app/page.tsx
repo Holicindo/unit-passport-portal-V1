@@ -7,35 +7,29 @@ export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    try {
-      const token = localStorage.getItem('token');
-      if (token) {
-        const userData = localStorage.getItem('user');
-        if (userData && userData !== 'undefined' && userData !== 'null') {
-          const user = JSON.parse(userData);
-          if (user.role === 'CLIENT') {
-            router.replace('/client-portal/dashboard');
-            return;
-          }
-          if (user.role === 'PARTNER') {
-            router.replace('/partner-portal');
-            return;
-          }
-          router.replace('/dashboard');
-          return;
-        }
-        // If token exists but no valid user data, default to admin dashboard (it will handle its own fail state)
-        router.replace('/dashboard');
-        return;
-      }
-    } catch (e) {
-      console.error('Error reading auth from localStorage', e);
-    }
-    
-    // Default for unauthenticated users
+    // Sesuai permintaan, kita tidak lagi mengecek token untuk auto-login.
+    // Setiap kali root URL (/) dibuka, sesi lama dibersihkan dan user dipaksa login kembali.
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     router.replace('/login');
   }, [router]);
 
-  // Render nothing while deciding where to route
-  return null;
+  return (
+    <div style={{ 
+      display: 'flex', height: '100vh', width: '100vw', 
+      alignItems: 'center', justifyContent: 'center', background: 'var(--color-light-tech-grey)' 
+    }}>
+      <div style={{
+        width: '40px', height: '40px', borderRadius: '50%',
+        border: '3px solid rgba(0, 31, 63, 0.1)',
+        borderTopColor: 'var(--color-cobalt-blue)',
+        animation: 'spin 1s linear infinite'
+      }} />
+      <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+    </div>
+  );
 }
