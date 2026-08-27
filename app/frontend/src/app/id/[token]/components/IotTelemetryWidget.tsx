@@ -16,6 +16,8 @@ interface TelemetryData {
   power: number | null;
   is_door1_open: boolean | null;
   is_door2_open: boolean | null;
+  is_door3_open?: boolean | null;
+  is_door4_open?: boolean | null;
   recorded_at: string;
 }
 
@@ -388,8 +390,23 @@ export default function IotTelemetryWidget({ unitId, unitModel, isDark = false, 
               <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--color-deep-navy)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Status Pintu</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <DoorStatus label="Pintu 1" isOpen={data.is_door1_open} />
-              <DoorStatus label="Pintu 2" isOpen={data.is_door2_open} />
+              {(unit?.specs?.door_count === 4 || unitModel?.includes('CX1K')) ? (
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                    <DoorStatus label="Pintu 1 (Atas Kiri)" isOpen={data.is_door1_open} />
+                    <DoorStatus label="Pintu 3 (Atas Kanan)" isOpen={data.is_door3_open} />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                    <DoorStatus label="Pintu 2 (Bawah Kiri)" isOpen={data.is_door2_open} />
+                    <DoorStatus label="Pintu 4 (Bawah Kanan)" isOpen={data.is_door4_open} />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <DoorStatus label="Pintu 1" isOpen={data.is_door1_open} />
+                  <DoorStatus label="Pintu 2" isOpen={data.is_door2_open} />
+                </>
+              )}
             </div>
           </div>
 

@@ -92,6 +92,12 @@ export class Unit {
   @Column({ nullable: true })
   is_door2_open?: boolean;
 
+  @Column({ nullable: true })
+  is_door3_open?: boolean;
+
+  @Column({ nullable: true })
+  is_door4_open?: boolean;
+
   @Column({ type: 'timestamp', nullable: true })
   last_seen_at?: Date;
 

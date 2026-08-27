@@ -18,6 +18,8 @@ export interface TelemetryPayload {
   power: number;
   isDoor1Open: boolean;
   isDoor2Open: boolean;
+  isDoor3Open?: boolean;
+  isDoor4Open?: boolean;
 }
 
 // Ambang batas alert
@@ -71,6 +73,8 @@ export class IotService {
       power: payload.power,
       is_door1_open: payload.isDoor1Open,
       is_door2_open: payload.isDoor2Open,
+      is_door3_open: payload.isDoor3Open,
+      is_door4_open: payload.isDoor4Open,
     });
     await this.telemetryLogRepo.save(log);
 
@@ -84,6 +88,8 @@ export class IotService {
       last_seen_at: new Date(),
       is_door1_open: payload.isDoor1Open,
       is_door2_open: payload.isDoor2Open,
+      is_door3_open: payload.isDoor3Open,
+      is_door4_open: payload.isDoor4Open,
     } as any);
 
     this.logger.debug(`✅ Data tersimpan untuk unit ${unit.id} (${payload.unitId})`);

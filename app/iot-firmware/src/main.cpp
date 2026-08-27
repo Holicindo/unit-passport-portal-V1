@@ -221,7 +221,7 @@ void loop() {
     doc["current"] = current;
     doc["power"] = power;
     doc["isDoor1Open"] = isDoor1Open;
-    doc["isDoor2Open"] = isDoor2Open;
+    doc["isDoor3Open"] = isDoor2Open; // Dikirim ke Pintu 3 (Atas Kanan) di sistem web
     
 
     char jsonBuffer[256];
