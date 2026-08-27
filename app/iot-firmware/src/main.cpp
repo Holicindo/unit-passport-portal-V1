@@ -16,8 +16,8 @@ const int mqtt_port = 1883;
 //     Caranya: buka Admin Dashboard → pilih unit yang akan dipasang ESP32 ini
 //     → isi field "IoT Unit ID" dengan nilai yang sama persis dengan di bawah ini.
 //     Contoh: jika serial number unit adalah "HLC-COOL-001", set iot_unit_id = "HC-0001"
-const char* unit_id = "A26051860";
-const char* mqtt_topic = "holicindo/units/A26051860/telemetry";
+const char* unit_id = "A26071976";
+const char* mqtt_topic = "holicindo/units/A26071976/telemetry";
 
 // --- INISIALISASI KONEKSI ---
 WiFiClient espClient;
@@ -234,5 +234,4 @@ void loop() {
     // Publikasi data ke MQTT
     client.publish(mqtt_topic, jsonBuffer);
   }
-}
-XAJ
+}

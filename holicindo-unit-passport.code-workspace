@@ -3,6 +3,10 @@
     {
       "path": ".",
       "name": "Unit Passport Portal"
+    },
+    {
+      "name": "iot-firmware",
+      "path": "app/iot-firmware"
     }
   ],
   "settings": {

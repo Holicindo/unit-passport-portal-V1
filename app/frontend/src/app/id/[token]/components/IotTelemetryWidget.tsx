@@ -125,9 +125,8 @@ function TempCard({ label, rawValue, min, max, offset, icon: Icon, isWarning, wa
 }
 
 function DoorStatus({ label, isOpen }: { label: string; isOpen: boolean | null }) {
-  // Sensor pintu belum terpasang — force TUTUP sampai sensor fisik dipasang
-  // Ubah baris ini ke `isOpen === true` saat sensor sudah terpasang
-  const actuallyOpen = false;
+  // Sensor pintu sudah terpasang — gunakan data real dari ESP32
+  const actuallyOpen = isOpen === true;
   const statusColor = actuallyOpen ? '#d97706' : '#059669';
   const bg    = actuallyOpen ? 'rgba(245,158,11,0.16)' : 'rgba(16,185,129,0.16)';
   const bdr   = actuallyOpen ? 'rgba(217,119,6,0.55)' : 'rgba(5,150,105,0.5)';

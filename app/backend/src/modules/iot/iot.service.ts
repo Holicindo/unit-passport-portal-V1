@@ -48,7 +48,10 @@ export class IotService {
   async processTelemetry(payload: TelemetryPayload): Promise<void> {
     // 1. Cari unit yang punya iot_unit_id cocok dengan payload.unitId
     const unit = await this.unitRepo.findOne({
-      where: { iot_unit_id: payload.unitId } as any,
+      where: [
+        { iot_unit_id: payload.unitId },
+        { serial_number: payload.unitId }
+      ] as any,
     });
 
     if (!unit) {
@@ -66,8 +69,8 @@ export class IotService {
       voltage: payload.voltage,
       current: payload.current,
       power: payload.power,
-      is_door1_open: false, // Sensor pintu belum terpasang — hardcode tertutup
-      is_door2_open: false, // Sensor pintu belum terpasang — hardcode tertutup
+      is_door1_open: payload.isDoor1Open,
+      is_door2_open: payload.isDoor2Open,
     });
     await this.telemetryLogRepo.save(log);
 
@@ -79,8 +82,8 @@ export class IotService {
       last_voltage: payload.voltage,
       last_power: payload.power,
       last_seen_at: new Date(),
-      is_door1_open: false, // Sensor pintu belum terpasang — hardcode tertutup
-      is_door2_open: false, // Sensor pintu belum terpasang — hardcode tertutup
+      is_door1_open: payload.isDoor1Open,
+      is_door2_open: payload.isDoor2Open,
     } as any);
 
     this.logger.debug(`✅ Data tersimpan untuk unit ${unit.id} (${payload.unitId})`);
