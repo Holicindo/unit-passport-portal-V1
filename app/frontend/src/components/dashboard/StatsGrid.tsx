@@ -106,38 +106,40 @@ export default function StatsGrid({ items, data, loading }: StatsGridProps) {
             style={{
               position: 'relative',
               overflow: 'hidden',
-              background: '#ECEEF2',
-              padding: '24px 22px',
-              borderRadius: '18px',
+              background: '#ffffff',
+              padding: '20px 22px',
+              borderRadius: '16px',
               display: 'flex',
               alignItems: 'center',
               gap: '18px',
-              boxShadow: '-6px -6px 14px rgba(255, 255, 255, 0.85), 6px 6px 14px rgba(0, 31, 63, 0.1)',
+              border: '1px solid rgba(0, 31, 63, 0.06)',
+              boxShadow: '0 4px 20px rgba(0, 31, 63, 0.03)',
               transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
               cursor: stat.onClick ? 'pointer' : 'default',
             }}
             onClick={stat.onClick}
             onMouseEnter={e => {
               (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-3px)';
-              (e.currentTarget as HTMLDivElement).style.boxShadow = '-8px -8px 18px rgba(255, 255, 255, 0.9), 8px 8px 18px rgba(0, 31, 63, 0.12)';
+              (e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 30px rgba(0, 31, 63, 0.06)';
+              (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(46, 91, 255, 0.2)';
             }}
             onMouseLeave={e => {
               (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
-              (e.currentTarget as HTMLDivElement).style.boxShadow = '-6px -6px 14px rgba(255, 255, 255, 0.85), 6px 6px 14px rgba(0, 31, 63, 0.1)';
+              (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 20px rgba(0, 31, 63, 0.03)';
+              (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(0, 31, 63, 0.06)';
             }}
           >
             <div style={{
               width: '46px',
               height: '46px',
-              borderRadius: '14px',
+              borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: '#ECEEF2',
+              background: 'linear-gradient(135deg, rgba(46,91,255,0.08) 0%, rgba(46,91,255,0.01) 100%)',
               color: stat.accent,
+              border: '1px solid rgba(46,91,255,0.08)',
               flexShrink: 0,
-              boxShadow: 'inset -4px -4px 8px rgba(255,255,255,0.9), inset 4px 4px 8px rgba(0, 31, 63, 0.08)',
-            }}>
               <Icon size={22} strokeWidth={1.8} />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>

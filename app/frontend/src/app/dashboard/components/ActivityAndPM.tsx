@@ -104,42 +104,70 @@ export function UpcomingPM({ pms, loading }: { pms: PMItem[]; loading: boolean }
             <div key={i} style={{ height: '70px', background: '#F1F5F9', borderRadius: '12px', animation: 'pulse 1.5s infinite' }}></div>
           ))
         ) : (
-          pms.map(pm => (
-            <div key={pm.id} style={{
-              background: '#ECEEF2', boxShadow: 'inset -3px -3px 6px rgba(255,255,255,0.9), inset 3px 3px 6px rgba(0,31,63,0.07)',
-              borderRadius: '12px', padding: '16px 14px', display: 'flex',
-              alignItems: 'center', gap: '12px', transition: 'all 0.2s', height: '100%',
-            }}>
-              <div style={{
-                width: '44px', height: '44px', borderRadius: '10px',
-                background: 'rgba(46,91,255,0.08)', color: 'var(--color-cobalt-blue)',
-                display: 'flex', flexDirection: 'column', alignItems: 'center',
-                justifyContent: 'center', lineHeight: 1, flexShrink: 0,
-              }}>
-                <span style={{ fontSize: '1.1rem', fontWeight: 850 }}>{pm.day}</span>
-                <span style={{ fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', marginTop: '2px' }}>{pm.month}</span>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', overflow: 'hidden', width: '100%' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--color-deep-navy)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {pm.sn}
+          pms.map(pm => {
+            const isLate = pm.relative.toLowerCase().includes('lewat');
+            const badgeBg = isLate ? '#FEE2E2' : 'rgba(46,91,255,0.08)';
+            const badgeColor = isLate ? '#DC2626' : 'var(--color-cobalt-blue)';
+            
+            return (
+              <div key={pm.id} style={{
+                background: '#ffffff', 
+                border: '1px solid rgba(0, 31, 63, 0.08)',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+                borderRadius: '8px', 
+                padding: '12px', 
+                display: 'flex',
+                alignItems: 'center', 
+                gap: '12px', 
+                transition: 'all 0.2s ease', 
+                height: '100%',
+                cursor: 'pointer'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,31,63,0.06)';
+                e.currentTarget.style.borderColor = 'rgba(46,91,255,0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'none';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.02)';
+                e.currentTarget.style.borderColor = 'rgba(0, 31, 63, 0.08)';
+              }}
+              >
+                <div style={{
+                  width: '42px', height: '42px', borderRadius: '8px',
+                  background: 'linear-gradient(135deg, rgba(46,91,255,0.1) 0%, rgba(46,91,255,0.02) 100%)', 
+                  color: 'var(--color-cobalt-blue)',
+                  border: '1px solid rgba(46,91,255,0.1)',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center',
+                  justifyContent: 'center', lineHeight: 1, flexShrink: 0,
+                }}>
+                  <span style={{ fontSize: '1rem', fontWeight: 800 }}>{pm.day}</span>
+                  <span style={{ fontSize: '0.55rem', fontWeight: 800, textTransform: 'uppercase', marginTop: '2px', letterSpacing: '0.5px' }}>{pm.month}</span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', overflow: 'hidden', width: '100%' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--color-deep-navy)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {pm.sn}
+                    </span>
+                    <span style={{
+                      fontSize: '0.6rem', background: badgeBg, color: badgeColor,
+                      padding: '2px 6px', borderRadius: '4px', fontWeight: 800, flexShrink: 0,
+                      textTransform: 'uppercase', letterSpacing: '0.5px'
+                    }}>
+                      {pm.relative}
+                    </span>
+                  </div>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--color-space-grey)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {pm.model}
                   </span>
-                  <span style={{
-                    fontSize: '0.65rem', background: 'rgba(46,91,255,0.08)', color: 'var(--color-cobalt-blue)',
-                    padding: '2px 8px', borderRadius: '8px', fontWeight: 800, flexShrink: 0,
-                  }}>
-                    {pm.relative}
+                  <span style={{ fontSize: '0.65rem', color: 'var(--color-space-grey)', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '3px' }}>
+                    <Users size={11} style={{ color: 'var(--color-cobalt-blue)' }} /> {pm.partner}
                   </span>
                 </div>
-                <span style={{ fontSize: '0.74rem', color: 'var(--color-space-grey)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {pm.model}
-                </span>
-                <span style={{ fontSize: '0.68rem', color: 'var(--color-space-grey)', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
-                  <Users size={12} style={{ color: 'var(--color-cobalt-blue)' }} /> {pm.partner}
-                </span>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

@@ -49,7 +49,7 @@ export default function ServiceTrendChart({ chartData, loading, liveTime }: Prop
         </div>
       </div>
 
-      <div className={styles.chartCeruk} style={{ position: 'relative', width: '100%', height: '260px' }}>
+      <div className={styles.chartCeruk} style={{ position: 'relative', width: '100%', height: '200px' }}>
         {loading ? (
           <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '8px' }}>
             <RefreshCw size={24} className={styles.spin} style={{ color: 'var(--color-cobalt-blue)' }} />
