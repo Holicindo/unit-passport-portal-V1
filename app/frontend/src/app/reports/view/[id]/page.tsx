@@ -348,6 +348,7 @@ export default function ReportView() {
               ))}
             </div>
           </div>
+        )}
         {/* Official Digital Verification Stamp Footer */}
         <div style={{
           marginTop: '24px',
