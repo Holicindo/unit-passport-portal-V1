@@ -79,9 +79,9 @@ export default function WarmReportTemplate({ mode = 'edit', data = {}, unit = {}
         <tbody>
           <tr>
             {/* Logo */}
-            <td rowSpan={3} style={{ ...B, width: '15%', background: '#000', color: '#fff',
+            <td rowSpan={3} style={{ ...B, width: '15%', background: '#000000', color: '#ffffff',
               fontSize: 22, fontWeight: 900, textAlign: 'center', verticalAlign: 'middle', letterSpacing: '0.04em' }}>
-              HOLIC
+              <span style={{ color: '#ffffff' }}>HOLIC</span>
             </td>
             {/* Title */}
             <td rowSpan={3} style={{ ...B, width: '50%', textAlign: 'center', verticalAlign: 'middle',

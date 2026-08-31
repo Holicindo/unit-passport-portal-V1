@@ -5,7 +5,7 @@ import { Cpu, RefreshCw } from 'lucide-react';
 import { useDashboardData } from './hooks/useDashboardData';
 import ServiceTrendChart from './components/ServiceTrendChart';
 import { RecentActivity, UpcomingPM } from './components/ActivityAndPM';
-import RightColumn from './components/RightColumn';
+import RightColumn, { FrequentComplaintsCard, WarrantyDistributionCard } from './components/RightColumn';
 import styles from './dashboard.module.css';
 
 const StatsGrid = dynamic(() => import('@/components/dashboard/StatsGrid'), {
@@ -83,6 +83,11 @@ export default function DashboardPage() {
           <ServiceTrendChart chartData={chartData} loading={loading} liveTime={liveTime} />
           <RecentActivity activities={recentActivities} loading={loading} />
           <UpcomingPM pms={upcomingPMs} loading={loading} />
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+            <FrequentComplaintsCard loading={loading} frequentCallIds={frequentCallIds} />
+            <WarrantyDistributionCard loading={loading} warrantyCategories={warrantyCategories} />
+          </div>
         </div>
 
         {/* RIGHT COLUMN */}

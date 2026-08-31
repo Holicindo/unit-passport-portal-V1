@@ -197,12 +197,19 @@
 }
 
 .logoCell {
-  font-size: 16px;
-  font-weight: bold;
-  letter-spacing: 0.1em;
-  text-align: center;
-  width: 25%;
-  background: #f1f5f9;
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.1em !important;
+  text-align: center !important;
+  width: 15% !important;
+  background-color: #000000 !important;
+  background: #000000 !important;
+  color: #ffffff !important;
+}
+
+.logoCell * {
+  color: #ffffff !important;
+  background: transparent !important;
 }
 
 .titleCell {

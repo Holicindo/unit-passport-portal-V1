@@ -198,7 +198,7 @@ export default function InspectionReportTemplate({
         <tbody>
           <tr>
             <td className={styles.logoCell} style={{ background: '#000000', color: '#ffffff', fontSize: '20px' }}>
-              <div>HOLIC</div>
+              <div style={{ color: '#ffffff' }}>HOLIC</div>
             </td>
             <td className={styles.titleCell}>
               <div style={{ fontSize: '14px', fontWeight: 'bold' }}>Inspection Report</div>

@@ -63,7 +63,7 @@ export default function CoolingReportTemplate({ mode = 'edit', data = {}, unit =
       <table className={styles.sheetHeaderTable}>
         <tbody>
           <tr>
-            <td className={styles.logoCell} rowSpan={3} style={{ width: '15%', background: '#000000', color: '#ffffff', fontSize: '20px' }}>HOLIC</td>
+            <td className={styles.logoCell} rowSpan={3} style={{ width: '15%', background: '#000000', color: '#ffffff', fontSize: '20px' }}><span style={{ color: '#ffffff' }}>HOLIC</span></td>
             <td className={styles.titleCell} rowSpan={3} style={{ width: '50%', borderLeft: '1px solid #000', borderRight: '1px solid #000' }}>
               <div style={{ fontSize: '10px', fontWeight: 'normal' }}>Post-Production</div>
               <div style={{ fontSize: '22px', marginTop: '4px' }}>Cooling System Report</div>

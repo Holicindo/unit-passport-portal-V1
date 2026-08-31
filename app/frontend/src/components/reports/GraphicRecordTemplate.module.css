@@ -30,14 +30,15 @@
 /* ── Header: Logo ── */
 .tdLogo {
   width: 15%;
-  background: #000;
+  background: #000000 !important;
+  background-color: #000000 !important;
   text-align: center;
   vertical-align: middle !important;
   padding: 6px !important;
 }
 
 .logoText {
-  color: #fff;
+  color: #ffffff !important;
   font-size: 22px;
   font-weight: 900;
   letter-spacing: 0.1em;

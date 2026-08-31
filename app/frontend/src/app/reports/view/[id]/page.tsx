@@ -15,6 +15,28 @@ import QcServiceTemplate from '@/components/reports/QcServiceTemplate';
 import IssueAnalysisTemplate from '@/components/reports/IssueAnalysisTemplate';
 import styles from './view.module.css';
 
+function HolicLogo({ size = 22 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 140 120"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="6"
+      strokeLinecap="square"
+      strokeLinejoin="miter"
+      aria-hidden="true"
+    >
+      <polygon points="60,5 10,95 20,110 60,110" />
+      <line x1="70" y1="15" x2="70" y2="110" />
+      <polyline points="70,15 110,90 100,110 70,110" />
+      <polyline points="80,110 80,55 125,45" />
+      <polyline points="90,110 90,85 135,75" />
+    </svg>
+  );
+}
+
 export default function ReportView() {
   const { id } = useParams();
   const router = useRouter();
@@ -133,11 +155,11 @@ export default function ReportView() {
         <div style={{
           maxWidth: '850px',
           margin: '0 auto 16px auto',
-          background: report.status === 'APPROVED' 
-            ? 'linear-gradient(135deg, #059669 0%, #10B981 100%)' 
-            : report.status === 'REVISION' 
-            ? 'linear-gradient(135deg, #DC2626 0%, #EF4444 100%)' 
-            : 'linear-gradient(135deg, #D97706 0%, #F59E0B 100%)',
+          background: report.status === 'APPROVED'
+            ? 'linear-gradient(135deg, #059669 0%, #10B981 100%)'
+            : report.status === 'REVISION'
+              ? 'linear-gradient(135deg, #DC2626 0%, #EF4444 100%)'
+              : 'linear-gradient(135deg, #D97706 0%, #F59E0B 100%)',
           color: '#ffffff',
           borderRadius: '12px',
           padding: '14px 20px',
@@ -151,11 +173,11 @@ export default function ReportView() {
               Status Persetujuan HQ: <strong>{report.status || 'PENDING'}</strong>
             </div>
             <div style={{ fontSize: '0.88rem', fontWeight: 800, marginTop: '2px' }}>
-              {report.status === 'APPROVED' 
-                ? '✓ Laporan telah disetujui & dipublikasikan ke Client Portal' 
-                : report.status === 'REVISION' 
-                ? '⚠ Laporan memerlukan revisi dari teknisi/mitra' 
-                : '⏳ Menunggu Verifikasi & Persetujuan Admin HQ'}
+              {report.status === 'APPROVED'
+                ? '✓ Laporan telah disetujui & dipublikasikan ke Client Portal'
+                : report.status === 'REVISION'
+                  ? '⚠ Laporan memerlukan revisi dari teknisi/mitra'
+                  : '⏳ Menunggu Verifikasi & Persetujuan Admin HQ'}
             </div>
             {report.revision_note && (
               <div style={{ fontSize: '0.78rem', marginTop: '4px', background: 'rgba(0,0,0,0.15)', padding: '4px 8px', borderRadius: '6px' }}>
@@ -222,27 +244,19 @@ export default function ReportView() {
           background: '#FAFCFF',
         }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{
-                background: '#0F172A',
-                color: '#ffffff',
-                fontWeight: 900,
-                fontSize: '18px',
-                padding: '4px 12px',
-                borderRadius: '4px',
-                letterSpacing: '1px',
-              }}>
-                HOLICINDO
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ color: '#0F172A', display: 'flex', alignItems: 'center' }}>
+                <HolicLogo size={28} />
               </div>
-              <span style={{ fontSize: '12px', fontWeight: 800, color: '#2E5BFF' }}>
-                PT. HOLICINDO INDONESIA
+              <span style={{ fontSize: '14px', fontWeight: 800, color: '#2E5BFF' }}>
+                PT. HOLICINDO DASA ANUGERAH
               </span>
             </div>
             <div style={{ fontSize: '10px', color: '#475569', marginTop: '4px', fontWeight: 600 }}>
-              Commercial Refrigeration, Kitchen & Cold Chain Solutions
+              Commercial Refrigeration, Machinery & Showcase Solutions
             </div>
             <div style={{ fontSize: '9px', color: '#64748b', marginTop: '2px' }}>
-              Jl. Raya Industri Holicindo No. 88, Jakarta | Telp: (021) 555-8899 | Email: qc@holicindo.co.id
+              Komplek Jersindo, Jl. Raya Cimindi No.115, Cibeureum, Cimahi Selatan, Cimahi City, West Java 40535 | Telp: +62 811-1182-5718 | Email: info@holicindo.com
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
@@ -285,7 +299,7 @@ export default function ReportView() {
                 if (idx > 0) {
                   const slot = entry.substring(0, idx);
                   const url = entry.substring(idx + 1);
-                  if (['top','front','back','left','right'].includes(slot)) {
+                  if (['top', 'front', 'back', 'left', 'right'].includes(slot)) {
                     images[slot] = url;
                   }
                 }
@@ -362,7 +376,7 @@ export default function ReportView() {
           color: '#64748b',
         }}>
           <div>
-            <strong>DOKUMEN RESMI DIGITAL PT HOLICINDO INDONESIA</strong>
+            <strong>DOKUMEN RESMI DIGITAL PT HOLICINDO DASA ANUGERAH</strong>
             <div>Dicetak dari Unit Passport Portal · Hak Cipta Dilindungi Undang-Undang</div>
           </div>
           <div style={{
@@ -380,7 +394,8 @@ export default function ReportView() {
       </div>
 
       {/* CSS overrides to exclude photos or hide specific areas from physical prints if needed */}
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @media print {
           @page {
             size: A4 portrait;
