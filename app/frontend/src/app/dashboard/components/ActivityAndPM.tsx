@@ -93,15 +93,15 @@ export function RecentActivity({ activities, loading }: { activities: ScheduleIt
 /* ── Upcoming PM Section ── */
 export function UpcomingPM({ pms, loading }: { pms: PMItem[]; loading: boolean }) {
   return (
-    <div className={styles.listCard} style={{ flex: 1, display: 'flex', flexDirection: 'column', margin: 0 }}>
+    <div className={styles.listCard} style={{ margin: 0 }}>
       <h3 className={styles.listTitle} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '12px', marginBottom: '16px' }}>
         <Calendar size={16} style={{ color: 'var(--color-cobalt-blue)', marginRight: '6px', verticalAlign: 'middle' }} />
         Jadwal Pemeliharaan Preventif (PM) Terdekat
       </h3>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', flex: 1 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
         {loading ? (
           [1, 2].map(i => (
-            <div key={i} style={{ height: '70px', background: '#F1F5F9', borderRadius: '12px', animation: 'pulse 1.5s infinite' }}></div>
+            <div key={i} style={{ height: '65px', background: '#F1F5F9', borderRadius: '10px', animation: 'pulse 1.5s infinite' }}></div>
           ))
         ) : (
           pms.map(pm => {
@@ -115,12 +115,11 @@ export function UpcomingPM({ pms, loading }: { pms: PMItem[]; loading: boolean }
                 border: '1px solid rgba(0, 31, 63, 0.08)',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
                 borderRadius: '8px', 
-                padding: '12px', 
+                padding: '12px 14px', 
                 display: 'flex',
                 alignItems: 'center', 
                 gap: '12px', 
                 transition: 'all 0.2s ease', 
-                height: '100%',
                 cursor: 'pointer'
               }}
               onMouseEnter={(e) => {
