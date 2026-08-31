@@ -44,7 +44,19 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
     this.client.on('message', (topic: string, payload: Buffer) => {
       try {
         const data = JSON.parse(payload.toString());
-        this.logger.debug(`📥 Data masuk dari [${topic}]: ${payload.toString()}`);
+        const doorStatus = [
+          data.isDoor1Open !== undefined ? (data.isDoor1Open ? 'P1:OPEN' : 'P1:CLOSED') : null,
+          data.isDoor2Open !== undefined ? (data.isDoor2Open ? 'P2:OPEN' : 'P2:CLOSED') : null,
+          data.isDoor3Open !== undefined ? (data.isDoor3Open ? 'P3:OPEN' : 'P3:CLOSED') : null,
+          data.isDoor4Open !== undefined ? (data.isDoor4Open ? 'P4:OPEN' : 'P4:CLOSED') : null,
+        ].filter(Boolean).join(' | ');
+
+        const tempCond = data.tempCondenser !== undefined && data.tempCondenser !== -127 ? `${data.tempCondenser}°C` : '—';
+        const tempEvap = data.tempEvaporator !== undefined && data.tempEvaporator !== -127 ? `${data.tempEvaporator}°C` : '—';
+        const tempCab = data.tempCabinet !== undefined && data.tempCabinet !== -127 ? `${data.tempCabinet}°C` : '—';
+
+        this.logger.log(`📡 [MQTT TELEMETRY] SN: ${data.unitId} | Suhu: [Kabinet: ${tempCab} | Evap: ${tempEvap} | Cond: ${tempCond}] | Pintu: [${doorStatus}] | Volt: ${data.voltage}V`);
+
         // Teruskan ke IoT Service untuk diproses
         this.iotService.processTelemetry(data).catch((err) => {
           this.logger.error(`Error memproses telemetry: ${err.message}`);

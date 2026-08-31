@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ServiceReport, FormType } from './entities/service-report.entity';
+import { ServiceReport, FormType, ReportStatus } from './entities/service-report.entity';
 import { CreateServiceReportDto } from './dto/create-service-report.dto';
 import { User } from '../auth/entities/user.entity';
 
@@ -34,6 +34,9 @@ export class ReportsService {
       reportId = generatePrefixedId('REP');
     }
 
+    // Default status to PENDING for Partner role, APPROVED for Admin
+    const defaultStatus = (user as any).role === 'PARTNER' ? 'PENDING' : 'APPROVED';
+
     const report = this.reportRepo.create({
       ...reportData,
       id: reportId,
@@ -41,6 +44,8 @@ export class ReportsService {
       created_by: { id: (user as any).userId } as any,
       version: nextVersion,
       photo_urls: dto.photo_urls || [],
+      status: dto.status || defaultStatus,
+      service_log_id: dto.service_log_id,
     });
 
     try {
@@ -51,10 +56,22 @@ export class ReportsService {
     }
   }
 
-  async findByUnit(unitId: string) {
+  async findByUnit(unitId: string, statusOnlyApproved: boolean = false) {
+    const where: any = { unit: { id: unitId } };
+    if (statusOnlyApproved) {
+      where.status = ReportStatus.APPROVED;
+    }
     return this.reportRepo.find({
-      where: { unit: { id: unitId } },
+      where,
       relations: ['created_by'],
+      order: { created_at: 'DESC' },
+    });
+  }
+
+  async findByServiceLog(serviceLogId: string) {
+    return this.reportRepo.find({
+      where: { service_log_id: serviceLogId },
+      relations: ['created_by', 'unit'],
       order: { created_at: 'DESC' },
     });
   }
@@ -68,7 +85,7 @@ export class ReportsService {
     return report;
   }
 
-  async findAll(page: number = 1, limit: number = 10, type?: FormType | 'REVISED') {
+  async findAll(page: number = 1, limit: number = 10, type?: FormType | 'REVISED', status?: string) {
     const query = this.reportRepo.createQueryBuilder('report')
       .leftJoinAndSelect('report.unit', 'unit')
       .leftJoinAndSelect('report.created_by', 'user')
@@ -82,6 +99,10 @@ export class ReportsService {
       } else {
         query.andWhere('report.form_type = :type', { type });
       }
+    }
+
+    if (status) {
+      query.andWhere('report.status = :status', { status });
     }
 
     const [data, total] = await query.getManyAndCount();
@@ -113,6 +134,12 @@ export class ReportsService {
     }
     if (updateData.photo_urls && updateData.photo_urls.length > 0) {
       report.photo_urls = updateData.photo_urls;
+    }
+    if (updateData.status) {
+      report.status = updateData.status;
+    }
+    if (updateData.revision_note !== undefined) {
+      report.revision_note = updateData.revision_note;
     }
     
     try {

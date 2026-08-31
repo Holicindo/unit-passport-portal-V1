@@ -48,8 +48,8 @@ export class Unit {
   @Column({ nullable: true })
   diagram_image_url?: string;
 
-  @ManyToOne(() => Client, (client) => client.units)
-  current_client!: Client;
+  @ManyToOne(() => Client, (client) => client.units, { nullable: true })
+  current_client?: Client | null;
 
   @Column({ nullable: true })
   outlet_branch!: string;

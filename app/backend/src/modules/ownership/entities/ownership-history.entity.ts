@@ -10,11 +10,11 @@ export class OwnershipHistory {
   @ManyToOne(() => Unit, (unit) => unit.ownership_history)
   unit!: Unit;
 
-  @ManyToOne(() => Client)
-  from_client!: Client;
+  @ManyToOne(() => Client, { nullable: true })
+  from_client?: Client | null;
 
-  @ManyToOne(() => Client)
-  to_client!: Client;
+  @ManyToOne(() => Client, { nullable: true })
+  to_client?: Client | null;
 
   @Column({ type: 'date', default: () => 'CURRENT_DATE' })
   transfer_date!: Date;

@@ -17,7 +17,7 @@ export function useAdminActions(
   const [photoGalleryUploading, setPhotoGalleryUploading] = useState(false);
   const [manualsUploading, setManualsUploading] = useState(false);
 
-  const handleEditChange = (fieldPath: string, value: string) => {
+  const handleEditChange = (fieldPath: string, value: any) => {
     setEditData((prev: any) => {
       const parts = fieldPath.split('.');
       if (parts.length === 1) return { ...prev, [fieldPath]: value };
@@ -32,6 +32,7 @@ export function useAdminActions(
       editData.serial_number === (unit?.serial_number || '') &&
       editData.outlet_branch === (unit?.outlet_branch || '') &&
       editData.city === (unit?.city || '') &&
+      (editData.current_client_id || editData.current_client?.id || '') === (unit?.current_client_id || unit?.current_client?.id || '') &&
       JSON.stringify(editData.specs) === JSON.stringify(unit?.specs);
 
     if (noChange) { showToast('Tidak ada perubahan', 'info'); return; }
@@ -75,7 +76,10 @@ export function useAdminActions(
         if (block === 'ownership') {
           if (editData.outlet_branch !== undefined) payload.outlet_branch = editData.outlet_branch;
           if (editData.city !== undefined) payload.city = editData.city;
-          if (editData.current_client?.id) payload.current_client_id = editData.current_client.id;
+          
+          const clientId = editData.current_client_id !== undefined ? editData.current_client_id : editData.current_client?.id;
+          if (clientId !== undefined) payload.current_client_id = clientId || '';
+          
           if (editData.specs !== undefined) {
             const cleanSpecs = JSON.parse(JSON.stringify(editData.specs, (_, v) => v === undefined ? null : v));
             payload.specs = cleanSpecs;

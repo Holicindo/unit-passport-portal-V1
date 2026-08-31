@@ -92,7 +92,7 @@ export class IotService {
       is_door4_open: payload.isDoor4Open,
     } as any);
 
-    this.logger.debug(`✅ Data tersimpan untuk unit ${unit.id} (${payload.unitId})`);
+    this.logger.log(`✅ [IOT SAVED DB] Unit ID: ${unit.id} (${payload.unitId}) | Last Seen: ${new Date().toLocaleTimeString()}`);
 
     // 4. Periksa kondisi alert
     await this.checkAlerts(unit, payload);
@@ -152,6 +152,72 @@ export class IotService {
         content: alert.content,
       });
     }
+  }
+
+  /**
+   * Mengambil semua daftar alert IoT aktif di seluruh unit terdaftar.
+   */
+  async getActiveAlerts() {
+    const units = await this.unitRepo.find({
+      relations: ['current_client'],
+    });
+
+    const activeAlerts: any[] = [];
+
+    units.forEach((unit) => {
+      // 1. Check Temperature Cabinet
+      if (unit.last_temp_cabinet !== null && unit.last_temp_cabinet !== undefined && unit.last_temp_cabinet > ALERT_THRESHOLDS.TEMP_CABINET_MAX && unit.last_temp_cabinet !== -127) {
+        activeAlerts.push({
+          id: `ALT-TEMP-${unit.id}`,
+          unit_id: unit.id,
+          serial_number: unit.serial_number,
+          model_name: unit.model_name,
+          client_name: unit.current_client?.company_name || 'Klien Umum',
+          type: 'HIGH_TEMP',
+          severity: 'CRITICAL',
+          title: 'Suhu Kabinet Melebihi Limit',
+          value: `${unit.last_temp_cabinet}°C`,
+          limit: `${ALERT_THRESHOLDS.TEMP_CABINET_MAX}°C`,
+          last_seen: unit.last_seen_at || new Date(),
+        });
+      }
+
+      // 2. Check Door Open
+      if (unit.is_door1_open || unit.is_door2_open || unit.is_door3_open || unit.is_door4_open) {
+        activeAlerts.push({
+          id: `ALT-DOOR-${unit.id}`,
+          unit_id: unit.id,
+          serial_number: unit.serial_number,
+          model_name: unit.model_name,
+          client_name: unit.current_client?.company_name || 'Klien Umum',
+          type: 'DOOR_OPEN',
+          severity: 'WARNING',
+          title: 'Pintu Kabinet Terbuka',
+          value: 'Door Open',
+          limit: 'Normal Closed',
+          last_seen: unit.last_seen_at || new Date(),
+        });
+      }
+
+      // 3. Voltage Anomaly
+      if (unit.last_voltage && (unit.last_voltage < ALERT_THRESHOLDS.VOLTAGE_MIN || unit.last_voltage > ALERT_THRESHOLDS.VOLTAGE_MAX)) {
+        activeAlerts.push({
+          id: `ALT-VOLT-${unit.id}`,
+          unit_id: unit.id,
+          serial_number: unit.serial_number,
+          model_name: unit.model_name,
+          client_name: unit.current_client?.company_name || 'Klien Umum',
+          type: 'VOLTAGE_ANOMALY',
+          severity: 'WARNING',
+          title: 'Tegangan Listrik Tidak Normal',
+          value: `${unit.last_voltage}V`,
+          limit: `${ALERT_THRESHOLDS.VOLTAGE_MIN}V - ${ALERT_THRESHOLDS.VOLTAGE_MAX}V`,
+          last_seen: unit.last_seen_at || new Date(),
+        });
+      }
+    });
+
+    return activeAlerts;
   }
 
   /**

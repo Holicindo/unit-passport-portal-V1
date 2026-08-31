@@ -167,51 +167,87 @@ export default function PartnersPage() {
                 <th>Nama Mitra</th>
                 <th>Kota</th>
                 <th>Kontak WhatsApp</th>
+                <th>Kinerja SLA</th>
+                <th>Rata-rata Penyelesaian</th>
                 <th>Status</th>
                 <th style={{ textAlign: 'right' }}>Aksi</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={5} className={styles.loadingCell}>Memuat data mitra...</td></tr>
+                <tr><td colSpan={7} className={styles.loadingCell}>Memuat data mitra...</td></tr>
               ) : error ? (
-                <tr><td colSpan={5} className={styles.loadingCell} style={{ color: '#E11D48' }}>{error}</td></tr>
+                <tr><td colSpan={7} className={styles.loadingCell} style={{ color: '#E11D48' }}>{error}</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={5} className={styles.loadingCell}>Tidak ada mitra ditemukan.</td></tr>
+                <tr><td colSpan={7} className={styles.loadingCell}>Tidak ada mitra ditemukan.</td></tr>
               ) : (
-                filtered.map((partner) => (
-                  <tr key={partner.id} className={styles.dataRow}>
-                    <td><span className={styles.partnerName}>{partner.partner_name}</span></td>
-                    <td>{partner.city}</td>
-                    <td>
-                      {partner.contact_wa ? (
-                        <a href={`https://wa.me/${partner.contact_wa.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
-                          style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--color-deep-navy)', textDecoration: 'none', fontWeight: 500 }}>
-                          {WA_ICON}{partner.contact_wa}
-                        </a>
-                      ) : <span style={{ color: 'var(--color-space-grey)', fontSize: '0.85rem' }}>—</span>}
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <button type="button" onClick={() => handleToggleActive(partner)}
-                          style={toggleBtnStyle(partner.is_active)}
-                          aria-label={partner.is_active ? 'Nonaktifkan routing' : 'Aktifkan routing'}
-                          title={partner.is_active ? 'Klik untuk nonaktifkan routing' : 'Klik untuk aktifkan routing'}>
-                          <span style={toggleKnobStyle(partner.is_active)} />
-                        </button>
-                        <span className={`${styles.statusBadge} ${partner.is_active ? styles.badgeSuccess : styles.badgeWarning}`} style={{ cursor: 'default' }}>
-                          {partner.is_active ? 'Routing Aktif' : 'Routing Nonaktif'}
-                        </span>
-                      </div>
-                    </td>
-                    <td>
-                      <div className={styles.actions}>
-                        <button className={styles.actionIconBtn} title="Edit Mitra" onClick={() => openEditModal(partner)}><Edit3 size={16} /></button>
-                        <button className={`${styles.actionIconBtn} ${styles.actionIconBtnDanger}`} title="Hapus Mitra" onClick={() => setDeleteTarget(partner)}><Trash2 size={16} /></button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                filtered.map((partner: any) => {
+                  const score = partner.sla_metrics?.sla_score ?? 95;
+                  const avgHours = partner.sla_metrics?.avg_resolution_hours ?? 18;
+                  const completed = partner.sla_metrics?.completed_tickets ?? 0;
+                  const total = partner.sla_metrics?.total_tickets ?? 0;
+
+                  return (
+                    <tr key={partner.id} className={styles.dataRow}>
+                      <td><span className={styles.partnerName}>{partner.partner_name}</span></td>
+                      <td>{partner.city}</td>
+                      <td>
+                        {partner.contact_wa ? (
+                          <a href={`https://wa.me/${partner.contact_wa.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--color-deep-navy)', textDecoration: 'none', fontWeight: 500 }}>
+                            {WA_ICON}{partner.contact_wa}
+                          </a>
+                        ) : <span style={{ color: 'var(--color-space-grey)', fontSize: '0.85rem' }}>—</span>}
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                          <span style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            width: 'fit-content',
+                            padding: '2px 8px',
+                            borderRadius: '12px',
+                            fontSize: '0.72rem',
+                            fontWeight: 800,
+                            background: score >= 90 ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)',
+                            color: score >= 90 ? '#10B981' : '#D97706',
+                            border: score >= 90 ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(245, 158, 11, 0.3)',
+                          }}>
+                            {score}% SLA Tepat Waktu
+                          </span>
+                          <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
+                            {completed} dari {total} Tiket Selesai
+                          </span>
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-deep-navy)' }}>
+                          ~{avgHours} Jam
+                        </div>
+                        <span style={{ fontSize: '0.68rem', color: '#64748b' }}>Target: &lt; 48 Jam</span>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <button type="button" onClick={() => handleToggleActive(partner)}
+                            style={toggleBtnStyle(partner.is_active)}
+                            aria-label={partner.is_active ? 'Nonaktifkan routing' : 'Aktifkan routing'}
+                            title={partner.is_active ? 'Klik untuk nonaktifkan routing' : 'Klik untuk aktifkan routing'}>
+                            <span style={toggleKnobStyle(partner.is_active)} />
+                          </button>
+                          <span className={`${styles.statusBadge} ${partner.is_active ? styles.badgeSuccess : styles.badgeWarning}`} style={{ cursor: 'default' }}>
+                            {partner.is_active ? 'Routing Aktif' : 'Routing Nonaktif'}
+                          </span>
+                        </div>
+                      </td>
+                      <td>
+                        <div className={styles.actions}>
+                          <button className={styles.actionIconBtn} title="Edit Mitra" onClick={() => openEditModal(partner)}><Edit3 size={16} /></button>
+                          <button className={`${styles.actionIconBtn} ${styles.actionIconBtnDanger}`} title="Hapus Mitra" onClick={() => setDeleteTarget(partner)}><Trash2 size={16} /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

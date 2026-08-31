@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { messageApi } from '@/lib/api';
-import { Send, User, Loader2, ArrowLeft, Mail } from 'lucide-react';
+import { Send, User, Loader2, ArrowLeft, Mail, Wrench } from 'lucide-react';
+import CreateServiceFromChatModal from './components/CreateServiceFromChatModal';
 import styles from './messages.module.css';
 
 export default function MessagesPage() {
@@ -19,6 +20,7 @@ export default function MessagesPage() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Detect mobile viewport
@@ -169,6 +171,26 @@ export default function MessagesPage() {
               <div className={styles.chatHeaderName}>{getChatPartnerName(activeChat)}</div>
               <div className={styles.chatHeaderStatus}>Live Chat</div>
             </div>
+            <button
+              onClick={() => setIsTicketModalOpen(true)}
+              style={{
+                marginLeft: 'auto',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 14px',
+                borderRadius: '8px',
+                background: 'linear-gradient(135deg, #FF6B00 0%, #E05D00 100%)',
+                color: '#ffffff',
+                border: 'none',
+                fontWeight: 700,
+                fontSize: '0.78rem',
+                cursor: 'pointer',
+                boxShadow: '0 2px 6px rgba(255,107,0,0.25)',
+              }}
+            >
+              <Wrench size={14} /> Buat Tiket Servis
+            </button>
           </div>
 
           <div className={styles.messagesContainer}>
@@ -229,6 +251,21 @@ export default function MessagesPage() {
           </>
         )}
       </div>
+      {isTicketModalOpen && activeChat && (
+        <CreateServiceFromChatModal
+          chatPartner={
+            activeChat.participant_1_id === currentUser?.id
+              ? activeChat.participant_2
+              : activeChat.participant_1
+          }
+          lastMessage={activeChat.last_message}
+          onClose={() => setIsTicketModalOpen(false)}
+          onSuccess={() => {
+            setIsTicketModalOpen(false);
+            router.push('/service');
+          }}
+        />
+      )}
     </div>
   );
 }

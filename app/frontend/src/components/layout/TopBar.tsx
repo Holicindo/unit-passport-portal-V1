@@ -75,8 +75,8 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
       try {
         const { notificationApi, messageApi } = await import('@/lib/api');
         const [alertsRes, convsRes] = await Promise.all([
-          notificationApi.getAlerts(),
-          messageApi.getConversations(),
+          notificationApi.getAlerts().catch(() => ({ data: [] })),
+          messageApi.getConversations().catch(() => ({ data: [] })),
         ]);
         setAlerts(alertsRes.data || []);
         setMessages(convsRes.data || []); // Storing conversations as 'messages' state for simplicity right now

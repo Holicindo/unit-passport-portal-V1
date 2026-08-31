@@ -33,14 +33,15 @@ export class ReportsController {
   }
 
   @Get()
-  @Roles(UserRole.ADMIN, UserRole.PARTNER)
-  @ApiOperation({ summary: 'Get all reports with pagination and type filtering' })
+  @Roles(UserRole.ADMIN, UserRole.PARTNER, UserRole.CLIENT)
+  @ApiOperation({ summary: 'Get all reports with pagination, type, and status filtering' })
   findAll(
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10,
     @Query('type') type?: string,
+    @Query('status') status?: string,
   ) {
-    return this.reportsService.findAll(page, limit, type as any);
+    return this.reportsService.findAll(page, limit, type as any, status);
   }
 
   @Post()
@@ -53,8 +54,16 @@ export class ReportsController {
   @Get('unit/:unitId')
   @Roles(UserRole.ADMIN, UserRole.PARTNER, UserRole.CLIENT)
   @ApiOperation({ summary: 'Get report history for a specific unit' })
-  findByUnit(@Param('unitId') unitId: string) {
-    return this.reportsService.findByUnit(unitId);
+  findByUnit(@Param('unitId') unitId: string, @Request() req: any) {
+    const isClient = req.user?.role === UserRole.CLIENT;
+    return this.reportsService.findByUnit(unitId, isClient);
+  }
+
+  @Get('service-log/:serviceLogId')
+  @Roles(UserRole.ADMIN, UserRole.PARTNER, UserRole.CLIENT)
+  @ApiOperation({ summary: 'Get report history for a specific service log' })
+  findByServiceLog(@Param('serviceLogId') serviceLogId: string) {
+    return this.reportsService.findByServiceLog(serviceLogId);
   }
 
   @Get(':id')

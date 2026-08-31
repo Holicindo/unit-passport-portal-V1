@@ -17,6 +17,12 @@ export enum FormType {
   OTHER = 'OTHER'
 }
 
+export enum ReportStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REVISION = 'REVISION'
+}
+
 @Entity('service_reports')
 export class ServiceReport {
   @PrimaryColumn()
@@ -39,6 +45,12 @@ export class ServiceReport {
 
   @Column({ type: 'enum', enum: FormType })
   form_type!: FormType;
+
+  @Column({ type: 'enum', enum: ReportStatus, default: ReportStatus.APPROVED })
+  status!: ReportStatus;
+
+  @Column({ nullable: true })
+  service_log_id?: string;
 
   @Column({ type: 'jsonb' })
   data!: any; // Stores all dynamic fields from the 11 forms

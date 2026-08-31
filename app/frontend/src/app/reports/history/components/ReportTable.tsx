@@ -15,11 +15,12 @@ interface Props {
   page: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  onApprove?: (id: string) => void;
 }
 
 export default function ReportTable({
   reports, loading, selectedReports, onToggleSelect, onSelectAll,
-  page, totalPages, onPageChange,
+  page, totalPages, onPageChange, onApprove,
 }: Props) {
   const router = useRouter();
 
@@ -37,6 +38,7 @@ export default function ReportTable({
                 <th>Nomor Laporan</th>
                 <th>Nama Unit</th>
                 <th>Tipe Laporan</th>
+                <th>Status HQ</th>
                 <th>Waktu & Tanggal</th>
                 <th>Dilaporkan Oleh</th>
                 <th style={{ textAlign: 'right', minWidth: '120px' }}>Action</th>
@@ -50,7 +52,7 @@ export default function ReportTable({
                   </tr>
                 ))
               ) : reports.length === 0 ? (
-                <tr><td colSpan={7} className={styles.emptyState}>Tidak ada laporan ditemukan.</td></tr>
+                <tr><td colSpan={8} className={styles.emptyState}>Tidak ada laporan ditemukan.</td></tr>
               ) : (
                 reports.map((report) => (
                   <tr key={report.id} className={styles.dataRow}>
@@ -75,6 +77,21 @@ export default function ReportTable({
                       </span>
                     </td>
                     <td>
+                      {report.status === 'APPROVED' ? (
+                        <span style={{ padding: '3px 8px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 800, background: 'rgba(16, 185, 129, 0.1)', color: '#10B981', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                          Disetujui
+                        </span>
+                      ) : report.status === 'REVISION' ? (
+                        <span style={{ padding: '3px 8px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 800, background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                          Revisi
+                        </span>
+                      ) : (
+                        <span style={{ padding: '3px 8px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 800, background: 'rgba(245, 158, 11, 0.1)', color: '#D97706', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+                          Menunggu Review
+                        </span>
+                      )}
+                    </td>
+                    <td>
                       <div className={styles.dateCell}>
                         <span>{parseDate(report.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                         <small>{parseDate(report.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB</small>
@@ -88,6 +105,24 @@ export default function ReportTable({
                     </td>
                     <td style={{ textAlign: 'right' }}>
                       <div className={styles.actions}>
+                        {report.status === 'PENDING' && onApprove && (
+                          <button
+                            title="Setujui Laporan"
+                            onClick={() => onApprove(report.id)}
+                            style={{
+                              background: 'rgba(16, 185, 129, 0.1)',
+                              color: '#10B981',
+                              border: '1px solid rgba(16, 185, 129, 0.3)',
+                              borderRadius: '6px',
+                              padding: '3px 8px',
+                              fontSize: '0.72rem',
+                              fontWeight: 800,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Setujui
+                          </button>
+                        )}
                         <Link href={getEditUrl(report.form_type, report.id)} title="Edit Laporan" className={styles.editBtn}>
                           <FileEdit size={18} />
                         </Link>

@@ -44,8 +44,18 @@ export default function Cooling2FormPage() {
   const [form, setForm]               = useState<any>(EMPTY_FORM);
 
   useEffect(() => {
-    unitApi.findAll(1, 1000).then(({ data }) => setAllUnits(Array.isArray(data) ? data[0] : (data.data || []))).catch(() => {});
-  }, []);
+    unitApi.findAll(1, 1000).then(({ data }) => {
+      const list = Array.isArray(data) ? data[0] : (data.data || []);
+      setAllUnits(list);
+      
+      // Auto-select unit from query parameter if present
+      const queryUnit = searchParams.get('unit') || searchParams.get('unitId');
+      if (queryUnit && !editId) {
+        const match = list.find((u: any) => u.id === queryUnit || u.serial_number === queryUnit);
+        if (match) setUnit(match);
+      }
+    }).catch(() => {});
+  }, [searchParams, editId]);
 
   useEffect(() => {
     if (!editId) return;
@@ -75,7 +85,13 @@ export default function Cooling2FormPage() {
       if (isEditMode && editId) {
         await reportApi.update(editId, { data: form, ...(uploadedUrls.length > 0 ? { photo_urls: uploadedUrls } : {}) });
       } else {
-        await reportApi.create({ unitId: unit.id, form_type: 'COOLING_2', data: form, photo_urls: uploadedUrls });
+        await reportApi.create({
+          unitId: unit.id,
+          form_type: 'COOLING_2',
+          data: form,
+          photo_urls: uploadedUrls,
+          service_log_id: searchParams.get('serviceLogId') || undefined,
+        });
       }
       setIsConfirm(false); setIsSuccess(true);
     } catch { alert('Gagal menyimpan Laporan.'); } finally { setLoading(false); }

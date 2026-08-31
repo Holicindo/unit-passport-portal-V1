@@ -13,6 +13,13 @@ import { IotService } from './iot.service';
 export class IotController {
   constructor(private readonly iotService: IotService) {}
 
+  @Get('iot/alerts')
+  @Roles(UserRole.CLIENT, UserRole.PARTNER, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Get all active IoT anomaly alerts across monitored fleet' })
+  getActiveAlerts() {
+    return this.iotService.getActiveAlerts();
+  }
+
   @Get(':id/telemetry/latest')
   @Roles(UserRole.CLIENT, UserRole.PARTNER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Get latest real-time sensor data for a unit' })

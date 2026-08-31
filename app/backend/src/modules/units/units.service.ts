@@ -173,13 +173,22 @@ export class UnitsService {
     if (dto.outlet_branch !== undefined) unit.outlet_branch = dto.outlet_branch;
     if (dto.city !== undefined) unit.city = dto.city;
 
-    if (dto.current_client_id) {
-      const newClient = await this.clientRepo.findOne({ where: { id: dto.current_client_id } });
-      if (!newClient) throw new BadRequestException('Klien tidak ditemukan');
-      unit.current_client = newClient;
+    if (dto.current_client_id !== undefined) {
+      if (dto.current_client_id === null || dto.current_client_id === '') {
+        (unit as any).current_client = null;
+      } else {
+        const newClient = await this.clientRepo.findOne({ where: { id: dto.current_client_id } });
+        if (!newClient) throw new BadRequestException('Klien tidak ditemukan');
+        unit.current_client = newClient;
+      }
     }
 
-    return this.unitRepo.save(unit);
+    try {
+      return await this.unitRepo.save(unit);
+    } catch (e: any) {
+      console.error('Update Unit Error:', e);
+      throw new BadRequestException('Database error: ' + (e.message || 'Unknown error'));
+    }
   }
 
   // Regenerate QR tokens for all units

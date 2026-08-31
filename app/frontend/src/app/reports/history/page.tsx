@@ -28,6 +28,7 @@ function ReportHistoryInner() {
   const [totalPages, setTotalPages] = useState(1);
   const [typeFilter, setTypeFilter] = useState(() => searchParams.get('type') || '');
   const [unitFilter, setUnitFilter] = useState(() => searchParams.get('unit') || '');
+  const [statusFilter, setStatusFilter] = useState(() => searchParams.get('status') || '');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedReports, setSelectedReports] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -37,7 +38,7 @@ function ReportHistoryInner() {
   const loadReports = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await reportApi.findAll(page, pageSize, typeFilter, unitFilter);
+      const { data } = await reportApi.findAll(page, pageSize, typeFilter, unitFilter, statusFilter);
       setReports(data.data || []);
       setTotalPages(data.meta?.last_page || 1);
     } catch (err) {
@@ -45,7 +46,7 @@ function ReportHistoryInner() {
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, typeFilter, unitFilter]);
+  }, [page, pageSize, typeFilter, unitFilter, statusFilter]);
 
   useEffect(() => { loadReports(); }, [loadReports]);
 
@@ -102,9 +103,9 @@ function ReportHistoryInner() {
               Filter: {formTypes.find(f => f.id === typeFilter)?.label || typeFilter}
             </span>
           )}
-          {(typeFilter || unitFilter) && (
+          {(typeFilter || unitFilter || statusFilter) && (
             <button
-              onClick={() => { setTypeFilter(''); setUnitFilter(''); router.push('/reports/history'); }}
+              onClick={() => { setTypeFilter(''); setUnitFilter(''); setStatusFilter(''); router.push('/reports/history'); }}
               style={{
                 background: 'none', border: '1px solid #cbd5e1', borderRadius: '8px',
                 padding: '4px 12px', fontSize: '0.78rem', color: '#64748b', cursor: 'pointer',
@@ -139,6 +140,17 @@ function ReportHistoryInner() {
             ]}
             placeholder="Semua Jenis Laporan"
           />
+          <CustomSelect
+            value={statusFilter}
+            onChange={(val) => setStatusFilter(val)}
+            options={[
+              { value: '', label: 'Semua Status Approval' },
+              { value: 'PENDING', label: 'Menunggu Review (PENDING)' },
+              { value: 'APPROVED', label: 'Disetujui (APPROVED)' },
+              { value: 'REVISION', label: 'Perlu Revisi (REVISION)' },
+            ]}
+            placeholder="Semua Status Approval"
+          />
         </div>
         <div className="dtToolbarRight">
           {selectedReports.length > 0 && isAdmin && (
@@ -161,6 +173,14 @@ function ReportHistoryInner() {
         selectedReports={selectedReports}
         onToggleSelect={toggleSelect} onSelectAll={handleSelectAll}
         page={page} totalPages={totalPages} onPageChange={setPage}
+        onApprove={async (id: string) => {
+          try {
+            await reportApi.update(id, { status: 'APPROVED' });
+            loadReports();
+          } catch {
+            alert('Gagal menyetujui laporan');
+          }
+        }}
       />
     </div>
   );

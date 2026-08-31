@@ -1,6 +1,6 @@
 "use client";
-
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Search, Plus, Edit3, Trash2, Upload } from 'lucide-react';
 import styles from '../partners.module.css';
 import { CustomSelect } from '../../../components/ui/CustomSelect';
@@ -16,13 +16,15 @@ import {
   saveBtnStyle,
 } from '../modalStyles';
 
-const emptyForm = { company_name: '', bp_code: '', city: '', email: '', total_unit: '0' };
+const emptyForm = { company_name: '', bp_code: '', city: '', email: '' };
 
 export default function ClientsPage() {
+  const router = useRouter();
   const [clients, setClients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [error, setError] = useState('');
+  const [expandedClientIds, setExpandedClientIds] = useState<Record<string, boolean>>({});
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [bulkModalOpen, setBulkModalOpen] = useState(false);
@@ -66,8 +68,7 @@ export default function ClientsPage() {
     if (!form.company_name.trim()) return;
     setSaving(true);
     try {
-      const { total_unit, ...payload } = form;
-      await clientApi.create({ ...payload, unit_count: parseInt(total_unit) || 0 });
+      await clientApi.create(form);
       setShowAddModal(false);
       fetchClients();
     } catch {
@@ -84,7 +85,6 @@ export default function ClientsPage() {
       bp_code: client.bp_code || client.bpCode || '',
       city: client.city || '',
       email: client.email || '',
-      total_unit: String(client.units?.length ?? client.unit_count ?? 0)
     });
   };
 
@@ -92,8 +92,7 @@ export default function ClientsPage() {
     if (!editTarget || !form.company_name.trim()) return;
     setSaving(true);
     try {
-      const { total_unit, ...payload } = form;
-      await clientApi.update(editTarget.id, { ...payload, unit_count: parseInt(total_unit) || 0 });
+      await clientApi.update(editTarget.id, form);
       setEditTarget(null);
       fetchClients();
     } catch {
@@ -175,21 +174,95 @@ export default function ClientsPage() {
               ) : filtered.length === 0 ? (
                 <tr><td colSpan={6} className={styles.loadingCell}>Tidak ada klien ditemukan.</td></tr>
               ) : (
-                filtered.map((client) => (
-                  <tr key={client.id} className={styles.dataRow}>
-                    <td><span className={styles.partnerName}>{client.company_name || client.name || '—'}</span></td>
-                    <td>{client.bp_code || client.bpCode || '—'}</td>
-                    <td>{client.city || '—'}</td>
-                    <td>{client.email || '—'}</td>
-                    <td><span className={styles.slaScore}>{client.units?.length ?? client.unit_count ?? '—'} Unit</span></td>
-                    <td>
-                      <div className={styles.actions}>
-                        <button className={styles.actionIconBtn} title="Edit Klien" onClick={() => openEditModal(client)}><Edit3 size={16} /></button>
-                        <button className={`${styles.actionIconBtn} ${styles.actionIconBtnDanger}`} title="Hapus Klien" onClick={() => setDeleteTarget(client)}><Trash2 size={16} /></button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                filtered.map((client) => {
+                  const isExpanded = !!expandedClientIds[client.id];
+                  const toggleExpand = (e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    setExpandedClientIds(prev => ({ ...prev, [client.id]: !prev[client.id] }));
+                  };
+                  return (
+                    <React.Fragment key={client.id}>
+                      <tr
+                        className={styles.dataRow}
+                        style={{ background: isExpanded ? 'rgba(0,0,0,0.02)' : 'transparent', cursor: 'pointer' }}
+                        onClick={toggleExpand}
+                      >
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <button
+                              onClick={toggleExpand}
+                              className={styles.expandBtn}
+                            >
+                              {isExpanded ? '-' : '+'}
+                            </button>
+                            <span className={styles.partnerName}>{client.company_name || client.name || '—'}</span>
+                          </div>
+                        </td>
+                        <td>{client.bp_code || client.bpCode || '—'}</td>
+                        <td>{client.city || '—'}</td>
+                        <td>{client.email || '—'}</td>
+                        <td><span className={styles.slaScore}>{client.units?.length ?? client.unit_count ?? '—'} Unit</span></td>
+                        <td onClick={(e) => e.stopPropagation()}>
+                          <div className={styles.actions}>
+                            <button className={styles.actionIconBtn} title="Edit Klien" onClick={() => openEditModal(client)}><Edit3 size={16} /></button>
+                            <button className={`${styles.actionIconBtn} ${styles.actionIconBtnDanger}`} title="Hapus Klien" onClick={() => setDeleteTarget(client)}><Trash2 size={16} /></button>
+                          </div>
+                        </td>
+                      </tr>
+                      {isExpanded && (
+                        <tr>
+                          <td colSpan={6} style={{ padding: 0, background: '#f8fafc', borderBottom: '1px solid #f0f0f4' }}>
+                            <div style={{ padding: '16px 24px 16px 48px' }} onClick={(e) => e.stopPropagation()}>
+                              <h4 style={{ fontSize: '0.8rem', color: 'var(--color-space-grey)', marginBottom: '12px', textTransform: 'uppercase', fontWeight: 700 }}>
+                                Daftar Unit Klien ({client.company_name || client.name})
+                              </h4>
+                              {!client.units || client.units.length === 0 ? (
+                                <p style={{ fontSize: '0.85rem', color: 'var(--color-space-grey)', fontStyle: 'italic', margin: 0 }}>
+                                  Tidak ada unit terdaftar untuk klien ini.
+                                </p>
+                              ) : (
+                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                                  <thead>
+                                    <tr>
+                                      <th style={{ textAlign: 'left', padding: '8px', color: 'var(--color-space-grey)', borderBottom: '1px solid #e2e8f0', width: '25%', fontSize: '0.75rem', fontWeight: 700 }}>Serial Number</th>
+                                      <th style={{ textAlign: 'left', padding: '8px', color: 'var(--color-space-grey)', borderBottom: '1px solid #e2e8f0', width: '35%', fontSize: '0.75rem', fontWeight: 700 }}>Model</th>
+                                      <th style={{ textAlign: 'left', padding: '8px', color: 'var(--color-space-grey)', borderBottom: '1px solid #e2e8f0', width: '15%', fontSize: '0.75rem', fontWeight: 700 }}>Cabang</th>
+                                      <th style={{ textAlign: 'left', padding: '8px', color: 'var(--color-space-grey)', borderBottom: '1px solid #e2e8f0', width: '15%', fontSize: '0.75rem', fontWeight: 700 }}>Kota</th>
+                                      <th style={{ textAlign: 'left', padding: '8px', color: 'var(--color-space-grey)', borderBottom: '1px solid #e2e8f0', width: '10%', fontSize: '0.75rem', fontWeight: 700 }}>Status</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {client.units.map((unit: any) => (
+                                      <tr key={unit.id} style={{ cursor: 'pointer' }} onClick={() => router.push(`/id/${unit.qr_token}`)}>
+                                        <td style={{ padding: '8px', borderBottom: '1px solid #f1f5f9', fontWeight: 700, color: 'var(--color-cobalt-blue)' }}>
+                                          {unit.serial_number}
+                                        </td>
+                                        <td style={{ padding: '8px', borderBottom: '1px solid #f1f5f9', color: 'var(--color-deep-navy)' }}>
+                                          {unit.model_name}
+                                        </td>
+                                        <td style={{ padding: '8px', borderBottom: '1px solid #f1f5f9', color: 'var(--color-space-grey)' }}>
+                                          {unit.outlet_branch || '—'}
+                                        </td>
+                                        <td style={{ padding: '8px', borderBottom: '1px solid #f1f5f9', color: 'var(--color-space-grey)' }}>
+                                          {unit.city || '—'}
+                                        </td>
+                                        <td style={{ padding: '8px', borderBottom: '1px solid #f1f5f9' }}>
+                                          <span className={`${styles.statusBadge} ${unit.status === 'ACTIVE' || unit.status === 'active' ? styles.badgeSuccess : styles.badgeWarning}`} style={{ padding: '2px 8px', fontSize: '0.7rem' }}>
+                                            {unit.status || 'ACTIVE'}
+                                          </span>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })
               )}
             </tbody>
           </table>

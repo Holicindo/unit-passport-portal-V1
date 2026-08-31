@@ -32,4 +32,14 @@ export class CreateServiceReportDto {
   @IsString()
   @IsOptional()
   baseReportId?: string;
+
+  @ApiProperty({ required: false, example: 'LOG-XXXXXXX' })
+  @IsString()
+  @IsOptional()
+  service_log_id?: string;
+
+  @ApiProperty({ required: false, example: 'PENDING' })
+  @IsString()
+  @IsOptional()
+  status?: any;
 }

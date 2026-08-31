@@ -30,6 +30,8 @@ const StatsGrid = dynamic(() => import('@/components/dashboard/StatsGrid'), {
   ssr: false
 });
 
+import IotAlertsAndAnalyticsWidget from './components/IotAlertsAndAnalyticsWidget';
+
 export default function DashboardPage() {
   const {
     loading, syncing, liveTime, statsData, chartData,
@@ -70,6 +72,10 @@ export default function DashboardPage() {
       </header>
 
       <StatsGrid data={statsData} loading={loading} />
+
+      <div style={{ marginTop: '16px' }}>
+        <IotAlertsAndAnalyticsWidget activeClients={activeClients} />
+      </div>
 
       <div className={styles.bottomSection}>
         {/* LEFT COLUMN */}

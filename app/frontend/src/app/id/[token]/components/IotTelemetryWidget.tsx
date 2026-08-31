@@ -394,11 +394,11 @@ export default function IotTelemetryWidget({ unitId, unitModel, isDark = false, 
                 <>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                     <DoorStatus label="Pintu 1 (Atas Kiri)" isOpen={data.is_door1_open} />
-                    <DoorStatus label="Pintu 3 (Atas Kanan)" isOpen={data.is_door3_open} />
+                    <DoorStatus label="Pintu 3 (Atas Kanan)" isOpen={data.is_door3_open ?? null} />
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                     <DoorStatus label="Pintu 2 (Bawah Kiri)" isOpen={data.is_door2_open} />
-                    <DoorStatus label="Pintu 4 (Bawah Kanan)" isOpen={data.is_door4_open} />
+                    <DoorStatus label="Pintu 4 (Bawah Kanan)" isOpen={data.is_door4_open ?? null} />
                   </div>
                 </>
               ) : (

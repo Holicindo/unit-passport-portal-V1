@@ -81,10 +81,11 @@ export const unitApi = {
 export const reportApi = {
   create: (data: any) => api.post('/reports', data),
   update: (id: string, data: any) => api.patch(`/reports/${id}`, data),
-  findAll: (page = 1, limit = 10, type?: string, unitId?: string) =>
-    api.get(`/reports?page=${page}&limit=${limit}${type ? `&type=${type}` : ''}${unitId ? `&unitId=${unitId}` : ''}`),
+  findAll: (page = 1, limit = 10, type?: string, unitId?: string, status?: string) =>
+    api.get(`/reports?page=${page}&limit=${limit}${type ? `&type=${type}` : ''}${unitId ? `&unitId=${unitId}` : ''}${status ? `&status=${status}` : ''}`),
   findOne: (id: string) => api.get(`/reports/${id}`),
   findByUnit: (unitId: string) => api.get(`/reports/unit/${unitId}`),
+  findByServiceLog: (serviceLogId: string) => api.get(`/reports/service-log/${serviceLogId}`),
   uploadPhotos: (files: File[]) => {
     const formData = new FormData();
     files.forEach(f => formData.append('photos', f));
@@ -151,4 +152,5 @@ export const userApi = {
 export const iotApi = {
   getLatest: (unitId: string) => api.get(`/units/${unitId}/telemetry/latest`),
   getHistory: (unitId: string, hours: number = 24) => api.get(`/units/${unitId}/telemetry/history?hours=${hours}`),
+  getActiveAlerts: () => api.get('/units/iot/alerts'),
 };

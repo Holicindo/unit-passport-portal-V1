@@ -58,10 +58,10 @@ export function useDashboardData() {
       const isAdmin = user?.role === 'ADMIN';
 
       const [unitsRes, serviceLogsRes, reportsRes, partnersRes] = await Promise.all([
-        isAdmin ? unitApi.findAll(1, 1000) : unitApi.findMyFleet(),
-        serviceLogApi.findAll(1, 1000),
-        reportApi.findAll(1, 1000),
-        partnerApi.findAll(),
+        (isAdmin ? unitApi.findAll(1, 1000) : unitApi.findMyFleet()).catch(() => ({ data: [] })),
+        serviceLogApi.findAll(1, 1000).catch(() => ({ data: [] })),
+        reportApi.findAll(1, 1000).catch(() => ({ data: [] })),
+        partnerApi.findAll().catch(() => ({ data: [] })),
       ]);
 
       const rawUnits = unitsRes.data?.data || unitsRes.data || [];

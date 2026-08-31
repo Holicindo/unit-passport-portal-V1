@@ -47,10 +47,10 @@ const menuItems = [
     id: 'partners', 
     label: 'Mitra & Klien', 
     icon: <Briefcase size={20} />, 
-    href: '/partners',
+    href: '/partners/clients',
     subItems: [
-      { label: 'Manajemen Mitra', icon: <Building2 size={18} />, href: '/partners' },
-      { label: 'Manajemen Klien', icon: <Users size={18} />, href: '/partners/clients' }
+      { label: 'Manajemen Klien', icon: <Users size={18} />, href: '/partners/clients' },
+      { label: 'Manajemen Mitra', icon: <Building2 size={18} />, href: '/partners' }
     ] 
   },
   { 

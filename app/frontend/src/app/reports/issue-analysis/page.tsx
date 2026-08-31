@@ -67,9 +67,19 @@ export default function IssueAnalysisPage() {
 
   useEffect(() => {
     unitApi.findAll(1, 1000)
-      .then(({ data }) => setAllUnits(Array.isArray(data) ? data[0] : (data.data || [])))
+      .then(({ data }) => {
+        const list = Array.isArray(data) ? data[0] : (data.data || []);
+        setAllUnits(list);
+        
+        // Auto-select unit from query parameter if present
+        const queryUnit = searchParams.get('unit') || searchParams.get('unitId');
+        if (queryUnit && !editId) {
+          const match = list.find((u: any) => u.id === queryUnit || u.serial_number === queryUnit);
+          if (match) setUnit(match);
+        }
+      })
       .catch(() => {});
-  }, []);
+  }, [searchParams, editId]);
 
   useEffect(() => {
     if (!editId) return;
@@ -125,6 +135,7 @@ export default function IssueAnalysisPage() {
           form_type: 'ISSUE_ANALYSIS',
           data: form,
           photo_urls: uploadedUrls,
+          service_log_id: searchParams.get('serviceLogId') || undefined,
         });
       }
       setIsConfirm(false);

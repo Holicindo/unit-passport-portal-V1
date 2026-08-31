@@ -6,7 +6,7 @@ import {
   ShieldAlert, Wrench, FileText, CheckCircle2,
   ExternalLink, Phone, ArrowLeft, Loader2,
   Lock, Check, UserCheck, Settings, BookOpen, Clock, Image as ImageIcon,
-  HelpCircle, Package, ChevronLeft, ChevronRight, Activity, BarChart2,
+  HelpCircle, Package, ChevronLeft, ChevronRight, Activity, BarChart2, FilePlus,
 } from 'lucide-react';
 import PassportTopbar from './components/PassportTopbar';
 import { CustomSelect } from '@/components/ui/CustomSelect';
@@ -25,6 +25,7 @@ import IotTelemetryWidget from './components/IotTelemetryWidget';
 import IotHistoryWidget from './components/IotHistoryWidget';
 import CustomerHealthWidget from './components/CustomerHealthWidget';
 import QrCard from './components/QrCard';
+import SelectReportTypeModal from './components/SelectReportTypeModal';
 import { INDONESIA_CITIES, getUnitType, UNIT_TYPE_LABELS, UNIT_TYPE_COLORS } from './constants';
 import styles from './id.module.css';
 
@@ -42,6 +43,7 @@ export default function QrPassportPage() {
 
   const autoUnitType = unit ? getUnitType(unit.model_name) : 'MESIN';
   const [photoIdx, setPhotoIdx] = useState(0);
+  const [showReportSelector, setShowReportSelector] = useState(false);
 
   // Ref untuk menyamakan tinggi kolom kiri dan kanan
   const leftColRef = useRef<HTMLDivElement>(null);
@@ -429,7 +431,30 @@ export default function QrPassportPage() {
             <div className={styles.panelContent}>
               {editBlocks.ownership ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingBottom: '16px' }}>
-                  <EditField label="Customer Name" value={editData.current_client?.company_name || ''} onChange={(v) => handleEditChange('current_client.company_name', v)} />
+                  <div className={styles.editRow}><div className={styles.editGroup}>
+                    <span className={styles.editLabel}>Customer Name</span>
+                    <CustomSelect
+                      value={editData.current_client_id || editData.current_client?.id || ''}
+                      onChange={(val) => {
+                        const selectedClient = clients.find(c => c.id === val);
+                        handleEditChange('current_client_id', val);
+                        if (selectedClient) {
+                          handleEditChange('current_client', selectedClient);
+                        } else if (val === '') {
+                          handleEditChange('current_client', null);
+                        }
+                      }}
+                      options={[
+                        { value: '', label: '-- Tidak ada Klien (Unassigned) --' },
+                        ...clients.map((c: any) => ({
+                          value: c.id,
+                          label: c.company_name || c.name
+                        }))
+                      ]}
+                      placeholder="Cari atau pilih klien..."
+                      showSearch={true}
+                    />
+                  </div></div>
                   <EditField label="HQ Address (Pusat)" value={editData.specs?.hq_address || ''} onChange={(v) => handleEditChange('specs.hq_address', v)} />
                   <EditField label="SO Number" value={editData.specs?.so_number || ''} onChange={(v) => handleEditChange('specs.so_number', v)} />
                   <EditField label="DO Number" value={editData.specs?.do_number || ''} onChange={(v) => handleEditChange('specs.do_number', v)} />
@@ -550,6 +575,7 @@ export default function QrPassportPage() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     <button className={styles.btnPrimary} onClick={() => { setTechName(user?.name || ''); setShowLogModal(true); }} style={{ background: 'linear-gradient(135deg, #059669, #047857)', boxShadow: '0 4px 12px rgba(5,150,105,0.3)' }}><Check size={16} /> Selesaikan &amp; Tutup Tiket</button>
                     <button className={styles.btnPrimary} onClick={() => { setTechName(user?.name || ''); setLogStatus('PENDING'); setShowLogModal(true); }}><Wrench size={16} /> Tambah Catatan Servis</button>
+                    <button className={styles.btnPrimary} onClick={() => setShowReportSelector(true)} style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)', boxShadow: '0 4px 12px rgba(59,130,246,0.3)' }}><FilePlus size={16} /> Buat Laporan Digital</button>
                   </div>
                 </div>
               )}
@@ -559,6 +585,7 @@ export default function QrPassportPage() {
                   <h3 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '8px', textAlign: 'center' }}>Administrator Control</h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
                     <button className={styles.btnEmergency} onClick={() => setShowServiceModal(true)}>Request Service</button>
+                    <button className={styles.btnPrimary} onClick={() => setShowReportSelector(true)} style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)' }}><FilePlus size={16} /> Buat Laporan Digital</button>
                     <button className={styles.btnPrimary} onClick={() => setShowTransferModal(true)}>Pindahkan Kepemilikan</button>
                   </div>
                 </div>
@@ -920,6 +947,7 @@ export default function QrPassportPage() {
         <AdminTransferModal show={showTransferModal} onClose={() => setShowTransferModal(false)} onSubmit={handleTransfer} loading={transferLoading}
           unit={unit} clients={clients} targetClientId={targetClientId} setTargetClientId={setTargetClientId} transferReason={transferReason} setTransferReason={setTransferReason} />
         <AllSpecsModal show={showAllSpecsModal} onClose={() => setShowAllSpecsModal(false)} unit={unit} />
+        <SelectReportTypeModal show={showReportSelector} onClose={() => setShowReportSelector(false)} unit={unit} />
       </div>
 
       <footer className={styles.footerCopyright}>Copyright &copy; 2026 PT. Holicindo Dasa Anugerah. All rights reserved.</footer>

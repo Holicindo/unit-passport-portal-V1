@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
-import { X, MessageSquare } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { X, MessageSquare, FilePlus, FileText, ExternalLink } from 'lucide-react';
 import { CustomSelect } from '@/components/ui/CustomSelect';
+import { reportApi } from '@/lib/api';
 import { parseDetailedIssue, formatDate } from '../utils';
 import { getUnitType, UNIT_TYPE_LABELS, UNIT_TYPE_COLORS } from '../../id/[token]/constants';
 import styles from '../service.module.css';
@@ -17,6 +19,7 @@ interface ServiceDetailModalProps {
 }
 
 export default function ServiceDetailModal({ log, partners, onClose, onUpdate, submitting, setSubmitting }: ServiceDetailModalProps) {
+  const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [editPartnerId, setEditPartnerId] = useState(log.partner?.id || '');
   const [editTechnician, setEditTechnician] = useState(log.technician_name || '');
@@ -26,6 +29,19 @@ export default function ServiceDetailModal({ log, partners, onClose, onUpdate, s
   const [editScheduledDate, setEditScheduledDate] = useState(log.scheduled_date ? log.scheduled_date.split('T')[0] : '');
   const [editDeliveryDate, setEditDeliveryDate] = useState(log.delivery_date ? log.delivery_date.split('T')[0] : '');
   const [editPlanningNotes, setEditPlanningNotes] = useState(log.planning_notes || '');
+
+  const [linkedReports, setLinkedReports] = useState<any[]>([]);
+  const [loadingReports, setLoadingReports] = useState(false);
+
+  useEffect(() => {
+    if (!log?.id && !log?.call_id) return;
+    const targetId = log.call_id || log.id;
+    setLoadingReports(true);
+    reportApi.findByServiceLog(targetId)
+      .then(({ data }) => setLinkedReports(Array.isArray(data) ? data : (data.data || [])))
+      .catch(() => setLinkedReports([]))
+      .finally(() => setLoadingReports(false));
+  }, [log]);
 
   const startEditing = () => {
     setEditPartnerId(log.partner?.id || '');
@@ -164,6 +180,59 @@ export default function ServiceDetailModal({ log, partners, onClose, onUpdate, s
                 {log.planning_notes && <div className={styles.detailItemFull}><span className={styles.detailLabel}>Catatan Internal</span><span className={styles.detailValue} style={{ color: 'var(--color-space-grey)' }}>{log.planning_notes}</span></div>}
               </>)}
             </div>
+          </div>
+
+          {/* Section 4: Laporan Digital Terkait */}
+          <div className={styles.detailSection}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <h4 className={styles.detailSectionTitle} style={{ margin: 0 }}>Laporan Digital Terkait</h4>
+              {log.unit?.id && (
+                <button
+                  type="button"
+                  onClick={() => router.push(`/reports/inspection?unit=${log.unit.id}&serviceLogId=${log.call_id || log.id}`)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '6px 12px',
+                    borderRadius: '8px',
+                    background: 'linear-gradient(135deg, #2E5BFF, #1a3fd4)',
+                    color: '#fff',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <FilePlus size={14} /> Buat Laporan Digital
+                </button>
+              )}
+            </div>
+
+            {loadingReports ? (
+              <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Memuat laporan...</span>
+            ) : linkedReports.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {linkedReports.map((r: any) => (
+                  <div key={r.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <FileText size={16} color="#3b82f6" />
+                      <div>
+                        <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e293b' }}>{r.form_type} — {r.id}</div>
+                        <div style={{ fontSize: '0.72rem', color: '#64748b' }}>{formatDate(r.created_at)}</div>
+                      </div>
+                    </div>
+                    <button type="button" onClick={() => router.push(`/reports/view/${r.id}`)} style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'none', border: 'none', color: '#2563eb', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600 }}>
+                      Lihat <ExternalLink size={13} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontStyle: 'italic', padding: '8px 0' }}>
+                Belum ada laporan digital yang ditautkan ke tiket ini.
+              </div>
+            )}
           </div>
         </div>
 

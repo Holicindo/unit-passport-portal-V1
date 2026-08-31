@@ -17,7 +17,6 @@ interface ClientForm {
   bp_code: string;
   city: string;
   email: string;
-  total_unit: string;
 }
 
 interface ClientFormModalProps {
@@ -81,17 +80,7 @@ export default function ClientFormModal({
               placeholder="Contoh: contact@starbucks.co.id"
             />
           </div>
-          <div>
-            <label style={labelStyle}>Total Unit</label>
-            <input
-              type="number"
-              style={inputStyle}
-              value={form.total_unit}
-              onChange={(e) => setForm({ ...form, total_unit: e.target.value })}
-              placeholder="0"
-              min="0"
-            />
-          </div>
+
         </div>
 
         <div style={modalFooterStyle}>

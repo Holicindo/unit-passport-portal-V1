@@ -15,6 +15,7 @@ export class ClientsService {
       skip: (page - 1) * limit,
       take: limit,
       order: { created_at: 'DESC' },
+      relations: ['units'],
     });
 
     return {

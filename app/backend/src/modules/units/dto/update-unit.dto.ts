@@ -22,10 +22,10 @@ export class UpdateUnitDto {
   @IsOptional()
   status?: string;
 
-  @ApiProperty({ example: 'CLI-XXXXXXX', required: false })
+  @ApiProperty({ example: 'CLI-XXXXXXX', required: false, nullable: true })
   @IsString()
   @IsOptional()
-  current_client_id?: string;
+  current_client_id?: string | null;
 
   @ApiProperty({ example: 'Starbucks Serpong', required: false })
   @IsString()

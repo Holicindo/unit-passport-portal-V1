@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { unitApi } from '@/lib/api';
+import { unitApi, clientApi } from '@/lib/api';
 
 export function useSmartRouting(
   unit: any,
@@ -42,22 +42,19 @@ export function useSmartRouting(
   // Media viewer
   const [selectedMedia, setSelectedMedia] = useState<string | null>(null);
 
-  // Load clients when Admin opens transfer modal
+  // Load clients when Admin views the page so we can use it for inline edits and transfer modal
   useEffect(() => {
-    if (user?.role === 'ADMIN' && showTransferModal) {
+    if (user?.role === 'ADMIN') {
       const fetchClients = async () => {
         try {
-          const storedToken = localStorage.getItem('token');
-          if (storedToken) {
-            const res = await fetch('/api/clients', { headers: { Authorization: `Bearer ${storedToken}` } });
-            const data = await res.json();
-            setClients(Array.isArray(data) ? data : (data?.data || []));
-          }
+          const res = await clientApi.findAll(200);
+          const data = res.data;
+          setClients(Array.isArray(data) ? data : (data?.data || []));
         } catch { /* ignore */ }
       };
       fetchClients();
     }
-  }, [user, showTransferModal]);
+  }, [user]);
 
   // Pre-fill tech name when log modal opens
   useEffect(() => {
