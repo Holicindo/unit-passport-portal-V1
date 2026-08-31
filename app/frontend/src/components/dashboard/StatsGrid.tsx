@@ -140,6 +140,7 @@ export default function StatsGrid({ items, data, loading }: StatsGridProps) {
               color: stat.accent,
               border: '1px solid rgba(46,91,255,0.08)',
               flexShrink: 0,
+            }}>
               <Icon size={22} strokeWidth={1.8} />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
