@@ -28,7 +28,8 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
       clientId: `holicindo-backend-${Math.random().toString(16).slice(2, 8)}`,
       reconnectPeriod: 5000, // Auto-reconnect setiap 5 detik jika terputus
       connectTimeout: 30000,
-    });
+      family: 4, // Force IPv4 to avoid IPv6 connection issues on broker.hivemq.com
+    } as any);
 
     this.client.on('connect', () => {
       this.logger.log('✅ MQTT Broker terkoneksi!');

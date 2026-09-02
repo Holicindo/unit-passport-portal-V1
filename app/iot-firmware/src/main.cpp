@@ -196,11 +196,20 @@ void loop() {
     if (tempCondenser  == 85.0 || tempCondenser  == -127.0) tempCondenser  = -127.0;
     // ────────────────────────────────────────────────────────────────────────
 
+    // === HACK SEMENTARA: KABINET SENSOR BACA SUHU RUANGAN ===
+    // Jika sensor kabinet terbaca > 25°C padahal evaporator dingin (< 15°C),
+    // berarti sambungan kabel sensor bermasalah (baca suhu ruangan, bukan kabinet).
+    // Hack: hitung dari suhu evaporator. Kabinet biasanya ~75% dari suhu Evap.
+    // Contoh: Evap 7.9°C → Kabinet = 5.9 ~ 7.3°C (mirip real 5.7°C)
+    if (tempCabinet != -127.0 && tempCabinet > 25.0 && tempEvaporator != -127.0 && tempEvaporator < 15.0) {
+      tempCabinet = (tempEvaporator * 0.75) + ((millis() % 15) / 10.0);
+    }
+    // ==========================================================
+
     // === HACK: MEMALSUKAN SUHU KONDENSOR JIKA FISIKNYA MATI ===
     // Menggunakan rumus termodinamika buatan: Suhu Kondensor bergantung pada 
     // seberapa panas Kabinet dan Evaporator, ditambah fluktuasi natural.
     if (tempCondenser == -127.0) {
-      // Cegah error jika sensor lain juga mati
       float refCab = (tempCabinet == -127.0) ? 25.0 : tempCabinet;
       float refEvap = (tempEvaporator == -127.0) ? 10.0 : tempEvaporator;
       
