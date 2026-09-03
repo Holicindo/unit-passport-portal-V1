@@ -244,12 +244,12 @@ function SummaryCard({ label, summary, color }: { label: string; summary: Sensor
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 const TIME_RANGES = [
-  { label: '30 Menit', hours: 0.5 },
-  { label: '3 Jam', hours: 3 },
-  { label: '6 Jam', hours: 6 },
-  { label: '24 Jam', hours: 24 },
-  { label: '3 Hari', hours: 72 },
-  { label: '7 Hari', hours: 168 },
+  { label: '1 Jam',    hours: 1,       bucketMin: 5   },
+  { label: '7 Jam',   hours: 7,       bucketMin: 15  },
+  { label: '24 Jam',  hours: 24,      bucketMin: 30  },
+  { label: '1 Bulan', hours: 720,     bucketMin: 120 },  // 30 days → 2-hour buckets
+  { label: '3 Bulan', hours: 2160,    bucketMin: 360 },  // 90 days → 6-hour buckets
+  { label: '1 Tahun', hours: 8760,    bucketMin: 1440 }, // 365 days → 1-day buckets
 ];
 
 interface IotHistoryWidgetProps {
@@ -261,7 +261,7 @@ interface IotHistoryWidgetProps {
 
 export default function IotHistoryWidget({ unitId, isDark = false, unit, onUnitUpdate }: IotHistoryWidgetProps) {
   const [view, setView] = useState<'chart' | 'table'>('chart');
-  const [rangeIdx, setRangeIdx] = useState(0); // default 30 Menit (mudah lihat data terbaru)
+  const [rangeIdx, setRangeIdx] = useState(2); // default 24 Jam
   const [data, setData] = useState<HistoryPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -312,19 +312,19 @@ export default function IotHistoryWidget({ unitId, isDark = false, unit, onUnitU
     }
   };
 
-  const downsampleTo5Minutes = (points: HistoryPoint[]) => {
+  const downsample = (points: HistoryPoint[], bucketMin: number) => {
     if (!points || points.length === 0) return [];
+    const bucketMs = bucketMin * 60 * 1000;
     const buckets = new Map<number, HistoryPoint>();
     for (const p of points) {
       const time = new Date(p.recorded_at).getTime();
-      // Bucket data into 5-minute intervals (300000 ms)
-      const bucketId = Math.floor(time / 300000);
+      const bucketId = Math.floor(time / bucketMs);
       if (!buckets.has(bucketId)) {
         buckets.set(bucketId, p);
       }
     }
     // Return sorted oldest to newest
-    return Array.from(buckets.values()).sort((a, b) => 
+    return Array.from(buckets.values()).sort((a, b) =>
       new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime()
     );
   };
@@ -334,10 +334,10 @@ export default function IotHistoryWidget({ unitId, isDark = false, unit, onUnitU
     else if (data.length === 0) setLoading(true);
 
     try {
-      const hours = TIME_RANGES[rangeIdx].hours;
-      const res = await iotApi.getHistory(unitId, hours);
+      const range = TIME_RANGES[rangeIdx];
+      const res = await iotApi.getHistory(unitId, range.hours);
       const raw: HistoryPoint[] = res.data || [];
-      setData(downsampleTo5Minutes(raw));
+      setData(downsample(raw, range.bucketMin));
     } catch {
       // API unavailable or failed
       setData([]);
@@ -460,7 +460,12 @@ export default function IotHistoryWidget({ unitId, isDark = false, unit, onUnitU
       {/* Legend (Removed since it is now inside the chart) */}
       <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
         <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>
-          {data.length} titik data · interval 5 menit
+          {data.length} titik data · interval {(() => {
+            const m = TIME_RANGES[rangeIdx].bucketMin;
+            if (m < 60) return `${m} menit`;
+            if (m < 1440) return `${m / 60} jam`;
+            return `${m / 1440} hari`;
+          })()}
         </span>
       </div>
 

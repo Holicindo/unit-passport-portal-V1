@@ -4,6 +4,28 @@ import { useState } from 'react';
 import { Upload, X, CheckCircle, AlertTriangle, Loader } from 'lucide-react';
 import styles from '../units.module.css';
 
+function HolicLogo({ size = 22 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 140 120"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="6"
+      strokeLinecap="square"
+      strokeLinejoin="miter"
+      aria-hidden="true"
+    >
+      <polygon points="60,5 10,95 20,110 60,110" />
+      <line x1="70" y1="15" x2="70" y2="110" />
+      <polyline points="70,15 110,90 100,110 70,110" />
+      <polyline points="80,110 80,55 125,45" />
+      <polyline points="90,110 90,85 135,75" />
+    </svg>
+  );
+}
+
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -60,8 +82,9 @@ export default function BulkUploadModal({ open, onClose, onSuccess }: Props) {
             <div style={{
               width: '36px', height: '36px', borderRadius: '10px',
               background: '#001F3F', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#fff',
             }}>
-              <Upload size={18} color="#001F3F" />
+              <HolicLogo size={22} />
             </div>
             <div>
               <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0f172a' }}>Bulk Upload Units</div>

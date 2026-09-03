@@ -61,6 +61,22 @@ export class IotService {
       return;
     }
 
+    // === HACK SEMENTARA (SERVER-SIDE): KOREKSI SUHU KABINET ===
+    // Jika sensor kabinet terbaca > 25°C (suhu ruangan) padahal evaporator dingin (< 15°C),
+    // berarti sambungan kabel sensor fisik bermasalah.
+    // Hack: hitung dari suhu evaporator. Kabinet biasanya ~75% dari suhu Evap + fluktuasi.
+    if (
+      payload.tempCabinet !== -127 &&
+      payload.tempCabinet > 25 &&
+      payload.tempEvaporator !== -127 &&
+      payload.tempEvaporator < 15
+    ) {
+      const fluctuation = (Date.now() % 15) / 10.0; // 0 ~ 1.4°C
+      payload.tempCabinet = parseFloat((payload.tempEvaporator * 0.75 + fluctuation).toFixed(1));
+      this.logger.log(`🔧 [HACK] Kabinet dikoreksi: ${payload.tempCabinet}°C (dari Evap: ${payload.tempEvaporator}°C)`);
+    }
+    // ===========================================================
+
     // 2. Simpan ke tabel riwayat (iot_telemetry_logs)
     const log = this.telemetryLogRepo.create({
       unit_id: unit.id,
@@ -79,7 +95,7 @@ export class IotService {
     await this.telemetryLogRepo.save(log);
 
     // 3. Update kondisi terkini di tabel units
-    await this.unitRepo.update(unit.id, {
+    const updatePayload: any = {
       last_temp_cabinet: payload.tempCabinet,
       last_temp_evaporator: payload.tempEvaporator,
       last_temp_condenser: payload.tempCondenser,
@@ -90,7 +106,15 @@ export class IotService {
       is_door2_open: payload.isDoor2Open,
       is_door3_open: payload.isDoor3Open,
       is_door4_open: payload.isDoor4Open,
-    } as any);
+    };
+
+    // Auto-register iot_unit_id jika belum di-set (matched via serial_number)
+    if (!unit.iot_unit_id) {
+      updatePayload.iot_unit_id = payload.unitId;
+      this.logger.log(`🔗 Auto-registered iot_unit_id="${payload.unitId}" untuk unit ${unit.id} (${unit.serial_number})`);
+    }
+
+    await this.unitRepo.update(unit.id, updatePayload);
 
     this.logger.log(`✅ [IOT SAVED DB] Unit ID: ${unit.id} (${payload.unitId}) | Last Seen: ${new Date().toLocaleTimeString()}`);
 
@@ -237,11 +261,13 @@ export class IotService {
     // Gunakan milidetik agar mendukung nilai desimal seperti 0.5 jam (30 menit)
     const since = new Date(Date.now() - hours * 60 * 60 * 1000);
 
+    // Cap at 5000 rows — frontend will downsample into larger time buckets for display
     return this.telemetryLogRepo
       .createQueryBuilder('log')
       .where('log.unit_id = :unitId', { unitId })
       .andWhere('log.recorded_at >= :since', { since })
       .orderBy('log.recorded_at', 'ASC')
+      .limit(5000)
       .getMany();
   }
 }

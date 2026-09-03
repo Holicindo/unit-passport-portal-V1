@@ -17,10 +17,53 @@ export function TableSkeleton({ pageSize }: { pageSize: number }) {
           <td><div className={styles.skeletonCell} style={{ width: '130px' }} /></td>
           <td><div className={styles.skeletonCell} style={{ width: '150px' }} /></td>
           <td><div className={styles.skeletonCell} style={{ width: '40px' }} /></td>
+          <td><div className={styles.skeletonCell} style={{ width: '60px' }} /></td>
           <td><div className={styles.skeletonCell} style={{ width: '40px' }} /></td>
         </tr>
       ))}
     </tbody>
+  );
+}
+
+/* ── Helpers ── */
+function getHealthScore(unit: any) {
+  if (!unit.iot_unit_id && !unit.last_seen_at) return <span style={{ color: '#94a3b8' }}>—</span>;
+  
+  let score = 100;
+  let hasData = false;
+  
+  if (unit.last_temp_cabinet !== undefined && unit.last_temp_cabinet !== null) {
+    hasData = true;
+    if (unit.last_temp_cabinet > 10 || unit.last_temp_cabinet < -2) score -= 15;
+    else if (unit.last_temp_cabinet > 7) score -= 5;
+  }
+  
+  if (unit.last_temp_condenser !== undefined && unit.last_temp_condenser !== null) {
+    hasData = true;
+    if (unit.last_temp_condenser > 60) score -= 20;
+    else if (unit.last_temp_condenser > 50) score -= 10;
+  }
+  
+  if (unit.last_voltage !== undefined && unit.last_voltage !== null) {
+    hasData = true;
+    if (unit.last_voltage < 200 || unit.last_voltage > 240) score -= 10;
+  }
+  
+  if (!hasData) {
+    score = 85; 
+  } else {
+    score = Math.max(0, Math.min(100, score));
+  }
+  
+  let color = '#10b981'; // green
+  if (score < 90) color = '#f59e0b'; // yellow
+  if (score < 70) color = '#ef4444'; // red
+  
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+      <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: color }} />
+      <span style={{ fontWeight: 600, color, fontSize: '0.85rem' }}>{score}%</span>
+    </div>
   );
 }
 
@@ -42,6 +85,8 @@ interface TableProps {
 }
 
 export function DesktopTable({ units, loading, pageSize, selectedIds, setSelectedIds, onDeleteClick }: TableProps) {
+  const router = useRouter();
+
   return (
     <div className={styles.desktopView}>
       <div className={styles.tableWrapper}>
@@ -61,18 +106,24 @@ export function DesktopTable({ units, loading, pageSize, selectedIds, setSelecte
               <th>Outlet Branch</th>
               <th>Customer</th>
               <th>City</th>
+              <th>Health Score</th>
               <th>Action</th>
             </tr>
           </thead>
           {loading ? (
             <TableSkeleton pageSize={pageSize} />
           ) : units.length === 0 ? (
-            <tbody><tr><td colSpan={7} className={styles.emptyState}>No units found.</td></tr></tbody>
+            <tbody><tr><td colSpan={8} className={styles.emptyState}>No units found.</td></tr></tbody>
           ) : (
             <tbody>
               {units.map((unit) => (
-                <tr key={unit.id} className={styles.dataRow}>
-                  <td style={{ textAlign: 'center' }}>
+                <tr 
+                  key={unit.id} 
+                  className={styles.dataRow} 
+                  onClick={() => router.push(`/id/${unit.qr_token}`)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
                     <input 
                       type="checkbox" 
                       checked={selectedIds?.includes(unit.id) || false}
@@ -81,18 +132,16 @@ export function DesktopTable({ units, loading, pageSize, selectedIds, setSelecte
                     />
                   </td>
                   <td>
-                    <Link 
-                      href={`/id/${unit.qr_token}`} 
-                      className={styles.serialLink}
-                    >
+                    <span className={styles.serialLink}>
                       {unit.serial_number}
-                    </Link>
+                    </span>
                   </td>
                   <td className={styles.modelCell}>{unit.model_name}</td>
                   <td><span style={{ color: 'var(--color-space-grey)', fontSize: '0.85rem' }}>{unit.outlet_branch || '—'}</span></td>
                   <td className={styles.customerCell}>{unit.current_client?.company_name || <span className={styles.noOwner}>—</span>}</td>
                   <td><span style={{ color: 'var(--color-space-grey)', fontSize: '0.85rem' }}>{unit.city || '—'}</span></td>
-                  <td>
+                  <td>{getHealthScore(unit)}</td>
+                  <td onClick={(e) => e.stopPropagation()}>
                     <div className={styles.actions}>
                       <Link href={`/id/${unit.qr_token}`} title="Lihat Detail" className={styles.actionIconBtn}>
                         <Eye size={18} />
