@@ -267,7 +267,7 @@ export class IotService {
       .where('log.unit_id = :unitId', { unitId })
       .andWhere('log.recorded_at >= :since', { since })
       .orderBy('log.recorded_at', 'ASC')
-      .limit(5000)
+      .limit(10000)
       .getMany();
   }
 }

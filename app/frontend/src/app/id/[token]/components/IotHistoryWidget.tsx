@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { BarChart2, TableProperties, RefreshCw, TrendingDown, TrendingUp, Minus, Download, ChevronDown, Settings2, X, Check } from 'lucide-react';
+import { BarChart2, TableProperties, RefreshCw, TrendingDown, TrendingUp, Minus, Download, ChevronDown, Settings2, X, Check, FileText } from 'lucide-react';
 import { iotApi, unitApi } from '@/lib/api';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -263,6 +263,7 @@ export default function IotHistoryWidget({ unitId, isDark = false, unit, onUnitU
   const [view, setView] = useState<'chart' | 'table'>('chart');
   const [rangeIdx, setRangeIdx] = useState(2); // default 24 Jam
   const [data, setData] = useState<HistoryPoint[]>([]);
+  const [rawData, setRawData] = useState<HistoryPoint[]>([]); // unsampled, for export
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showAllRows, setShowAllRows] = useState(false);
@@ -337,6 +338,7 @@ export default function IotHistoryWidget({ unitId, isDark = false, unit, onUnitU
       const range = TIME_RANGES[rangeIdx];
       const res = await iotApi.getHistory(unitId, range.hours);
       const raw: HistoryPoint[] = res.data || [];
+      setRawData(raw);
       setData(downsample(raw, range.bucketMin));
     } catch {
       // API unavailable or failed
@@ -353,10 +355,12 @@ export default function IotHistoryWidget({ unitId, isDark = false, unit, onUnitU
     return () => clearInterval(interval);
   }, [fetchHistory]);
 
-  const summary = useMemo(() => computeSummary(data), [data]);
+  // Summary and table use rawData (5-min intervals) — chart uses downsampled data
+  const tableSource = useMemo(() => rawData.length > 0 ? rawData : data, [rawData, data]);
+  const summary = useMemo(() => computeSummary(tableSource), [tableSource]);
 
   // Table rows — oldest first, limited to 20 unless expanded
-  const tableRows = useMemo(() => [...data], [data]);
+  const tableRows = useMemo(() => [...tableSource], [tableSource]);
   const visibleRows = showAllRows ? tableRows : tableRows.slice(0, 20);
 
   const formatTime = (iso: string) => {
@@ -370,14 +374,14 @@ export default function IotHistoryWidget({ unitId, isDark = false, unit, onUnitU
   };
 
   const exportCsv = () => {
-    const header = 'Waktu,Kabinet (°C),Evaporator (°C),Kondensor (°C)\n';
-    const rows = data.map(d =>
-      `${formatTime(d.recorded_at)},${d.temp_cabinet ?? ''},${d.temp_evaporator ?? ''},${d.temp_condenser ?? ''}`
+    // Use rawData (5-min intervals) instead of downsampled display data
+    const exportRows = rawData.length > 0 ? rawData : data;
+    const rawSummary = computeSummary(exportRows);
+    const header = 'Waktu (WIB),Kabinet (°C),Evaporator (°C),Kondensor (°C)\n';
+    const rows = exportRows.map(d =>
+      `${formatTime(d.recorded_at)},${d.temp_cabinet?.toFixed(1) ?? ''},${d.temp_evaporator?.toFixed(1) ?? ''},${d.temp_condenser?.toFixed(1) ?? ''}`
     ).join('\n');
-    
-    // Tambahkan rata-rata di paling bawah CSV
-    const summaryRow = `\nRATA-RATA (${data.length} DATA),${summary.cabinet.avg ?? ''},${summary.evaporator.avg ?? ''},${summary.condenser.avg ?? ''}`;
-    
+    const summaryRow = `\nRATA-RATA (${exportRows.length} DATA),${rawSummary.cabinet.avg ?? ''},${rawSummary.evaporator.avg ?? ''},${rawSummary.condenser.avg ?? ''}`;
     const blob = new Blob([header + rows + summaryRow], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -385,6 +389,388 @@ export default function IotHistoryWidget({ unitId, isDark = false, unit, onUnitU
     a.download = `sensor-history-${unitId}-${TIME_RANGES[rangeIdx].label}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const exportPdf = () => {
+    // Use rawData (5-min intervals) for the full report
+    const exportRows = rawData.length > 0 ? rawData : data;
+    const rawSummary = computeSummary(exportRows);
+
+    // ── Build SVG chart inline ──
+    const W = 900, H = 520, PL = 70, PR = 70, PT = 55, PB = 65;
+    const cW = W - PL - PR, cH = H - PT - PB;
+
+    const allTemps = exportRows.flatMap(d => [d.temp_cabinet, d.temp_evaporator, d.temp_condenser])
+      .filter(v => v !== null && v !== -127 && v !== 85) as number[];
+    const rawMin = allTemps.length ? Math.floor(Math.min(...allTemps)) : 0;
+    const rawMax = allTemps.length ? Math.ceil(Math.max(...allTemps)) : 40;
+    const pad = Math.max(3, Math.ceil((rawMax - rawMin) * 0.15));
+    const dMin = rawMin - pad, dMax = rawMax + pad, dRange = dMax - dMin;
+
+    const xOf = (i: number) => exportRows.length <= 1 ? PL + cW / 2 : PL + (i / (exportRows.length - 1)) * cW;
+    const yOf = (v: number) => PT + cH - ((v - dMin) / dRange) * cH;
+
+    const buildSvgPath = (key: keyof HistoryPoint) => {
+      const pts: string[] = [];
+      exportRows.forEach((d, i) => {
+        const v = d[key] as number | null;
+        if (v !== null && v !== -127 && v !== 85) pts.push(`${i === 0 || pts.length === 0 ? 'M' : 'L'} ${xOf(i).toFixed(1)} ${yOf(v).toFixed(1)}`);
+      });
+      return pts.join(' ');
+    };
+
+    // Y-axis grid lines
+    const yStep = Math.max(1, Math.ceil(dRange / 6));
+    const yLines: number[] = [];
+    for (let v = dMin; v <= dMax; v += yStep) yLines.push(v);
+
+    // X-axis ticks (up to 10)
+    const xTickCount = Math.min(10, exportRows.length);
+    const xTicks = xTickCount <= 1 ? [0] : Array.from({ length: xTickCount }, (_, i) => Math.floor(i * (exportRows.length - 1) / (xTickCount - 1)));
+
+    const gridLines = yLines.map(v =>
+      `<line x1="${PL}" y1="${yOf(v).toFixed(1)}" x2="${W - PR}" y2="${yOf(v).toFixed(1)}" stroke="#bbb" stroke-width="0.8" stroke-dasharray="4 4"/>
+       <text x="${PL - 10}" y="${yOf(v).toFixed(1)}" text-anchor="end" dominant-baseline="middle" font-size="13" fill="#000" font-weight="bold" font-family="monospace">${v.toFixed(0)}</text>
+       <text x="${W - PR + 10}" y="${yOf(v).toFixed(1)}" text-anchor="start" dominant-baseline="middle" font-size="13" fill="#000" font-weight="bold" font-family="monospace">${v.toFixed(0)}</text>`
+    ).join('');
+
+    const xTickSvg = xTicks.map(idx => {
+      const d = new Date(exportRows[idx].recorded_at);
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mo = String(d.getMonth() + 1).padStart(2, '0');
+      const yy = d.getFullYear();
+      const hh = String(d.getHours()).padStart(2, '0');
+      const mi = String(d.getMinutes()).padStart(2, '0');
+      const x = xOf(idx).toFixed(1);
+      return `<line x1="${x}" y1="${PT}" x2="${x}" y2="${PT + cH}" stroke="#ddd" stroke-width="0.8"/>
+              <line x1="${x}" y1="${PT + cH}" x2="${x}" y2="${PT + cH + 6}" stroke="#555" stroke-width="1.5"/>
+              <text x="${x}" y="${PT + cH + 20}" text-anchor="middle" font-size="11" fill="#000" font-weight="bold" font-family="monospace">${dd}/${mo}/${yy}</text>
+              <text x="${x}" y="${PT + cH + 35}" text-anchor="middle" font-size="11" fill="#000" font-weight="bold" font-family="monospace">${hh}:${mi}</text>`;
+    }).join('');
+
+    const alarmLineH1 = tempLimits.cabinet.max;
+    const alarmLineL1 = tempLimits.cabinet.min;
+    const alarmSvg = [
+      `<line x1="${PL}" y1="${yOf(alarmLineH1).toFixed(1)}" x2="${W - PR}" y2="${yOf(alarmLineH1).toFixed(1)}" stroke="#ef4444" stroke-width="1" stroke-dasharray="6 3" opacity="0.6"/>`,
+      `<line x1="${PL}" y1="${yOf(alarmLineL1).toFixed(1)}" x2="${W - PR}" y2="${yOf(alarmLineL1).toFixed(1)}" stroke="#ef4444" stroke-width="1" stroke-dasharray="6 3" opacity="0.6"/>`,
+    ].join('');
+
+    const chartSvg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">
+      <!-- Legend -->
+      <text x="${PL}" y="22" font-size="13" fill="#000" font-weight="bold" font-family="sans-serif">Kabinet°C</text>
+      <line x1="${PL + 75}" y1="16" x2="${PL + 115}" y2="16" stroke="#10b981" stroke-width="4"/>
+      <text x="${PL + 130}" y="22" font-size="13" fill="#000" font-weight="bold" font-family="sans-serif">Evaporator°C</text>
+      <line x1="${PL + 230}" y1="16" x2="${PL + 270}" y2="16" stroke="#2E5BFF" stroke-width="4"/>
+      <text x="${PL + 285}" y="22" font-size="13" fill="#000" font-weight="bold" font-family="sans-serif">Kondensor°C</text>
+      <line x1="${PL + 390}" y1="16" x2="${PL + 430}" y2="16" stroke="#ef4444" stroke-width="4"/>
+      <!-- Grid -->
+      ${gridLines}
+      <!-- Alarm thresholds -->
+      ${alarmSvg}
+      <!-- Chart border -->
+      <rect x="${PL}" y="${PT}" width="${cW}" height="${cH}" fill="none" stroke="#ccc" stroke-width="1"/>
+      <!-- X ticks -->
+      ${xTickSvg}
+      <!-- Data lines -->
+      <path d="${buildSvgPath('temp_cabinet')}" fill="none" stroke="#10b981" stroke-width="3" stroke-linejoin="round"/>
+      <path d="${buildSvgPath('temp_evaporator')}" fill="none" stroke="#2E5BFF" stroke-width="3" stroke-linejoin="round"/>
+      <path d="${buildSvgPath('temp_condenser')}" fill="none" stroke="#ef4444" stroke-width="3" stroke-linejoin="round"/>
+    </svg>`;
+
+    // ── Build table HTML (multi-column like Elitech, 4 cols of rows) ──
+    const COLS = 4;
+    const colSize = Math.ceil(exportRows.length / COLS);
+    let tableHtml = `<table class="data-table"><thead><tr>`;
+    for (let c = 0; c < COLS; c++) {
+      tableHtml += `<th>Waktu (WIB)</th><th>Kab°C</th><th>Evap°C</th><th>Kond°C</th>`;
+    }
+    tableHtml += `</tr></thead><tbody>`;
+    for (let row = 0; row < colSize; row++) {
+      tableHtml += '<tr>';
+      for (let col = 0; col < COLS; col++) {
+        const idx = col * colSize + row;
+        if (idx < exportRows.length) {
+          const d = exportRows[idx];
+          tableHtml += `<td class="time">${formatTime(d.recorded_at)}</td>
+            <td class="cab">${d.temp_cabinet?.toFixed(1) ?? '—'}</td>
+            <td class="evap">${d.temp_evaporator?.toFixed(1) ?? '—'}</td>
+            <td class="cond">${d.temp_condenser?.toFixed(1) ?? '—'}</td>`;
+        } else {
+          tableHtml += '<td colspan="4"></td>';
+        }
+      }
+      tableHtml += '</tr>';
+    }
+    tableHtml += '</tbody></table>';
+
+    // ── Duration string ──
+    const firstTs = exportRows[0] ? new Date(exportRows[0].recorded_at) : new Date();
+    const lastTs = exportRows[exportRows.length - 1] ? new Date(exportRows[exportRows.length - 1].recorded_at) : new Date();
+    const durationMs = lastTs.getTime() - firstTs.getTime();
+    const dDays = Math.floor(durationMs / 86400000);
+    const dHours = Math.floor((durationMs % 86400000) / 3600000);
+    const dMins = Math.floor((durationMs % 3600000) / 60000);
+    const durationStr = dDays > 0 ? `${dDays}d ${dHours}h ${dMins}m` : `${dHours}h ${dMins}m`;
+
+    const unitName = unit?.model_name ?? unitId;
+    const unitSn = unit?.serial_number ?? unitId;
+    const clientName = unit?.current_client?.company_name ?? '—';
+    const outlet = unit?.outlet_branch ?? '—';
+    const createdOn = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Data Report — ${unitSn}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, Helvetica, sans-serif; font-size: 13px; color: #000; background: #fff; padding: 28px 32px; }
+
+    /* ── Header ── */
+    .page-header {
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 2px solid #000; padding-bottom: 14px; margin-bottom: 20px;
+    }
+    .page-header-left h1 {
+      font-size: 30px; font-weight: 900; color: #000; letter-spacing: -0.5px; line-height: 1;
+    }
+    .page-header-left .sub {
+      font-size: 12px; color: #444; margin-top: 4px; font-weight: 400;
+    }
+    .logo-block {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      padding: 0;
+    }
+    .logo-block svg { width: 44px; height: 44px; color: #000; }
+    .logo-block span {
+      font-size: 15px; font-weight: 900; color: #000;
+      letter-spacing: 1px; font-family: Arial, sans-serif; text-transform: uppercase;
+    }
+
+    /* ── Section titles ── */
+    .section-title {
+      color: #000; font-weight: 900;
+      padding: 10px 0 5px; font-size: 15px; letter-spacing: 0.1px;
+      margin-top: 18px; margin-bottom: 8px;
+      border-bottom: 2px solid #000;
+    }
+
+    /* ── Info grid (2-col key-value) ── */
+    .info-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 0; border: 1px solid #999; border-radius: 4px; overflow: hidden;
+    }
+    .info-row {
+      display: flex; align-items: baseline; padding: 7px 14px;
+      border-bottom: 1px solid #ddd; font-size: 12px;
+    }
+    .info-row:nth-child(odd) { background: #f5f5f5; }
+    .info-row b { min-width: 160px; font-weight: 700; color: #000; flex-shrink: 0; }
+    .info-row span { color: #000; }
+
+    /* ── Alarm section ── */
+    .alarm-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .alarm-table th {
+      background: #e8e8e8; font-weight: 700; color: #000;
+      padding: 7px 14px; text-align: left; border: 1px solid #999;
+    }
+    .alarm-table td { padding: 7px 14px; border: 1px solid #999; color: #000; }
+    .alarm-table tr:nth-child(even) td { background: #f5f5f5; }
+    .alarm-table td:first-child { font-weight: 700; min-width: 100px; }
+    .ok-badge {
+      display: inline-block; background: #dcfce7; color: #15803d;
+      border: 1px solid #16a34a; border-radius: 3px; padding: 1px 8px;
+      font-size: 11px; font-weight: 900;
+    }
+
+    /* ── Summary ── */
+    .summary-outer { display: flex; gap: 0; border: 1px solid #999; border-radius: 4px; overflow: hidden; }
+    .summary-left { flex: 1.2; }
+    .summary-right { flex: 1; border-left: 1px solid #999; }
+    .sum-row {
+      display: flex; align-items: baseline; padding: 7px 14px;
+      border-bottom: 1px solid #ddd; font-size: 12px;
+    }
+    .sum-row:nth-child(odd) { background: #f5f5f5; }
+    .sum-row b { min-width: 160px; font-weight: 700; color: #000; flex-shrink: 0; }
+    .sum-row .v { font-family: monospace; font-weight: 700; color: #000; }
+    .v-green { color: #000 !important; }
+    .v-blue  { color: #000 !important; }
+    .v-red   { color: #000 !important; }
+
+    /* ── Chart ── */
+    .chart-wrap {
+      margin: 6px 0 10px; border: 1px solid #999;
+      border-radius: 4px; overflow: hidden; padding: 8px 6px 4px;
+      background: #fff;
+    }
+
+    /* ── Data table ── */
+    .data-range {
+      font-size: 9.5px; color: #444; margin-bottom: 4px; font-style: italic;
+    }
+    .data-table {
+      width: 100%; border-collapse: collapse;
+      font-size: 10px; font-family: monospace;
+    }
+    .data-table thead tr th {
+      background: #222; color: #fff;
+      padding: 4px 7px; text-align: left; font-size: 10px;
+      font-family: Arial, sans-serif; font-weight: 700; white-space: nowrap;
+    }
+    .data-table tbody td {
+      padding: 2px 7px; border-bottom: 1px solid #ddd;
+      white-space: nowrap;
+    }
+    .data-table tbody tr:nth-child(even) td { background: #f5f5f5; }
+    .data-table td.time { color: #000; font-weight: 600; }
+    .data-table td.cab  { color: #000; font-weight: 700; }
+    .data-table td.evap { color: #000; font-weight: 700; }
+    .data-table td.cond { color: #000; font-weight: 700; }
+    /* column separators between each group */
+    .data-table td.sep, .data-table th.sep { border-left: 2px solid #999; }
+
+    /* ── Footer ── */
+    .page-footer {
+      margin-top: 16px; padding-top: 7px;
+      border-top: 1px solid #999;
+      display: flex; justify-content: space-between;
+      font-size: 9px; color: #444;
+    }
+
+    @media print {
+      body { padding: 14px 18px; }
+      .page-header { margin-bottom: 12px; }
+      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .page-break { page-break-before: always; break-before: page; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════ HEADER ═══════════════ -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1>Data Report IoT Telemetry</h1>
+      <div class="sub">File created on: ${createdOn} WIB &nbsp;·&nbsp; ${unitSn}</div>
+    </div>
+    <div class="logo-block">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 210" fill="none">
+        <polyline points="100,8 8,182 20,198 180,198 192,182 100,8" stroke="currentColor" stroke-width="10" stroke-linejoin="miter" stroke-linecap="square" fill="none"/>
+        <line x1="93" y1="20" x2="93" y2="198" stroke="currentColor" stroke-width="8" stroke-linecap="square"/>
+        <line x1="107" y1="20" x2="107" y2="198" stroke="currentColor" stroke-width="8" stroke-linecap="square"/>
+        <polyline points="107,75 150,75 150,128" stroke="currentColor" stroke-width="8" stroke-linecap="square" stroke-linejoin="miter" fill="none"/>
+        <polyline points="107,87 138,87 138,128" stroke="currentColor" stroke-width="8" stroke-linecap="square" stroke-linejoin="miter" fill="none"/>
+        <polyline points="107,128 168,128 168,175" stroke="currentColor" stroke-width="8" stroke-linecap="square" stroke-linejoin="miter" fill="none"/>
+        <polyline points="107,140 156,140 156,175" stroke="currentColor" stroke-width="8" stroke-linecap="square" stroke-linejoin="miter" fill="none"/>
+      </svg>
+      <span>Holicindo</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════ DEVICE INFO ═══════════════ -->
+  <div class="section-title">Device Information</div>
+  <div class="info-grid">
+    <div class="info-row"><b>Model:</b><span>${unitName}</span></div>
+    <div class="info-row"><b>Probe Type:</b><span>Temperature (3-Sensor)</span></div>
+    <div class="info-row"><b>Serial Number:</b><span>${unitSn}</span></div>
+    <div class="info-row"><b>Unit ID (IoT):</b><span>${unit?.iot_unit_id ?? unitId}</span></div>
+    <div class="info-row"><b>Klien:</b><span>${clientName}</span></div>
+    <div class="info-row"><b>Outlet / Cabang:</b><span>${outlet}</span></div>
+  </div>
+
+  <!-- ═══════════════ CONFIG ═══════════════ -->
+  <div class="section-title">Config. Info</div>
+  <div class="info-grid">
+    <div class="info-row"><b>Logging Interval:</b><span>5 menit</span></div>
+    <div class="info-row"><b>Storage Mode:</b><span>Continuous</span></div>
+    <div class="info-row"><b>Range Tampil:</b><span>${TIME_RANGES[rangeIdx].label}</span></div>
+    <div class="info-row"><b>Total Data Points:</b><span>${exportRows.length} titik</span></div>
+  </div>
+
+  <!-- ═══════════════ ALARM THRESHOLD ═══════════════ -->
+  <div class="section-title">Alarm Threshold</div>
+  <table class="alarm-table">
+    <thead>
+      <tr>
+        <th>Sensor</th><th>Batas Atas (H1)</th><th>Batas Bawah (L1)</th><th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>Kabinet</b></td>
+        <td>Above: ${tempLimits.cabinet.max.toFixed(1)}°C</td>
+        <td>Below: ${tempLimits.cabinet.min.toFixed(1)}°C</td>
+        <td><span class="ok-badge">OK</span></td>
+      </tr>
+      <tr>
+        <td><b>Evaporator</b></td>
+        <td>Above: ${tempLimits.evaporator.max.toFixed(1)}°C</td>
+        <td>Below: ${tempLimits.evaporator.min.toFixed(1)}°C</td>
+        <td><span class="ok-badge">OK</span></td>
+      </tr>
+      <tr>
+        <td><b>Kondensor</b></td>
+        <td>Above: ${tempLimits.condenser.max.toFixed(1)}°C</td>
+        <td>Below: ${tempLimits.condenser.min.toFixed(1)}°C</td>
+        <td><span class="ok-badge">OK</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ═══════════════ SUMMARY ═══════════════ -->
+  <div class="section-title">Summary</div>
+  <div class="summary-outer">
+    <div class="summary-left">
+      <div class="sum-row"><b>Maximum (Kabinet):</b><span class="v v-green">${rawSummary.cabinet.max ?? '—'}°C</span></div>
+      <div class="sum-row"><b>Minimum (Kabinet):</b><span class="v v-green">${rawSummary.cabinet.min ?? '—'}°C</span></div>
+      <div class="sum-row"><b>Average (Kabinet):</b><span class="v v-green">${rawSummary.cabinet.avg ?? '—'}°C</span></div>
+      <div class="sum-row"><b>Average (Evaporator):</b><span class="v v-blue">${rawSummary.evaporator.avg ?? '—'}°C</span></div>
+      <div class="sum-row"><b>Average (Kondensor):</b><span class="v v-red">${rawSummary.condenser.avg ?? '—'}°C</span></div>
+    </div>
+    <div class="summary-right">
+      <div class="sum-row"><b>First Reading:</b><span class="v">${exportRows[0] ? formatTime(exportRows[0].recorded_at) : '—'} WIB</span></div>
+      <div class="sum-row"><b>Last Reading:</b><span class="v">${exportRows[exportRows.length-1] ? formatTime(exportRows[exportRows.length-1].recorded_at) : '—'} WIB</span></div>
+      <div class="sum-row"><b>Logging Duration:</b><span class="v">${durationStr}</span></div>
+      <div class="sum-row"><b>Total Memory:</b><span class="v">${exportRows.length} titik data</span></div>
+      <div class="sum-row"><b>First Alarm:</b><span class="v">N/A</span></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ CHART ═══════════════ -->
+  <div class="chart-wrap">${chartSvg}</div>
+
+  <!-- Footer halaman 1 -->
+  <div class="page-footer" style="margin-top:20px;">
+    <span>portal.holicindo.com</span>
+    <span>File Name: SensorReport_${unitSn}_${TIME_RANGES[rangeIdx].label.replace(' ', '')}_${new Date().toISOString().slice(0,10)} &nbsp;·&nbsp; Halaman 1/2</span>
+  </div>
+
+  <!-- ═══════════════ DATA TABLE ═══════════════ -->
+  <div class="page-break">
+  <div class="section-title">Data Detail</div>
+  <div class="data-range">
+    From ${exportRows[0] ? formatTime(exportRows[0].recorded_at) : '—'} WIB &nbsp;→&nbsp; ${exportRows[exportRows.length-1] ? formatTime(exportRows[exportRows.length-1].recorded_at) : '—'} WIB &nbsp;·&nbsp; ${exportRows.length} titik data &nbsp;·&nbsp; interval 5 menit
+  </div>
+  ${tableHtml}
+
+  <!-- ═══════════════ FOOTER (halaman 2) ═══════════════ -->
+  <div class="page-footer">
+    <span>portal.holicindo.com</span>
+    <span>File Name: SensorReport_${unitSn}_${TIME_RANGES[rangeIdx].label.replace(' ', '')}_${new Date().toISOString().slice(0,10)}</span>
+  </div>
+  </div><!-- end page-break div -->
+
+  <script>window.onload = () => { window.print(); }</script>
+</body>
+</html>`;
+
+    const win = window.open('', '_blank', 'width=1000,height=800');
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+    }
   };
 
   return (
@@ -454,18 +840,21 @@ export default function IotHistoryWidget({ unitId, isDark = false, unit, onUnitU
             <Download size={12} />
             Export CSV
           </button>
+          <button onClick={exportPdf} disabled={data.length === 0} style={{
+            padding: '5px 10px', borderRadius: '8px', border: '1px solid rgba(234,88,12,0.25)',
+            background: 'rgba(234,88,12,0.06)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px',
+            fontSize: '0.72rem', fontWeight: 700, color: '#ea580c', fontFamily: 'inherit',
+          }}>
+            <FileText size={12} />
+            Export PDF
+          </button>
         </div>
       </div>
 
       {/* Legend (Removed since it is now inside the chart) */}
       <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
         <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>
-          {data.length} titik data · interval {(() => {
-            const m = TIME_RANGES[rangeIdx].bucketMin;
-            if (m < 60) return `${m} menit`;
-            if (m < 1440) return `${m / 60} jam`;
-            return `${m / 1440} hari`;
-          })()}
+          {tableRows.length} titik data · interval 5 menit
         </span>
       </div>
 
@@ -558,7 +947,7 @@ export default function IotHistoryWidget({ unitId, isDark = false, unit, onUnitU
                   <tfoot style={{ position: 'sticky', bottom: 0, zIndex: 10, background: '#f0f4f8' }}>
                     <tr style={{ background: 'rgba(46,91,255,0.04)', borderTop: '2px solid rgba(46,91,255,0.12)' }}>
                       <td colSpan={2} style={{ padding: '12px 14px', fontWeight: 800, color: '#475569', fontSize: '0.7rem', textTransform: 'uppercase', backdropFilter: 'blur(4px)' }}>
-                        Rata-rata ({data.length} data)
+                        Rata-rata ({tableRows.length} data)
                       </td>
                       <td style={{ padding: '12px 14px', fontFamily: 'monospace', fontWeight: 900, color: '#10b981', backdropFilter: 'blur(4px)' }}>
                         {summary.cabinet.avg !== null ? `${summary.cabinet.avg}°` : '—'}
