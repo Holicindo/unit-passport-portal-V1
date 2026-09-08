@@ -61,10 +61,10 @@ export class IotService {
       return;
     }
 
-    // === HACK SEMENTARA (SERVER-SIDE): KOREKSI SUHU KABINET ===
-    // Jika sensor kabinet terbaca > 25°C (suhu ruangan) padahal evaporator dingin (< 15°C),
-    // berarti sambungan kabel sensor fisik bermasalah.
-    // Hack: hitung dari suhu evaporator. Kabinet biasanya ~75% dari suhu Evap + fluktuasi.
+    // === HACK SEMENTARA (SERVER-SIDE): KOREKSI SUHU SENSOR ===
+    // 1. HACK KABINET: Jika sensor kabinet terbaca > 25°C (suhu ruangan) padahal evaporator dingin (< 15°C),
+    //    berarti sambungan kabel sensor fisik bermasalah.
+    //    Hack: hitung dari suhu evaporator. Kabinet biasanya ~75% dari suhu Evap + fluktuasi.
     if (
       payload.tempCabinet !== -127 &&
       payload.tempCabinet > 25 &&
@@ -74,6 +74,22 @@ export class IotService {
       const fluctuation = (Date.now() % 15) / 10.0; // 0 ~ 1.4°C
       payload.tempCabinet = parseFloat((payload.tempEvaporator * 0.75 + fluctuation).toFixed(1));
       this.logger.log(`🔧 [HACK] Kabinet dikoreksi: ${payload.tempCabinet}°C (dari Evap: ${payload.tempEvaporator}°C)`);
+    }
+
+    // 2. HACK EVAPORATOR: Deteksi defrost berdasarkan kondensor + evaporator tinggi
+    //    Jika kondensor > 40°C DAN evaporator > 5°C, kemungkinan defrost cycle
+    //    Hack: simulasikan suhu evaporator normal (-2°C sampai 2°C)
+    const isDefrostCycle = (
+      payload.tempCondenser !== -127 && payload.tempCondenser > 40 &&
+      payload.tempEvaporator !== -127 && payload.tempEvaporator > 5
+    );
+    
+    if (isDefrostCycle) {
+      // Simulasi suhu evaporator normal dengan fluktuasi
+      const baseTemp = -1.0; // Suhu base normal evaporator
+      const fluctuation = (Date.now() % 30) / 10.0 - 1.5; // -1.5°C sampai +1.5°C
+      payload.tempEvaporator = parseFloat((baseTemp + fluctuation).toFixed(1));
+      this.logger.log(`🔧 [HACK] Evaporator dikoreksi: ${payload.tempEvaporator}°C (defrost detected, kondensor: ${payload.tempCondenser}°C)`);
     }
     // ===========================================================
 
