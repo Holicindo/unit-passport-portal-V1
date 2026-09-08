@@ -338,8 +338,11 @@ export default function IotHistoryWidget({ unitId, isDark = false, unit, onUnitU
       const range = TIME_RANGES[rangeIdx];
       const res = await iotApi.getHistory(unitId, range.hours);
       const raw: HistoryPoint[] = res.data || [];
-      setRawData(raw);
-      setData(downsample(raw, range.bucketMin));
+      // Filter rawData to exactly match the selected time range
+      const since = new Date(Date.now() - range.hours * 60 * 60 * 1000);
+      const filtered = raw.filter(p => new Date(p.recorded_at) >= since);
+      setRawData(filtered);
+      setData(downsample(filtered, range.bucketMin));
     } catch {
       // API unavailable or failed
       setData([]);
@@ -365,12 +368,15 @@ export default function IotHistoryWidget({ unitId, isDark = false, unit, onUnitU
 
   const formatTime = (iso: string) => {
     const d = new Date(iso);
-    const dd = String(d.getDate()).padStart(2, '0');
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const yyyy = d.getFullYear();
-    const H = String(d.getHours()).padStart(2, '0');
-    const M = String(d.getMinutes()).padStart(2, '0');
-    return `${dd}/${mm}/${yyyy} ${H}:${M}`;
+    // Explicit WIB (UTC+7) conversion — tidak bergantung timezone browser
+    const wib  = new Date(d.getTime() + 7 * 60 * 60 * 1000);
+    const dd   = String(wib.getUTCDate()).padStart(2, '0');
+    const mm   = String(wib.getUTCMonth() + 1).padStart(2, '0');
+    const yyyy = wib.getUTCFullYear();
+    const H    = String(wib.getUTCHours()).padStart(2, '0');
+    const M    = String(wib.getUTCMinutes()).padStart(2, '0');
+    const S    = String(wib.getUTCSeconds()).padStart(2, '0');
+    return `${dd}/${mm}/${yyyy} ${H}:${M}:${S}`;
   };
 
   const exportCsv = () => {
