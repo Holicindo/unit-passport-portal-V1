@@ -245,8 +245,8 @@ function SummaryCard({ label, summary, color }: { label: string; summary: Sensor
 // ─── Main Component ────────────────────────────────────────────────────────────
 const TIME_RANGES = [
   { label: '1 Jam',    hours: 1,       bucketMin: 5   },
-  { label: '7 Jam',   hours: 7,       bucketMin: 15  },
-  { label: '24 Jam',  hours: 24,      bucketMin: 30  },
+  { label: '7 Jam',   hours: 7,       bucketMin: 5   },
+  { label: '24 Jam',  hours: 24,      bucketMin: 5   },
   { label: '1 Bulan', hours: 720,     bucketMin: 120 },  // 30 days → 2-hour buckets
   { label: '3 Bulan', hours: 2160,    bucketMin: 360 },  // 90 days → 6-hour buckets
   { label: '1 Tahun', hours: 8760,    bucketMin: 1440 }, // 365 days → 1-day buckets
@@ -313,21 +313,60 @@ export default function IotHistoryWidget({ unitId, isDark = false, unit, onUnitU
     }
   };
 
+  // Terapkan hack koreksi suhu yang sama dengan backend (iot.service.ts)
+  // Kabinet > 25°C tapi evap < 15°C = sensor kabel bermasalah, koreksi dari evap
+  const applyHack = (point: HistoryPoint): HistoryPoint => {
+    const cab  = point.temp_cabinet;
+    const evap = point.temp_evaporator;
+    if (
+      cab  !== null && cab  !== undefined && cab  !== -127 && cab  > 25 &&
+      evap !== null && evap !== undefined && evap !== -127 && evap < 15
+    ) {
+      return {
+        ...point,
+        temp_cabinet: parseFloat((evap * 0.75).toFixed(1)),
+      };
+    }
+    return point;
+  };
+
   const downsample = (points: HistoryPoint[], bucketMin: number) => {
     if (!points || points.length === 0) return [];
+    
+    // Untuk interval konsisten 5 menit, kita perlu mengelompokkan berdasarkan slot waktu yang tepat
+    // Bukan hanya membagi dengan bucket, tapi membuat grid waktu yang konsisten
     const bucketMs = bucketMin * 60 * 1000;
-    const buckets = new Map<number, HistoryPoint>();
-    for (const p of points) {
-      const time = new Date(p.recorded_at).getTime();
-      const bucketId = Math.floor(time / bucketMs);
-      if (!buckets.has(bucketId)) {
-        buckets.set(bucketId, p);
+    
+    // Group data berdasarkan slot waktu 5 menit
+    const buckets = new Map<number, HistoryPoint[]>();
+    
+    for (const point of points) {
+      const time = new Date(point.recorded_at).getTime();
+      // Bulatkan ke slot 5 menit terdekat
+      // Misal 16:23:30 -> 16:23:00, 16:28:15 -> 16:28:00
+      const slotTime = Math.floor(time / bucketMs) * bucketMs;
+      
+      if (!buckets.has(slotTime)) {
+        buckets.set(slotTime, []);
       }
+      buckets.get(slotTime)!.push(point);
     }
-    // Return sorted oldest to newest
-    return Array.from(buckets.values()).sort((a, b) =>
-      new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime()
-    );
+    
+    // Ambil satu data per slot (yang paling dekat dengan waktu slot)
+    const result: HistoryPoint[] = [];
+    
+    for (const [slotTime, pointsInSlot] of buckets) {
+      // Pilih data yang paling dekat dengan waktu slot
+      const bestPoint = pointsInSlot.reduce((closest, current) => {
+        const closestDiff = Math.abs(new Date(closest.recorded_at).getTime() - slotTime);
+        const currentDiff = Math.abs(new Date(current.recorded_at).getTime() - slotTime);
+        return currentDiff < closestDiff ? current : closest;
+      });
+      
+      result.push(bestPoint);
+    }
+    
+    return result.sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
   };
 
   const fetchHistory = useCallback(async (isManual = false) => {
@@ -340,7 +379,9 @@ export default function IotHistoryWidget({ unitId, isDark = false, unit, onUnitU
       const raw: HistoryPoint[] = res.data || [];
       // Filter rawData to exactly match the selected time range
       const since = new Date(Date.now() - range.hours * 60 * 60 * 1000);
-      const filtered = raw.filter(p => new Date(p.recorded_at) >= since);
+      const filtered = raw
+        .filter(p => new Date(p.recorded_at) >= since)
+        .map(applyHack); // terapkan koreksi sensor yang sama dengan backend
       setRawData(filtered);
       setData(downsample(filtered, range.bucketMin));
     } catch {
@@ -358,8 +399,8 @@ export default function IotHistoryWidget({ unitId, isDark = false, unit, onUnitU
     return () => clearInterval(interval);
   }, [fetchHistory]);
 
-  // Summary and table use rawData (5-min intervals) — chart uses downsampled data
-  const tableSource = useMemo(() => rawData.length > 0 ? rawData : data, [rawData, data]);
+  // Table and summary use downsampled data (same as chart) — consistent intervals
+  const tableSource = useMemo(() => data, [data]);
   const summary = useMemo(() => computeSummary(tableSource), [tableSource]);
 
   // Table rows — oldest first, limited to 20 unless expanded
@@ -368,15 +409,15 @@ export default function IotHistoryWidget({ unitId, isDark = false, unit, onUnitU
 
   const formatTime = (iso: string) => {
     const d = new Date(iso);
-    // Explicit WIB (UTC+7) conversion — tidak bergantung timezone browser
-    const wib  = new Date(d.getTime() + 7 * 60 * 60 * 1000);
+    // Explicit WIB (UTC+7) conversion
+    const wib = new Date(d.getTime() + 7 * 60 * 60 * 1000);
     const dd   = String(wib.getUTCDate()).padStart(2, '0');
     const mm   = String(wib.getUTCMonth() + 1).padStart(2, '0');
     const yyyy = wib.getUTCFullYear();
     const H    = String(wib.getUTCHours()).padStart(2, '0');
     const M    = String(wib.getUTCMinutes()).padStart(2, '0');
-    const S    = String(wib.getUTCSeconds()).padStart(2, '0');
-    return `${dd}/${mm}/${yyyy} ${H}:${M}:${S}`;
+    // Hapus detik, hanya jam:menit
+    return `${dd}/${mm}/${yyyy} ${H}:${M}`;
   };
 
   const exportCsv = () => {

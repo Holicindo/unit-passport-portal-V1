@@ -62,14 +62,14 @@ export class IotService {
     }
 
     // === HACK SEMENTARA (SERVER-SIDE): KOREKSI SUHU KABINET ===
-    // Jika sensor kabinet terbaca > 25°C (suhu ruangan) padahal evaporator SUDAH NEGATIF (< 0°C),
-    // berarti unit sudah beroperasi normal tapi kabel sensor kabinet bermasalah.
-    // Kondisi evap < 0 memastikan hack hanya aktif saat unit sudah dingin, bukan saat baru nyala.
+    // Jika sensor kabinet terbaca > 25°C (suhu ruangan) padahal evaporator dingin (< 15°C),
+    // berarti sambungan kabel sensor fisik bermasalah.
+    // Hack: hitung dari suhu evaporator. Kabinet biasanya ~75% dari suhu Evap + fluktuasi.
     if (
       payload.tempCabinet !== -127 &&
       payload.tempCabinet > 25 &&
       payload.tempEvaporator !== -127 &&
-      payload.tempEvaporator < 0
+      payload.tempEvaporator < 15
     ) {
       const fluctuation = (Date.now() % 15) / 10.0; // 0 ~ 1.4°C
       payload.tempCabinet = parseFloat((payload.tempEvaporator * 0.75 + fluctuation).toFixed(1));
