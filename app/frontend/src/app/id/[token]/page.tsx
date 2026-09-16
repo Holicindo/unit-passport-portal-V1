@@ -34,7 +34,7 @@ export default function QrPassportPage() {
   const passport = usePassportData();
   const {
     token, unit, user, loading, error,
-    isDark, setIsDark, carouselRef, unitReports,
+    carouselRef, unitReports,
     toast, showToast, clearToast, loadUnitData,
     isGuest, isClient, isPartner, isAdmin,
     belongsToClient, hasClientRestriction,
@@ -114,7 +114,7 @@ export default function QrPassportPage() {
   );
 
   return (
-    <div className={styles.pageWrapper} data-theme={isDark ? 'dark' : 'light'} data-page="passport">
+    <div className={styles.pageWrapper} data-page="passport">
       {/* Toast — CSS module classes */}
       {toast && (
         <div role="alert" aria-live="polite" className={styles.toastContainer}>
@@ -132,8 +132,6 @@ export default function QrPassportPage() {
 
       {/* Sticky topbar — outside container */}
       <PassportTopbar
-        isDark={isDark}
-        setIsDark={setIsDark}
         isGuest={isGuest}
         isClient={isClient}
         isPartner={isPartner}
@@ -820,7 +818,7 @@ export default function QrPassportPage() {
                   </span>
                 </div>
                 <div className={styles.panelContent}>
-                  <CustomerHealthWidget isDark={isDark} />
+                  <CustomerHealthWidget />
                 </div>
               </section>
             )}
@@ -839,7 +837,7 @@ export default function QrPassportPage() {
                   </span>
                 </div>
                 <div className={styles.panelContent}>
-                  <IotTelemetryWidget unitId={unit.id} unitModel={unit.model_name} isDark={isDark} unit={unit} />
+                  <IotTelemetryWidget unitId={unit.id} unitModel={unit.model_name} unit={unit} />
                 </div>
               </section>
             )}
@@ -857,7 +855,7 @@ export default function QrPassportPage() {
                   </span>
                 </div>
                 <div className={styles.panelContent}>
-                  <IotHistoryWidget unitId={unit.id} isDark={isDark} unit={unit} onUnitUpdate={loadUnitData} />
+                  <IotHistoryWidget unitId={unit.id} unit={unit} onUnitUpdate={loadUnitData} />
                 </div>
               </section>
             )}

@@ -131,10 +131,7 @@ export default function UsersPage() {
     <div className={styles.container}>
       <header className={styles.header}>
         <div>
-          <div className={styles.titleWrapper}>
-            <ShieldAlert size={28} className={styles.titleIcon} strokeWidth={2.5} />
-            <h1 className={styles.title}>Manajemen Pengguna</h1>
-          </div>
+          <h1 className={styles.title}>Manajemen Pengguna</h1>
           <p className={styles.subtitle}>Kontrol akses, role, dan hak istimewa untuk seluruh pengguna sistem.</p>
         </div>
       </header>

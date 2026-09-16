@@ -45,6 +45,12 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
     this.client.on('message', (topic: string, payload: Buffer) => {
       try {
         const data = JSON.parse(payload.toString());
+        
+        // Debug: Log raw payload untuk unit A26051860
+        if (data.unitId === 'A26051860') {
+          this.logger.log(`🔍 [DEBUG A26051860] Raw payload: ${payload.toString()}`);
+        }
+        
         const doorStatus = [
           data.isDoor1Open !== undefined ? (data.isDoor1Open ? 'P1:OPEN' : 'P1:CLOSED') : null,
           data.isDoor2Open !== undefined ? (data.isDoor2Open ? 'P2:OPEN' : 'P2:CLOSED') : null,

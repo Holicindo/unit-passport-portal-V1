@@ -24,7 +24,6 @@ interface TelemetryData {
 interface IotTelemetryWidgetProps {
   unitId: string;
   unitModel?: string;
-  isDark?: boolean;
   unit?: any;
 }
 
@@ -163,7 +162,7 @@ function DoorStatus({ label, isOpen }: { label: string; isOpen: boolean | null }
   );
 }
 
-export default function IotTelemetryWidget({ unitId, unitModel, isDark = false, unit }: IotTelemetryWidgetProps) {
+export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelemetryWidgetProps) {
   const [data, setData] = useState<TelemetryData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -306,13 +305,11 @@ export default function IotTelemetryWidget({ unitId, unitModel, isDark = false, 
             onClick={() => fetchData(true)}
             disabled={refreshing}
             style={{
-              background: refreshing
-                ? 'rgba(46,91,255,0.12)'
-                : isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,31,63,0.06)',
-              border: `1px solid ${refreshing ? 'rgba(46,91,255,0.3)' : isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,31,63,0.12)'}`,
+              background: refreshing ? 'rgba(46,91,255,0.12)' : 'rgba(0,31,63,0.06)',
+              border: `1px solid ${refreshing ? 'rgba(46,91,255,0.3)' : 'rgba(0,31,63,0.12)'}`,
               borderRadius: '6px', padding: '4px 10px',
               cursor: refreshing ? 'not-allowed' : 'pointer',
-              color: refreshing ? '#2E5BFF' : isDark ? '#f8fafc' : '#475569',
+              color: refreshing ? '#2E5BFF' : '#475569',
               display: 'flex', alignItems: 'center', gap: '5px',
               fontSize: '0.72rem', fontWeight: 700, fontFamily: 'inherit',
               transition: 'all 0.2s ease',
@@ -377,8 +374,8 @@ export default function IotTelemetryWidget({ unitId, unitModel, isDark = false, 
                 { label: 'Daya',    value: data.power,   unit: 'W', alert: false },
               ].map(({ label, value, unit, alert }) => (
                 <div key={label} style={{
-                  background: alert ? 'rgba(239,68,68,0.08)' : (isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,31,63,0.04)'),
-                  border: `1.5px solid ${alert ? 'rgba(239,68,68,0.3)' : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,31,63,0.08)')}`,
+                  background: alert ? 'rgba(239,68,68,0.08)' : 'rgba(0,31,63,0.04)',
+                  border: `1.5px solid ${alert ? 'rgba(239,68,68,0.3)' : 'rgba(0,31,63,0.08)'}`,
                   borderRadius: '12px', padding: '14px 10px', textAlign: 'center'
                 }}>
                   <div style={{

@@ -1,147 +1,126 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 :root {
-  /* Brand Identity Colors */
-  --color-space-grey: #717378;      /* Headers, icons, sidebar */
-  --color-deep-navy: #001F3F;       /* Footers, badges, text */
-  --color-light-tech-grey: #E8EAEE; /* Main background — warm grey untuk neumorphism */
-  --color-optic-white: #FFFFFF;     /* Cards, content */
-  --color-cobalt-blue: #2E5BFF;     /* Buttons, links, actions */
-  --color-safety-orange: #FF6B00;   /* Warning, emergency */
-  --color-success: #10B981;
-  --color-warning: #F59E0B;
+  /* ── Brand Colors ── */
+  --color-optic-white: #F6F7FC;
+  /* card surface */
+  --color-light-tech-grey: #ADACB5;
+  /* French Gray (legacy) */
+  --color-space-grey: #64748B;
+  --color-deep-navy: #0D2B5E;
+  --color-navy-mid: #1E3A5F;
+  --color-navy-light: #2A4A72;
+  --color-cobalt-blue: #4F46E5;
+  /* indigo — primary accent */
+  --color-indigo-light: #6366F1;
+  /* hover / secondary accent */
+  --color-indigo-pale: #EEF2FF;
+  /* indigo tint bg */
+  --color-safety-orange: #CC5500;
+  --color-success: #045017;
+  --color-warning: #c78006;
+  --color-error: #4e0909;
+  --color-danger: #4e0909;
 
-  --font-heading: 'Montserrat', sans-serif;
-  --font-body: 'Inter', sans-serif;
+  /* ── Semantic surfaces ── */
+  --color-card-bg: #F6F7FC;
+  /* card surface */
+  --color-bg-page: #F0F1F7;
+  /* off-white page background */
+  --color-bg-row: #ECEDFA;
+  /* table row / list item */
+  --color-bg-row-hover: #E0E2F5;
+  /* row hover */
+  --color-border: rgba(79, 70, 229, 0.15);
+  /* indigo-tinted border */
 
-  --radius-sm: 8px;
-  --radius-md: 12px;
+  /* ── Typography ── */
+  --font-heading: 'Inter', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+
+  /* ── Spacing & Layout ── */
+  --radius-sm: 6px;
+  --radius-md: 10px;
   --radius-lg: 16px;
-  --radius-xl: 24px;
-  --sidebar-width: 260px;
+  --sidebar-width: 280px;
   --sidebar-collapsed-width: 80px;
-  --main-padding: 20px;
+  --main-padding: 24px;
 
-  /* Light Mode Glass System - Brand-aligned */
-  --glass-bg: rgba(255, 255, 255, 0.9);      /* Optic White glass */
-  --glass-border: rgba(113, 115, 120, 0.15); /* Space Grey subtle border */
-  --glass-blur: blur(24px) saturate(180%);
-  --glass-shadow: 0 8px 32px rgba(0, 31, 63, 0.06), 0 2px 8px rgba(46, 91, 255, 0.04);
-  --glass-shadow-hover: 0 16px 48px rgba(0, 31, 63, 0.1), 0 4px 12px rgba(46, 91, 255, 0.08);
+  /* ── Borders ── */
+  --border-card: 1px solid rgba(79, 70, 229, 0.12);
+  --border-input: 1px solid rgba(79, 70, 229, 0.15);
 
-  /* Neumorphism Card Tokens — untuk halaman passport dan portal */
-  --shadow-card-neu:
-    -5px -5px 12px rgba(255, 255, 255, 0.9),
-     5px  5px 12px rgba(0, 31, 63, 0.12),
-     0 1px 3px rgba(0, 31, 63, 0.06);
-  --border-card: 1px solid rgba(0, 31, 63, 0.05);
-  --shadow-card-inset: inset 3px 3px 7px rgba(0, 31, 63, 0.07), inset -3px -3px 7px rgba(255, 255, 255, 0.92);
-
-  /* Neumorphism tokens — shorthand untuk client portal dan komponen lain */
-  --neu-base:          #E4E6EF;
-  --neu-shadow:
-    -6px -6px 10px rgba(255, 255, 255, 0.72),
-     6px  6px 12px rgba(0, 31, 63, 0.14),
-     0 1px 3px rgba(0, 31, 63, 0.05);
-  --neu-shadow-sm:
-    -3px -3px 6px rgba(255, 255, 255, 0.72),
-     3px  3px 6px rgba(0, 31, 63, 0.14);
-  --neu-shadow-inset:
-    inset 3px 3px 7px rgba(0, 31, 63, 0.07),
-    inset -3px -3px 7px rgba(255, 255, 255, 0.92);
-  --neu-shadow-hover:
-    -8px -8px 14px rgba(255, 255, 255, 0.80),
-     8px  8px 16px rgba(0, 31, 63, 0.18),
-     0 2px 5px rgba(0, 31, 63, 0.07);
-
-  /* Background Gradient - Subtle frosted aurora glow from sidebar */
-  --bg-gradient-image: 
-    radial-gradient(ellipse at 0% 50%, rgba(180, 193, 239, 0.15) 0%, transparent 70%),
-    radial-gradient(ellipse at 10% 100%, rgba(46, 91, 255, 0.04) 0%, transparent 50%);
+  /* ── Shadows (neumorphic — indigo/navy toned) ── */
+  --shadow-card:
+    -6px -6px 12px rgba(255, 255, 255, 0.72),
+    6px 6px 12px rgba(79, 70, 229, 0.1);
+  --shadow-card-inset:
+    inset 3px 3px 6px rgba(79, 70, 229, 0.07),
+    inset -3px -3px 6px rgba(255, 255, 255, 0.75);
 }
 
-[data-theme="dark"] {
-  /* Brand-aligned dark mode - Deep Navy #001F3F as base */
-  --color-light-tech-grey: #001F3F;  /* Brand Deep Navy as background */
-  --color-deep-navy: #ffffff;
-  --color-space-grey: #a0aec0;  /* Lighter grey for readability on dark */
-  --color-optic-white: rgba(0, 31, 63, 0.7);  /* Semi-transparent Deep Navy */
-
-  /* Brand-aware glassmorphism - Cobalt Blue accents */
-  --glass-bg: rgba(0, 31, 63, 0.45);  /* Deep Navy glass */
-  --glass-border: rgba(46, 91, 255, 0.25);  /* Cobalt Blue border */
-  --glass-blur: blur(20px) saturate(180%);
-  --glass-shadow: 0 8px 32px rgba(46, 91, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  --glass-shadow-hover: 0 16px 48px rgba(46, 91, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-
-  /* Brand-aligned background gradient - Deep Navy with Cobalt Blue glows */
-  --bg-gradient-image: 
-    radial-gradient(ellipse at 50% 50%, rgba(46, 91, 255, 0.35) 0%, transparent 60%),
-    radial-gradient(ellipse at 10% 20%, rgba(46, 91, 255, 0.25) 0%, transparent 45%),
-    radial-gradient(ellipse at 90% 80%, rgba(0, 31, 63, 0.4) 0%, transparent 45%);
-}
-
-* {
+/* ── Reset ── */
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   padding: 0;
   margin: 0;
 }
 
-html, body {
-  max-width: 100vw;
-  overflow-x: hidden;
+html {
+  font-size: 16px;
+}
+
+body {
   font-family: var(--font-body);
-  
-  /* Animated Silver Gradient Background matching Sidebar */
-  background: linear-gradient(135deg, rgba(161, 161, 163, 0.85), rgba(252, 252, 254, 0.9), rgba(205, 206, 210, 0.85), rgba(112, 112, 114, 0.85), rgba(208, 209, 214, 0.85));
-  background-size: 300% 300%;
-  animation: bodyGradientFlow 6s ease infinite;
-  background-attachment: fixed;
-  
+  font-size: 0.925rem;
+  line-height: 1.6;
+  display: flex;
+  background: linear-gradient(160deg, #E8E9F4 0%, #F0F1F7 50%, #EAEbF5 100%);
   color: var(--color-deep-navy);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-@keyframes bodyGradientFlow {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-@keyframes passportBgFlow {
-  0%   { background-position: 0% 50%; }
-  50%  { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-h1, h2, h3, h4 {
+h1,
+h2,
+h3,
+h4 {
   font-family: var(--font-heading);
   font-weight: 700;
 }
 
-/* Force all titles and subtitles to be black/deep-navy per user request */
-[class*="title"], [class*="Title"],
-[class*="subtitle"], [class*="Subtitle"] {
-  color: var(--color-deep-navy) !important;
+a {
+  color: inherit;
+  text-decoration: none;
 }
 
+/* ── Main wrapper ── */
 .main-wrapper {
   margin-left: calc(var(--sidebar-width) + 16px);
-  padding: var(--main-padding);
+  padding: 0;
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  min-height: calc(100vh - 32px);
+  min-height: 100vh;
   width: calc(100vw - var(--sidebar-width) - 32px);
   max-width: calc(100vw - var(--sidebar-width) - 32px);
   overflow-x: hidden;
-  
-  /* Bento Box Neumorphism Style */
-  background: #ECEEF2;
+  background: var(--color-bg-page);
   border-radius: 32px;
   margin-top: 16px;
   margin-bottom: 16px;
   margin-right: 16px;
-  box-shadow: -8px -8px 20px rgba(255, 255, 255, 0.9), 8px 8px 20px rgba(0, 31, 63, 0.08);
+  box-shadow: -8px -8px 20px rgba(255, 255, 255, 0.65), 8px 8px 20px rgba(79, 70, 229, 0.1);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Page content area (below TopBar) ── */
+.page-content {
+  padding: 0 var(--main-padding) var(--main-padding) var(--main-padding);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .main-wrapper.sidebar-collapsed {
@@ -155,22 +134,19 @@ h1, h2, h3, h4 {
     margin: 12px !important;
     width: calc(100vw - 24px) !important;
     max-width: calc(100vw - 24px) !important;
-    padding: 12px !important;
-    padding-bottom: 80px !important; /* Space for BottomNav */
+    padding: 0 !important;
     border-radius: 24px !important;
+  }
+
+  .page-content {
+    padding: 0 12px 80px 12px !important;
   }
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-/* Global Mobile Submenu Pill Tabs */
+/* ── Mobile Pill Tabs ── */
 .mobile-sub-tabs {
   display: none;
-  background: #F2F4F7;
-  box-shadow: inset -3px -3px 6px rgba(255,255,255,0.9), inset 3px 3px 6px rgba(0,31,63,0.06);
+  background: #E0E2F5;
   padding: 6px;
   border-radius: 12px;
   gap: 4px;
@@ -194,1030 +170,173 @@ a {
 }
 
 .mobile-sub-tab.active {
-  background: #ECEEF2;
+  background: var(--color-card-bg);
   color: var(--color-cobalt-blue);
-  box-shadow: -4px -4px 8px rgba(255,255,255,0.9), 4px 4px 8px rgba(0,31,63,0.08);
 }
 
 @media (max-width: 768px) {
   .mobile-sub-tabs {
     display: flex;
-    margin-bottom: 16px;
-  }
-
-  .mobile-sub-tab {
-    padding: 8px 10px;
-    font-size: 0.76rem;
-  }
-
-  /* Universal Mobile Scale Refinements */
-  [class*="pageTitle"], 
-  [class*="title"], 
-  [class*="pageHeader"] h2, 
-  [class*="header"] h2,
-  h2 {
-    font-size: 1.35rem !important;
-    letter-spacing: -0.02em !important;
-    line-height: 1.25 !important;
-    font-weight: 800 !important;
-    margin-bottom: 6px !important;
-  }
-
-  [class*="pageSubtitle"], 
-  [class*="subtitle"], 
-  [class*="pageHeader"] p,
-  [class*="header"] p,
-  p[class*="desc"] {
-    font-size: 0.82rem !important;
-    line-height: 1.45 !important;
-    opacity: 0.85 !important;
-  }
-
-  [class*="pageHeader"],
-  [class*="header"] {
-    margin-bottom: 16px !important;
-    gap: 8px !important;
-  }
-
-  /* Compact button styling */
-  button,
-  [class*="Btn"],
-  [class*="btn"],
-  [class*="button"] {
-    font-size: 0.8rem !important;
-  }
-
-  [class*="submitBtn"],
-  [class*="createBtn"],
-  [class*="assignBtn"],
-  [class*="confirmBtn"],
-  [class*="saveBtn"] {
-    padding: 10px 18px !important;
-    border-radius: 8px !important;
-    font-size: 0.82rem !important;
-  }
-
-  /* Landing Page Cards scaling down */
-  [class*="menuCard"] {
-    padding: 24px 20px !important;
-    border-radius: 16px !important;
-    gap: 16px !important;
-  }
-
-  [class*="menuGrid"] {
-    gap: 16px !important;
-  }
-
-  [class*="iconWrapper"] {
-    width: 44px !important;
-    height: 44px !important;
-    border-radius: 12px !important;
-  }
-
-  [class*="iconWrapper"] svg {
-    width: 20px !important;
-    height: 20px !important;
-  }
-
-  [class*="textWrapper"] h3 {
-    font-size: 1.05rem !important;
-    margin-bottom: 6px !important;
-  }
-
-  [class*="textWrapper"] p {
-    font-size: 0.82rem !important;
-    line-height: 1.4 !important;
-  }
-
-  /* Compact Form Fields on mobile */
-  [class*="formGroup"] input, 
-  [class*="formGroup"] select,
-  [class*="formGroup"] textarea {
-    height: 40px !important;
-    font-size: 0.85rem !important;
-    padding: 0 12px !important;
-    border-radius: 8px !important;
-  }
-
-  [class*="formGroup"] textarea {
-    height: auto !important;
-    padding: 10px 12px !important;
-  }
-
-  [class*="formCard"] {
-    padding: 20px 16px !important;
-    gap: 20px !important;
-    border-radius: 12px !important;
-  }
-
-  [class*="formSection"] {
-    gap: 12px !important;
-    padding-bottom: 16px !important;
-  }
-
-  [class*="sectionTitle"] {
-    font-size: 0.95rem !important;
-  }
-
-  /* Ultra-Premium 2-Column Mobile Card Layout */
-  div[class*="_planningGrid__"],
-  div[class*="_mobileCardsContainer__"],
-  div[class*="_mobileView__"],
-  .mobileView {
-    display: grid !important;
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 12px !important;
-    width: 100% !important;
-  }
-
-  /* Prevent double nested grids */
-  .mobileView > div[class*="_mobileCardsContainer__"] {
-    display: contents !important;
-  }
-
-  /* Target ONLY actual cards using exact compiled class matching */
-  div[class*="_planningCard__"],
-  div[class*="_mobileCard__"] {
-    background: var(--color-optic-white) !important;
-    border: 1px solid rgba(0, 31, 63, 0.08) !important;
-    border-radius: 16px !important;
-    padding: 14px !important;
-    box-shadow: 0 4px 12px rgba(0, 31, 63, 0.02) !important;
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: space-between !important;
-    transition: all 0.2s ease !important;
-    min-height: 290px !important; /* Enforce uniform height for grid alignment */
-    box-sizing: border-box !important;
-    gap: 12px !important;
-  }
-
-  div[class*="_planningCard__"]:hover,
-  div[class*="_mobileCard__"]:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 8px 20px rgba(0, 31, 63, 0.05) !important;
-    border-color: rgba(46, 91, 255, 0.15) !important;
-  }
-
-  /* Scale down header inside cards slightly */
-  div[class*="_cardHeader__"],
-  div[class*="_mobileCardHeader__"] {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 4px !important;
-    border-bottom: 1px dashed rgba(0, 31, 63, 0.08) !important;
-    padding-bottom: 8px !important;
-    width: 100% !important;
-  }
-
-  div[class*="_unitInfo__"] {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 2px !important;
-    width: 100% !important;
-  }
-
-  [class*="_modelName__"] {
-    font-size: 0.88rem !important;
-    line-height: 1.25 !important;
-    font-weight: 800 !important;
-    color: var(--color-deep-navy) !important;
-  }
-
-  /* Shrink badge text sizes elegantly */
-  [class*="_statusBadge__"],
-  [class*="_typeBadge__"],
-  [class*="_badge__"] {
-    font-size: 0.6rem !important;
-    padding: 2px 6px !important;
-    border-radius: 8px !important;
-    font-weight: 800 !important;
-    text-transform: uppercase !important;
-  }
-
-  /* Scale down sub-tag values */
-  [class*="_serialNumber__"],
-  [class*="_serialTag__"],
-  [class*="_mobileLogId__"],
-  .reportId {
-    font-size: 0.65rem !important;
-    padding: 2px 6px !important;
-    border-radius: 4px !important;
-    font-weight: 700 !important;
-  }
-
-  /* Premium PM Forecast Container */
-  div[class*="_forecastBox__"] {
-    background: #F8FAFC !important;
-    border: 1px solid rgba(0, 31, 63, 0.04) !important;
-    padding: 8px !important;
-    border-radius: 8px !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 2px !important;
-    width: 100% !important;
-  }
-
-  [class*="_forecastTitle__"] {
-    font-size: 0.58rem !important;
-    font-weight: 800 !important;
-  }
-
-  [class*="_forecastDate__"] {
-    font-size: 0.72rem !important;
-    font-weight: 800 !important;
-  }
-
-  /* Action Buttons Alignment side-by-side */
-  div[class*="_mobileCardActions__"],
-  div[class*="_cardFooter__"] {
-    display: flex !important;
-    flex-direction: row !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    gap: 6px !important;
-    margin-top: auto !important;
-    padding-top: 8px !important;
-    border-top: 1px solid rgba(0, 31, 63, 0.05) !important;
-    width: 100% !important;
-  }
-
-  /* Pill-shaped, small centered primary action button */
-  button[class*="_assignBtn__"] {
-    background: var(--color-cobalt-blue) !important;
-    color: white !important;
-    border-radius: 20px !important;
-    padding: 6px 14px !important;
-    font-size: 0.7rem !important;
-    font-weight: 700 !important;
-    width: auto !important;
-    margin: 0 auto !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 4px !important;
-    border: none !important;
-    box-shadow: 0 4px 10px rgba(46, 91, 255, 0.15) !important;
-  }
-
-  button[class*="_assignBtn__"]:hover {
-    background: #1a47e5 !important;
-    transform: translateY(-1px) !important;
-  }
-
-  /* Compact side-by-side buttons for list cards */
-  button[class*="_mobileActionBtn__"],
-  a[class*="_mobileActionBtn__"] {
-    flex: 1 !important;
-    width: auto !important;
-    padding: 6px 4px !important;
-    font-size: 0.65rem !important;
-    font-weight: 700 !important;
-    border-radius: 6px !important;
-    justify-content: center !important;
-    height: 28px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 4px !important;
-    white-space: nowrap !important;
-    border: none !important;
-    box-shadow: none !important;
-  }
-
-  button[class*="_mobileActionBtn__"] svg,
-  a[class*="_mobileActionBtn__"] svg,
-  button[class*="_assignBtn__"] svg {
-    width: 10px !important;
-    height: 10px !important;
   }
 }
 
-/* ============================================================
-   MIDNIGHT NAVY DARK THEME SPECIFIC OVERRIDES
-   Dynamically aligns all elements to match the login page
-   ============================================================ */
-[data-theme="dark"] {
-  /* Dynamic Layout Overrides */
-  --bg-html: #010412;
-  --bg-gradient-image: radial-gradient(ellipse at 50% 50%, rgba(10, 40, 150, 0.5) 0%, transparent 60%),
-    radial-gradient(ellipse at 10% 20%, rgba(20, 80, 255, 0.3) 0%, transparent 45%),
-    radial-gradient(ellipse at 90% 80%, rgba(20, 80, 255, 0.3) 0%, transparent 45%);
-  --color-light-tech-grey: #010412;
-  --color-deep-navy: #ffffff;
-  --color-space-grey: #8f9bb3;
-  --color-optic-white: rgba(6, 13, 33, 0.85);
+/* ══════════════════════════════════════════════════════════
+   CARD OUTLINE — Slate Grey border on Morning Mist cards
+   Only applied to actual container elements (div, section, article)
+   NOT to headings, paragraphs, spans, or inline elements
+   ══════════════════════════════════════════════════════════ */
 
-  --glass-bg: rgba(4, 8, 20, 0.45);
-  --glass-border: rgba(46, 91, 255, 0.15);
-  --glass-blur: blur(20px) saturate(180%);
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  --glass-shadow-hover: 0 16px 48px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
-
-  /* Neumorphism Card Tokens — dark mode override */
-  --shadow-card-neu: 0 8px 32px rgba(46, 91, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  --border-card: 1px solid rgba(46, 91, 255, 0.2);
-  --shadow-card-inset: inset 4px 4px 12px rgba(0, 0, 0, 0.2), inset -4px -4px 8px rgba(46, 91, 255, 0.05);
+/* Hard-coded white backgrounds → card surface */
+div[style*="background: #ffffff"],
+div[style*="background:#ffffff"],
+div[style*="background: white"],
+div[style*="background:white"],
+section[style*="background: #ffffff"],
+section[style*="background:#ffffff"] {
+  background: var(--color-card-bg) !important;
+  border: 1.5px solid var(--color-border) !important;
+  box-shadow: var(--shadow-card) !important;
 }
 
-/* ── LOGIN-STYLE Background Grid & Dots for Admin Dark Mode ── */
-/* Diagonal grid lines on main-wrapper (behind content) */
-[data-theme="dark"] .main-wrapper {
-  position: relative;
+/* CSS class-named card containers */
+.chartCard,
+.listCard,
+.statCard,
+.formCard,
+.profileCard,
+.errorCard,
+.tableContainer,
+.calendarContainer,
+.kanbanColumn,
+.modalCard {
+  background: var(--color-card-bg) !important;
+  border: 1.5px solid var(--color-border) !important;
+  box-shadow: var(--shadow-card) !important;
 }
 
-[data-theme="dark"] .main-wrapper::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: var(--sidebar-width, 260px);
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-  z-index: 0;
-  /* Brand-aligned grid - Cobalt Blue #2E5BFF = rgb(46, 91, 255) */
-  background: 
-    repeating-linear-gradient(
-      45deg,
-      transparent,
-      transparent 100px,
-      rgba(46, 91, 255, 0.08) 100px,
-      rgba(46, 91, 255, 0.08) 101px
-    ),
-    repeating-linear-gradient(
-      -45deg,
-      transparent,
-      transparent 100px,
-      rgba(46, 91, 255, 0.06) 100px,
-      rgba(46, 91, 255, 0.06) 101px
-    );
-  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+/* ── Passport page background ── */
+[data-page="passport"] {
+  background: linear-gradient(160deg, #E8E9F4 0%, #F0F1F7 40%, #EAEbF5 100%) !important;
 }
 
-[data-theme="dark"] .main-wrapper.sidebar-collapsed::before {
-  left: var(--sidebar-collapsed-width, 80px);
+/* ── Old hardcoded grey overrides → new bg-row ── */
+div[style*="background: #ECEEF2"],
+div[style*="background:#ECEEF2"],
+div[style*="background: #E8EAEE"],
+div[style*="background:#E8EAEE"],
+div[style*="background: #F2F4F7"],
+div[style*="background:#F2F4F7"],
+div[style*="background: #F8FAFC"],
+div[style*="background:#F8FAFC"],
+div[style*="background: #f8fafc"],
+div[style*="background:#f8fafc"],
+div[style*="background: #F1F5F9"],
+div[style*="background:#F1F5F9"] {
+  background: var(--color-bg-row) !important;
 }
 
-/* Dot grid pattern overlay - Cobalt Blue */
-[data-theme="dark"] .main-wrapper::after {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: var(--sidebar-width, 260px);
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-  z-index: 0;
-  background-image: radial-gradient(circle, rgba(46, 91, 255, 0.3) 1px, transparent 1px);
-  background-size: 28px 28px;
-  opacity: 0.4;
-  mask-image: radial-gradient(ellipse at 30% 40%, black 10%, transparent 65%),
-              radial-gradient(ellipse at 80% 70%, black 10%, transparent 60%);
-  -webkit-mask-image: radial-gradient(ellipse at 30% 40%, black 10%, transparent 65%),
-                      radial-gradient(ellipse at 80% 70%, black 10%, transparent 60%);
-  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+/* ── Tooltip CSS (stat cards) ── */
+.stat-tip-anchor:hover .stat-tip-bubble {
+  display: block !important;
 }
 
-[data-theme="dark"] .main-wrapper.sidebar-collapsed::after {
-  left: var(--sidebar-collapsed-width, 80px);
+/* ── Force no background on optic-white references in CSS modules ── */
+/* This is the var redirect — CSS modules using var(--color-optic-white) will now get Morning Mist */
+
+/* ══════════════════════════════════════════════════════════
+   GLOBAL TABLE STYLES — Navy header + row dividers
+   Applies to all tables across the app
+   ══════════════════════════════════════════════════════════ */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
 }
 
-/* Ensure content layers above the background decorations */
-[data-theme="dark"] .main-wrapper > * {
-  position: relative;
-  z-index: 1;
+table thead tr {
+  background: linear-gradient(160deg, #1E3A5F 0%, #0D2B5E 100%) !important;
 }
 
-@media (max-width: 768px) {
-  [data-theme="dark"] .main-wrapper::before,
-  [data-theme="dark"] .main-wrapper::after {
-    left: 0 !important;
-  }
-}
-
-/* Sidebar - always #001F3F (set in module CSS, no theme override needed) */
-
-/* Card overrides - Brand-aligned glassmorphism */
-[data-theme="dark"] [class*="Card_"]:not([class*="modal"]):not([class*="Modal"]), 
-[data-theme="dark"] [class*="card_"]:not([class*="modal"]):not([class*="Modal"]),
-[data-theme="dark"] [class*="Card"]:not([class*="modal"]):not([class*="Modal"]),
-[data-theme="dark"] [class*="card"]:not([class*="modal"]):not([class*="Modal"]) {
-  background: rgba(0, 31, 63, 0.5) !important;  /* Deep Navy glass */
-  border: 1px solid rgba(46, 91, 255, 0.2) !important;  /* Cobalt Blue border */
-  box-shadow: 0 8px 32px rgba(46, 91, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
-  backdrop-filter: blur(20px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-  color: #ffffff !important;
-  border-radius: 16px !important;
-}
-
-/* Modal overlay mobile overrides handled in unit.module.css per-component */
-
-
-/* Header & Typography overrides */
-[data-theme="dark"] h1,
-[data-theme="dark"] h2,
-[data-theme="dark"] h3,
-[data-theme="dark"] h4,
-[data-theme="dark"] [class*="Title"],
-[data-theme="dark"] [class*="title"] {
-  color: #ffffff !important;
-}
-
-[data-theme="dark"] p,
-[data-theme="dark"] span,
-[data-theme="dark"] [class*="Subtitle"],
-[data-theme="dark"] [class*="subtitle"],
-[data-theme="dark"] [class*="desc"] {
-  color: #a0abc0;
-}
-
-/* Search input & toolbar overrides - Deep Navy glass */
-[data-theme="dark"] [class*="toolbar"],
-[data-theme="dark"] [class*="Toolbar"] {
-  border-bottom: 1px solid rgba(46, 91, 255, 0.12) !important;
+table thead th {
   background: transparent !important;
-}
-
-[data-theme="dark"] [class*="searchBox"],
-[data-theme="dark"] [class*="SearchBox"] {
-  background: rgba(0, 31, 63, 0.5) !important;  /* Deep Navy glass */
-  border: 1px solid rgba(46, 91, 255, 0.2) !important;  /* Cobalt Blue border */
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
-}
-
-[data-theme="dark"] [class*="searchBox"] input,
-[data-theme="dark"] [class*="SearchBox"] input,
-[data-theme="dark"] input[class*="searchInput"] {
-  color: #ffffff !important;
-  background: transparent !important;
-}
-
-[data-theme="dark"] [class*="searchBox"] input::placeholder,
-[data-theme="dark"] [class*="SearchBox"] input::placeholder {
-  color: #a0aec0 !important;  /* Space Grey placeholder */
-}
-
-[data-theme="dark"] [class*="countBadge"],
-[data-theme="dark"] [class*="CountBadge"] {
-  background: rgba(46, 91, 255, 0.2) !important;  /* Cobalt Blue badge */
-  color: #ffffff !important;
-}
-
-/* ── TopBar Dropdown Dark Mode - Brand-aligned ── */
-
-/* Profile Dropdown - Deep Navy glass */
-[data-theme="dark"] [class*="dropdownMenu"] {
-  background: rgba(0, 31, 63, 0.9) !important;  /* Deep Navy glass */
-  border: 1px solid rgba(46, 91, 255, 0.25) !important;  /* Cobalt Blue border */
-  box-shadow: 0 8px 32px rgba(46, 91, 255, 0.15), 0 0 0 1px rgba(46,91,255,0.1) !important;
-  backdrop-filter: blur(20px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-}
-
-[data-theme="dark"] [class*="dropdownEmail"] {
-  color: #a0aec0 !important;  /* Space Grey text */
-  background: rgba(0, 31, 63, 0.5) !important;
-  border-bottom: 1px solid rgba(46, 91, 255, 0.12) !important;
-}
-
-[data-theme="dark"] [class*="dropdownItem"] {
-  color: #ffffff !important;
-}
-
-/* Log Out item - Safety Orange for warning action */
-[data-theme="dark"] [class*="dropdownItem"]:hover {
-  background: rgba(255, 107, 0, 0.15) !important;  /* Safety Orange hover for logout */
-}
-
-/* Notification Dropdown - Deep Navy glass */
-[data-theme="dark"] [class*="notificationDropdown"] {
-  background: rgba(0, 31, 63, 0.9) !important;  /* Deep Navy glass */
-  border: 1px solid rgba(46, 91, 255, 0.2) !important;  /* Cobalt Blue border */
-  box-shadow: 0 8px 32px rgba(46, 91, 255, 0.12) !important;
-  backdrop-filter: blur(20px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-}
-
-[data-theme="dark"] [class*="notificationHeader"] {
-  color: #ffffff !important;
-  background: rgba(0, 31, 63, 0.6) !important;  /* Deep Navy */
-  border-bottom: 1px solid rgba(46, 91, 255, 0.12) !important;
-}
-
-[data-theme="dark"] [class*="notificationItem"] {
-  color: #ffffff !important;
-  border-bottom-color: rgba(46, 91, 255, 0.08) !important;
-}
-
-[data-theme="dark"] [class*="notificationItem"]:hover {
-  background: rgba(46, 91, 255, 0.12) !important;  /* Cobalt Blue hover */
-}
-
-/* Role Badge - Cobalt Blue */
-[data-theme="dark"] [class*="roleBadge"] {
-  background: rgba(46, 91, 255, 0.2) !important;
-  color: #ffffff !important;
-}
-
-/* Avatar - Cobalt Blue accent */
-[data-theme="dark"] [class*="avatar"] {
-  background: rgba(46, 91, 255, 0.2) !important;
-  border-color: rgba(46, 91, 255, 0.3) !important;
-}
-
-/* ── Dashboard Component Dark Mode - Brand-aligned ── */
-
-/* Dashboard Cards - brand glassmorphism */
-[data-theme="dark"] [class*="chartCard"],
-[data-theme="dark"] [class*="listCard"] {
-  background: rgba(0, 31, 63, 0.5) !important;  /* Deep Navy glass */
-  backdrop-filter: blur(20px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-  border: 1px solid rgba(46, 91, 255, 0.2) !important;  /* Cobalt Blue border */
-  box-shadow: 0 8px 32px rgba(46, 91, 255, 0.1) !important;
-}
-
-/* Dashboard header border */
-[data-theme="dark"] [class*="header"][class*="dashboard"] {
-  border-bottom-color: rgba(46, 91, 255, 0.15) !important;
-}
-
-/* Sync Button - Deep Navy glass with Cobalt border */
-[data-theme="dark"] [class*="syncBtn"] {
-  background: rgba(0, 31, 63, 0.6) !important;
-  border: 1px solid rgba(46, 91, 255, 0.25) !important;
-  color: #ffffff !important;
-  backdrop-filter: blur(8px) !important;
-  -webkit-backdrop-filter: blur(8px) !important;
-}
-
-[data-theme="dark"] [class*="syncBtn"]:hover {
-  background: rgba(46, 91, 255, 0.2) !important;  /* Cobalt Blue hover */
-}
-
-/* Loading skeletons - Deep Navy appropriate color */
-[data-theme="dark"] div[style*="background: #F1F5F9"],
-[data-theme="dark"] div[style*="background:#F1F5F9"] {
-  background: rgba(0, 31, 63, 0.6) !important;  /* Deep Navy skeleton */
-}
-
-/* Chart tooltip - Deep Navy glass */
-[data-theme="dark"] div[style*="background: rgba(255,255,255,0.95)"],
-[data-theme="dark"] div[style*="background:rgba(255,255,255,0.95)"] {
-  background: rgba(0, 31, 63, 0.9) !important;  /* Deep Navy glass */
-  border: 1px solid rgba(46, 91, 255, 0.25) !important;  /* Cobalt Blue border */
-  box-shadow: 0 8px 24px rgba(46, 91, 255, 0.15) !important;
-}
-
-/* Timeline dots - Deep Navy circle */
-[data-theme="dark"] div[style*="background: white"] {
-  background: rgba(0, 31, 63, 0.9) !important;  /* Deep Navy */
-}
-
-/* Chart grid lines - Cobalt Blue tints */
-[data-theme="dark"] line[stroke="rgba(0,31,63,0.03)"] {
-  stroke: rgba(46, 91, 255, 0.12) !important;
-}
-
-[data-theme="dark"] line[stroke="rgba(0,31,63,0.06)"] {
-  stroke: rgba(46, 91, 255, 0.18) !important;
-}
-
-/* List item borders in dashboard - Cobalt Blue */
-[data-theme="dark"] [class*="listItem"] {
-  border-bottom-color: rgba(46, 91, 255, 0.1) !important;
-}
-
-[data-theme="dark"] [class*="listTitle"] {
-  border-bottom-color: rgba(46, 91, 255, 0.12) !important;
-}
-
-/* Empty state box */
-[data-theme="dark"] [class*="emptyStateBox"] {
-  background: rgba(16, 185, 129, 0.08) !important;
-  border-color: rgba(16, 185, 129, 0.25) !important;
-}
-
-/* PM item subtle background - Cobalt Blue */
-[data-theme="dark"] div[style*="background: rgba(46,91,255,0.02)"],
-[data-theme="dark"] div[style*="background:rgba(46,91,255,0.02)"] {
-  background: rgba(46, 91, 255, 0.1) !important;
-  border-color: rgba(46, 91, 255, 0.15) !important;
-}
-
-/* Timeline vertical line - Cobalt Blue */
-[data-theme="dark"] div[style*="background: rgba(0,31,63,0.06)"] {
-  background: rgba(46, 91, 255, 0.18) !important;
-}
-
-/* Header border - Cobalt Blue */
-[data-theme="dark"] [class*="header"] {
-  border-bottom-color: rgba(46, 91, 255, 0.12) !important;
-}
-
-/* ── Messages Page Dark Mode ── */
-/* ── Messages Page Dark Mode - Brand-aligned ── */
-[data-theme="dark"] [class*="messages_layout"],
-[data-theme="dark"] [class*="layout"] {
-  background: rgba(0, 31, 63, 0.5) !important;  /* Deep Navy glass */
-  border-color: rgba(46, 91, 255, 0.15) !important;
-  backdrop-filter: blur(20px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-}
-
-[data-theme="dark"] [class*="sidebar"] {
-  background: rgba(113, 115, 120, 0.2) !important;  /* Space Grey sidebar */
-  border-right-color: rgba(46, 91, 255, 0.12) !important;
-}
-
-[data-theme="dark"] [class*="sidebarHeader"],
-[data-theme="dark"] [class*="chatHeader"],
-[data-theme="dark"] [class*="inputArea"] {
-  background: rgba(0, 31, 63, 0.6) !important;  /* Deep Navy */
-  border-color: rgba(46, 91, 255, 0.12) !important;
-}
-
-[data-theme="dark"] [class*="chatWindow"] {
-  background: rgba(0, 31, 63, 0.3) !important;  /* Deep Navy */
-}
-
-[data-theme="dark"] [class*="avatarPlaceholder"] {
-  background: rgba(46, 91, 255, 0.2) !important;  /* Cobalt Blue */
-  color: #ffffff !important;
-}
-
-[data-theme="dark"] [class*="conversationItem"] {
-  border-bottom-color: rgba(46, 91, 255, 0.08) !important;
-}
-
-[data-theme="dark"] [class*="conversationItem"]:hover {
-  background: rgba(46, 91, 255, 0.1) !important;  /* Cobalt Blue hover */
-}
-
-[data-theme="dark"] [class*="conversationItem"][class*="active"] {
-  background: rgba(46, 91, 255, 0.15) !important;  /* Cobalt Blue active */
-}
-
-/* Message bubbles - Deep Navy glass */
-[data-theme="dark"] [class*="messageThem"] [class*="messageBubble"] {
-  background: rgba(0, 31, 63, 0.7) !important;  /* Deep Navy */
-  color: #ffffff !important;
-  border-color: rgba(46, 91, 255, 0.15) !important;
-}
-
-[data-theme="dark"] [class*="messageInput"] {
-  background: rgba(0, 31, 63, 0.6) !important;  /* Deep Navy */
-  border-color: rgba(46, 91, 255, 0.2) !important;
-  color: #ffffff !important;
-}
-
-[data-theme="dark"] [class*="messageInput"]:focus {
-  background: rgba(0, 31, 63, 0.75) !important;
-  border-color: rgba(46, 91, 255, 0.4) !important;  /* Cobalt Blue focus */
-}
-
-[data-theme="dark"] [class*="emptyStateChat"],
-[data-theme="dark"] [class*="emptyStateSidebar"] {
-  background: rgba(0, 31, 63, 0.4) !important;
-  color: #a0aec0 !important;  /* Space Grey text */
-}
-
-[data-theme="dark"] [class*="backBtn"]:hover,
-[data-theme="dark"] [class*="backChatBtn"]:hover {
-  background: rgba(46, 91, 255, 0.12) !important;  /* Cobalt Blue hover */
-}
-
-/* ── Inline Style Overrides - Brand-aligned ── */
-[data-theme="dark"] div[style*="background: #fff"],
-[data-theme="dark"] div[style*="background:#fff"] {
-  background: rgba(0, 31, 63, 0.85) !important;  /* Deep Navy */
-  color: #ffffff !important;
-}
-
-[data-theme="dark"] div[style*="background: #f8fafc"],
-[data-theme="dark"] div[style*="background:#f8fafc"] {
-  background: rgba(0, 31, 63, 0.6) !important;  /* Deep Navy */
-}
-
-[data-theme="dark"] button[style*="background: #f8fafc"],
-[data-theme="dark"] button[style*="background:#f8fafc"] {
-  background: rgba(0, 31, 63, 0.5) !important;
-  color: #ffffff !important;
-  border-color: rgba(46, 91, 255, 0.2) !important;  /* Cobalt Blue border */
-}
-
-/* Interactive Table & List overrides - Brand-aligned */
-[data-theme="dark"] table thead th {
-  background: rgba(0, 31, 63, 0.6) !important;  /* Deep Navy */
-  color: #ffffff !important;
-  border-bottom: 2px solid rgba(46, 91, 255, 0.2) !important;  /* Cobalt Blue */
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
-}
-
-[data-theme="dark"] table td {
-  border-bottom: 1px solid rgba(46, 91, 255, 0.08) !important;
-  color: #ffffff !important;
-}
-
-[data-theme="dark"] [class*="dataRow"]:hover,
-[data-theme="dark"] tr:hover td {
-  background: rgba(46, 91, 255, 0.08) !important;  /* Cobalt Blue hover */
-}
-
-[data-theme="dark"] [class*="tableWrapper"] {
-  background: transparent !important;
-}
-
-/* Table Text & Meta contrast adjustments */
-[data-theme="dark"] [class*="unitModel"],
-[data-theme="dark"] [class*="partnerName"],
-[data-theme="dark"] [class*="issueTextMain"],
-[data-theme="dark"] [class*="issueText"],
-[data-theme="dark"] [class*="partnerCity"],
-[data-theme="dark"] [class*="issueContactSub"],
-[data-theme="dark"] [class*="clientName"],
-[data-theme="dark"] [class*="unitName"] {
-  color: #ffffff !important;
-}
-
-[data-theme="dark"] [class*="metaLabel"],
-[data-theme="dark"] [class*="mobileLabel"],
-[data-theme="dark"] [class*="forecastTitle"] {
-  color: #a0aec0 !important;  /* Space Grey labels */
+  color: rgba(255, 255, 255, 0.85) !important;
+  font-size: 0.72rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  padding: 13px 16px !important;
   font-weight: 700 !important;
+  border-bottom: none !important;
+  text-align: left !important;
+  white-space: nowrap !important;
 }
 
-[data-theme="dark"] [class*="metaValue"],
-[data-theme="dark"] [class*="mobileValue"],
-[data-theme="dark"] [class*="mobileValueIssue"],
-[data-theme="dark"] [class*="mobileValueDate"] {
-  color: #ffffff !important;
+table tbody td {
+  padding: 13px 16px;
+  border-bottom: 1px solid rgba(79, 70, 229, 0.08);
+  vertical-align: middle;
+  color: var(--color-deep-navy);
 }
 
-/* Serial Number Tags & Badges - Cobalt Blue */
-[data-theme="dark"] [class*="serialTag"],
-[data-theme="dark"] [class*="unitSn"],
-[data-theme="dark"] [class*="serialNumber"],
-[data-theme="dark"] [class*="mobileUnitSn"] {
-  background: rgba(46, 91, 255, 0.15) !important;
-  color: #ffffff !important;
-  border: 1px solid rgba(46, 91, 255, 0.25) !important;
+table tbody tr:last-child td {
+  border-bottom: none;
 }
 
-/* PM Forecast Box - Cobalt Blue accent */
-[data-theme="dark"] [class*="forecastBox"] {
-  background: rgba(46, 91, 255, 0.08) !important;
-  border: 1px dashed rgba(46, 91, 255, 0.25) !important;
-  color: #ffffff !important;
+table tbody tr:nth-child(even) {
+  background: rgba(79, 70, 229, 0.025);
 }
 
-[data-theme="dark"] [class*="forecastDate"] {
-  color: #ffffff !important;
+table tbody tr:hover {
+  background: rgba(79, 70, 229, 0.06) !important;
+  transition: background 0.15s ease;
 }
 
-/* Card lines & separation borders - Cobalt Blue */
-[data-theme="dark"] [class*="cardBody"] {
-  border-top: 1px solid rgba(46, 91, 255, 0.1) !important;
-  border-bottom: 1px solid rgba(46, 91, 255, 0.1) !important;
+/* Table wrapper card — consistent across pages */
+.tableContainer {
+  background: var(--color-card-bg) !important;
+  border-radius: 16px !important;
+  border: 1.5px solid var(--color-border) !important;
+  box-shadow: var(--shadow-card) !important;
+  overflow: hidden !important;
 }
 
-/* Pagination container overrides */
-[data-theme="dark"] [class*="pagination"],
-[data-theme="dark"] [class*="mobilePagination"] {
-  background: transparent !important;
-  border-top: 1px solid rgba(46, 91, 255, 0.1) !important;
-}
-
-[data-theme="dark"] [class*="totalText"],
-[data-theme="dark"] [class*="mobilePageIndicator"] {
-  color: #ffffff !important;
-}
-
-/* Pagination buttons - Deep Navy glass with Cobalt Blue border */
-[data-theme="dark"] [class*="pageBtn"],
-[data-theme="dark"] [class*="pageArrow"],
-[data-theme="dark"] [class*="mobilePageArrow"] {
-  color: #ffffff !important;
-  border: 1px solid rgba(46, 91, 255, 0.15) !important;
-  background: rgba(0, 31, 63, 0.5) !important;  /* Deep Navy */
-  backdrop-filter: blur(8px) !important;
-  -webkit-backdrop-filter: blur(8px) !important;
-}
-
-[data-theme="dark"] [class*="pageBtn"]:hover:not([class*="activePage"]),
-[data-theme="dark"] [class*="pageArrow"]:hover:not([disabled]),
-[data-theme="dark"] [class*="mobilePageArrow"]:hover:not([disabled]) {
-  background: rgba(46, 91, 255, 0.15) !important;  /* Cobalt Blue hover */
-  color: #ffffff !important;
-}
-
-[data-theme="dark"] [class*="activePage"],
-[data-theme="dark"] [class*="pageBtn"][class*="active"] {
-  background: var(--color-cobalt-blue) !important;  /* Cobalt Blue active */
-  color: #ffffff !important;
-  border-color: var(--color-cobalt-blue) !important;
-  box-shadow: 0 4px 12px rgba(46, 91, 255, 0.35) !important;
-}
-
-[data-theme="dark"] [class*="ellipsis"] {
-  color: #ffffff !important;
-}
-
-/* Status badges - brand-aligned colors */
-[data-theme="dark"] [class*="status_active"],
-[data-theme="dark"] [class*="badgeCompleted"] {
-  background: rgba(16, 185, 129, 0.15) !important;  /* Success green */
-  color: #34d399 !important;
-  border: 1px solid rgba(16, 185, 129, 0.3) !important;
-}
-
-[data-theme="dark"] [class*="status_inactive"],
-[data-theme="dark"] [class*="badgeCancelled"] {
-  background: rgba(113, 115, 120, 0.15) !important;  /* Space Grey inactive */
-  color: #a0aec0 !important;
-  border: 1px solid rgba(113, 115, 120, 0.25) !important;
-}
-
-[data-theme="dark"] [class*="badgePending"] {
-  background: rgba(255, 107, 0, 0.15) !important;  /* Safety Orange pending */
-  color: #ff8c3a !important;
-  border: 1px solid rgba(255, 107, 0, 0.3) !important;
-}
-
-/* Generic buttons - Deep Navy glass */
-[data-theme="dark"] button:not([class*="activePage"]):not([class*="assignBtn"]):not([class*="scanBtn"]):not([class*="btnEmergency"]):not([class*="btnPrimary"]) {
-  background: rgba(0, 31, 63, 0.6) !important;  /* Deep Navy */
-  border: 1px solid rgba(46, 91, 255, 0.15) !important;
-  color: #ffffff !important;
-}
-
-[data-theme="dark"] button:hover:not([class*="activePage"]):not([class*="assignBtn"]):not([class*="scanBtn"]):not([disabled]):not([class*="btnEmergency"]):not([class*="btnPrimary"]) {
-  background: rgba(46, 91, 255, 0.15) !important;  /* Cobalt Blue hover */
-  color: #ffffff !important;
-}
-
-/* Enhanced status badges */
-[data-theme="dark"] .statusDue, [data-theme="dark"] .badgePending {
-  background: rgba(255, 107, 0, 0.18) !important;  /* Safety Orange */
-  color: #ff8c3a !important;
-  border: 1px solid rgba(255, 107, 0, 0.35) !important;
-}
-
-[data-theme="dark"] .statusOverdue {
-  background: rgba(239, 68, 68, 0.18) !important;  /* Alert red */
-  color: #f87171 !important;
-  border: 1px solid rgba(239, 68, 68, 0.35) !important;
-}
-
-[data-theme="dark"] .statusScheduled {
-  background: rgba(46, 91, 255, 0.18) !important;  /* Cobalt Blue scheduled */
-  color: #ffffff !important;
-  border: 1px solid rgba(46, 91, 255, 0.35) !important;
-}
-
-/* Primary Blue Buttons - Cobalt Blue gradient */
-[data-theme="dark"] button[class*="assignBtn"],
-[data-theme="dark"] button[class*="scanBtn"],
-[data-theme="dark"] [class*="scanBtn"] {
-  background: linear-gradient(180deg, #3a66ff 0%, #1a47e5 100%) !important;  /* Cobalt Blue gradient */
-  color: #ffffff !important;
-  border: 1px solid rgba(46, 91, 255, 0.5) !important;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15), 0 4px 14px rgba(46, 91, 255, 0.4) !important;
-}
-
-[data-theme="dark"] button[class*="assignBtn"]:hover,
-[data-theme="dark"] button[class*="scanBtn"]:hover,
-[data-theme="dark"] [class*="scanBtn"]:hover {
-  background: linear-gradient(180deg, #4a74ff 0%, #2250f0 100%) !important;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2), 0 6px 20px rgba(46, 91, 255, 0.5) !important;
-  transform: translateY(-1px) !important;
-}
-
-/* ── LOGIN PAGE: Force dark inputs (login page has no data-theme attr) ── */
-[class*="inputWithIcon"] input,
-[class*="inputWithIconNew"] input,
-[class*="passwordWrapper"] input,
-[class*="passwordWrapperNew"] input {
-  background: #101728 !important;
-  background-color: #101728 !important;
-  border: none !important;
-  color: #ffffff !important;
-  box-shadow: inset 8px 8px 16px rgba(0, 0, 0, 0.7) !important;
-}
-
-[class*="inputWithIcon"] input::placeholder,
-[class*="inputWithIconNew"] input::placeholder,
-[class*="passwordWrapper"] input::placeholder,
-[class*="passwordWrapperNew"] input::placeholder {
-  color: rgba(255, 255, 255, 0.35) !important;
-}
-
-[class*="inputWithIcon"] input:-webkit-autofill,
-[class*="inputWithIconNew"] input:-webkit-autofill,
-[class*="passwordWrapper"] input:-webkit-autofill,
-[class*="passwordWrapperNew"] input:-webkit-autofill {
-  transition: background-color 9999s ease-in-out 0s !important;
-  -webkit-text-fill-color: #ffffff !important;
-  box-shadow: inset 8px 8px 16px rgba(0, 0, 0, 0.7) !important;
-}
-
-/* Form inputs - Deep Navy glass with Cobalt Blue focus */
-[data-theme="dark"] input,
-[data-theme="dark"] select,
-[data-theme="dark"] textarea,
-[data-theme="dark"] [class*="searchWrapper"],
-[data-theme="dark"] [class*="filterSelect"] {
-  background: rgba(0, 31, 63, 0.5) !important;  /* Deep Navy */
-  border: 1px solid rgba(46, 91, 255, 0.2) !important;  /* Cobalt Blue border */
-  color: #ffffff !important;
-}
-
-[data-theme="dark"] input:focus,
-[data-theme="dark"] select:focus,
-[data-theme="dark"] textarea:focus {
-  border-color: rgba(46, 91, 255, 0.4) !important;
-  box-shadow: 0 0 0 3px rgba(46, 91, 255, 0.15) !important;
-}
-
-[data-theme="dark"] [class*="searchWrapper"] input,
-[data-theme="dark"] [class*="filterSelect"] option {
-  background: #040814 !important;
-  color: #ffffff !important;
-}
-
-[data-theme="dark"] input::placeholder,
-[data-theme="dark"] textarea::placeholder {
-  color: #64748b !important;
-}
-
-/* Button span & SVG icon color inheritance overrides to preserve pure white */
-[data-theme="dark"] button span,
-[data-theme="dark"] button[class*="Btn"] span,
-[data-theme="dark"] a[class*="Btn"] span,
-[data-theme="dark"] button svg,
-[data-theme="dark"] button[class*="Btn"] svg {
-  color: inherit !important;
-}
-
-/* Stat Summary Card Values & Labels high contrast overrides (e.g. 514, 0, 1) */
-[data-theme="dark"] [class*="statValue"] {
-  color: #ffffff !important;
-}
-
-[data-theme="dark"] [class*="statLabel"] {
-  color: #a0abc0 !important;
-}
 
 /* ============================================================
-   ENTERPRISE DATATABLE TOOLBAR
+   DataTable Toolbar Styles (Global)
    ============================================================ */
 .dtToolbar {
   display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap;
   align-items: center;
-  padding: 16px 24px;
-  border-bottom: 1px solid rgba(0, 31, 63, 0.06);
-  background: rgba(0, 31, 63, 0.015);
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(79, 70, 229, 0.08);
 }
 
-.dtToolbarLeft, .dtToolbarRight {
+.dtToolbarLeft {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .dtToolbarText {
-  font-size: 0.85rem;
-  color: var(--color-space-grey);
-  font-weight: 500;
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.dtToolbarSelect {
-  background: #ECEEF2;
-  border: none;
-  border-radius: 10px;
-  padding: 6px 32px 6px 12px;
   font-size: 0.85rem;
-  color: var(--color-deep-navy);
-  cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 8px center;
-  background-size: 14px;
-  box-shadow: inset -4px -4px 8px rgba(255, 255, 255, 0.9), inset 4px 4px 8px rgba(0, 31, 63, 0.08);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  font-weight: 500;
+  color: var(--color-space-grey);
+  white-space: nowrap;
 }
 
-.dtToolbarSelect:focus {
-  outline: none;
-  box-shadow: inset -6px -6px 12px rgba(255, 255, 255, 0.95), inset 6px 6px 12px rgba(0, 31, 63, 0.12);
+.dtToolbarRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .dtToolbarSearch {
@@ -1227,639 +346,107 @@ a {
 }
 
 .dtToolbarSearchInput {
-  background: #ECEEF2;
+  padding: 10px 40px 10px 16px;
+  border-radius: 24px;
   border: none;
-  border-radius: 30px;
-  padding: 10px 36px 10px 16px;
+  background: var(--color-card-bg);
+  box-shadow: inset 4px 4px 8px rgba(79, 70, 229, 0.08), inset -4px -4px 8px rgba(255, 255, 255, 0.9);
   font-size: 0.85rem;
-  width: 240px;
+  font-family: var(--font-body);
   color: var(--color-deep-navy);
-  box-shadow: inset 4px 4px 8px rgba(0, 31, 63, 0.08), inset -4px -4px 8px rgba(255, 255, 255, 0.9);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  width: 260px;
+  transition: all 0.3s ease;
 }
 
 .dtToolbarSearchInput:focus {
   outline: none;
-  box-shadow: inset 6px 6px 12px rgba(0, 31, 63, 0.12), inset -6px -6px 12px rgba(255, 255, 255, 0.95);
+  box-shadow: inset 6px 6px 12px rgba(79, 70, 229, 0.12), inset -6px -6px 12px rgba(255, 255, 255, 0.95);
 }
 
 .dtToolbarSearchIcon {
   position: absolute;
-  right: 12px;
+  right: 16px;
   color: var(--color-space-grey);
+  pointer-events: none;
 }
 
 .dtToolbarCreateBtn {
-  background: linear-gradient(135deg, #2E5BFF 0%, #1e4bd6 100%);
-  color: white !important;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 24px;
-  font-size: 0.85rem;
-  font-weight: 600;
   display: flex;
   align-items: center;
   gap: 6px;
+  padding: 10px 18px;
+  border-radius: 24px;
+  border: none;
+  background: var(--color-cobalt-blue);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-family: var(--font-body);
   cursor: pointer;
+  white-space: nowrap;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: -4px -4px 10px rgba(255, 255, 255, 0.9), 4px 4px 10px rgba(46, 91, 255, 0.3);
+  box-shadow: -4px -4px 10px rgba(255, 255, 255, 0.8), 4px 4px 10px rgba(79, 70, 229, 0.15);
 }
 
 .dtToolbarCreateBtn:hover {
-  background: linear-gradient(135deg, #1e4bd6 0%, #1738a1 100%);
-  box-shadow: -6px -6px 14px rgba(255, 255, 255, 0.95), 6px 6px 14px rgba(46, 91, 255, 0.4);
   transform: translateY(-2px);
+  box-shadow: -6px -6px 14px rgba(255, 255, 255, 0.85), 6px 6px 14px rgba(79, 70, 229, 0.2);
 }
 
 .dtToolbarCreateBtn:active {
-  box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.2), inset -4px -4px 8px rgba(255, 255, 255, 0.1);
   transform: translateY(0);
-}
-
-[data-theme="dark"] .dtToolbar {
-  background: rgba(4, 8, 20, 0.85);
-  border-bottom: 1px solid rgba(46, 91, 255, 0.08);
-}
-
-[data-theme="dark"] .dtToolbarSelect,
-[data-theme="dark"] .dtToolbarSearchInput {
-  background: rgba(4, 8, 20, 0.8);
-  border-color: rgba(46, 91, 255, 0.12);
-  color: #fff;
+  box-shadow: inset -4px -4px 8px rgba(255, 255, 255, 0.8), inset 4px 4px 8px rgba(79, 70, 229, 0.15);
 }
 
 /* ============================================================
-   STAT TOOLTIP CUSTOM STYLES
+   Responsive Toolbar Layout
    ============================================================ */
-.stat-tip-anchor {
-  position: relative;
-}
-
-.stat-tip-anchor:hover .stat-tip-bubble {
-  display: block !important;
-  animation: tooltipFadeIn 0.2s ease-out forwards;
-}
-
-.stat-tip-anchor:hover .stat-tip-icon {
-  color: var(--color-cobalt-blue, #2E5BFF) !important;
-}
-
-@keyframes tooltipFadeIn {
-  from { opacity: 0; transform: translateY(5px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* ============================================================
-   FORM PAGES DARK MODE (Registration, Edit, Service Forms)
-   Aligned with login page deep blue aesthetic
-   ============================================================ */
-
-/* Form Card — login-style glass */
-[data-theme="dark"] [class*="formCard"] {
-  background: rgba(4, 8, 20, 0.5) !important;
-  border: 1px solid rgba(46, 91, 255, 0.15) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
-  backdrop-filter: blur(20px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-}
-
-/* Form Section dividers — subtle blue instead of white */
-[data-theme="dark"] [class*="formSection"] {
-  border-bottom-color: rgba(46, 91, 255, 0.1) !important;
-}
-
-/* Section Titles — white with subtle left accent */
-[data-theme="dark"] [class*="sectionTitle"] {
-  color: #ffffff !important;
-  border-left: 3px solid #2e5bff !important;
-  padding-left: 12px !important;
-}
-
-/* Form Labels — bright silver, not dim */
-[data-theme="dark"] [class*="formGroup"] label,
-[data-theme="dark"] [class*="dropZoneWrapper"] label {
-  color: #a0abc0 !important;
-}
-
-/* Form Inputs/Selects — deep glass with blue accent border */
-[data-theme="dark"] [class*="formGroup"] input,
-[data-theme="dark"] [class*="formGroup"] select,
-[data-theme="dark"] [class*="formGroup"] textarea {
-  background: rgba(4, 8, 20, 0.55) !important;
-  border: 1px solid rgba(46, 91, 255, 0.15) !important;
-  color: #ffffff !important;
-}
-
-[data-theme="dark"] [class*="formGroup"] input:focus,
-[data-theme="dark"] [class*="formGroup"] select:focus,
-[data-theme="dark"] [class*="formGroup"] textarea:focus {
-  background: rgba(4, 8, 20, 0.7) !important;
-  border-color: rgba(46, 91, 255, 0.5) !important;
-  box-shadow: 0 0 0 4px rgba(46, 91, 255, 0.12) !important;
-}
-
-[data-theme="dark"] [class*="formGroup"] input::placeholder {
-  color: #64748b !important;
-}
-
-/* Select dropdown arrow */
-[data-theme="dark"] [class*="formGroup"] select {
-  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E") !important;
-}
-
-/* Error Alert — deep red glass */
-[data-theme="dark"] [class*="errorAlert"] {
-  background: rgba(239, 68, 68, 0.1) !important;
-  border: 1px solid rgba(239, 68, 68, 0.25) !important;
-  color: #f87171 !important;
-}
-
-/* Submit Button — login-style gradient */
-[data-theme="dark"] [class*="submitBtn"] {
-  background: linear-gradient(180deg, #184cf4 0%, #0a2eb5 100%) !important;
-  color: #ffffff !important;
-  border: none !important;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15), 0 4px 14px rgba(46, 91, 255, 0.35) !important;
-}
-
-[data-theme="dark"] [class*="submitBtn"]:hover:not(:disabled) {
-  background: linear-gradient(180deg, #1f56ff 0%, #0c36cf 100%) !important;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2), 0 6px 20px rgba(46, 91, 255, 0.5) !important;
-}
-
-/* Back Button */
-[data-theme="dark"] [class*="backBtn"] {
-  color: #8f9bb3 !important;
-  background: none !important;
-  border: none !important;
-}
-
-[data-theme="dark"] [class*="backBtn"]:hover {
-  color: #2e5bff !important;
-}
-
-/* Drop Zone */
-[data-theme="dark"] [class*="dropZone"] {
-  background: rgba(4, 8, 20, 0.45) !important;
-  border: 2px dashed rgba(46, 91, 255, 0.25) !important;
-  backdrop-filter: blur(8px) !important;
-  -webkit-backdrop-filter: blur(8px) !important;
-}
-
-[data-theme="dark"] [class*="dropZone"]:hover {
-  border-color: #2e5bff !important;
-  background: rgba(46, 91, 255, 0.08) !important;
-}
-
-[data-theme="dark"] [class*="dropZoneActive"] {
-  border-color: #2e5bff !important;
-  background: rgba(46, 91, 255, 0.12) !important;
-  box-shadow: 0 0 0 4px rgba(46, 91, 255, 0.1) !important;
-}
-
-[data-theme="dark"] [class*="dropZoneText"] {
-  color: #a0abc0 !important;
-}
-
-[data-theme="dark"] [class*="dropZoneText"] strong {
-  color: #6d8eff !important;
-}
-
-[data-theme="dark"] [class*="dropZoneIcon"] {
-  color: #64748b !important;
-}
-
-[data-theme="dark"] [class*="dropZonePreview"] {
-  background: rgba(4, 8, 20, 0.9) !important;
-}
-
-[data-theme="dark"] [class*="uploadingOverlay"] {
-  background: rgba(4, 8, 20, 0.85) !important;
-}
-
-[data-theme="dark"] [class*="uploadingOverlay"] span {
-  color: #6d8eff !important;
-}
-
-/* Modal Card — login glass style */
-[data-theme="dark"] [class*="modalCard"] {
-  background: rgba(4, 8, 20, 0.75) !important;
-  border: 1px solid rgba(46, 91, 255, 0.18) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5) !important;
-  backdrop-filter: blur(24px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
-}
-
-[data-theme="dark"] [class*="modalOverlay"] {
-  background: rgba(1, 4, 18, 0.6) !important;
-  backdrop-filter: blur(8px) !important;
-  -webkit-backdrop-filter: blur(8px) !important;
-}
-
-[data-theme="dark"] [class*="modalTitle"] {
-  color: #ffffff !important;
-}
-
-[data-theme="dark"] [class*="modalDescription"] {
-  color: #a0abc0 !important;
-}
-
-[data-theme="dark"] [class*="modalIcon"] {
-  background: rgba(46, 91, 255, 0.12) !important;
-  color: #6d8eff !important;
-}
-
-/* Cancel Button — dark glass */
-[data-theme="dark"] [class*="cancelBtn"] {
-  background: rgba(4, 8, 20, 0.45) !important;
-  border: 1px solid rgba(46, 91, 255, 0.15) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
-  color: #a0abc0 !important;
-}
-
-[data-theme="dark"] [class*="cancelBtn"]:hover {
-  background: rgba(46, 91, 255, 0.1) !important;
-  color: #ffffff !important;
-}
-
-/* Confirm Button — gradient blue */
-[data-theme="dark"] [class*="confirmBtn"] {
-  background: linear-gradient(180deg, #184cf4 0%, #0a2eb5 100%) !important;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15), 0 4px 12px rgba(46, 91, 255, 0.3) !important;
-}
-
-[data-theme="dark"] [class*="confirmBtn"]:hover {
-  background: linear-gradient(180deg, #1f56ff 0%, #0c36cf 100%) !important;
-}
-
-/* ============================================================
-   PRINT STYLES — Hide all UI chrome, show only report content
-   ============================================================ */
-@media print {
-  /* Hide sidebar, topbar, bottom nav */
-  nav, aside, header, footer,
-  [class*="Sidebar"],
-  [class*="TopBar"],
-  [class*="BottomNav"],
-  [class*="toolbar"],
-  [class*="unitBar"],
-  [class*="modeBar"],
-  [class*="photoBar"],
-  [class*="formFooter"],
-  [class*="pageWrapper"] > *:not([class*="sheetContainer"]):not([class*="formContainer"]) {
-    display: none !important;
-  }
-
-  /* Remove wrapper padding/margin */
-  .main-wrapper {
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-  }
-
-  /* Sheet container fills page */
-  [class*="sheetContainer"],
-  [class*="formContainer"],
-  #report-print-area {
-    margin: 0 !important;
-    padding: 0 !important;
-    max-width: 100% !important;
-    width: 100% !important;
-  }
-
-  /* Ensure textarea content doesn't overflow */
-  textarea {
-    overflow: hidden !important;
-    resize: none !important;
-    height: auto !important;
-    word-break: break-word !important;
-  }
-
-  @page {
-    size: A4 portrait;
-    margin: 8mm;
-  }
-}
-
-/* ══════════════════════════════════════════════════════════
-   MOBILE OPTIMIZATIONS — Global (All Admin Pages)
-   ══════════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
-  /* Datatable toolbar: stack vertically */
   .dtToolbar {
     flex-direction: column;
     align-items: stretch;
-    padding: 12px 14px;
-    gap: 10px;
+    gap: 12px;
+    padding: 16px 20px;
   }
 
-  .dtToolbarLeft,
-  .dtToolbarRight {
-    flex-wrap: wrap;
+  .dtToolbarLeft {
+    flex-direction: column;
+    align-items: stretch;
     gap: 8px;
-    width: 100%;
+  }
+
+  .dtToolbarText {
+    justify-content: center;
+    font-size: 0.8rem;
+  }
+
+  .dtToolbarRight {
+    flex-direction: column;
+    gap: 8px;
   }
 
   .dtToolbarSearch {
-    flex: 1;
-    min-width: 0;
+    order: -1;
+    margin-bottom: 8px;
   }
 
   .dtToolbarSearchInput {
     width: 100%;
-    font-size: 16px; /* Prevent iOS zoom */
   }
 
   .dtToolbarCreateBtn {
     width: 100%;
     justify-content: center;
-    padding: 10px 16px;
-  }
-
-  .dtToolbarText {
-    font-size: 0.8rem;
   }
 }
 
 @media (max-width: 480px) {
-  .dtToolbar {
-    padding: 10px 12px;
+  .dtToolbarLeft {
+    gap: 6px;
   }
 
-  .dtToolbarCreateBtn {
-    font-size: 0.8rem;
-    padding: 9px 14px;
+  .dtToolbarText {
+    flex-direction: column;
+    gap: 4px;
   }
-}
-
-/* ══════════════════════════════════════════════════════════════
-   LIGHT MODE - Brand-Aligned Glassmorphism
-   ══════════════════════════════════════════════════════════════ */
-
-/* Sidebar - always #001F3F (no light mode override needed) */
-
-/* Cards - Optic White glass with brand shadows (tidak berlaku di passport page & client portal) */
-:root:not([data-theme="dark"]) [class*="Card_"]:not([class*="modal"]):not([class*="Modal"]):not([class*="ClientPortal"]),
-:root:not([data-theme="dark"]) [class*="card_"]:not([class*="modal"]):not([class*="Modal"]):not([class*="ClientPortal"]),
-:root:not([data-theme="dark"]) [class*="Card"]:not([class*="modal"]):not([class*="Modal"]):not([class*="ClientPortal"]),
-:root:not([data-theme="dark"]) [class*="card"]:not([class*="modal"]):not([class*="Modal"]):not([class*="ClientPortal"]),
-html:not([data-theme="dark"]) [class*="Card_"]:not([class*="modal"]):not([class*="Modal"]):not([class*="ClientPortal"]),
-html:not([data-theme="dark"]) [class*="card_"]:not([class*="modal"]):not([class*="Modal"]):not([class*="ClientPortal"]),
-html:not([data-theme="dark"]) [class*="Card"]:not([class*="modal"]):not([class*="Modal"]):not([class*="ClientPortal"]),
-html:not([data-theme="dark"]) [class*="card"]:not([class*="modal"]):not([class*="Modal"]):not([class*="ClientPortal"]) {
-  background: rgba(255, 255, 255, 0.92) !important;
-  border: 1px solid rgba(113, 115, 120, 0.1) !important;
-  box-shadow: 0 8px 32px rgba(0, 31, 63, 0.05), 0 2px 8px rgba(46, 91, 255, 0.03) !important;
-  backdrop-filter: blur(20px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-  color: var(--color-deep-navy) !important;
-  border-radius: 16px !important;
-}
-
-/* ── Passport page: BATALKAN glass override, pakai neumorphism ── */
-/* Selector ini identik dengan di atas + [data-page="passport"] sehingga source order menang */
-html:not([data-theme="dark"]) [data-page="passport"] [class*="Card_"],
-html:not([data-theme="dark"]) [data-page="passport"] [class*="card_"],
-html:not([data-theme="dark"]) [data-page="passport"] [class*="Card"],
-html:not([data-theme="dark"]) [data-page="passport"] [class*="card"],
-html:not([data-theme="dark"]) [data-page="passport"] section,
-:root:not([data-theme="dark"]) [data-page="passport"] [class*="Card_"],
-:root:not([data-theme="dark"]) [data-page="passport"] [class*="card_"],
-:root:not([data-theme="dark"]) [data-page="passport"] [class*="Card"],
-:root:not([data-theme="dark"]) [data-page="passport"] [class*="card"],
-:root:not([data-theme="dark"]) [data-page="passport"] section {
-  background: #E8EAEE !important;
-  border: none !important;
-  box-shadow:
-    -6px -6px 10px rgba(255, 255, 255, 0.72),
-     6px  6px 12px rgba(0, 31, 63, 0.14),
-     0 1px 3px rgba(0, 31, 63, 0.05) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border-radius: 18px !important;
-  color: var(--color-deep-navy) !important;
-}
-:root:not([data-theme="dark"]) [data-page="passport"] [class*="card_"],
-:root:not([data-theme="dark"]) [data-page="passport"] [class*="Card"],
-:root:not([data-theme="dark"]) [data-page="passport"] [class*="card"],
-html:not([data-theme="dark"]) [data-page="passport"] section,
-:root:not([data-theme="dark"]) [data-page="passport"] section {
-  background: #E8EAEE !important;
-  border: none !important;
-  box-shadow:
-    -8px -8px 16px rgba(255, 255, 255, 0.78),
-     8px  8px 18px rgba(0, 31, 63, 0.16),
-     0 2px 4px rgba(0, 31, 63, 0.06) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border-radius: 20px !important;
-  color: var(--color-deep-navy) !important;
-}
-
-/* ── Passport page: force animated neumorphism background ── */
-[data-page="passport"] {
-  background: linear-gradient(
-    135deg,
-    #dde0e6 0%,
-    #eceef2 25%,
-    #e4e7ec 50%,
-    #d8dbe2 75%,
-    #e8eaee 100%
-  ) !important;
-  background-size: 300% 300% !important;
-  animation: passportBgFlow 8s ease infinite !important;
-}
-
-/* Dashboard chart/list cards */
-:root:not([data-theme="dark"]) [class*="chartCard"],
-:root:not([data-theme="dark"]) [class*="listCard"],
-html:not([data-theme="dark"]) [class*="chartCard"],
-html:not([data-theme="dark"]) [class*="listCard"] {
-  background: rgba(255, 255, 255, 0.92) !important;
-  border: 1px solid rgba(113, 115, 120, 0.1) !important;
-  box-shadow: 0 8px 32px rgba(0, 31, 63, 0.05) !important;
-}
-
-/* Dropdowns - Solid White (no glassmorphism per request) */
-:root:not([data-theme="dark"]) [class*="dropdownMenu"],
-html:not([data-theme="dark"]) [class*="dropdownMenu"] {
-  background: #ffffff !important;
-  border: 1px solid rgba(113, 115, 120, 0.15) !important;
-  box-shadow: 0 8px 32px rgba(0, 31, 63, 0.08), 0 4px 12px rgba(46, 91, 255, 0.04) !important;
-}
-
-:root:not([data-theme="dark"]) [class*="dropdownEmail"],
-html:not([data-theme="dark"]) [class*="dropdownEmail"] {
-  color: var(--color-space-grey) !important;
-  background: rgba(242, 244, 247, 0.5) !important;
-  border-bottom: 1px solid rgba(113, 115, 120, 0.08) !important;
-}
-
-:root:not([data-theme="dark"]) [class*="dropdownItem"],
-html:not([data-theme="dark"]) [class*="dropdownItem"] {
-  color: var(--color-deep-navy) !important;
-}
-
-:root:not([data-theme="dark"]) [class*="dropdownItem"]:hover,
-html:not([data-theme="dark"]) [class*="dropdownItem"]:hover {
-  background: rgba(255, 107, 0, 0.08) !important;  /* Safety Orange hover for logout */
-}
-
-/* Notification dropdown */
-:root:not([data-theme="dark"]) [class*="notificationDropdown"],
-html:not([data-theme="dark"]) [class*="notificationDropdown"] {
-  background: rgba(255, 255, 255, 0.95) !important;
-  border: 1px solid rgba(113, 115, 120, 0.12) !important;
-  box-shadow: 0 8px 32px rgba(0, 31, 63, 0.08) !important;
-}
-
-:root:not([data-theme="dark"]) [class*="notificationHeader"],
-html:not([data-theme="dark"]) [class*="notificationHeader"] {
-  color: var(--color-deep-navy) !important;
-  background: rgba(242, 244, 247, 0.5) !important;
-  border-bottom: 1px solid rgba(113, 115, 120, 0.08) !important;
-}
-
-/* Search box - always on #001F3F TopBar, no light mode override needed */
-
-/* Form inputs - Optic White glass (exclude TopBar search and login page dark inputs) */
-:root:not([data-theme="dark"]) input:not([class*="searchInput"]):not(.login-input-field):not([class*="otpInput"]),
-:root:not([data-theme="dark"]) select,
-:root:not([data-theme="dark"]) textarea,
-html:not([data-theme="dark"]) input:not([class*="searchInput"]):not(.login-input-field):not([class*="otpInput"]),
-html:not([data-theme="dark"]) select,
-html:not([data-theme="dark"]) textarea {
-  background: rgba(255, 255, 255, 0.95) !important;
-  border: 1px solid rgba(113, 115, 120, 0.2) !important;
-  color: var(--color-deep-navy) !important;
-}
-
-:root:not([data-theme="dark"]) input:not([class*="searchInput"]):not(.login-input-field):not([class*="otpInput"]):focus,
-:root:not([data-theme="dark"]) select:focus,
-:root:not([data-theme="dark"]) textarea:focus,
-html:not([data-theme="dark"]) input:not([class*="searchInput"]):not(.login-input-field):not([class*="otpInput"]):focus,
-html:not([data-theme="dark"]) select:focus,
-html:not([data-theme="dark"]) textarea:focus {
-  border-color: var(--color-cobalt-blue) !important;
-  box-shadow: 0 0 0 3px rgba(46, 91, 255, 0.1) !important;
-}
-
-/* Buttons - Cobalt Blue primary */
-:root:not([data-theme="dark"]) button[class*="assignBtn"],
-:root:not([data-theme="dark"]) button[class*="scanBtn"],
-html:not([data-theme="dark"]) button[class*="assignBtn"],
-html:not([data-theme="dark"]) button[class*="scanBtn"] {
-  background: var(--color-cobalt-blue) !important;
-  color: #ffffff !important;
-  border: 1px solid var(--color-cobalt-blue) !important;
-  box-shadow: 0 4px 12px rgba(46, 91, 255, 0.25) !important;
-}
-
-:root:not([data-theme="dark"]) button[class*="assignBtn"]:hover,
-:root:not([data-theme="dark"]) button[class*="scanBtn"]:hover,
-html:not([data-theme="dark"]) button[class*="assignBtn"]:hover,
-html:not([data-theme="dark"]) button[class*="scanBtn"]:hover {
-  background: #1a47e5 !important;
-  box-shadow: 0 6px 20px rgba(46, 91, 255, 0.35) !important;
-  transform: translateY(-1px) !important;
-}
-
-/* Role badge - Cobalt Blue */
-:root:not([data-theme="dark"]) [class*="roleBadge"],
-html:not([data-theme="dark"]) [class*="roleBadge"] {
-  background: rgba(46, 91, 255, 0.1) !important;
-  color: var(--color-cobalt-blue) !important;
-}
-
-/* Serial tags - Cobalt Blue accent */
-:root:not([data-theme="dark"]) [class*="serialTag"],
-:root:not([data-theme="dark"]) [class*="unitSn"],
-html:not([data-theme="dark"]) [class*="serialTag"],
-html:not([data-theme="dark"]) [class*="unitSn"] {
-  background: rgba(46, 91, 255, 0.08) !important;
-  color: var(--color-cobalt-blue) !important;
-  border: 1px solid rgba(46, 91, 255, 0.2) !important;
-}
-
-/* Table headers - Space Grey tint */
-:root:not([data-theme="dark"]) table thead th,
-html:not([data-theme="dark"]) table thead th {
-  background: rgba(242, 244, 247, 0.8) !important;  /* Light Tech Grey */
-  color: var(--color-deep-navy) !important;
-  border-bottom: 2px solid rgba(113, 115, 120, 0.15) !important;
-}
-
-:root:not([data-theme="dark"]) table td,
-html:not([data-theme="dark"]) table td {
-  border-bottom: 1px solid rgba(113, 115, 120, 0.08) !important;
-  color: var(--color-deep-navy) !important;
-}
-
-:root:not([data-theme="dark"]) tr:hover td,
-html:not([data-theme="dark"]) tr:hover td {
-  background: rgba(46, 91, 255, 0.04) !important;  /* Cobalt Blue hover */
-}
-
-/* Status badges - brand colors */
-:root:not([data-theme="dark"]) [class*="status_active"],
-:root:not([data-theme="dark"]) [class*="badgeCompleted"],
-html:not([data-theme="dark"]) [class*="status_active"],
-html:not([data-theme="dark"]) [class*="badgeCompleted"] {
-  background: rgba(16, 185, 129, 0.1) !important;
-  color: #059669 !important;
-  border: 1px solid rgba(16, 185, 129, 0.25) !important;
-}
-
-:root:not([data-theme="dark"]) [class*="badgePending"],
-:root:not([data-theme="dark"]) .statusDue,
-html:not([data-theme="dark"]) [class*="badgePending"],
-html:not([data-theme="dark"]) .statusDue {
-  background: rgba(255, 107, 0, 0.1) !important;  /* Safety Orange */
-  color: var(--color-safety-orange) !important;
-  border: 1px solid rgba(255, 107, 0, 0.25) !important;
-}
-
-:root:not([data-theme="dark"]) .statusOverdue,
-html:not([data-theme="dark"]) .statusOverdue {
-  background: rgba(239, 68, 68, 0.1) !important;
-  color: #dc2626 !important;
-  border: 1px solid rgba(239, 68, 68, 0.25) !important;
-}
-
-:root:not([data-theme="dark"]) .statusScheduled,
-html:not([data-theme="dark"]) .statusScheduled {
-  background: rgba(46, 91, 255, 0.1) !important;  /* Cobalt Blue */
-  color: var(--color-cobalt-blue) !important;
-  border: 1px solid rgba(46, 91, 255, 0.25) !important;
-}
-
-/* TopBar - always #001F3F (no light mode override needed) */
-
-/* Sync button */
-:root:not([data-theme="dark"]) [class*="syncBtn"],
-html:not([data-theme="dark"]) [class*="syncBtn"] {
-  background: rgba(255, 255, 255, 0.9) !important;
-  border: 1px solid rgba(46, 91, 255, 0.2) !important;
-  color: var(--color-cobalt-blue) !important;
-}
-
-:root:not([data-theme="dark"]) [class*="syncBtn"]:hover,
-html:not([data-theme="dark"]) [class*="syncBtn"]:hover {
-  background: rgba(46, 91, 255, 0.08) !important;
-  border-color: var(--color-cobalt-blue) !important;
-}
-
-/* Links - Cobalt Blue */
-:root:not([data-theme="dark"]) a,
-html:not([data-theme="dark"]) a {
-  color: var(--color-cobalt-blue);
-}
-
-:root:not([data-theme="dark"]) a:hover,
-html:not([data-theme="dark"]) a:hover {
-  color: #1a47e5;
 }

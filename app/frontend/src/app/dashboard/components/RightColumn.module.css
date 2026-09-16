@@ -1,0 +1,405 @@
+/* Right Column Dashboard Components */
+
+.listCard {
+  background: var(--color-card-bg);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: var(--shadow-card);
+  border: 1.5px solid var(--color-border);
+}
+
+.listTitle {
+  font-size: 1rem;
+  color: var(--color-deep-navy);
+  margin-bottom: 16px;
+  font-family: var(--font-heading);
+  border-bottom: 2px solid rgba(79, 70, 229, 0.15);
+  padding-bottom: 12px;
+  font-weight: 800;
+  margin-top: 0;
+  display: flex;
+  align-items: center;
+}
+
+.listItems {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.listItem {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: var(--color-bg-row);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-deep-navy);
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.listItem:hover {
+  background: var(--color-bg-row-hover);
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.1);
+  transform: translateX(2px);
+}
+
+.emptyStateBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 20px 16px;
+  background: var(--color-bg-row);
+  border: 1px dashed rgba(79, 70, 229, 0.25);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.clientName {
+  color: var(--color-deep-navy);
+  font-weight: 700;
+}
+
+.clientCount {
+  color: var(--color-deep-navy);
+  font-weight: 800;
+}
+
+.unitName {
+  color: var(--color-deep-navy);
+  font-weight: 700;
+}
+
+.unitCount {
+  color: var(--color-safety-orange);
+  font-weight: 800;
+}
+
+.description {
+  font-size: 0.7rem;
+  color: var(--color-deep-navy);
+  font-weight: 600;
+  opacity: 0.8;
+  margin-bottom: 16px;
+}
+
+.cardHeaderContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.cardTitle {
+  margin-bottom: 0;
+}
+
+.warrantyRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 10px 12px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  border: none;
+  background: var(--color-bg-row);
+}
+
+.warrantyRow:hover {
+  background: var(--color-bg-row-hover);
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.1);
+}
+
+.warrantyLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-deep-navy);
+  display: flex;
+  align-items: center;
+}
+
+.warrantyDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.warrantyCount {
+  font-size: 0.75rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 31, 63, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modalContent {
+  background: var(--color-card-bg);
+  border-radius: 16px;
+  max-width: 440px;
+  width: 100%;
+  padding: 24px;
+  box-shadow: 0 20px 40px rgba(13, 43, 94, 0.15);
+  border: 1px solid var(--color-border);
+  animation: fadeIn 0.2s ease;
+  position: relative;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  padding-bottom: 12px;
+}
+
+.modalTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--color-deep-navy);
+}
+
+.modalSubtitle {
+  font-size: 0.72rem;
+  color: var(--color-space-grey);
+  font-weight: 600;
+}
+
+.closeBtn {
+  background: var(--color-bg-row);
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.casesList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 260px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.caseItem {
+  padding: 10px 12px;
+  background: var(--color-bg-row);
+  border-radius: 8px;
+  border-left: 3px solid var(--color-cobalt-blue);
+  font-size: 0.75rem;
+  color: var(--color-deep-navy);
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.modalActions {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.reportBtn {
+  background: var(--color-cobalt-blue);
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.frequentItem {
+  flex-direction: column;
+  gap: 2px;
+  align-items: stretch;
+}
+
+.frequentHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.serialNumber {
+  font-weight: 700;
+  color: var(--color-deep-navy);
+}
+
+.visitCount {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--color-deep-navy);
+  background: var(--color-indigo-pale);
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.issueText {
+  font-size: 0.72rem;
+  color: var(--color-deep-navy);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.liveBadge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--color-cobalt-blue);
+  background: var(--color-indigo-pale);
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(79, 70, 229, 0.2);
+}
+
+.pulsingDot {
+  width: 7px;
+  height: 7px;
+  background: var(--color-cobalt-blue);
+  border-radius: 50%;
+  margin-right: 8px;
+  opacity: 0.6;
+  animation: pulse 1.5s infinite;
+}
+
+.liveCard {
+  border: 1.5px solid var(--color-border);
+  background: var(--color-card-bg);
+}
+
+.serviceRequestItem {
+  flex-direction: column;
+  gap: 4px;
+  align-items: stretch;
+  border-left: 3px solid rgba(79, 70, 229, 0.35);
+  background: var(--color-bg-row);
+  padding: 10px 12px;
+}
+
+.serviceRequestHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.clientNameBold {
+  font-weight: 700;
+  color: var(--color-deep-navy);
+  font-size: 0.8rem;
+}
+
+.timeAgo {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--color-deep-navy);
+  opacity: 0.7;
+}
+
+.serviceRequestFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.serviceIssue {
+  font-size: 0.72rem;
+  color: var(--color-deep-navy);
+  font-weight: 600;
+  opacity: 0.8;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.statusBadge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--color-cobalt-blue);
+  background: var(--color-indigo-pale);
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
+  border: 1px solid rgba(79, 70, 229, 0.15);
+}
+
+.overdueItem {
+  flex-direction: column;
+  gap: 2px;
+  align-items: stretch;
+  border-left: 3px solid rgba(79, 70, 229, 0.35);
+}
+
+.overdueHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.daysOpen {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--color-deep-navy);
+}
+
+.clientItemBadge {
+  background: var(--color-indigo-pale);
+  color: var(--color-cobalt-blue);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

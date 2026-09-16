@@ -1,5 +1,5 @@
-/* ============================================================
-   Units Page — CSS Module
+﻿/* ============================================================
+   Units Page â€” CSS Module
    ============================================================ */
 
 .container {
@@ -19,7 +19,8 @@
 }
 
 .title {
-  font-family: var(--font-heading); /* Matching Sidebar Font */
+  font-family: var(--font-heading);
+  /* Matching Sidebar Font */
   font-size: 1.8rem;
   font-weight: 800;
   color: var(--color-deep-dark);
@@ -40,7 +41,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  background: #ECEEF2;
+  background: var(--color-card-bg);
   color: var(--color-cobalt-blue);
   border: none;
   padding: 13px 26px;
@@ -50,27 +51,27 @@
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: -4px -4px 10px rgba(255, 255, 255, 0.9), 4px 4px 10px rgba(0, 31, 63, 0.08);
+  box-shadow: -4px -4px 10px rgba(255, 255, 255, 0.8), 4px 4px 10px rgba(79, 70, 229, 0.08);
   letter-spacing: 0.02em;
 }
 
 .scanBtn:hover {
-  box-shadow: -6px -6px 14px rgba(255, 255, 255, 0.95), 6px 6px 14px rgba(0, 31, 63, 0.1);
+  box-shadow: -6px -6px 14px rgba(255, 255, 255, 0.85), 6px 6px 14px rgba(79, 70, 229, 0.1);
   transform: translateY(-2px);
   color: #1a47e5;
 }
 
 .scanBtn:active {
-  box-shadow: inset -4px -4px 8px rgba(255, 255, 255, 0.9), inset 4px 4px 8px rgba(0, 31, 63, 0.08);
+  box-shadow: inset -4px -4px 8px rgba(255, 255, 255, 0.8), inset 4px 4px 8px rgba(79, 70, 229, 0.08);
   transform: translateY(0);
 }
 
 /* ---- Table Card ---- */
 .tableCard {
-  background: #ECEEF2;
+  background: var(--color-card-bg);
   border-radius: 24px;
-  box-shadow: -6px -6px 14px rgba(255, 255, 255, 0.85), 6px 6px 14px rgba(0, 31, 63, 0.1);
-  border: none;
+  box-shadow: var(--shadow-card);
+  border: 1.5px solid var(--color-border);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -91,16 +92,16 @@
   align-items: center;
   gap: 12px;
   flex: 1;
-  background: #ECEEF2;
+  background: var(--color-card-bg);
   border-radius: 30px;
   padding: 10px 16px;
   border: none;
-  box-shadow: inset 4px 4px 8px rgba(0, 31, 63, 0.08), inset -4px -4px 8px rgba(255, 255, 255, 0.9);
+  box-shadow: inset 4px 4px 8px rgba(79, 70, 229, 0.08), inset -4px -4px 8px rgba(255, 255, 255, 0.9);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .searchBox:focus-within {
-  box-shadow: inset 6px 6px 12px rgba(0, 31, 63, 0.12), inset -6px -6px 12px rgba(255, 255, 255, 0.95);
+  box-shadow: inset 6px 6px 12px rgba(79, 70, 229, 0.12), inset -6px -6px 12px rgba(255, 255, 255, 0.95);
 }
 
 .searchInput {
@@ -139,27 +140,31 @@
 }
 
 .table thead th {
-  background: #f8fafc;
-  color: var(--color-space-grey);
-  font-size: 0.75rem;
+  background: linear-gradient(160deg, #1E3A5F 0%, #0D2B5E 100%);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.72rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 12px 16px;
+  letter-spacing: 0.06em;
+  padding: 13px 16px;
   font-weight: 700;
-  border-bottom: 1px solid #f0f0f4;
+  border-bottom: none;
   text-align: left;
   white-space: nowrap;
 }
 
 .table td {
-  padding: 14px 16px;
-  border-bottom: 1px solid #f0f0f4;
+  padding: 13px 16px;
+  border-bottom: 1px solid rgba(79, 70, 229, 0.08);
   vertical-align: middle;
   color: var(--color-deep-navy);
 }
 
 .table tr:last-child td {
   border-bottom: none;
+}
+
+.table tbody tr:nth-child(even) {
+  background: rgba(79, 70, 229, 0.025);
 }
 
 .table th:last-child,
@@ -175,13 +180,13 @@
 }
 
 .dataRow:hover {
-  background: rgba(46, 91, 255, 0.025);
+  background: rgba(79, 70, 229, 0.06) !important;
 }
 
 .serialTag {
   font-weight: 700;
   color: var(--color-cobalt-blue);
-  background: rgba(46, 91, 255, 0.08);
+  background: rgba(79, 70, 229, 0.08);
   padding: 3px 8px;
   border-radius: 6px;
   font-size: 0.75rem;
@@ -195,8 +200,15 @@
   text-transform: uppercase;
 }
 
-.status_active { background: #e6f9f0; color: #35a37f; }
-.status_inactive { background: #f2f4f7; color: #667085; }
+.status_active {
+  background: #e6f9f0;
+  color: #35a37f;
+}
+
+.status_inactive {
+  background: #f2f4f7;
+  color: #667085;
+}
 
 .typeBadge {
   font-size: 0.7rem;
@@ -226,7 +238,7 @@
 
 .actionIconBtn {
   color: var(--color-space-grey);
-  background: #ECEEF2;
+  background: var(--color-card-bg);
   border: none;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -235,17 +247,17 @@
   justify-content: center;
   padding: 8px;
   border-radius: 50%;
-  box-shadow: -4px -4px 10px rgba(255, 255, 255, 0.9), 4px 4px 10px rgba(0, 31, 63, 0.08);
+  box-shadow: -4px -4px 10px rgba(255, 255, 255, 0.8), 4px 4px 10px rgba(79, 70, 229, 0.08);
 }
 
 .actionIconBtn:hover {
   color: var(--color-cobalt-blue);
-  box-shadow: -6px -6px 14px rgba(255, 255, 255, 0.95), 6px 6px 14px rgba(0, 31, 63, 0.1);
+  box-shadow: -6px -6px 14px rgba(255, 255, 255, 0.85), 6px 6px 14px rgba(79, 70, 229, 0.1);
   transform: translateY(-1px);
 }
 
 .actionIconBtn:active {
-  box-shadow: inset -4px -4px 8px rgba(255, 255, 255, 0.9), inset 4px 4px 8px rgba(0, 31, 63, 0.08);
+  box-shadow: inset -4px -4px 8px rgba(255, 255, 255, 0.8), inset 4px 4px 8px rgba(79, 70, 229, 0.08);
   transform: translateY(0);
 }
 
@@ -256,11 +268,19 @@
   justify-content: space-between;
   padding: 24px 32px;
   border-top: 1px solid #f0f0f4;
-  background: #fff;
+  background: var(--color-card-bg);
 }
 
-.paginationLeft, .paginationRight { flex: 1; }
-.paginationCenter { display: flex; align-items: center; gap: 12px; }
+.paginationLeft,
+.paginationRight {
+  flex: 1;
+}
+
+.paginationCenter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 
 .totalText {
   font-size: 0.9rem;
@@ -268,7 +288,11 @@
   font-weight: 500;
 }
 
-.pageNumbers { display: flex; align-items: center; gap: 4px; }
+.pageNumbers {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
 
 .pageBtn {
   min-width: 36px;
@@ -278,29 +302,29 @@
   justify-content: center;
   border-radius: 50%;
   border: none;
-  background: #ECEEF2;
+  background: var(--color-card-bg);
   color: #555;
   font-weight: 600;
   font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: -4px -4px 10px rgba(255, 255, 255, 0.9), 4px 4px 10px rgba(0, 31, 63, 0.08);
+  box-shadow: -4px -4px 10px rgba(255, 255, 255, 0.8), 4px 4px 10px rgba(79, 70, 229, 0.08);
 }
 
-.pageBtn:hover { 
-  background: #ECEEF2; 
-  box-shadow: -6px -6px 14px rgba(255, 255, 255, 0.95), 6px 6px 14px rgba(0, 31, 63, 0.1);
+.pageBtn:hover {
+  background: var(--color-card-bg);
+  box-shadow: -6px -6px 14px rgba(255, 255, 255, 0.85), 6px 6px 14px rgba(79, 70, 229, 0.1);
   transform: translateY(-1px);
 }
 
 .pageBtn:active {
-  box-shadow: inset -4px -4px 8px rgba(255, 255, 255, 0.9), inset 4px 4px 8px rgba(0, 31, 63, 0.08);
+  box-shadow: inset -4px -4px 8px rgba(255, 255, 255, 0.8), inset 4px 4px 8px rgba(79, 70, 229, 0.08);
   transform: translateY(0);
 }
 
 .activePage {
   color: var(--color-cobalt-blue) !important;
-  box-shadow: inset -4px -4px 8px rgba(255, 255, 255, 0.9), inset 4px 4px 8px rgba(0, 31, 63, 0.08) !important;
+  box-shadow: inset -4px -4px 8px rgba(255, 255, 255, 0.8), inset 4px 4px 8px rgba(79, 70, 229, 0.08) !important;
 }
 
 .pageArrow {
@@ -311,29 +335,35 @@
   justify-content: center;
   border: none;
   border-radius: 50%;
-  background: #ECEEF2;
+  background: var(--color-card-bg);
   color: #888;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: -4px -4px 10px rgba(255, 255, 255, 0.9), 4px 4px 10px rgba(0, 31, 63, 0.08);
+  box-shadow: -4px -4px 10px rgba(255, 255, 255, 0.8), 4px 4px 10px rgba(79, 70, 229, 0.08);
 }
 
 .pageArrow:hover:not(:disabled) {
-  box-shadow: -6px -6px 14px rgba(255, 255, 255, 0.95), 6px 6px 14px rgba(0, 31, 63, 0.1);
+  box-shadow: -6px -6px 14px rgba(255, 255, 255, 0.85), 6px 6px 14px rgba(79, 70, 229, 0.1);
   color: var(--color-cobalt-blue);
   transform: translateY(-1px);
 }
 
 .pageArrow:active:not(:disabled) {
-  box-shadow: inset -4px -4px 8px rgba(255, 255, 255, 0.9), inset 4px 4px 8px rgba(0, 31, 63, 0.08);
+  box-shadow: inset -4px -4px 8px rgba(255, 255, 255, 0.8), inset 4px 4px 8px rgba(79, 70, 229, 0.08);
   transform: translateY(0);
 }
 
 
 
-.pageArrow:disabled { opacity: 0.3; cursor: not-allowed; }
+.pageArrow:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
 
-.ellipsis { color: #999; padding: 0 4px; }
+.ellipsis {
+  color: #999;
+  padding: 0 4px;
+}
 
 .perPageSelect {
   display: flex;
@@ -351,8 +381,13 @@
 
 /* ---- Skeleton ---- */
 @keyframes shimmer {
-  0% { background-position: -400px 0; }
-  100% { background-position: 400px 0; }
+  0% {
+    background-position: -400px 0;
+  }
+
+  100% {
+    background-position: 400px 0;
+  }
 }
 
 .skeletonRow td {
@@ -424,7 +459,7 @@
 }
 
 .mobileCard {
-  background: #ECEEF2;
+  background: var(--color-card-bg);
   border: none;
   border-radius: 16px;
   padding: 14px 14px 12px;
@@ -439,7 +474,7 @@
 
 .mobileCard:active {
   transform: scale(0.99);
-  box-shadow: -2px -2px 6px rgba(255,255,255,0.8), 2px 2px 6px rgba(0,31,63,0.12);
+  box-shadow: -2px -2px 6px rgba(255, 255, 255, 0.8), 2px 2px 6px rgba(0, 31, 63, 0.12);
 }
 
 .mobileCardHeader {
@@ -535,7 +570,7 @@
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   border: none;
-  background: #ECEEF2;
+  background: var(--color-card-bg);
   box-shadow: -3px -3px 8px rgba(255, 255, 255, 0.9), 3px 3px 8px rgba(0, 31, 63, 0.07);
   white-space: nowrap;
   font-family: var(--font-heading);
@@ -560,7 +595,7 @@
 .mobileActionDetail {
   background: linear-gradient(135deg, #001F3F, #002a56);
   color: #fff;
-  box-shadow: -2px -2px 6px rgba(255,255,255,0.08), 2px 2px 8px rgba(0,0,0,0.18), 0 2px 8px rgba(0,31,63,0.25);
+  box-shadow: -2px -2px 6px rgba(255, 255, 255, 0.08), 2px 2px 8px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 31, 63, 0.25);
 }
 
 @media (max-width: 768px) {
@@ -624,7 +659,7 @@
   margin-top: 20px;
   gap: 8px;
   width: 100%;
-  background: #ECEEF2;
+  background: var(--color-card-bg);
   padding: 12px;
   border-radius: var(--radius-md);
   border: none;
@@ -668,8 +703,13 @@
 
 /* ---- Animation ---- */
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .spinIcon {

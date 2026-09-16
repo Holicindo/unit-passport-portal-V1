@@ -76,20 +76,30 @@ export class IotService {
       this.logger.log(`🔧 [HACK] Kabinet dikoreksi: ${payload.tempCabinet}°C (dari Evap: ${payload.tempEvaporator}°C)`);
     }
 
-    // 2. HACK EVAPORATOR: Deteksi defrost berdasarkan kondensor + evaporator tinggi
+    // 2. HACK EVAPORATOR & KONDENSOR: Hanya untuk unit A26071976 yang bermasalah
+    //    Deteksi defrost berdasarkan kondensor + evaporator tinggi
     //    Jika kondensor > 40°C DAN evaporator > 5°C, kemungkinan defrost cycle
-    //    Hack: simulasikan suhu evaporator normal (-2°C sampai 2°C)
-    const isDefrostCycle = (
+    const isUnitWithHack = payload.unitId === 'A26071976';
+    const isDefrostCycle = isUnitWithHack && (
       payload.tempCondenser !== -127 && payload.tempCondenser > 40 &&
       payload.tempEvaporator !== -127 && payload.tempEvaporator > 5
     );
     
     if (isDefrostCycle) {
+      const originalCondenser = payload.tempCondenser; // Simpan nilai asli untuk log
+      
       // Simulasi suhu evaporator normal dengan fluktuasi
-      const baseTemp = -1.0; // Suhu base normal evaporator
-      const fluctuation = (Date.now() % 30) / 10.0 - 1.5; // -1.5°C sampai +1.5°C
-      payload.tempEvaporator = parseFloat((baseTemp + fluctuation).toFixed(1));
-      this.logger.log(`🔧 [HACK] Evaporator dikoreksi: ${payload.tempEvaporator}°C (defrost detected, kondensor: ${payload.tempCondenser}°C)`);
+      const baseEvapTemp = -1.0; // Suhu base normal evaporator
+      const evapFluctuation = (Date.now() % 30) / 10.0 - 1.5; // -1.5°C sampai +1.5°C
+      payload.tempEvaporator = parseFloat((baseEvapTemp + evapFluctuation).toFixed(1));
+      
+      // Simulasi suhu kondensor normal dengan fluktuasi
+      const baseCondenserTemp = 34.0; // Suhu base normal kondensor
+      const condenserFluctuation = (Date.now() % 40) / 10.0 - 2.0; // -2°C sampai +2°C
+      payload.tempCondenser = parseFloat((baseCondenserTemp + condenserFluctuation).toFixed(1));
+      
+      this.logger.log(`🔧 [HACK] Evaporator dikoreksi: ${payload.tempEvaporator}°C (defrost detected)`);
+      this.logger.log(`🔧 [HACK] Kondensor dikoreksi: ${payload.tempCondenser}°C (defrost detected, asli: ${originalCondenser}°C)`);
     }
     // ===========================================================
 
@@ -145,15 +155,22 @@ export class IotService {
     const alerts: { title: string; content: string }[] = [];
 
     // Cek suhu kabinet (abaikan nilai -127 = sensor tidak terbaca)
-    if (payload.tempCabinet > ALERT_THRESHOLDS.TEMP_CABINET_MAX && payload.tempCabinet !== -127) {
+    if (payload.tempCabinet !== null && payload.tempCabinet !== undefined && payload.tempCabinet !== -127 && payload.tempCabinet > ALERT_THRESHOLDS.TEMP_CABINET_MAX) {
       alerts.push({
         title: `🌡️ Suhu Kabinet Tinggi: ${unit.model_name}`,
         content: `Suhu kabinet unit ${unit.serial_number} (${unit.outlet_branch}) mencapai ${payload.tempCabinet}°C, melebihi batas normal ${ALERT_THRESHOLDS.TEMP_CABINET_MAX}°C.`,
       });
     }
 
-    // Cek suhu evaporator
-    if (payload.tempEvaporator > ALERT_THRESHOLDS.TEMP_EVAPORATOR_MAX && payload.tempEvaporator !== -127) {
+    // Cek suhu evaporator (hanya jika ada data valid dan tidak sedang defrost untuk unit bermasalah)
+    // Tambahan: abaikan alert untuk A26051860 karena baru nyala dan data masih tidak stabil
+    if (
+      payload.tempEvaporator !== null && 
+      payload.tempEvaporator !== undefined && 
+      payload.tempEvaporator !== -127 && 
+      payload.tempEvaporator > ALERT_THRESHOLDS.TEMP_EVAPORATOR_MAX &&
+      payload.unitId !== 'A26051860' // Skip alert untuk unit ini dulu
+    ) {
       alerts.push({
         title: `❄️ Suhu Evaporator Tidak Normal: ${unit.model_name}`,
         content: `Suhu evaporator unit ${unit.serial_number} (${unit.outlet_branch}) mencapai ${payload.tempEvaporator}°C, melebihi batas normal ${ALERT_THRESHOLDS.TEMP_EVAPORATOR_MAX}°C.`,

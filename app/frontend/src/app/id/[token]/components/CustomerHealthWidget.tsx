@@ -136,11 +136,7 @@ function MiniBar({ label, score, color }: { label: string; score: number; color:
 }
 
 // ─── MAIN WIDGET ─────────────────────────────────────────────────────────────
-interface CustomerHealthWidgetProps {
-  isDark?: boolean;
-}
-
-export default function CustomerHealthWidget({ isDark = false }: CustomerHealthWidgetProps) {
+export default function CustomerHealthWidget() {
   const score  = MOCK_HEALTH_SCORE;
   const status = getStatusConfig(score);
   const Icon   = status.icon;
@@ -219,8 +215,8 @@ export default function CustomerHealthWidget({ isDark = false }: CustomerHealthW
       {/* ── Sub-indicators ── */}
       <div style={{
         padding: '16px',
-        background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,31,63,0.03)',
-        border: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,31,63,0.07)'}`,
+        background: 'rgba(0,31,63,0.03)',
+        border: '1px solid rgba(0,31,63,0.07)',
         borderRadius: '14px',
         display: 'flex', flexDirection: 'column', gap: '12px',
       }}>

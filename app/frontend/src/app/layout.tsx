@@ -30,7 +30,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id" className={`${inter.variable} ${montserrat.variable}`}>
-      <body style={{ display: 'flex', margin: 0, padding: 0, background: 'var(--color-light-tech-grey)' }}>
+      <body>
         <ClientLayoutWrapper>
           {children}
         </ClientLayoutWrapper>

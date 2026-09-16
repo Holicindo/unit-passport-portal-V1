@@ -244,26 +244,24 @@ function SummaryCard({ label, summary, color }: { label: string; summary: Sensor
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 const TIME_RANGES = [
-  { label: '1 Jam',    hours: 1,       bucketMin: 5   },
-  { label: '7 Jam',   hours: 7,       bucketMin: 5   },
-  { label: '24 Jam',  hours: 24,      bucketMin: 5   },
-  { label: '1 Bulan', hours: 720,     bucketMin: 120 },  // 30 days → 2-hour buckets
-  { label: '3 Bulan', hours: 2160,    bucketMin: 360 },  // 90 days → 6-hour buckets
-  { label: '1 Tahun', hours: 8760,    bucketMin: 1440 }, // 365 days → 1-day buckets
+  { label: '1 Jam',    hours: 1,       bucketMin: 5   },   // 5 menit - detail tinggi untuk troubleshooting
+  { label: '7 Jam',    hours: 7,       bucketMin: 5   },   // 5 menit - detail tinggi untuk analisis harian
+  { label: '24 Jam',   hours: 24,      bucketMin: 5   },   // 5 menit - analisis harian detail
+  { label: '1 Bulan',  hours: 720,     bucketMin: 30  },   // 30 menit - tren bulanan optimal
+  { label: '3 Bulan',  hours: 2160,    bucketMin: 60  },   // 1 jam - tren triwulan
+  { label: '1 Tahun',  hours: 8760,    bucketMin: 240 },   // 4 jam - tren tahunan
 ];
 
 interface IotHistoryWidgetProps {
   unitId: string;
-  isDark?: boolean;
-  unit?: any; // To access specs and update them
+  unit?: any;
   onUnitUpdate?: (newUnit: any) => void;
 }
 
-export default function IotHistoryWidget({ unitId, isDark = false, unit, onUnitUpdate }: IotHistoryWidgetProps) {
+export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHistoryWidgetProps) {
   const [view, setView] = useState<'chart' | 'table'>('chart');
   const [rangeIdx, setRangeIdx] = useState(2); // default 24 Jam
   const [data, setData] = useState<HistoryPoint[]>([]);
-  const [rawData, setRawData] = useState<HistoryPoint[]>([]); // unsampled, for export
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showAllRows, setShowAllRows] = useState(false);
@@ -377,12 +375,11 @@ export default function IotHistoryWidget({ unitId, isDark = false, unit, onUnitU
       const range = TIME_RANGES[rangeIdx];
       const res = await iotApi.getHistory(unitId, range.hours);
       const raw: HistoryPoint[] = res.data || [];
-      // Filter rawData to exactly match the selected time range
+      // Filter data to exactly match the selected time range and apply downsampling
       const since = new Date(Date.now() - range.hours * 60 * 60 * 1000);
       const filtered = raw
         .filter(p => new Date(p.recorded_at) >= since)
         .map(applyHack); // terapkan koreksi sensor yang sama dengan backend
-      setRawData(filtered);
       setData(downsample(filtered, range.bucketMin));
     } catch {
       // API unavailable or failed
@@ -421,8 +418,8 @@ export default function IotHistoryWidget({ unitId, isDark = false, unit, onUnitU
   };
 
   const exportCsv = () => {
-    // Use rawData (5-min intervals) instead of downsampled display data
-    const exportRows = rawData.length > 0 ? rawData : data;
+    // Use downsampled data (consistent 5-min intervals) for export
+    const exportRows = data; // Use display data which is already downsampled to 5-min intervals
     const rawSummary = computeSummary(exportRows);
     const header = 'Waktu (WIB),Kabinet (°C),Evaporator (°C),Kondensor (°C)\n';
     const rows = exportRows.map(d =>
@@ -439,8 +436,8 @@ export default function IotHistoryWidget({ unitId, isDark = false, unit, onUnitU
   };
 
   const exportPdf = () => {
-    // Use rawData (5-min intervals) for the full report
-    const exportRows = rawData.length > 0 ? rawData : data;
+    // Use downsampled data (consistent 5-min intervals) for the full report
+    const exportRows = data; // Use display data which is already downsampled to 5-min intervals
     const rawSummary = computeSummary(exportRows);
 
     // ── Build SVG chart inline ──

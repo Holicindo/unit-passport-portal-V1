@@ -96,7 +96,7 @@ export default function SelectReportTypeModal({ show, onClose, unit }: SelectRep
 
   return (
     <div className={styles.modalOverlay} style={{ zIndex: 1100 }}>
-      <div className={styles.modalCard} style={{ maxWidth: '650px', width: '90%' }}>
+      <div className={styles.modalCard} style={{ maxWidth: '720px', width: '92%' }}>
         <div className={styles.modalHeader}>
           <div className={styles.headerLeftMobile}>
             <button onClick={onClose} className={styles.mobileBackBtn}>
@@ -107,39 +107,41 @@ export default function SelectReportTypeModal({ show, onClose, unit }: SelectRep
           <button onClick={onClose} className={styles.closeBtn}>×</button>
         </div>
 
-        <div className={styles.modalForm} style={{ padding: '20px 24px' }}>
-          <p className={styles.modalHint} style={{ marginBottom: '16px' }}>
+        <div className={styles.modalForm} style={{ padding: '24px 28px' }}>
+          <p className={styles.modalHint} style={{
+            marginBottom: '20px'
+          }}>
             Pilih tipe laporan digital yang ingin dibuat untuk unit ini.
           </p>
 
           {activeLog && (
             <div style={{
-              background: 'rgba(255,107,0,0.08)',
-              border: '1px solid rgba(255,107,0,0.2)',
-              borderRadius: '10px',
-              padding: '12px 16px',
-              marginBottom: '20px',
+              background: 'linear-gradient(135deg, rgba(255,107,0,0.12) 0%, rgba(255,107,0,0.06) 100%)',
+              border: '1.5px solid rgba(255,107,0,0.3)',
+              borderRadius: '12px',
+              padding: '16px 20px',
+              marginBottom: '24px',
               display: 'flex',
               flexDirection: 'column',
-              gap: '4px'
+              gap: '6px'
             }}>
               <div style={{
-                fontSize: '0.68rem',
+                fontSize: '0.7rem',
                 fontWeight: 800,
-                color: '#FF6B00',
+                color: '#D97706',
                 textTransform: 'uppercase',
-                letterSpacing: '0.06em',
+                letterSpacing: '0.08em',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '6px'
+                gap: '8px'
               }}>
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#FF6B00', display: 'inline-block' }} />
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#FF6B00', display: 'inline-block' }} />
                 Tiket Servis Aktif Terdeteksi
               </div>
-              <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#fff', fontFamily: 'monospace' }}>
+              <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-deep-navy)', fontFamily: 'var(--font-heading)' }}>
                 Call ID: {activeLog.id}
               </div>
-              <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '2px' }}>
+              <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '2px', lineHeight: 1.4 }}>
                 Laporan ini akan otomatis ditautkan ke tiket servis di atas untuk dokumentasi.
               </div>
             </div>
@@ -147,12 +149,12 @@ export default function SelectReportTypeModal({ show, onClose, unit }: SelectRep
 
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-            gap: '12px',
-            maxHeight: '400px',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gap: '16px',
+            maxHeight: '420px',
             overflowY: 'auto',
-            paddingRight: '4px',
-            marginBottom: '10px'
+            paddingRight: '8px',
+            marginBottom: '12px'
           }}>
             {reportTypes.map((type) => (
               <button
@@ -162,40 +164,55 @@ export default function SelectReportTypeModal({ show, onClose, unit }: SelectRep
                 style={{
                   display: 'flex',
                   alignItems: 'flex-start',
-                  gap: '12px',
-                  padding: '14px',
-                  background: type.bg,
-                  border: `1px solid ${type.border}`,
-                  borderRadius: '12px',
+                  gap: '14px',
+                  padding: '18px 16px',
+                  background: '#FFFFFF',
+                  border: `2px solid ${type.border}`,
+                  borderRadius: '14px',
                   cursor: 'pointer',
                   textAlign: 'left',
-                  transition: 'all 0.2s ease',
+                  transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
                   outline: 'none',
+                  boxShadow: '0 2px 12px rgba(13, 43, 94, 0.06)',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.15)';
+                  e.currentTarget.style.transform = 'translateY(-3px)';
+                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(13, 43, 94, 0.12)';
+                  e.currentTarget.style.borderColor = type.border.replace('0.15', '0.4');
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'none';
-                  e.currentTarget.style.boxShadow = 'none';
+                  e.currentTarget.style.boxShadow = '0 2px 12px rgba(13, 43, 94, 0.06)';
+                  e.currentTarget.style.borderColor = type.border;
                 }}
               >
                 <div style={{
-                  padding: '8px',
-                  background: 'rgba(255,255,255,0.05)',
-                  borderRadius: '10px',
+                  padding: '10px',
+                  background: type.bg,
+                  borderRadius: '12px',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center'
+                  justifyContent: 'center',
+                  flexShrink: 0
                 }}>
                   {type.icon}
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                  <span style={{ fontSize: '0.86rem', fontWeight: 700, color: '#fff' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+                  <span style={{
+                    fontSize: '0.9rem',
+                    fontWeight: 700,
+                    color: 'var(--color-deep-navy)',
+                    fontFamily: 'var(--font-heading)',
+                    lineHeight: 1.2
+                  }}>
                     {type.name}
                   </span>
-                  <span style={{ fontSize: '0.74rem', color: '#94a3b8', lineHeight: 1.3 }}>
+                  <span style={{
+                    fontSize: '0.78rem',
+                    color: '#64748b',
+                    lineHeight: 1.4,
+                    fontWeight: 500
+                  }}>
                     {type.description}
                   </span>
                 </div>

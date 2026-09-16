@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import styles from './Sidebar.module.css';
-import { 
+import {
   LayoutDashboard, Package, Wrench, BarChart3, ChevronDown,
   List, PlusCircle, ClipboardCheck, History, Wrench as Tool, Calendar, FileText,
   Users, Shield, Briefcase, Building2, Activity, Database
@@ -22,72 +22,74 @@ function HolicIcon({ className }: { className?: string }) {
 }
 
 const menuItems = [
-  { id: 'dashboard', label: 'Ringkasan Armada', icon: <LayoutDashboard size={20} />, href: '/dashboard' },
-  { 
-    id: 'units', 
-    label: 'Unit', 
-    icon: <Package size={20} />, 
+  { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} />, href: '/dashboard' },
+  {
+    id: 'units',
+    label: 'Unit',
+    icon: <Package size={20} />,
     href: '/units',
     subItems: [
       { label: 'Daftar Unit', icon: <List size={18} />, href: '/units' },
       { label: 'Registrasi Unit', icon: <PlusCircle size={18} />, href: '/units/new' }
-    ] 
+    ]
   },
-  { 
-    id: 'service', 
-    label: 'Servis', 
-    icon: <Wrench size={20} />, 
+  {
+    id: 'service',
+    label: 'Servis',
+    icon: <Wrench size={20} />,
     href: '/service',
     subItems: [
       { label: 'Log Servis', icon: <Tool size={18} />, href: '/service' },
       { label: 'Rencana Servis', icon: <Calendar size={18} />, href: '/service/planning' }
-    ] 
+    ]
   },
-  { 
-    id: 'partners', 
-    label: 'Mitra & Klien', 
-    icon: <Briefcase size={20} />, 
+  {
+    id: 'partners',
+    label: 'Mitra & Klien',
+    icon: <Briefcase size={20} />,
     href: '/partners/clients',
     subItems: [
       { label: 'Manajemen Klien', icon: <Users size={18} />, href: '/partners/clients' },
       { label: 'Manajemen Mitra', icon: <Building2 size={18} />, href: '/partners' }
-    ] 
+    ]
   },
-  { 
-    id: 'reports', 
-    label: 'Laporan', 
-    icon: <BarChart3 size={20} />, 
+  {
+    id: 'reports',
+    label: 'Laporan',
+    icon: <BarChart3 size={20} />,
     href: '/reports',
     subItems: [
       { label: 'Digital Form', icon: <FileText size={18} />, href: '/reports' },
       { label: 'Riwayat Laporan', icon: <History size={18} />, href: '/reports/history' }
-    ] 
+    ]
   },
-  { 
-    id: 'users', 
-    label: 'Pengaturan Akses', 
-    icon: <Shield size={20} />, 
+  {
+    id: 'users',
+    label: 'Pengaturan Akses',
+    icon: <Shield size={20} />,
     href: '/users',
     subItems: [
       { label: 'Manajemen Pengguna', icon: <Users size={18} />, href: '/users' },
       { label: 'Matriks Hak Akses', icon: <Shield size={18} />, href: '/users/roles' }
-    ] 
+    ]
   },
-  { 
-    id: 'audit', 
-    label: 'Aktivitas Log', 
-    icon: <Activity size={20} />, 
+  {
+    id: 'audit',
+    label: 'Aktivitas Log',
+    icon: <Activity size={20} />,
     href: '/audit'
   },
 ];
 
 import { useState, useEffect } from 'react';
+import { Menu } from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
+  onToggle: () => void;
 }
 
-export default function Sidebar({ isOpen }: SidebarProps) {
+export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
   const pathname = usePathname();
   const [role, setRole] = useState<string | null>(null);
 
@@ -129,11 +131,11 @@ export default function Sidebar({ isOpen }: SidebarProps) {
         {filteredMenuItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
           const hasSubItems = !!item.subItems;
-          
+
           return (
             <div key={item.id} className={styles.menuGroup}>
-              <Link 
-                href={item.href} 
+              <Link
+                href={item.href}
                 className={`${styles.menuItem} ${isActive ? styles.active : ''}`}
               >
                 <div className={styles.menuItemMain}>
@@ -141,22 +143,22 @@ export default function Sidebar({ isOpen }: SidebarProps) {
                   <span className={styles.label}>{item.label}</span>
                 </div>
                 {hasSubItems && (
-                  <ChevronDown 
-                    size={16} 
-                    className={`${styles.arrow} ${isActive ? styles.arrowOpen : ''}`} 
+                  <ChevronDown
+                    size={16}
+                    className={`${styles.arrow} ${isActive ? styles.arrowOpen : ''}`}
                   />
                 )}
               </Link>
-              
+
               {hasSubItems && (
                 <div className={`${styles.subItemsContainer} ${isActive ? styles.expanded : ''}`}>
                   <div className={styles.subItems}>
                     {item.subItems.map((sub) => {
                       const isSubActive = pathname === sub.href;
                       return (
-                        <Link 
-                          key={sub.label} 
-                          href={sub.href} 
+                        <Link
+                          key={sub.label}
+                          href={sub.href}
                           className={`${styles.subItem} ${isSubActive ? styles.subActive : ''}`}
                         >
                           <span className={styles.subIcon}>{sub.icon}</span>

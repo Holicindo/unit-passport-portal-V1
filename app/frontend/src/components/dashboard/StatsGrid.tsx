@@ -86,172 +86,172 @@ export default function StatsGrid({ items, data, loading }: StatsGridProps) {
         width: '100%',
         marginBottom: '24px'
       }}>
-      {stats.map((stat, idx) => {
-        const Icon = stat.icon;
-        
-        // Dynamic wave logic
-        const numValue = parseFloat(String(stat.value).replace(/[^0-9.]/g, '')) || 0;
-        let percentage = Math.min(1, numValue / stat.max);
-        if (loading || isNaN(percentage)) percentage = 0.5;
-        
-        const startY = 100 - (percentage * 50);
-        const peakY = 100 - (percentage * 90);
-        const dipY = 100 - (percentage * 30);
-        
-        const pathD = `M0,${startY} C65,${peakY} 135,${dipY} 200,${startY} C265,${peakY} 335,${dipY} 400,${startY} L400,100 L0,100 Z`;
+        {stats.map((stat, idx) => {
+          const Icon = stat.icon;
 
-        return (
-          <div
-            key={stat.label + idx}
-            style={{
-              position: 'relative',
-              overflow: 'hidden',
-              background: '#ffffff',
-              padding: '20px 22px',
-              borderRadius: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '18px',
-              border: '1px solid rgba(0, 31, 63, 0.06)',
-              boxShadow: '0 4px 20px rgba(0, 31, 63, 0.03)',
-              transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-              cursor: stat.onClick ? 'pointer' : 'default',
-            }}
-            onClick={stat.onClick}
-            onMouseEnter={e => {
-              (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-3px)';
-              (e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 30px rgba(0, 31, 63, 0.06)';
-              (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(46, 91, 255, 0.2)';
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
-              (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 20px rgba(0, 31, 63, 0.03)';
-              (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(0, 31, 63, 0.06)';
-            }}
-          >
-            <div style={{
-              width: '46px',
-              height: '46px',
-              borderRadius: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'linear-gradient(135deg, rgba(46,91,255,0.08) 0%, rgba(46,91,255,0.01) 100%)',
-              color: stat.accent,
-              border: '1px solid rgba(46,91,255,0.08)',
-              flexShrink: 0,
-            }}>
-              <Icon size={22} strokeWidth={1.8} />
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <h3 style={{
-                fontSize: '1.5rem',
-                margin: 0,
-                marginBottom: '3px',
-                color: '#001F3F',
-                fontWeight: 800,
-                fontFamily: '"Montserrat", sans-serif',
-                letterSpacing: '-0.02em',
-                lineHeight: 1,
-                position: 'relative',
-                zIndex: 1
-              }}>
-                {stat.value}
-              </h3>
-              <p style={{
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                color: '#717378',
-                margin: 0,
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
-                position: 'relative',
-                zIndex: 1
-              }}>
-                {stat.label}
-              </p>
-            </div>
+          // Dynamic wave logic
+          const numValue = parseFloat(String(stat.value).replace(/[^0-9.]/g, '')) || 0;
+          let percentage = Math.min(1, numValue / stat.max);
+          if (loading || isNaN(percentage)) percentage = 0.5;
 
-            {/* Tooltip Icon */}
-            {stat.tooltip && (
-              <span
-                style={{
-                  position: 'absolute',
-                  top: '12px',
-                  right: '12px',
-                  zIndex: 10,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  cursor: 'help',
-                }}
-                className="stat-tip-anchor"
-              >
-                <HelpCircle
-                  size={14}
-                  style={{ color: `${stat.accent}80`, transition: 'color 0.2s' }}
-                  className="stat-tip-icon"
-                />
+          const startY = 100 - (percentage * 50);
+          const peakY = 100 - (percentage * 90);
+          const dipY = 100 - (percentage * 30);
+
+          const pathD = `M0,${startY} C65,${peakY} 135,${dipY} 200,${startY} C265,${peakY} 335,${dipY} 400,${startY} L400,100 L0,100 Z`;
+
+          return (
+            <div
+              key={stat.label + idx}
+              style={{
+                position: 'relative',
+                overflow: 'hidden',
+                background: 'linear-gradient(145deg, #1E3A5F 0%, #0D2B5E 60%, #162F5A 100%)',
+                padding: '20px 22px',
+                borderRadius: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '18px',
+                border: '1.5px solid rgba(255, 255, 255, 0.12)',
+                boxShadow: '-4px -4px 10px rgba(255, 255, 255, 0.04), 4px 4px 14px rgba(0, 0, 0, 0.35)',
+                transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                cursor: stat.onClick ? 'pointer' : 'default',
+              }}
+              onClick={stat.onClick}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-3px)';
+                (e.currentTarget as HTMLDivElement).style.boxShadow = '-4px -4px 12px rgba(255,255,255,0.06), 4px 4px 20px rgba(0,0,0,0.45)';
+                (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(99, 102, 241, 0.5)';
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
+                (e.currentTarget as HTMLDivElement).style.boxShadow = '-4px -4px 10px rgba(255,255,255,0.04), 4px 4px 14px rgba(0,0,0,0.35)';
+                (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255, 255, 255, 0.12)';
+              }}
+            >
+              <div style={{
+                width: '46px',
+                height: '46px',
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'rgba(255, 255, 255, 0.12)',
+                color: '#ffffff',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                flexShrink: 0,
+              }}>
+                <Icon size={22} strokeWidth={1.8} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <h3 style={{
+                  fontSize: '1.5rem',
+                  margin: 0,
+                  marginBottom: '3px',
+                  color: '#ffffff',
+                  fontWeight: 800,
+                  fontFamily: '"Montserrat", sans-serif',
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1,
+                  position: 'relative',
+                  zIndex: 1
+                }}>
+                  {stat.value}
+                </h3>
+                <p style={{
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  color: 'rgba(255, 255, 255, 0.65)',
+                  margin: 0,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                  position: 'relative',
+                  zIndex: 1
+                }}>
+                  {stat.label}
+                </p>
+              </div>
+
+              {/* Tooltip Icon */}
+              {stat.tooltip && (
                 <span
                   style={{
-                    display: 'none',
                     position: 'absolute',
-                    bottom: 'calc(100% + 8px)',
-                    right: 0,
-                    width: '220px',
-                    background: '#001F3F',
-                    color: '#ffffff',
-                    fontSize: '0.72rem',
-                    lineHeight: 1.55,
-                    fontWeight: 400,
-                    padding: '10px 12px',
-                    borderRadius: '10px',
-                    border: '1px solid rgba(46, 91, 255, 0.2)',
-                    boxShadow: '0 8px 24px rgba(0, 31, 63, 0.15)',
-                    pointerEvents: 'none',
-                    whiteSpace: 'normal',
-                    textAlign: 'left',
-                    zIndex: 9999,
+                    top: '12px',
+                    right: '12px',
+                    zIndex: 10,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    cursor: 'help',
                   }}
-                  className="stat-tip-bubble"
+                  className="stat-tip-anchor"
                 >
-                  {stat.tooltip}
-                  <span style={{
-                    position: 'absolute', top: '100%', right: '8px',
-                    borderWidth: '5px', borderStyle: 'solid',
-                    borderColor: '#001F3F transparent transparent transparent',
-                  }} />
+                  <HelpCircle
+                    size={14}
+                    style={{ color: 'rgba(255,255,255,0.4)', transition: 'color 0.2s' }}
+                    className="stat-tip-icon"
+                  />
+                  <span
+                    style={{
+                      display: 'none',
+                      position: 'absolute',
+                      bottom: 'calc(100% + 8px)',
+                      right: 0,
+                      width: '220px',
+                      background: '#0D2B5E',
+                      color: '#ffffff',
+                      fontSize: '0.72rem',
+                      lineHeight: 1.55,
+                      fontWeight: 400,
+                      padding: '10px 12px',
+                      borderRadius: '10px',
+                      border: '1px solid rgba(79, 70, 229, 0.25)',
+                      boxShadow: '0 8px 24px rgba(13, 43, 94, 0.2)',
+                      pointerEvents: 'none',
+                      whiteSpace: 'normal',
+                      textAlign: 'left',
+                      zIndex: 9999,
+                    }}
+                    className="stat-tip-bubble"
+                  >
+                    {stat.tooltip}
+                    <span style={{
+                      position: 'absolute', top: '100%', right: '8px',
+                      borderWidth: '5px', borderStyle: 'solid',
+                      borderColor: '#0D2B5E transparent transparent transparent',
+                    }} />
+                  </span>
                 </span>
-              </span>
-            )}
+              )}
 
-            {/* Subtle Background Wave */}
-            <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', zIndex: 0, pointerEvents: 'none' }}>
-              <svg 
-                viewBox="0 0 400 100" 
-                style={{
-                  position: 'absolute',
-                  bottom: 0,
-                  left: 0,
-                  width: '200%',
-                  height: '100%',
-                  opacity: 0.18,
-                  animation: `waveAnimation ${5 + (idx % 3) * 1.5}s linear infinite`
-                }}
-                preserveAspectRatio="none"
-              >
-                <defs>
-                  <linearGradient id={`grad-${stat.label.replace(/\s+/g, '')}-${idx}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={stat.accent} stopOpacity="1" />
-                    <stop offset="100%" stopColor={stat.accent} stopOpacity="0.05" />
-                  </linearGradient>
-                </defs>
-                <path d={pathD} fill={`url(#grad-${stat.label.replace(/\s+/g, '')}-${idx})`} style={{ transition: 'd 0.8s ease' }} />
-              </svg>
+              {/* Wave animation — lighter/white tinted on dark bg */}
+              <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', zIndex: 0, pointerEvents: 'none' }}>
+                <svg
+                  viewBox="0 0 400 100"
+                  style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    width: '200%',
+                    height: '100%',
+                    opacity: 0.14,
+                    animation: `waveAnimation ${5 + (idx % 3) * 1.5}s linear infinite`
+                  }}
+                  preserveAspectRatio="none"
+                >
+                  <defs>
+                    <linearGradient id={`grad-${stat.label.replace(/\s+/g, '')}-${idx}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
+                      <stop offset="100%" stopColor="#ffffff" stopOpacity="0.02" />
+                    </linearGradient>
+                  </defs>
+                  <path d={pathD} fill={`url(#grad-${stat.label.replace(/\s+/g, '')}-${idx})`} />
+                </svg>
+              </div>
             </div>
-          </div>
-        );
-      })}
-    </div>
+          );
+        })}
+      </div>
     </>
   );
 }

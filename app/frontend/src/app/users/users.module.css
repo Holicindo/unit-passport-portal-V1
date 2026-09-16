@@ -1,4 +1,4 @@
-.container {
+﻿.container {
   padding: 36px 48px;
   width: 100%;
   display: flex;
@@ -137,9 +137,9 @@
 }
 
 .card {
-  background: #ECEEF2;
+  background: var(--color-card-bg);
   border-radius: var(--radius-lg);
-  box-shadow: -6px -6px 14px rgba(255, 255, 255, 0.85), 6px 6px 14px rgba(0, 31, 63, 0.1);
+  box-shadow: var(--shadow-card);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -154,21 +154,20 @@
 }
 
 .table th {
-  background: #f8fafc;
-  color: var(--color-space-grey);
-  font-size: 0.75rem;
+  background: linear-gradient(160deg, #1E3A5F 0%, #0D2B5E 100%);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.72rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 12px 16px;
+  letter-spacing: 0.06em;
+  padding: 13px 16px;
   font-weight: 700;
-  border-bottom: 1px solid #f0f0f4;
+  border-bottom: none;
   text-align: left;
-  white-space: nowrap;
-}
+  white-space: nowrap;}
 
 .table td {
   padding: 14px 16px;
-  border-bottom: 1px solid #f0f0f4;
+  border-bottom: 1px solid rgba(79, 70, 229, 0.08);
   vertical-align: middle;
   color: var(--color-deep-navy);
 }
@@ -182,7 +181,7 @@
 }
 
 .table tbody tr:hover {
-  background: rgba(46, 91, 255, 0.02);
+  background: rgba(79, 70, 229, 0.06);
 }
 
 .avatar {
@@ -251,7 +250,7 @@
 }
 
 .actionBtn {
-  background: #ECEEF2;
+  background: var(--color-card-bg);
   border: none;
   color: var(--color-space-grey);
   cursor: pointer;
@@ -398,7 +397,7 @@
   font-size: 0.88rem;
   font-family: var(--font-inter);
   color: var(--color-deep-navy);
-  background: #f8fafc;
+  background: var(--color-card-bg);
   transition: all 0.2s ease;
   -webkit-appearance: none;
   appearance: none;
@@ -604,3 +603,5 @@
   gap: 12px;
   justify-content: center;
 }
+
+

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Sun, Moon, QrCode } from 'lucide-react';
+import React, { useState } from 'react';
+import { QrCode } from 'lucide-react';
 import styles from './PassportTopbar.module.css';
 
 // ─── Holicindo Logo SVG ───────────────────────────────────────────────────────
@@ -39,8 +39,6 @@ interface AccessState {
 }
 
 export interface PassportTopbarProps extends AccessState {
-  isDark: boolean;
-  setIsDark: (fn: (v: boolean) => boolean) => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   unit: any | null;
   token: string;
@@ -67,25 +65,6 @@ function TopbarBadge({ config, onClick }: TopbarBadgeProps) {
     <button className={styles.topbarBadge} onClick={onClick} aria-label={`Access level: ${config.text}`} type="button">
       <span className={styles.badgeDesktop}>{config.text}</span>
       <span className={styles.badgeMobile}>{config.shortText}</span>
-    </button>
-  );
-}
-
-function DarkLightToggle({ isDark, setIsDark }: { isDark: boolean; setIsDark: (fn: (v: boolean) => boolean) => void }) {
-  const handleClick = () => {
-    setIsDark((v) => !v);
-    document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
-  };
-
-  return (
-    <button
-      className={styles.iconBtn}
-      onClick={handleClick}
-      aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-      type="button"
-    >
-      {isDark ? <Sun size={14} /> : <Moon size={14} />}
-      <span className={styles.toggleText}>{isDark ? 'Light' : 'Dark'}</span>
     </button>
   );
 }
@@ -133,8 +112,6 @@ function QrPrintButton({ unit, token }: QrPrintButtonProps) {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function PassportTopbar({
-  isDark,
-  setIsDark,
   isGuest,
   isClient,
   isPartner,
@@ -155,6 +132,11 @@ export default function PassportTopbar({
 
   const [showBadgeInfo, setShowBadgeInfo] = useState(false);
 
+  // FORCE RESET: Remove any existing dark theme from DOM
+  React.useEffect(() => {
+    document.documentElement.removeAttribute('data-theme');
+  }, []);
+
   return (
     <header className={styles.topbar} role="banner">
       {/* Left: brand logo */}
@@ -163,9 +145,9 @@ export default function PassportTopbar({
         <span className={styles.topbarLogoText}>HOLICINDO</span>
       </div>
 
-      {/* Right: toggle → badge */}
+      {/* Right: QR print + access badge */}
       <div className={styles.topbarRight}>
-        <DarkLightToggle isDark={isDark} setIsDark={setIsDark} />
+        <QrPrintButton unit={unit} token={token} />
         <span className={styles.divider} aria-hidden="true" />
         <div style={{ position: 'relative' }}>
           <TopbarBadge config={badge} onClick={() => setShowBadgeInfo(!showBadgeInfo)} />
@@ -190,7 +172,7 @@ export default function PassportTopbar({
                     borderRadius: '4px',
                     fontSize: '0.75rem',
                     cursor: 'pointer',
-                    fontWeight: 'bold'
+                    fontWeight: 'bold',
                   }}
                 >
                   Logout / Bersihkan Sesi

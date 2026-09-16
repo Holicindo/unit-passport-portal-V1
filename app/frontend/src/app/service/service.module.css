@@ -1,4 +1,4 @@
-.container {
+﻿.container {
   padding: 40px;
   min-height: 100vh;
   background-color: var(--color-light-tech-grey);
@@ -45,7 +45,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #ECEEF2;
+  background: var(--color-card-bg);
   color: var(--color-cobalt-blue);
   border: none;
   padding: 12px 24px;
@@ -140,7 +140,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  background: #ECEEF2;
+  background: var(--color-card-bg);
   border: none;
   border-radius: 30px;
   padding: 10px 16px;
@@ -181,7 +181,7 @@
 }
 
 .filterSelect {
-  background: #ECEEF2;
+  background: var(--color-card-bg);
   border: none;
   border-radius: 10px;
   padding: 8px 16px;
@@ -218,21 +218,20 @@
 }
 
 .table th {
-  background: #f8fafc;
-  color: var(--color-space-grey);
-  font-size: 0.75rem;
+  background: linear-gradient(160deg, #1E3A5F 0%, #0D2B5E 100%);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.72rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 12px 16px;
+  letter-spacing: 0.06em;
+  padding: 13px 16px;
   font-weight: 700;
-  border-bottom: 1px solid #f0f0f4;
+  border-bottom: none;
   text-align: left;
-  white-space: nowrap;
-}
+  white-space: nowrap;}
 
 .table td {
   padding: 14px 16px;
-  border-bottom: 1px solid #f0f0f4;
+  border-bottom: 1px solid rgba(79, 70, 229, 0.08);
   vertical-align: middle;
   color: var(--color-deep-navy);
 }
@@ -370,7 +369,7 @@
 }
 
 .actionBtn {
-  background: #ECEEF2;
+  background: var(--color-card-bg);
   border: none;
   color: var(--color-space-grey);
   padding: 8px;
@@ -419,7 +418,7 @@
 }
 
 .expandBtn {
-  background: #ECEEF2;
+  background: var(--color-card-bg);
   border: 1px solid rgba(0, 31, 63, 0.1);
   color: var(--color-deep-navy);
   border-radius: 4px;
@@ -551,7 +550,7 @@
 .formGroup input,
 .formGroup select,
 .formGroup textarea {
-  background: #F8FAFC;
+  background: var(--color-card-bg);
   border: 1px solid #E2E8F0;
   border-radius: 10px;
   padding: 10px 14px;
@@ -582,11 +581,11 @@
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  background: #F8FAFC;
+  background: var(--color-card-bg);
 }
 
 .cancelBtn {
-  background: #ECEEF2;
+  background: var(--color-card-bg);
   border: none;
   color: var(--color-space-grey);
   padding: 10px 20px;
@@ -609,7 +608,7 @@
 }
 
 .saveBtn {
-  background: #ECEEF2;
+  background: var(--color-card-bg);
   color: var(--color-cobalt-blue);
   border: none;
   padding: 10px 24px;
@@ -856,7 +855,7 @@
 
 /* Detail Modal specific styles */
 .detailSection {
-  background: #F8FAFC;
+  background: var(--color-card-bg);
   border: 1px solid #E2E8F0;
   border-radius: 12px;
   padding: 16px;

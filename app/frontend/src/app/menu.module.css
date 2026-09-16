@@ -1,4 +1,4 @@
-.pageHeader {
+﻿.pageHeader {
   margin-bottom: 32px;
   margin-top: 10px;
 }
@@ -93,7 +93,7 @@
   line-height: 1.5;
 }
 
-/* ── Category Section Headers ── */
+/* â”€â”€ Category Section Headers â”€â”€ */
 .categoryHeader {
   display: flex;
   align-items: center;

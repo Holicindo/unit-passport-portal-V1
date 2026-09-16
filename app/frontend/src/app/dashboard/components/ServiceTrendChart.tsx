@@ -28,23 +28,23 @@ export default function ServiceTrendChart({ chartData, loading, liveTime }: Prop
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
           <h3 className={styles.chartTitle} style={{ margin: 0 }}>
-            <TrendingUp size={18} style={{ color: 'var(--color-safety-orange)' }} />
             Tren Aktivitas Servis (12 Bulan Terakhir)
           </h3>
-          <p style={{ margin: 0, fontSize: '0.74rem', color: 'var(--color-space-grey)' }}>Membandingkan jumlah servis selesai vs yang masih pending secara bulanan.</p>
+          <p style={{ margin: 0, fontSize: '0.74rem', color: 'var(--color-deep-navy)', fontWeight: 600, opacity: 0.7 }}>Membandingkan jumlah servis selesai vs yang masih pending secara bulanan.</p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
           <span style={{
-            fontSize: '0.72rem', background: 'rgba(46,91,255,0.08)', color: 'var(--color-cobalt-blue)',
+            fontSize: '0.72rem', background: 'rgba(0,31,63,0.08)', color: 'var(--color-deep-navy)',
             padding: '4px 10px', borderRadius: '12px', fontWeight: 800, letterSpacing: '0.5px',
-            display: 'flex', alignItems: 'center', gap: '4px'
+            display: 'flex', alignItems: 'center', gap: '4px',
+            border: '1px solid rgba(0,31,63,0.15)',
           }}>
-            <span style={{ width: '6px', height: '6px', background: 'var(--color-cobalt-blue)', borderRadius: '50%', display: 'inline-block', animation: 'pulse 1.2s infinite' }}></span>
+            <span style={{ width: '6px', height: '6px', background: 'var(--color-deep-navy)', borderRadius: '50%', display: 'inline-block', opacity: 0.5, animation: 'pulse 1.2s infinite' }}></span>
             REAL-TIME SYNCED ({liveTime || 'Live Clock'})
           </span>
           <div style={{ display: 'flex', gap: '12px', fontSize: '0.72rem', fontWeight: 700 }}>
-            <span style={{ color: 'var(--color-safety-orange)' }}>● Pending</span>
-            <span style={{ color: 'var(--color-cobalt-blue)' }}>● Selesai</span>
+            <span style={{ color: 'var(--color-deep-navy)' }}>— Pending</span>
+            <span style={{ color: 'var(--color-deep-navy)', opacity: 0.55 }}>— Selesai</span>
           </div>
         </div>
       </div>
@@ -60,7 +60,7 @@ export default function ServiceTrendChart({ chartData, loading, liveTime }: Prop
             {/* Y-axis labels */}
             <div style={{ position: 'absolute', left: 0, top: 0, bottom: '24px', width: '28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', pointerEvents: 'none' }}>
               {yLabels.map((label, i) => (
-                <span key={i} style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--color-space-grey)', textAlign: 'right', opacity: 0.7 }}>
+                <span key={i} style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--color-deep-navy)', textAlign: 'right', opacity: 0.55 }}>
                   {label.value}
                 </span>
               ))}
@@ -71,27 +71,35 @@ export default function ServiceTrendChart({ chartData, loading, liveTime }: Prop
             <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
               <defs>
                 <linearGradient id="comp-grad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#2E5BFF" stopOpacity="0.25" />
-                  <stop offset="100%" stopColor="#2E5BFF" stopOpacity="0.0" />
+                  <stop offset="0%" stopColor="#001F3F" stopOpacity="0.2" />
+                  <stop offset="100%" stopColor="#001F3F" stopOpacity="0.0" />
                 </linearGradient>
                 <linearGradient id="pend-grad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#FF6B00" stopOpacity="0.25" />
-                  <stop offset="100%" stopColor="#FF6B00" stopOpacity="0.0" />
+                  <stop offset="0%" stopColor="#001F3F" stopOpacity="0.1" />
+                  <stop offset="100%" stopColor="#001F3F" stopOpacity="0.0" />
                 </linearGradient>
               </defs>
 
-              <line x1="0" y1="15" x2="100" y2="15" stroke="rgba(0,31,63,0.03)" strokeDasharray="2 2" vectorEffect="non-scaling-stroke" />
-              <line x1="0" y1="50" x2="100" y2="50" stroke="rgba(0,31,63,0.03)" strokeDasharray="2 2" vectorEffect="non-scaling-stroke" />
-              <line x1="0" y1="85" x2="100" y2="85" stroke="rgba(0,31,63,0.06)" vectorEffect="non-scaling-stroke" />
+              {/* Horizontal grid lines — visible and dashed */}
+              <line x1="0" y1="15" x2="100" y2="15" stroke="rgba(0,31,63,0.2)" strokeDasharray="3 3" vectorEffect="non-scaling-stroke" />
+              <line x1="0" y1="35" x2="100" y2="35" stroke="rgba(0,31,63,0.12)" strokeDasharray="3 3" vectorEffect="non-scaling-stroke" />
+              <line x1="0" y1="50" x2="100" y2="50" stroke="rgba(0,31,63,0.2)" strokeDasharray="3 3" vectorEffect="non-scaling-stroke" />
+              <line x1="0" y1="65" x2="100" y2="65" stroke="rgba(0,31,63,0.12)" strokeDasharray="3 3" vectorEffect="non-scaling-stroke" />
+              {/* Bottom axis — solid */}
+              <line x1="0" y1="85" x2="100" y2="85" stroke="rgba(0,31,63,0.35)" vectorEffect="non-scaling-stroke" />
+              {/* Left axis — solid */}
+              <line x1="0" y1="0" x2="0" y2="85" stroke="rgba(0,31,63,0.35)" vectorEffect="non-scaling-stroke" />
 
               {completedFill && <path d={completedFill} fill="url(#comp-grad)" />}
               {pendingFill && <path d={pendingFill} fill="url(#pend-grad)" />}
 
+              {/* Pending line — darker, solid */}
               {pendingLine && (
-                <path d={pendingLine} stroke="#FF6B00" strokeWidth="2.5" fill="none" vectorEffect="non-scaling-stroke" />
+                <path d={pendingLine} stroke="rgba(0,31,63,0.85)" strokeWidth="2" fill="none" vectorEffect="non-scaling-stroke" />
               )}
+              {/* Completed line — lighter, dashed */}
               {completedLine && (
-                <path d={completedLine} stroke="#2E5BFF" strokeWidth="2.5" fill="none" vectorEffect="non-scaling-stroke" />
+                <path d={completedLine} stroke="rgba(0,31,63,0.4)" strokeWidth="2" strokeDasharray="4 2" fill="none" vectorEffect="non-scaling-stroke" />
               )}
             </svg>
 

@@ -12,7 +12,6 @@ export function usePassportData() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isDark, setIsDark] = useState(false);
   const carouselRef = useRef<HTMLDivElement>(null);
   const [unitReports, setUnitReports] = useState<any[]>([]);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
@@ -102,7 +101,7 @@ export function usePassportData() {
 
   return {
     token, unit, user, loading, error,
-    isDark, setIsDark, carouselRef, unitReports,
+    carouselRef, unitReports,
     toast, showToast, clearToast, loadUnitData,
     isGuest, isClient, isPartner, isAdmin,
     belongsToClient, hasClientRestriction,

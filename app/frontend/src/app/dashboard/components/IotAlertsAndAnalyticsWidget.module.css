@@ -1,0 +1,350 @@
+/* IoT Alerts and Analytics Widget Styles */
+
+.gridContainer {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.card {
+  background: var(--color-card-bg);
+  border-radius: 16px;
+  border: 1.5px solid var(--color-border);
+  padding: 20px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.iconWrapper {
+  padding: 8px;
+  border-radius: 10px;
+  display: flex;
+}
+
+.iconWrapperError {
+  background: rgba(239, 68, 68, 0.1);
+  color: #EF4444;
+}
+
+.iconWrapperSuccess {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10B981;
+}
+
+.cardTitle {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-deep-navy);
+  margin: 0;
+}
+
+.cardSubtitle {
+  font-size: 11px;
+  color: var(--color-deep-navy);
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+.activeBadge {
+  background: #FEF2F2;
+  color: #DC2626;
+  border: 1px solid #FCA5A5;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: 12px;
+  letter-spacing: 0.04em;
+}
+
+.normalStatus {
+  background: var(--color-bg-row);
+  border: none;
+  border-left: 3px solid var(--color-success);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-deep-navy);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.alertsList {
+  max-height: 160px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 4px;
+}
+
+.alertItem {
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.alertItemCritical {
+  background: var(--color-bg-row);
+  border-left: 3px solid var(--color-danger);
+  border-top: none;
+  border-right: none;
+  border-bottom: none;
+}
+
+.alertItemWarning {
+  background: var(--color-bg-row);
+  border-left: 3px solid var(--color-warning);
+  border-top: none;
+  border-right: none;
+  border-bottom: none;
+}
+
+.alertContent {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.alertInfo {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.alertTitle {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--color-deep-navy);
+}
+
+.alertSubinfo {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-deep-navy);
+  margin-left: 6px;
+}
+
+.alertDescription {
+  font-size: 10px;
+  color: var(--color-deep-navy);
+  font-weight: 600;
+  opacity: 0.75;
+  margin-top: 1px;
+}
+
+.alertStatus {
+  color: #DC2626;
+  font-weight: bold;
+}
+
+.detailButton {
+  color: #ffffff;
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  text-decoration: none;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.detailButtonCritical {
+  background: #DC2626;
+}
+
+.detailButtonWarning {
+  background: #D97706;
+}
+
+.slaHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.slaHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.slaTitle {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--color-deep-navy);
+  margin: 0;
+}
+
+.tooltipWrapper {
+  position: relative;
+  cursor: pointer;
+  display: flex;
+}
+
+.tooltip {
+  position: absolute;
+  top: 22px;
+  left: -20px;
+  width: 240px;
+  background: #0F172A;
+  color: #ffffff;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 10px;
+  line-height: 1.5;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  z-index: 50;
+}
+
+.slaBadge {
+  padding: 3px 9px;
+  border-radius: 12px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #10B981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.slaProgress {
+  margin-bottom: 12px;
+}
+
+.slaProgressHeader {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--color-space-grey);
+  margin-bottom: 4px;
+}
+
+.progressBar {
+  height: 6px;
+  background: var(--color-bg-row);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progressFill {
+  width: 94.2%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-success) 0%, #027a22 100%);
+  border-radius: 3px;
+}
+
+.metricsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.metricBox {
+  background: var(--color-bg-row);
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: none;
+}
+
+.metricLabel {
+  font-size: 10px;
+  color: var(--color-deep-navy);
+  font-weight: 700;
+  opacity: 0.7;
+  margin-bottom: 2px;
+}
+
+.metricValue {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.metricValueBlue {
+  color: var(--color-cobalt-blue);
+}
+
+.metricValueDark {
+  color: var(--color-deep-navy);
+}
+
+.metricTarget {
+  font-size: 9px;
+  color: var(--color-deep-navy);
+  font-weight: 600;
+  opacity: 0.6;
+}
+
+.clientsSection {
+  border-top: 2px solid rgba(79, 70, 229, 0.12);
+  padding-top: 12px;
+}
+
+.clientsHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.clientsTitle {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--color-space-grey);
+}
+
+.clientsList {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.clientItem {
+  background: var(--color-bg-row);
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-deep-navy);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.clientUnit {
+  color: var(--color-cobalt-blue);
+  font-weight: 800;
+}
+
+.fallbackText {
+  font-size: 10px;
+  color: var(--color-deep-navy);
+  font-weight: 600;
+  opacity: 0.6;
+}

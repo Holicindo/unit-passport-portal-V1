@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Users, ShieldAlert, Activity, CheckCircle2, ChevronRight, X, ExternalLink } from 'lucide-react';
 import { WarrantyCategories } from '../utils';
-import styles from '../dashboard.module.css';
+import styles from './RightColumn.module.css';
 
 interface Props {
   loading: boolean;
@@ -16,14 +16,13 @@ interface Props {
 
 export function FrequentComplaintsCard({ loading, frequentCallIds }: { loading: boolean; frequentCallIds: Props['frequentCallIds'] }) {
   return (
-    <div className={styles.listCard} style={{ margin: 0 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-        <h3 className={styles.listTitle} style={{ marginBottom: 0 }}>
-          <ShieldAlert size={16} style={{ color: 'var(--color-safety-orange)', marginRight: '6px', verticalAlign: 'middle' }} />
+    <div className={styles.listCard}>
+      <div className={styles.cardHeaderContainer}>
+        <h3 className={`${styles.listTitle} ${styles.cardTitle}`}>
           Keluhan Berulang (Sulit)
         </h3>
       </div>
-      <p style={{ fontSize: '0.7rem', color: 'var(--color-space-grey)', marginBottom: '16px' }}>
+      <p className={styles.description}>
         Call ID / Komplain dikunjungi lebih dari 2 kali.
       </p>
       <div className={styles.listItems}>
@@ -40,14 +39,14 @@ export function FrequentComplaintsCard({ loading, frequentCallIds }: { loading: 
             </div>
           ) : (
             frequentCallIds.map((call, idx) => (
-              <div key={idx} className={styles.listItem} style={{ flexDirection: 'column', gap: '2px', alignItems: 'stretch' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span className={styles.unitName} style={{ fontWeight: 700, color: 'var(--color-deep-navy)' }}>SN: {call.sn}</span>
-                  <span className={styles.unitCount} style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-safety-orange)', background: 'rgba(255,107,0,0.08)', padding: '2px 6px', borderRadius: '6px' }}>
+              <div key={idx} className={`${styles.listItem} ${styles.frequentItem}`}>
+                <div className={styles.frequentHeader}>
+                  <span className={styles.serialNumber}>SN: {call.sn}</span>
+                  <span className={styles.visitCount}>
                     {call.visits}x Kunjungan
                   </span>
                 </div>
-                <span style={{ fontSize: '0.72rem', color: 'var(--color-space-grey)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{call.issue}</span>
+                <span className={styles.issueText}>{call.issue}</span>
               </div>
             ))
           )
@@ -86,14 +85,13 @@ export function WarrantyDistributionCard({ loading, warrantyCategories }: { load
 
   return (
     <>
-      <div className={styles.listCard} style={{ margin: 0, position: 'relative' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-          <h3 className={styles.listTitle} style={{ marginBottom: 0 }}>
-            <ShieldAlert size={16} style={{ color: 'var(--color-cobalt-blue)', marginRight: '6px', verticalAlign: 'middle' }} />
+      <div className={styles.listCard}>
+        <div className={styles.cardHeaderContainer}>
+          <h3 className={`${styles.listTitle} ${styles.cardTitle}`}>
             Distribusi Masalah Garansi
           </h3>
         </div>
-        <p style={{ fontSize: '0.7rem', color: 'var(--color-space-grey)', marginBottom: '14px' }}>
+        <p className={styles.description}>
           Klik pada kategori untuk melihat rincian kasus unit garansi.
         </p>
         <div className={styles.listItems}>
@@ -103,38 +101,22 @@ export function WarrantyDistributionCard({ loading, warrantyCategories }: { load
             ))
           ) : (
             [
-              { key: 'Refrigeration', count: warrantyCategories.refrigeration, color: 'var(--color-cobalt-blue)' },
-              { key: 'Electrical', count: warrantyCategories.electrical, color: 'var(--color-space-grey)' },
-              { key: 'Glass / Physical', count: warrantyCategories.glass, color: 'var(--color-deep-navy)' },
+              { key: 'Refrigeration', count: warrantyCategories.refrigeration, dot: '#4F46E5' },
+              { key: 'Electrical', count: warrantyCategories.electrical, dot: '#CC5500' },
+              { key: 'Glass / Physical', count: warrantyCategories.glass, dot: '#045017' },
             ].map((cat) => (
               <div
                 key={cat.key}
-                className={styles.listItem}
+                className={styles.warrantyRow}
                 onClick={() => handleRowClick(cat.key, cat.count)}
-                style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  cursor: 'pointer', padding: '10px 12px', borderRadius: '8px',
-                  transition: 'all 0.2s ease', border: '1px solid rgba(0,31,63,0.06)',
-                  background: '#f8fafc',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#ffffff';
-                  e.currentTarget.style.borderColor = 'rgba(46,91,255,0.2)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,31,63,0.04)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = '#f8fafc';
-                  e.currentTarget.style.borderColor = 'rgba(0,31,63,0.06)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
               >
-                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-deep-navy)', display: 'flex', alignItems: 'center' }}>
-                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: cat.color, marginRight: '8px' }}></span>
+                <span className={styles.warrantyLabel}>
+                  <span className={styles.warrantyDot} style={{ background: cat.dot }}></span>
                   {cat.key}
                 </span>
-                <span style={{ fontSize: '0.75rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span className={styles.warrantyCount}>
                   {cat.count} Kasus
-                  <ChevronRight size={14} style={{ color: 'var(--color-space-grey)', opacity: 0.7 }} />
+                  <ChevronRight size={14} style={{ color: cat.dot, opacity: 0.7 }} />
                 </span>
               </div>
             ))
@@ -144,38 +126,23 @@ export function WarrantyDistributionCard({ loading, warrantyCategories }: { load
 
       {/* Modal Detail Kasus Garansi */}
       {selectedCat && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 9999,
-          background: 'rgba(0, 31, 63, 0.4)', backdropFilter: 'blur(4px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px'
-        }}
-        onClick={() => setSelectedCat(null)}
-        >
-          <div style={{
-            background: '#ffffff', borderRadius: '16px', maxWidth: '440px', width: '100%',
-            padding: '24px', boxShadow: '0 20px 40px rgba(0,0,0,0.15)', border: '1px solid rgba(0,31,63,0.1)',
-            animation: 'fadeIn 0.2s ease', position: 'relative'
-          }}
-          onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid rgba(0,0,0,0.06)', paddingBottom: '12px' }}>
+        <div className={styles.modalOverlay} onClick={() => setSelectedCat(null)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
               <div>
-                <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--color-deep-navy)' }}>
+                <h4 className={styles.modalTitle}>
                   Klaim Garansi: {selectedCat.name}
                 </h4>
-                <span style={{ fontSize: '0.72rem', color: 'var(--color-space-grey)', fontWeight: 600 }}>
+                <span className={styles.modalSubtitle}>
                   Total {selectedCat.count} kasus terdeteksi dalam garansi aktif
                 </span>
               </div>
-              <button
-                onClick={() => setSelectedCat(null)}
-                style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-              >
+              <button className={styles.closeBtn} onClick={() => setSelectedCat(null)}>
                 <X size={16} style={{ color: 'var(--color-deep-navy)' }} />
               </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '260px', overflowY: 'auto', paddingRight: '4px' }}>
+            <div className={styles.casesList}>
               {selectedCat.cases.length === 0 ? (
                 <div className={styles.emptyStateBox} style={{ padding: '20px' }}>
                   <CheckCircle2 size={24} style={{ color: 'var(--color-cobalt-blue)' }} />
@@ -184,25 +151,17 @@ export function WarrantyDistributionCard({ loading, warrantyCategories }: { load
                 </div>
               ) : (
                 selectedCat.cases.map((c, i) => (
-                  <div key={i} style={{
-                    padding: '10px 12px', background: '#f8fafc', borderRadius: '8px',
-                    borderLeft: '3px solid var(--color-cobalt-blue)', fontSize: '0.75rem',
-                    color: 'var(--color-deep-navy)', fontWeight: 600, lineHeight: 1.4
-                  }}>
+                  <div key={i} className={styles.caseItem}>
                     {c}
                   </div>
                 ))
               )}
             </div>
 
-            <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+            <div className={styles.modalActions}>
               <button
+                className={styles.reportBtn}
                 onClick={() => window.location.href = `/reports/history?category=${encodeURIComponent(selectedCat.name)}`}
-                style={{
-                  background: 'var(--color-cobalt-blue)', color: '#fff', border: 'none',
-                  padding: '8px 16px', borderRadius: '8px', fontSize: '0.78rem',
-                  fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px'
-                }}
               >
                 Buka Laporan Lengkap <ExternalLink size={13} />
               </button>
@@ -216,17 +175,16 @@ export function WarrantyDistributionCard({ loading, warrantyCategories }: { load
 
 export default function RightColumn({ loading, activeClients, frequentCallIds, overdueCallIds, warrantyCategories, newServiceRequests = [] }: Props) {
   return (
-    <div className={styles.listsSection}>
+    <div>
 
       {/* Klien Teraktif */}
-      <div className={styles.listCard}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-          <h3 className={styles.listTitle} style={{ marginBottom: 0 }}>
-            <Users size={16} style={{ color: 'var(--color-cobalt-blue)', marginRight: '6px', verticalAlign: 'middle' }} />
+      <div className={styles.listCard} style={{ marginBottom: '24px' }}>
+        <div className={styles.cardHeaderContainer}>
+          <h3 className={`${styles.listTitle} ${styles.cardTitle}`}>
             Klien Teraktif
           </h3>
         </div>
-        <p style={{ fontSize: '0.7rem', color: 'var(--color-space-grey)', marginBottom: '16px' }}>
+        <p className={styles.description}>
           Berdasarkan servis dalam 12 bulan terakhir.
         </p>
         <div className={styles.listItems}>
@@ -237,8 +195,8 @@ export default function RightColumn({ loading, activeClients, frequentCallIds, o
           ) : (
             activeClients.map((client, idx) => (
               <div key={idx} className={styles.listItem}>
-                <span className={styles.clientName} style={{ fontWeight: 600 }}>{client.name}</span>
-                <span className={styles.clientCount} style={{ background: 'rgba(46,91,255,0.06)', color: 'var(--color-cobalt-blue)', padding: '2px 8px', borderRadius: '12px', fontSize: '0.78rem' }}>{client.count} Servis</span>
+                <span className={`${styles.clientName} ${styles.serialNumber}`}>{client.name}</span>
+                <span className={`${styles.clientCount} ${styles.clientItemBadge}`}>{client.count} Servis</span>
               </div>
             ))
           )}
@@ -246,15 +204,15 @@ export default function RightColumn({ loading, activeClients, frequentCallIds, o
       </div>
 
       {/* Permintaan Servis Baru Masuk (Real-time) */}
-      <div className={styles.listCard} style={{ border: '2px solid rgba(46, 91, 255, 0.2)', background: 'linear-gradient(to bottom, #ffffff, #f8fafc)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-          <h3 className={styles.listTitle} style={{ marginBottom: 0, display: 'flex', alignItems: 'center', color: 'var(--color-cobalt-blue)' }}>
-            <span style={{ width: '8px', height: '8px', background: '#22c55e', borderRadius: '50%', marginRight: '8px', boxShadow: '0 0 8px #22c55e', animation: 'pulse 1.5s infinite' }}></span>
+      <div className={`${styles.listCard} ${styles.liveCard}`} style={{ marginBottom: '24px' }}>
+        <div className={styles.cardHeaderContainer}>
+          <h3 className={`${styles.listTitle} ${styles.cardTitle}`} style={{ display: 'flex', alignItems: 'center' }}>
+            <span className={styles.pulsingDot}></span>
             Permintaan Servis Masuk
           </h3>
-          <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#fff', background: 'var(--color-cobalt-blue)', padding: '2px 8px', borderRadius: '12px' }}>Live</span>
+          <span className={styles.liveBadge}>Live</span>
         </div>
-        <p style={{ fontSize: '0.7rem', color: 'var(--color-space-grey)', marginBottom: '16px' }}>
+        <p className={styles.description}>
           Tiket perbaikan atau komplain yang baru saja masuk.
         </p>
         <div className={styles.listItems}>
@@ -270,16 +228,20 @@ export default function RightColumn({ loading, activeClients, frequentCallIds, o
               </div>
             ) : (
               newServiceRequests.map((req, idx) => (
-                <div key={idx} className={styles.listItem} style={{ flexDirection: 'column', gap: '4px', alignItems: 'stretch', borderLeft: '3px solid var(--color-cobalt-blue)', background: '#fff', padding: '10px 12px', boxShadow: '0 2px 8px rgba(15,23,42,0.04)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span className={styles.unitName} style={{ fontWeight: 700, color: 'var(--color-deep-navy)', fontSize: '0.8rem' }}>{req.client}</span>
-                    <span className={styles.unitCount} style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b' }}>
+                <div key={idx} className={`${styles.listItem} ${styles.serviceRequestItem}`}>
+                  <div className={styles.serviceRequestHeader}>
+                    <span className={styles.clientNameBold}>{req.client}</span>
+                    <span className={styles.timeAgo}>
                       {req.timeAgo}
                     </span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--color-space-grey)', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{req.issue}</span>
-                    <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#f59e0b', background: '#fef3c7', padding: '2px 6px', borderRadius: '4px', marginLeft: '8px' }}>{req.status}</span>
+                  <div className={styles.serviceRequestFooter}>
+                    <span className={styles.serviceIssue}>{req.issue}</span>
+                    <span className={styles.statusBadge} style={{
+                      background: req.status === 'Baru' ? 'rgba(79,70,229,0.12)' : 'rgba(4,80,23,0.1)',
+                      color: req.status === 'Baru' ? '#4F46E5' : '#045017',
+                      border: req.status === 'Baru' ? '1px solid rgba(79,70,229,0.25)' : '1px solid rgba(4,80,23,0.2)',
+                    }}>{req.status}</span>
                   </div>
                 </div>
               ))
@@ -289,14 +251,13 @@ export default function RightColumn({ loading, activeClients, frequentCallIds, o
       </div>
 
       {/* Tiket Terbengkalai */}
-      <div className={styles.listCard}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-          <h3 className={styles.listTitle} style={{ marginBottom: 0 }}>
-            <Activity size={16} style={{ color: 'var(--color-safety-orange)', marginRight: '6px', verticalAlign: 'middle' }} />
-            Tiket Terbengkalai {'>'} 2 Minggu
+      <div className={styles.listCard} style={{ marginBottom: '24px' }}>
+        <div className={styles.cardHeaderContainer}>
+          <h3 className={`${styles.listTitle} ${styles.cardTitle}`}>
+            Tiket Terbengkalai &gt; 2 Minggu
           </h3>
         </div>
-        <p style={{ fontSize: '0.7rem', color: 'var(--color-space-grey)', marginBottom: '16px' }}>
+        <p className={styles.description}>
           Komplain berstatus Pending lebih dari 14 hari.
         </p>
         <div className={styles.listItems}>
@@ -313,14 +274,18 @@ export default function RightColumn({ loading, activeClients, frequentCallIds, o
               </div>
             ) : (
               overdueCallIds.map((ticket, idx) => (
-                <div key={idx} className={styles.listItem} style={{ flexDirection: 'column', gap: '2px', alignItems: 'stretch', borderLeft: '3px solid var(--color-safety-orange)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span className={styles.unitName} style={{ fontWeight: 700, color: 'var(--color-deep-navy)' }}>SN: {ticket.sn}</span>
-                    <span className={styles.unitCount} style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-safety-orange)' }}>
+                <div key={idx} className={`${styles.listItem} ${styles.overdueItem}`}>
+                  <div className={styles.overdueHeader}>
+                    <span className={styles.serialNumber}>SN: {ticket.sn}</span>
+                    <span className={styles.daysOpen} style={{
+                      color: ticket.daysOpen > 30 ? '#CC5500' : ticket.daysOpen > 20 ? '#c78006' : '#4F46E5',
+                      background: ticket.daysOpen > 30 ? 'rgba(204,85,0,0.1)' : ticket.daysOpen > 20 ? 'rgba(199,128,6,0.1)' : 'rgba(79,70,229,0.1)',
+                      padding: '2px 7px', borderRadius: '4px', fontSize: '0.72rem',
+                    }}>
                       {ticket.daysOpen} Hari
                     </span>
                   </div>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--color-space-grey)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ticket.issue}</span>
+                  <span className={styles.issueText}>{ticket.issue}</span>
                 </div>
               ))
             )

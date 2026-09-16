@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Sidebar from '@/components/layout/Sidebar';
 import TopBar from '@/components/layout/TopBar';
@@ -8,10 +8,10 @@ import BottomNav from '@/components/layout/BottomNav';
 
 export default function ClientLayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isLoginPage     = pathname === '/login';
-  const isHomePage      = pathname === '/';
-  const isPassportPage  = pathname?.startsWith('/id/');
-  const isClientPortal  = pathname?.startsWith('/client-portal');
+  const isLoginPage = pathname === '/login';
+  const isHomePage = pathname === '/';
+  const isPassportPage = pathname?.startsWith('/id/');
+  const isClientPortal = pathname?.startsWith('/client-portal');
   const isPartnerPortal = pathname?.startsWith('/partner-portal');
 
   // Pages that render completely standalone — no admin sidebar/topbar/bottomnav
@@ -20,9 +20,15 @@ export default function ClientLayoutWrapper({ children }: { children: React.Reac
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
+  // FORCE RESET: Remove any dark theme artifacts from DOM on every page load
+  useEffect(() => {
+    document.documentElement.removeAttribute('data-theme');
+    document.body.removeAttribute('data-theme');
+  }, [pathname]);
+
   return (
     <>
-      {!hideLayout && <Sidebar isOpen={sidebarOpen} />}
+      {!hideLayout && <Sidebar isOpen={sidebarOpen} onToggle={toggleSidebar} />}
       <div
         className={`${!hideLayout ? 'main-wrapper' : ''} ${!sidebarOpen && !hideLayout ? 'sidebar-collapsed' : ''}`}
         style={{
@@ -37,7 +43,9 @@ export default function ClientLayoutWrapper({ children }: { children: React.Reac
         {!hideLayout && <TopBar onToggleSidebar={toggleSidebar} isSidebarOpen={sidebarOpen} />}
 
         <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          {children}
+          <div className="page-content">
+            {children}
+          </div>
         </main>
 
         {!hideLayout && (

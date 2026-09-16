@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './TopBar.module.css';
-import { Search, Mail, Bell, ChevronDown, Menu, LogOut, QrCode, Sun, Moon } from 'lucide-react';
+import { Bell, ChevronDown, LogOut, QrCode, Menu } from 'lucide-react';
 import QrScannerModal from './QrScannerModal';
 
 interface TopBarProps {
@@ -21,28 +21,10 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
 
   const [alerts, setAlerts] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
   // Refs for click-outside detection
   const profileRef = useRef<HTMLDivElement>(null);
   const bellRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
-    if (savedTheme) {
-      setTheme(savedTheme);
-      document.documentElement.setAttribute('data-theme', savedTheme);
-    } else {
-      document.documentElement.setAttribute('data-theme', 'light');
-    }
-  }, []);
-
-  const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
-    document.documentElement.setAttribute('data-theme', newTheme);
-  };
 
   useEffect(() => {
     try {
@@ -109,7 +91,7 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
 
   const getDisplayName = () => {
     if (!user) return 'Loading...';
-    if (user.name) return user.name;
+    if (user.name && user.name !== 'Unknown User') return user.name;
     return user.email?.split('@')[0] || 'User';
   };
 
@@ -131,10 +113,6 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
         <button className={styles.toggleBtn} onClick={onToggleSidebar}>
           <Menu size={24} />
         </button>
-        <div className={styles.searchBox}>
-          <Search size={18} className={styles.searchIcon} />
-          <input type="text" placeholder="Cari..." className={styles.searchInput} />
-        </div>
       </div>
 
       <div className={styles.actions}>
@@ -143,11 +121,7 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
           <span>Pindai QR</span>
         </button>
 
-        <div className={styles.iconContainer}>
-          <button className={styles.actionBtn} onClick={toggleTheme} title="Ganti Tema">
-            {theme === 'light' ? <Moon size={20} /> : <Sun size={20} style={{ color: '#FFB800' }} />}
-          </button>
-        </div>
+
 
         {/* Inbox disabled for phase 1
         <div className={styles.iconContainer}>
@@ -172,9 +146,9 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
                 </div>
               ) : (
                 alerts.map(alert => (
-                  <div 
-                    key={alert.id} 
-                    className={styles.notificationItem} 
+                  <div
+                    key={alert.id}
+                    className={styles.notificationItem}
                     style={{ background: alert.is_read ? 'transparent' : 'rgba(46, 91, 255, 0.05)' }}
                     onClick={() => markAsRead(alert.id, 'ALERT')}
                   >
@@ -186,13 +160,13 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
             </div>
           )}
         </div>
-        
+
         <div className={styles.profileContainer} ref={profileRef}>
           <div className={styles.userProfile} onClick={() => { setDropdownOpen(!dropdownOpen); setMailOpen(false); setBellOpen(false); }}>
             <div className={styles.avatar}>
-              <img 
-                src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(getDisplayName())}`} 
-                alt="User Initials Avatar" 
+              <img
+                src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(getDisplayName())}`}
+                alt="User Initials Avatar"
               />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}>
@@ -215,7 +189,7 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
           )}
         </div>
       </div>
-      
+
       <QrScannerModal isOpen={isScannerOpen} onClose={() => setIsScannerOpen(false)} />
     </header>
   );

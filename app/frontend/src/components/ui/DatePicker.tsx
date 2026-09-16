@@ -77,10 +77,6 @@ export default function DatePicker({
   const [isDark, setIsDark] = useState(false);
   useEffect(() => {
     const check = () => setIsDark(document.documentElement.dataset.theme === 'dark');
-    check();
-    const observer = new MutationObserver(check);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-    return () => observer.disconnect();
   }, []);
 
   const c = isDark || theme === 'dark' ? darkColors : lightColors;
