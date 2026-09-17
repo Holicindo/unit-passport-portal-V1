@@ -24,7 +24,14 @@ export default function ClientLayoutWrapper({ children }: { children: React.Reac
   useEffect(() => {
     document.documentElement.removeAttribute('data-theme');
     document.body.removeAttribute('data-theme');
-  }, [pathname]);
+    
+    // Set body display flex only for non-login pages
+    if (hideLayout) {
+      document.body.style.display = 'block';
+    } else {
+      document.body.style.display = 'flex';
+    }
+  }, [pathname, hideLayout]);
 
   return (
     <>
