@@ -6,15 +6,17 @@
 /* ── Full-screen wrapper ── */
 .container {
   min-height: 100vh;
+  width: 100vw;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   overflow: hidden;
-  
+
   /* Base dark background */
   background: linear-gradient(135deg, #0b1120 0%, #172a4d 100%);
-  padding: 24px;
+  padding: 0;
+  margin: 0;
 }
 
 /* ── Aura Light Effect (Background) ── */
@@ -47,18 +49,39 @@
 }
 
 @keyframes auroraFloat1 {
-  0% { transform: rotate(-2deg) translate(0, 0) scale(1); opacity: 0.3; }
-  50% { opacity: 0.7; }
-  100% { transform: rotate(5deg) translate(4%, -4%) scale(1.1); opacity: 0.4; }
+  0% {
+    transform: rotate(-2deg) translate(0, 0) scale(1);
+    opacity: 0.3;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+
+  100% {
+    transform: rotate(5deg) translate(4%, -4%) scale(1.1);
+    opacity: 0.4;
+  }
 }
 
 @keyframes auroraFloat2 {
-  0% { transform: rotate(2deg) translate(0, 0) scale(1); opacity: 0.6; }
-  50% { opacity: 0.3; }
-  100% { transform: rotate(-5deg) translate(-6%, 6%) scale(1.1); opacity: 0.7; }
+  0% {
+    transform: rotate(2deg) translate(0, 0) scale(1);
+    opacity: 0.6;
+  }
+
+  50% {
+    opacity: 0.3;
+  }
+
+  100% {
+    transform: rotate(-5deg) translate(-6%, 6%) scale(1.1);
+    opacity: 0.7;
+  }
 }
 
-.dotGrid, .dotGridRight {
+.dotGrid,
+.dotGridRight {
   display: none;
 }
 
@@ -90,11 +113,11 @@
   inset: 0;
   border-radius: 20px;
   z-index: -1;
-  
+
   border: 2px solid transparent;
-  background: 
+  background:
     linear-gradient(#0c1424, #0c1424) padding-box,
-    conic-gradient(from var(--border-angle), transparent 50%, rgba(40,110,255,0.6) 80%, rgba(200,230,255,0.9) 95%, #ffffff 100%) border-box;
+    conic-gradient(from var(--border-angle), transparent 50%, rgba(40, 110, 255, 0.6) 80%, rgba(200, 230, 255, 0.9) 95%, #ffffff 100%) border-box;
   animation: borderRotate 4s linear infinite;
 }
 
@@ -106,8 +129,9 @@
   border-radius: 21px;
   z-index: -2;
 
-  background: conic-gradient(from var(--border-angle), transparent 50%, rgba(40,110,255,0.4) 70%, rgba(200,230,255,0.8) 95%, #ffffff 100%);
-  filter: blur(12px); /* Tighter, more subtle glow */
+  background: conic-gradient(from var(--border-angle), transparent 50%, rgba(40, 110, 255, 0.4) 70%, rgba(200, 230, 255, 0.8) 95%, #ffffff 100%);
+  filter: blur(12px);
+  /* Tighter, more subtle glow */
   animation: borderRotate 4s linear infinite;
   opacity: 0.9;
 }
@@ -245,8 +269,8 @@
 }
 
 .inputWithIconNew input:-webkit-autofill,
-.inputWithIconNew input:-webkit-autofill:hover, 
-.inputWithIconNew input:-webkit-autofill:focus, 
+.inputWithIconNew input:-webkit-autofill:hover,
+.inputWithIconNew input:-webkit-autofill:focus,
 .inputWithIconNew input:-webkit-autofill:active {
   transition: background-color 5000s ease-in-out 0s;
   -webkit-text-fill-color: #ffffff !important;
@@ -293,8 +317,8 @@
 }
 
 .passwordWrapperNew input:-webkit-autofill,
-.passwordWrapperNew input:-webkit-autofill:hover, 
-.passwordWrapperNew input:-webkit-autofill:focus, 
+.passwordWrapperNew input:-webkit-autofill:hover,
+.passwordWrapperNew input:-webkit-autofill:focus,
 .passwordWrapperNew input:-webkit-autofill:active {
   transition: background-color 5000s ease-in-out 0s;
   -webkit-text-fill-color: #ffffff !important;
@@ -351,7 +375,9 @@
   transition: color 0.2s;
 }
 
-.forgotLink:hover { color: #5a7fff; }
+.forgotLink:hover {
+  color: #5a7fff;
+}
 
 /* Error */
 .errorMessage {
@@ -576,7 +602,8 @@
 
   .brandHeader {
     margin-bottom: 0;
-    padding: 10vh 20px 8vh; /* Space in the blue area */
+    padding: 10vh 20px 8vh;
+    /* Space in the blue area */
     flex-shrink: 0;
   }
 
@@ -598,11 +625,13 @@
 
   /* ── Form Area Bottom Sheet ── */
   .formArea {
-    background: #f4f6f9; /* Off-white for softer contrast */
+    background: #f4f6f9;
+    /* Off-white for softer contrast */
     flex: 1;
     border-radius: 36px 36px 0 0;
     padding: 32px 24px 40px;
-    box-shadow: 0 -10px 40px rgba(0,0,0,0.15); /* Softer shadow */
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.15);
+    /* Softer shadow */
     display: flex;
     flex-direction: column;
   }
@@ -642,7 +671,7 @@
     background-color: #f0f4f8 !important;
     border: 1px solid #d1d9e6 !important;
     color: #0f172a !important;
-    box-shadow: inset 2px 2px 5px rgba(0,0,0,0.06) !important;
+    box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.06) !important;
     padding-top: 12px;
     padding-bottom: 12px;
     -webkit-text-fill-color: #0f172a !important;
@@ -663,7 +692,9 @@
     -webkit-text-fill-color: #94a3b8 !important;
   }
 
-  .inputIcon, .lockIcon, .eyeBtn {
+  .inputIcon,
+  .lockIcon,
+  .eyeBtn {
     color: #94a3b8;
   }
 
@@ -678,7 +709,7 @@
     margin-top: 4px;
     box-shadow: 0 4px 12px rgba(10, 46, 181, 0.3);
   }
-  
+
   .divider {
     margin: 24px 0 16px;
   }
