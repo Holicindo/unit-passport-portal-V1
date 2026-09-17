@@ -24,12 +24,25 @@ export default function ClientLayoutWrapper({ children }: { children: React.Reac
   useEffect(() => {
     document.documentElement.removeAttribute('data-theme');
     document.body.removeAttribute('data-theme');
-    
-    // Set body display flex only for non-login pages
+
     if (hideLayout) {
+      // Login page: Force full coverage without margins
       document.body.style.display = 'block';
+      document.body.style.margin = '0';
+      document.body.style.padding = '0';
+      document.body.style.overflowX = 'hidden';
+      document.body.style.background = '#0b1120';
+      document.body.style.width = '100vw';
+      document.body.style.height = '100vh';
     } else {
+      // Dashboard pages: Reset to normal layout
       document.body.style.display = 'flex';
+      document.body.style.margin = '';
+      document.body.style.padding = '';
+      document.body.style.overflowX = '';
+      document.body.style.background = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
     }
   }, [pathname, hideLayout]);
 

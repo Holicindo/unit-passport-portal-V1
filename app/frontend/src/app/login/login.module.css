@@ -3,20 +3,40 @@
    UI/UX Final Design - Pixel Perfect Match
    ============================================================ */
 
+/* ── Force full viewport coverage ── */
+:global(body):has(.container),
+:global(html):has(.container) {
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-x: hidden !important;
+  width: 100vw !important;
+  height: 100vh !important;
+}
+
+:global(body):has(.container) {
+  display: block !important;
+  background: #0b1120 !important;
+}
+
 /* ── Full-screen wrapper ── */
 .container {
-  min-height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   width: 100vw;
+  height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
   overflow: hidden;
 
   /* Base dark background */
   background: linear-gradient(135deg, #0b1120 0%, #172a4d 100%);
   padding: 0;
   margin: 0;
+  z-index: 1000;
 }
 
 /* ── Aura Light Effect (Background) ── */

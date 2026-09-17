@@ -36,6 +36,18 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
+    // Force remove all margin/padding that could cause white borders
+    document.documentElement.style.margin = '0';
+    document.documentElement.style.padding = '0';
+    document.documentElement.style.overflowX = 'hidden';
+    document.body.style.margin = '0';
+    document.body.style.padding = '0';
+    document.body.style.display = 'block';
+    document.body.style.overflowX = 'hidden';
+    document.body.style.background = '#0b1120';
+    document.body.style.width = '100vw';
+    document.body.style.height = '100vh';
+
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       setRedirectUrl(params.get('redirect'));
