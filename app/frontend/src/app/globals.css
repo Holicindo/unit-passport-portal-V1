@@ -76,7 +76,6 @@ body {
   font-family: var(--font-body);
   font-size: 0.925rem;
   line-height: 1.6;
-  display: flex;
   background: linear-gradient(160deg, #E8E9F4 0%, #F0F1F7 50%, #EAEbF5 100%);
   color: var(--color-deep-navy);
   -webkit-font-smoothing: antialiased;
