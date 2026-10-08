@@ -101,6 +101,37 @@ export class Unit {
   @Column({ type: 'timestamp', nullable: true })
   last_seen_at?: Date;
 
+  // --- Health Score V2 Configuration & Baseline ---
+  @Column({ type: 'timestamp', nullable: true })
+  commissioning_date?: Date;
+
+  @Column({ type: 'float', default: 0 })
+  cal_temp_cabinet_offset!: number;
+
+  @Column({ type: 'float', default: 0 })
+  cal_temp_evap_offset!: number;
+
+  @Column({ type: 'float', default: 0 })
+  cal_temp_condenser_offset!: number;
+
+  @Column({ type: 'float', default: 0 })
+  cal_voltage_offset!: number;
+
+  @Column({ type: 'float', default: 1 })
+  cal_power_slope!: number;
+
+  @Column({ type: 'float', nullable: true })
+  target_temp_min?: number;
+
+  @Column({ type: 'float', nullable: true })
+  target_temp_max?: number;
+
+  @Column({ type: 'float', default: 1.5 })
+  compressor_normal_ampere!: number;
+
+  @Column({ type: 'float', default: 0.3 })
+  ampere_tolerance!: number;
+
   @OneToMany(() => ServiceLog, (log) => log.unit)
   service_logs!: ServiceLog[];
 

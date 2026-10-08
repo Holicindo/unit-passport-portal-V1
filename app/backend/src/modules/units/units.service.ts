@@ -233,6 +233,24 @@ export class UnitsService {
     };
   }
 
+  async updateCalibration(id: string, calibrationData: Partial<Unit>) {
+    const unit = await this.unitRepo.findOne({ where: { id } });
+    if (!unit) throw new NotFoundException('Unit tidak ditemukan');
+
+    // Update field-field kalibrasi dan ambang batas
+    if (calibrationData.cal_temp_cabinet_offset !== undefined) unit.cal_temp_cabinet_offset = calibrationData.cal_temp_cabinet_offset;
+    if (calibrationData.cal_temp_evap_offset !== undefined) unit.cal_temp_evap_offset = calibrationData.cal_temp_evap_offset;
+    if (calibrationData.cal_temp_condenser_offset !== undefined) unit.cal_temp_condenser_offset = calibrationData.cal_temp_condenser_offset;
+    if (calibrationData.cal_voltage_offset !== undefined) unit.cal_voltage_offset = calibrationData.cal_voltage_offset;
+    if (calibrationData.cal_power_slope !== undefined) unit.cal_power_slope = calibrationData.cal_power_slope;
+    if (calibrationData.target_temp_min !== undefined) unit.target_temp_min = calibrationData.target_temp_min;
+    if (calibrationData.target_temp_max !== undefined) unit.target_temp_max = calibrationData.target_temp_max;
+    if (calibrationData.compressor_normal_ampere !== undefined) unit.compressor_normal_ampere = calibrationData.compressor_normal_ampere;
+    if (calibrationData.ampere_tolerance !== undefined) unit.ampere_tolerance = calibrationData.ampere_tolerance;
+
+    return this.unitRepo.save(unit);
+  }
+
   async remove(id: string) {
     const unit = await this.unitRepo.findOne({ where: { id } });
     if (!unit) throw new NotFoundException('Unit tidak ditemukan');

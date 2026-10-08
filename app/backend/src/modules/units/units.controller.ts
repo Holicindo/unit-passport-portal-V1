@@ -119,6 +119,18 @@ export class UnitsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
+  @Patch(':id/calibration')
+  @ApiOperation({ summary: 'Admin: Update sensor calibration offset & compressor baseline' })
+  updateCalibration(
+    @Param('id') id: string,
+    @Body() calibrationDto: Record<string, any>,
+  ) {
+    return this.unitsService.updateCalibration(id, calibrationDto);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
   @Delete(':id')
   @ApiOperation({ summary: 'Admin: Delete a unit' })
   remove(@Param('id') id: string) {

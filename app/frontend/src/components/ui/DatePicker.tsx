@@ -157,10 +157,11 @@ export default function DatePicker({
     : '';
 
   // ── Trigger colors ─────────────────────────────────────────────────────────
-  const triggerBg    = isDark || theme === 'dark' ? 'rgba(255,255,255,0.06)' : '#ffffff';
-  const triggerBorder= isDark || theme === 'dark' ? '1px solid rgba(255,255,255,0.15)' : '1px solid #e2e8f0';
-  const triggerColor = isDark || theme === 'dark' ? '#ffffff' : '#0f172a';
-  const labelColor   = isDark || theme === 'dark' ? '#94a3b8' : '#475569';
+  const triggerBg    = 'rgba(8, 18, 50, 0.95)';
+  const triggerShadow= 'inset -2px -2px 6px rgba(255,255,255,0.04), inset 3px 3px 8px rgba(0,0,0,0.6)';
+  const triggerBorder= '1px solid rgba(255,255,255,0.06)';
+  const triggerColor = '#f1f5f9';
+  const labelColor   = '#64748b';
 
   const daysInMonth = getDaysInMonth(viewYear, viewMonth);
   const firstDay    = getFirstDay(viewYear, viewMonth);
@@ -356,7 +357,15 @@ export default function DatePicker({
   return (
     <div style={{ position:'relative', width:'100%' }}>
       {label && (
-        <label style={{ display:'block', fontSize:'0.8rem', color: labelColor, fontWeight:600, marginBottom:'6px' }}>
+        <label style={{
+          display: 'block',
+          fontSize: '0.72rem',
+          fontWeight: 700,
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+          color: labelColor,
+          marginBottom: '6px',
+        }}>
           {label}
         </label>
       )}
@@ -368,7 +377,7 @@ export default function DatePicker({
           width: '100%',
           background: triggerBg,
           border: triggerBorder,
-          borderRadius: '8px',
+          borderRadius: '10px',
           padding: '10px 14px',
           color: displayValue ? triggerColor : '#94a3b8',
           fontSize: '0.88rem',
@@ -380,7 +389,8 @@ export default function DatePicker({
           cursor: 'pointer',
           textAlign: 'left',
           boxSizing: 'border-box',
-          transition: 'border-color 0.2s',
+          boxShadow: triggerShadow,
+          transition: 'box-shadow 0.2s ease',
         }}
       >
         <span>{displayValue || placeholder}</span>

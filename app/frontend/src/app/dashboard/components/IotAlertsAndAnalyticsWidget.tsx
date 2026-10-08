@@ -23,7 +23,7 @@ export default function IotAlertsAndAnalyticsWidget({ activeClients }: { activeC
       }
     };
     fetchAlerts();
-    const interval = setInterval(fetchAlerts, 15000);
+    const interval = setInterval(fetchAlerts, 60000);
     return () => clearInterval(interval);
   }, []);
 

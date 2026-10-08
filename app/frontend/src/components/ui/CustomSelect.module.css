@@ -1,55 +1,58 @@
-﻿.selectContainer {
+.selectContainer {
   position: relative;
   display: inline-block;
   min-width: 70px;
   width: max-content;
 }
 
+/* ── Dark Neumorphic trigger — inset shadow on dark bg ── */
 .selectTrigger {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  background: #FFFFFF;
-  border: 1.5px solid rgba(79, 70, 229, 0.2);
-  border-radius: 12px;
-  padding: 10px 16px;
+  background: rgba(8, 18, 50, 0.95);
+  border: 1px solid rgba(255,255,255,0.06);
+  borderRadius: 10px;
+  padding: 10px 14px;
   font-size: 0.85rem;
-  color: var(--color-deep-navy, #001f3f);
+  color: #f1f5f9;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: box-shadow 0.2s ease;
   font-family: inherit;
   gap: 8px;
-  box-shadow: 0 2px 8px rgba(13, 43, 94, 0.04);
+  box-shadow: inset -2px -2px 6px rgba(255,255,255,0.04), inset 3px 3px 8px rgba(0,0,0,0.6);
 }
 
 .selectTrigger:hover {
-  border-color: rgba(79, 70, 229, 0.4);
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.1);
+  box-shadow: inset -2px -2px 6px rgba(255,255,255,0.05), inset 3px 3px 9px rgba(0,0,0,0.65);
 }
 
 .selectTrigger.open {
-  border-color: var(--color-cobalt-blue);
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12), 0 4px 12px rgba(13, 43, 94, 0.08);
+  box-shadow:
+    inset -2px -2px 6px rgba(255,255,255,0.06),
+    inset 3px 3px 10px rgba(0,0,0,0.7),
+    0 0 0 2px rgba(46, 91, 255, 0.3);
+  background: rgba(8, 18, 50, 0.95);
 }
 
 .placeholder {
-  color: var(--color-space-grey, #6B7280);
+  color: #94a3b8;
 }
 
 .value {
-  color: var(--color-deep-navy, #001f3f);
+  color: #f1f5f9;
   font-weight: 500;
 }
 
 .icon {
-  color: var(--color-space-grey, #6B7280);
+  color: #94a3b8;
   transition: transform 0.2s ease;
 }
 
 .iconOpen {
   transform: rotate(180deg);
-  color: var(--color-cobalt-blue, #2E5BFF);
+  color: #4f7fff;
 }
 
 .dropdownMenu {

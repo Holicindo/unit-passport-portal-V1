@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { QrCode } from 'lucide-react';
 import styles from './PassportTopbar.module.css';
 
 // ─── Holicindo Logo SVG ───────────────────────────────────────────────────────
@@ -69,46 +68,6 @@ function TopbarBadge({ config, onClick }: TopbarBadgeProps) {
   );
 }
 
-interface QrPrintButtonProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  unit: any;
-  token: string;
-}
-
-function QrPrintButton({ unit, token }: QrPrintButtonProps) {
-  const handlePrint = () => {
-    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(
-      window.location.origin + '/id/' + token
-    )}`;
-    const pw = window.open('', '_blank');
-    if (pw) {
-      pw.document.write(
-        `<html><head><title>Print QR</title><style>` +
-        `@page{margin:0}html,body{margin:0;display:flex;flex-direction:column;` +
-        `align-items:center;justify-content:center;height:100vh;font-family:sans-serif}` +
-        `</style></head><body>` +
-        `<h2>${unit?.serial_number ?? ''}</h2>` +
-        `<img src="${qrApiUrl}" alt="QR" style="width:400px;height:400px" ` +
-        `onload="window.print();window.close()"/>` +
-        `<p>${unit?.model_name ?? ''}</p>` +
-        `</body></html>`
-      );
-      pw.document.close();
-    }
-  };
-
-  return (
-    <button
-      className={`${styles.iconBtn} ${styles.iconBtnAccent}`}
-      onClick={handlePrint}
-      aria-label="Print QR"
-      type="button"
-    >
-      <QrCode size={14} /> QR
-    </button>
-  );
-}
-
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function PassportTopbar({
@@ -145,10 +104,8 @@ export default function PassportTopbar({
         <span className={styles.topbarLogoText}>HOLICINDO</span>
       </div>
 
-      {/* Right: QR print + access badge */}
+      {/* Right: access badge */}
       <div className={styles.topbarRight}>
-        <QrPrintButton unit={unit} token={token} />
-        <span className={styles.divider} aria-hidden="true" />
         <div style={{ position: 'relative' }}>
           <TopbarBadge config={badge} onClick={() => setShowBadgeInfo(!showBadgeInfo)} />
           {showBadgeInfo && (

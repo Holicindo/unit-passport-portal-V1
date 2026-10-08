@@ -63,7 +63,7 @@ export default function ClientLayoutWrapper({ children }: { children: React.Reac
         {!hideLayout && <TopBar onToggleSidebar={toggleSidebar} isSidebarOpen={sidebarOpen} />}
 
         <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <div className="page-content">
+          <div className="page-content" suppressHydrationWarning>
             {children}
           </div>
         </main>

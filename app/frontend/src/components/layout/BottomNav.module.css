@@ -103,8 +103,8 @@
   /* Neumorphic FAB — raised dengan highlight */
   box-shadow:
     -4px -4px 10px rgba(255, 255, 255, 0.65),
-     4px  4px 10px rgba(0, 31, 63, 0.40),
-     0 6px 20px rgba(0, 31, 63, 0.30);
+    4px 4px 10px rgba(0, 31, 63, 0.40),
+    0 6px 20px rgba(0, 31, 63, 0.30);
   position: absolute;
   bottom: 18px;
   left: 50%;
@@ -118,8 +118,8 @@
   transform: translateX(-50%) translateY(-3px);
   box-shadow:
     -5px -5px 12px rgba(255, 255, 255, 0.70),
-     5px  5px 14px rgba(0, 31, 63, 0.50),
-     0 10px 28px rgba(0, 31, 63, 0.36);
+    5px 5px 14px rgba(0, 31, 63, 0.50),
+    0 10px 28px rgba(0, 31, 63, 0.36);
 }
 
 .navCenterActive .navCenterFab {

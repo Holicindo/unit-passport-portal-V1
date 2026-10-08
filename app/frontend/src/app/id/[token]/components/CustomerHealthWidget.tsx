@@ -1,276 +1,313 @@
 'use client';
 
-import React from 'react';
-import { ShieldCheck, AlertTriangle, XCircle, Wrench, CheckCircle2, Wifi, WifiOff } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import {
+  ShieldCheck, AlertTriangle, XCircle, Wrench, CheckCircle2,
+  Wifi, WifiOff, Loader2, Thermometer, Zap, Wind, Snowflake,
+  Activity, TrendingDown, TrendingUp, AlertCircle,
+  DoorOpen, RefreshCw, BarChart2, Clock,
+} from 'lucide-react';
+import { healthScoreApi } from '@/lib/api';
 
-// ─── MOCK DATA ───────────────────────────────────────────────────────────────
-// Untuk pameran: nilai stabil dan positif. Angka ini tidak dihitung dari data
-// sensor mentah, sehingga informasi teknis tetap tersimpan di sisi internal.
-const MOCK_HEALTH_SCORE = 87;
-const MOCK_SECONDARY = [
-  { label: 'Sistem Pendingin', score: 90 },
-  { label: 'Kelistrikan',      score: 85 },
-  { label: 'Sirkulasi Udara',  score: 88 },
-];
-
-// ─── TIPE ────────────────────────────────────────────────────────────────────
-interface StatusConfig {
-  label:       string;
-  sublabel:    string;
-  color:       string;
-  bgColor:     string;
-  borderColor: string;
-  glowColor:   string;
-  icon:        React.ElementType;
-  recommendation: string;
-}
-
-function getStatusConfig(score: number): StatusConfig {
-  if (score >= 80) {
-    return {
-      label:          'Optimal',
-      sublabel:       'Unit beroperasi normal',
-      color:          '#10b981',
-      bgColor:        'rgba(16,185,129,0.08)',
-      borderColor:    'rgba(16,185,129,0.25)',
-      glowColor:      'rgba(16,185,129,0.3)',
-      icon:           ShieldCheck,
-      recommendation: 'Tidak ada indikasi gangguan. Kapasitas pendinginan terjaga dengan baik. Jadwal perawatan rutin berikutnya sesuai rencana.',
-    };
-  }
-  if (score >= 60) {
-    return {
-      label:          'Perhatian',
-      sublabel:       'Perlu pemeriksaan segera',
-      color:          '#f59e0b',
-      bgColor:        'rgba(245,158,11,0.08)',
-      borderColor:    'rgba(245,158,11,0.25)',
-      glowColor:      'rgba(245,158,11,0.3)',
-      icon:           AlertTriangle,
-      recommendation: 'Performa sistem pendingin mulai menurun. Disarankan untuk menjadwalkan servis ringan atau pembersihan filter dalam waktu dekat.',
-    };
-  }
+// ─── STATUS CONFIG ────────────────────────────────────────────────────────────
+function getStatusConfig(score: number) {
+  if (score >= 80) return {
+    label: 'Mesin Berjalan Baik', sublabel: 'Unit beroperasi dalam kondisi optimal',
+    color: '#10b981', bgColor: 'rgba(16,185,129,0.08)', borderColor: 'rgba(16,185,129,0.25)', glowColor: 'rgba(16,185,129,0.3)',
+    icon: ShieldCheck,
+    recommendation: 'Tidak ada indikasi gangguan. Kapasitas pendinginan terjaga dengan baik. Jadwal perawatan rutin berikutnya sesuai rencana.',
+  };
+  if (score >= 60) return {
+    label: 'Perlu Diperhatikan', sublabel: 'Ada tanda-tanda yang perlu segera dicek',
+    color: '#f59e0b', bgColor: 'rgba(245,158,11,0.08)', borderColor: 'rgba(245,158,11,0.25)', glowColor: 'rgba(245,158,11,0.3)',
+    icon: AlertTriangle,
+    recommendation: 'Performa sistem pendingin mulai menurun. Disarankan untuk menjadwalkan servis ringan atau pembersihan filter dalam waktu dekat.',
+  };
   return {
-    label:          'Kritis',
-    sublabel:       'Membutuhkan servis segera',
-    color:          '#ef4444',
-    bgColor:        'rgba(239,68,68,0.08)',
-    borderColor:    'rgba(239,68,68,0.25)',
-    glowColor:      'rgba(239,68,68,0.3)',
-    icon:           XCircle,
+    label: 'Mesin Butuh Servis', sublabel: 'Perlu penanganan teknisi segera',
+    color: '#ef4444', bgColor: 'rgba(239,68,68,0.08)', borderColor: 'rgba(239,68,68,0.25)', glowColor: 'rgba(239,68,68,0.3)',
+    icon: XCircle,
     recommendation: 'Terdapat indikasi penurunan kinerja signifikan. Segera hubungi teknisi Holicindo untuk pemeriksaan dan kemungkinan penggantian komponen.',
   };
 }
 
+function sc(score: number) {
+  if (score >= 80) return '#10b981';
+  if (score >= 60) return '#f59e0b';
+  return '#ef4444';
+}
+function sl(score: number) {
+  if (score >= 80) return 'BAIK';
+  if (score >= 60) return 'PERHATIAN';
+  return 'KRITIS';
+}
+
 // ─── DONUT CHART ─────────────────────────────────────────────────────────────
 function DonutChart({ score, color, glowColor }: { score: number; color: string; glowColor: string }) {
-  const size   = 160;
-  const stroke = 14;
-  const r      = (size - stroke) / 2;
-  const circ   = 2 * Math.PI * r;
+  const size = 156, stroke = 14, r = (size - stroke) / 2;
+  const circ = 2 * Math.PI * r;
   const offset = circ - (score / 100) * circ;
-
   return (
     <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
       <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-        {/* Track */}
-        <circle
-          cx={size / 2} cy={size / 2} r={r}
-          fill="none"
-          stroke="rgba(0,0,0,0.06)"
-          strokeWidth={stroke}
-        />
-        {/* Progress */}
-        <circle
-          cx={size / 2} cy={size / 2} r={r}
-          fill="none"
-          stroke={color}
-          strokeWidth={stroke}
-          strokeLinecap="round"
-          strokeDasharray={circ}
-          strokeDashoffset={offset}
-          style={{ transition: 'stroke-dashoffset 1s ease', filter: `drop-shadow(0 0 6px ${glowColor})` }}
-        />
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(0,0,0,0.25)" strokeWidth={stroke} />
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={stroke}
+          strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset}
+          style={{ transition: 'stroke-dashoffset 1s ease' }} />
       </svg>
-      {/* Center label */}
-      <div style={{
-        position: 'absolute', inset: 0,
-        display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center',
-        pointerEvents: 'none',
-      }}>
-        <span style={{
-          fontSize: '2.2rem', fontWeight: 900,
-          color, lineHeight: 1, fontFamily: 'monospace',
-          letterSpacing: '-0.03em',
-          textShadow: `0 0 20px ${glowColor}`,
-        }}>
-          {score}
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <span style={{ fontSize: '2.1rem', fontWeight: 900, color, lineHeight: 1, fontFamily: 'monospace' }}>
+          {Math.round(score)}
         </span>
-        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-space-grey)', marginTop: '2px' }}>
-          / 100
-        </span>
+        <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', marginTop: 2 }}>/100</span>
       </div>
     </div>
   );
 }
 
-// ─── MINI BAR ────────────────────────────────────────────────────────────────
-function MiniBar({ label, score, color }: { label: string; score: number; color: string }) {
+// ─── SUBSYSTEM CARD ───────────────────────────────────────────────────────────
+function SubCard({ icon: Icon, label, score, accent, desc }: {
+  icon: React.ElementType; label: string; score: number; accent: string; desc: string;
+}) {
+  const c = sc(score), lbl = sl(score), pct = Math.min(100, Math.max(0, score));
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-deep-navy)' }}>{label}</span>
-        <span style={{ fontSize: '0.72rem', fontWeight: 800, color, fontFamily: 'monospace' }}>{score}%</span>
+    <div style={{ background: 'var(--color-deep-navy, #0D2B5E)', boxShadow: 'inset -2px -2px 4px rgba(255,255,255,.05),inset 2px 2px 4px rgba(0,0,0,.4)', borderRadius: 14, padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ background: 'var(--color-deep-navy, #0D2B5E)', boxShadow: '-2px -2px 4px rgba(255,255,255,.05),2px 2px 4px rgba(0,0,0,.3)', borderRadius: 7, padding: 5 }}>
+            <Icon size={13} color={accent} />
+          </div>
+          <span style={{ fontSize: '.77rem', fontWeight: 800, color: '#f1f5f9' }}>{label}</span>
+        </div>
+        <span style={{ fontSize: '.6rem', fontWeight: 800, color: c, background: `${c}18`, border: `1px solid ${c}30`, borderRadius: 20, padding: '2px 7px' }}>{lbl}</span>
       </div>
-      <div style={{ height: '6px', borderRadius: '99px', background: 'rgba(0,0,0,0.07)', overflow: 'hidden' }}>
-        <div style={{
-          height: '100%', width: `${score}%`, borderRadius: '99px',
-          background: `linear-gradient(90deg, ${color}bb, ${color})`,
-          transition: 'width 1.2s ease',
-          boxShadow: `0 0 6px ${color}55`,
-        }} />
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 3 }}>
+        <span style={{ fontSize: '1.8rem', fontWeight: 900, color: c, fontFamily: 'monospace', lineHeight: 1 }}>{Math.round(score)}</span>
+        <span style={{ fontSize: '.72rem', color: '#94a3b8', fontWeight: 600 }}>/100</span>
+      </div>
+      <div style={{ height: 6, borderRadius: 99, background: 'rgba(0,0,0,.25)', overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: `${pct}%`, borderRadius: 99, background: `linear-gradient(90deg,${c}99,${c})`, transition: 'width 1.2s ease' }} />
+      </div>
+      <p style={{ fontSize: '.7rem', color: '#94a3b8', margin: 0, lineHeight: 1.5, fontWeight: 500 }}>{desc}</p>
+    </div>
+  );
+}
+
+// ─── EVIDENCE BAR ─────────────────────────────────────────────────────────────
+function EvidenceBar({ label, value, icon: Icon }: { label: string; value: number; icon: React.ElementType }) {
+  const pct = Math.min(100, Math.max(0, value * 100));
+  const c = value > 0.6 ? '#ef4444' : value > 0.3 ? '#f59e0b' : '#10b981';
+  const lbl = value > 0.6 ? 'Tinggi' : value > 0.3 ? 'Sedang' : 'Rendah';
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <Icon size={11} color={c} />
+          <span style={{ fontSize: '.72rem', fontWeight: 700, color: '#f1f5f9' }}>{label}</span>
+        </div>
+        <span style={{ fontSize: '.65rem', fontWeight: 800, color: c }}>{lbl} ({pct.toFixed(0)}%)</span>
+      </div>
+      <div style={{ height: 5, borderRadius: 99, background: 'rgba(0,0,0,.25)', overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: `${pct}%`, borderRadius: 99, background: `linear-gradient(90deg,${c}88,${c})`, transition: 'width 1.2s ease' }} />
       </div>
     </div>
   );
 }
+
+// ─── METRIC PILL ──────────────────────────────────────────────────────────────
+function MetricPill({ icon: Icon, label, value, sub, good }: {
+  icon: React.ElementType; label: string; value: string; sub: string; good: boolean;
+}) {
+  const c = good ? '#10b981' : '#f59e0b';
+  return (
+    <div style={{ background: 'var(--color-deep-navy, #0D2B5E)', boxShadow: 'inset -2px -2px 4px rgba(255,255,255,.05),inset 2px 2px 4px rgba(0,0,0,.4)', borderRadius: 12, padding: '11px 13px', display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        <Icon size={11} color={c} />
+        <span style={{ fontSize: '.63rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '.05em' }}>{label}</span>
+      </div>
+      <span style={{ fontSize: '1.2rem', fontWeight: 900, color: c, fontFamily: 'monospace', lineHeight: 1 }}>{value}</span>
+      <span style={{ fontSize: '.63rem', color: '#cbd5e1', fontWeight: 600 }}>{sub}</span>
+    </div>
+  );
+}
+
+// ─── SECTION HEADER ───────────────────────────────────────────────────────────
+function SectionHeader({ title, badge }: { title: string; badge?: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <span style={{ fontSize: '.68rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '.07em' }}>{title}</span>
+      {badge && (
+        <span style={{ fontSize: '.6rem', fontWeight: 800, color: '#60a5fa', background: 'rgba(96,165,250,.1)', border: '1px solid rgba(96,165,250,.2)', borderRadius: 20, padding: '2px 8px' }}>{badge}</span>
+      )}
+    </div>
+  );
+}
+
+const neuBox = {
+  background: 'var(--color-deep-navy, #0D2B5E)',
+  boxShadow: '-4px -4px 10px rgba(255,255,255,.05), 4px 4px 10px rgba(0,0,0,.4)',
+  borderRadius: 16, padding: '16px 18px', display: 'flex', flexDirection: 'column' as const, gap: 13,
+};
 
 // ─── MAIN WIDGET ─────────────────────────────────────────────────────────────
-export default function CustomerHealthWidget() {
-  const score  = MOCK_HEALTH_SCORE;
-  const status = getStatusConfig(score);
-  const Icon   = status.icon;
+interface Props { unitId?: string; }
+
+export default function CustomerHealthWidget({ unitId }: Props) {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!unitId) { setLoading(false); return; }
+    healthScoreApi.getByUnitId(unitId)
+      .then(r => setData(r.data || null))
+      .catch(() => setData(null))
+      .finally(() => setLoading(false));
+  }, [unitId]);
+
+  if (loading) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 40, gap: 10, color: '#94a3b8' }}>
+      <Loader2 size={18} className="animate-spin" />
+      <span style={{ fontSize: '.84rem', fontWeight: 600 }}>Memuat data kesehatan mesin...</span>
+    </div>
+  );
+
+  if (!data?.overall_score && data?.overall_score !== 0) return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '13px 15px', background: 'rgba(148,163,184,.07)', border: '1px solid rgba(148,163,184,.2)', borderRadius: 12 }}>
+      <WifiOff size={15} color="#94A3B8" />
+      <div>
+        <div style={{ fontSize: '.82rem', fontWeight: 700, color: 'var(--color-deep-navy)' }}>Data Kesehatan Belum Tersedia</div>
+        <div style={{ fontSize: '.7rem', color: '#94a3b8', marginTop: 2 }}>Analisis pertama berjalan otomatis setiap jam. Pastikan unit sudah terhubung ke perangkat IoT.</div>
+      </div>
+    </div>
+  );
+
+  const score    = Number(data.overall_score ?? 0);
+  const status   = getStatusConfig(score);
+  const Icon     = status.icon;
+  const conf     = Number(data.confidence_score ?? 0);
+  const lc       = data.lifecycle_state ?? 'LEARNING';
+
+  // Subsystem scores
+  const cabScore  = Number(data.sub_cabinet_score    ?? 0);
+  const evapScore = Number(data.sub_evaporator_score ?? 0);
+  const condScore = Number(data.sub_condenser_score  ?? 0);
+  const elecScore = Number(data.sub_electrical_score ?? 0);
+  const baseScore = Number(data.sub_baseline_score   ?? 100);
+
+  // Evidence
+  const evCond = Number(data.evidence_condenser_issue  ?? 0);
+  const evEvap = Number(data.evidence_evaporator_issue ?? 0);
+  const evWeak = Number(data.evidence_weak_cooling     ?? 0);
+  const hasAlert = evCond > 0.5 || evEvap > 0.5 || evWeak > 0.5;
+
+  // Metrik operasional
+  const tib     = Number(data.tib_percentage        ?? 0);
+  const hdm     = Number(data.hdm_value             ?? 0);
+  const duty    = Number(data.duty_cycle_percentage ?? 0);
+  const starts  = Number(data.starts_per_hour       ?? 0);
+
+  // V4 baru
+  const doorRec     = Number(data.door_avg_recovery_min    ?? 0);
+  const doorEvt     = Number(data.door_event_count         ?? 0);
+  const voltAnomaly = Number(data.voltage_anomaly_ratio    ?? 0);
+  const defCycles   = Number(data.defrost_cycle_count      ?? 0);
+  const defAnomaly  = Number(data.defrost_anomaly_fraction ?? 0);
+  const blTIBDelta  = Number(data.baseline_tib_delta       ?? 0);
+  const blCoolDelta = Number(data.baseline_cooling_delta   ?? 0);
+
+  const lcLabel = lc === 'ACTIVE' ? 'Aktif' : lc === 'PROVISIONAL' ? 'Awal Operasi' : 'Pembelajaran';
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-      {/* ── Status bar ── */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '10px 16px',
-        background: status.bgColor,
-        border: `1.5px solid ${status.borderColor}`,
-        borderRadius: '10px',
-        fontSize: '0.78rem', fontWeight: 700,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '7px', color: status.color }}>
-          <Wifi size={15} />
-          <span style={{ fontWeight: 800 }}>IoT AKTIF — Data Terproses</span>
+      {/* ── STATUS BAR ── */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 14px', background: 'var(--color-deep-navy, #0D2B5E)', boxShadow: 'inset -2px -2px 5px rgba(255,255,255,.05),inset 2px 2px 5px rgba(0,0,0,.4)', borderRadius: 11, fontSize: '.76rem', fontWeight: 700 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: status.color }}>
+          <Wifi size={14} />
+          <span>IoT Aktif — Analisis Kesehatan Mesin</span>
         </div>
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '5px',
-          fontSize: '0.65rem', color: '#10b981', fontWeight: 800,
-          background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)',
-          borderRadius: '20px', padding: '3px 9px',
-        }}>
-          <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#10b981', display: 'inline-block', animation: 'pulse 1.5s infinite' }} />
-          TERPANTAU
-        </div>
+        <span style={{ fontSize: '.62rem', fontWeight: 800, background: lc === 'ACTIVE' ? 'rgba(16,185,129,.1)' : 'rgba(245,158,11,.1)', color: lc === 'ACTIVE' ? '#10b981' : '#f59e0b', border: `1px solid ${lc === 'ACTIVE' ? 'rgba(16,185,129,.25)' : 'rgba(245,158,11,.25)'}`, borderRadius: 20, padding: '3px 9px' }}>
+          {lcLabel}
+        </span>
       </div>
 
-      {/* ── Donut + Status Info ── */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: '20px',
-        padding: '20px',
-        background: status.bgColor,
-        border: `1.5px solid ${status.borderColor}`,
-        borderRadius: '16px',
-        flexWrap: 'wrap',
-      }}>
-        {/* Chart */}
+      {/* ── SKOR UTAMA ── */}
+      <div style={{ ...neuBox, flexDirection: 'row', alignItems: 'center', gap: 22, flexWrap: 'wrap', padding: 22 }}>
         <DonutChart score={score} color={status.color} glowColor={status.glowColor} />
-
-        {/* Info */}
-        <div style={{ flex: '1 1 160px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {/* Badge status */}
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', alignSelf: 'flex-start' }}>
-            <div style={{
-              background: `${status.color}22`, padding: '5px', borderRadius: '8px',
-              border: `1px solid ${status.borderColor}`,
-            }}>
-              <Icon size={16} color={status.color} />
+        <div style={{ flex: '1 1 140px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+            <div style={{ background: 'var(--color-deep-navy, #0D2B5E)', padding: 6, borderRadius: 9, boxShadow: 'inset -2px -2px 4px rgba(255,255,255,.05),inset 2px 2px 5px rgba(0,0,0,.4)' }}>
+              <Icon size={15} color={status.color} />
             </div>
             <div>
-              <div style={{ fontSize: '1rem', fontWeight: 900, color: status.color, lineHeight: 1 }}>
-                {status.label}
-              </div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--color-space-grey)', fontWeight: 600, marginTop: '2px' }}>
-                {status.sublabel}
-              </div>
+              <div style={{ fontSize: '1rem', fontWeight: 900, color: status.color, lineHeight: 1 }}>{status.label}</div>
+              <div style={{ fontSize: '.7rem', color: '#64748b', fontWeight: 600, marginTop: 2 }}>{status.sublabel}</div>
             </div>
           </div>
-
-          {/* Indeks label */}
           <div>
-            <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--color-space-grey)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '3px' }}>
-              Indeks Kesehatan Unit
+            <div style={{ fontSize: '.62rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 3 }}>Indeks Kesehatan Mesin</div>
+            <div style={{ fontSize: '1.9rem', fontWeight: 900, color: status.color, lineHeight: 1, fontFamily: 'monospace' }}>
+              {Math.round(score)}<span style={{ fontSize: '.95rem', fontWeight: 700, color: '#64748b', marginLeft: 3 }}>/100</span>
             </div>
-            <div style={{ fontSize: '1.8rem', fontWeight: 900, color: status.color, lineHeight: 1, fontFamily: 'monospace' }}>
-              {score}<span style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--color-space-grey)', marginLeft: '2px' }}>%</span>
-            </div>
+            <div style={{ fontSize: '.63rem', color: '#94a3b8', marginTop: 3, fontWeight: 600 }}>Tingkat keakuratan data: {(conf * 100).toFixed(0)}%</div>
           </div>
         </div>
       </div>
 
-      {/* ── Sub-indicators ── */}
-      <div style={{
-        padding: '16px',
-        background: 'rgba(0,31,63,0.03)',
-        border: '1px solid rgba(0,31,63,0.07)',
-        borderRadius: '14px',
-        display: 'flex', flexDirection: 'column', gap: '12px',
-      }}>
-        <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--color-space-grey)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-          Rincian Komponen
-        </div>
-        {MOCK_SECONDARY.map((item) => (
-          <MiniBar
-            key={item.label}
-            label={item.label}
-            score={item.score}
-            color={getStatusConfig(item.score).color}
-          />
-        ))}
-      </div>
-
-      {/* ── Rekomendasi ── */}
-      <div style={{
-        display: 'flex', gap: '12px', alignItems: 'flex-start',
-        padding: '14px 16px',
-        background: 'rgba(46,91,255,0.05)',
-        border: '1px solid rgba(46,91,255,0.15)',
-        borderRadius: '12px',
-      }}>
-        <div style={{
-          flexShrink: 0, marginTop: '1px',
-          background: 'rgba(46,91,255,0.1)', padding: '6px', borderRadius: '8px',
-        }}>
-          <CheckCircle2 size={16} color="#2E5BFF" />
-        </div>
-        <div>
-          <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#2E5BFF', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
-            Rekomendasi
-          </div>
-          <p style={{ fontSize: '0.82rem', color: 'var(--color-deep-navy)', lineHeight: 1.6, margin: 0, fontWeight: 500 }}>
-            {status.recommendation}
-          </p>
+      {/* ── 5 SUBSISTEM ── */}
+      <div style={neuBox}>
+        <SectionHeader title="Skor Per Bagian Mesin" badge="5 Bagian" />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(130px,1fr))', gap: 9 }}>
+          <SubCard icon={Thermometer} label="Kabinet"              score={cabScore}  accent="#3b82f6" desc="Waktu suhu normal + Panas berlebih + Laju pendinginan + Pemulihan pintu" />
+          <SubCard icon={Snowflake}   label="Evaporator" score={evapScore} accent="#06b6d4" desc="Laju drop evap + Amplitudo + Beda suhu + Siklus defrost" />
+          <SubCard icon={Wind}        label="Kondensor"    score={condScore} accent="#f97316" desc="Suhu puncak pembuangan + Kenaikan panas per siklus" />
+          <SubCard icon={Zap}         label="Kelistrikan & Kompresor"       score={elecScore} accent="#8b5cf6" desc="Waktu nyala + Frekuensi start + Siklus pendek + Arus + Tegangan" />
+          <SubCard icon={BarChart2}   label="Performa vs Awal Aktivasi"     score={baseScore} accent="#ec4899" desc="Perbandingan kinerja saat ini dengan 14 hari pertama unit aktif" />
         </div>
       </div>
 
-      {/* ── Service nudge ── */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: '10px',
-        padding: '12px 14px',
-        background: 'rgba(245,158,11,0.06)',
-        border: '1px solid rgba(245,158,11,0.2)',
-        borderRadius: '10px',
-      }}>
-        <Wrench size={15} color="#f59e0b" style={{ flexShrink: 0 }} />
-        <p style={{ fontSize: '0.78rem', color: 'var(--color-deep-navy)', lineHeight: 1.5, margin: 0, fontWeight: 600 }}>
-          Ingin menjadwalkan perawatan rutin?{' '}
-          <span style={{ color: '#2E5BFF', fontWeight: 700 }}>Gunakan tombol "Request Service" di atas.</span>
+      {/* ── ANALITIK V4 BARU ── */}
+      <div style={neuBox}>
+        <SectionHeader title="Analitik Lanjutan" badge="V4" />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: 9 }}>
+          <MetricPill icon={DoorOpen}    label="Pemulihan Suhu Setelah Pintu Dibuka" value={doorRec > 0 ? `${doorRec.toFixed(1)} mnt` : 'N/A'} sub={`${doorEvt} kali pintu dibuka hari ini`}           good={doorRec <= 15} />
+          <MetricPill icon={RefreshCw}   label="Siklus Defrost Terdeteksi"            value={`${defCycles}x`}                                     sub={`Tidak normal: ${(defAnomaly*100).toFixed(0)}%`}     good={defAnomaly <= 0.1} />
+          <MetricPill icon={Zap}         label="Gangguan Tegangan Listrik"            value={`${(voltAnomaly*100).toFixed(1)}%`}                   sub="Batas normal: 180V – 250V"                          good={voltAnomaly <= 0.02} />
+          <MetricPill icon={TrendingDown} label="Penurunan Performa vs Awal"          value={blTIBDelta > 0 ? `-${blTIBDelta.toFixed(1)}%` : '0%'} sub={`Laju pendinginan turun ${blCoolDelta.toFixed(2)} °C/mnt`} good={blTIBDelta <= 5} />
+        </div>
+      </div>
+
+      {/* ── INDIKASI MASALAH ── */}
+      <div style={{ ...neuBox, boxShadow: hasAlert ? '-4px -4px 10px rgba(255,255,255,.05), 4px 4px 10px rgba(239,68,68,.4)' : '-4px -4px 10px rgba(255,255,255,.05), 4px 4px 10px rgba(0,0,0,.4)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <SectionHeader title="Indikasi Masalah (Berdasarkan Analisis Multi-Sensor)" />
+          {hasAlert && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '.6rem', fontWeight: 800, color: '#ef4444', background: 'rgba(239,68,68,.08)', border: '1px solid rgba(239,68,68,.2)', borderRadius: 20, padding: '2px 8px' }}>
+              <AlertCircle size={10} /> Perlu Perhatian
+            </div>
+          )}
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+          <EvidenceBar label="Kondensor"    value={evCond} icon={Wind} />
+          <EvidenceBar label="Evaporator" value={evEvap} icon={Snowflake} />
+          <EvidenceBar label="Pendinginan Tidak Optimal"     value={evWeak} icon={TrendingDown} />
+        </div>
+        <p style={{ fontSize: '.7rem', color: '#94a3b8', margin: 0, lineHeight: 1.6, padding: '9px 11px', background: 'rgba(0,0,0,.2)', borderRadius: 8 }}>
+          Nilai 0% = tidak ada indikasi masalah. Nilai <strong style={{ color: '#ef4444' }}>merah (&gt;60%)</strong> = bagian mesin tersebut perlu diperiksa oleh teknisi.
         </p>
       </div>
+
+      {/* ── METRIK OPERASIONAL ── */}
+      <div style={neuBox}>
+        <SectionHeader title="Metrik Operasional Harian" />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 9 }}>
+          <MetricPill icon={Activity}    label="Waktu Suhu dalam Target"         value={`${tib.toFixed(1)}%`}      sub="Target: ≥ 95%"              good={tib >= 95} />
+          <MetricPill icon={TrendingUp}  label="Akumulasi Panas Berlebih / Jam"  value={`${hdm.toFixed(1)} °C·mnt`} sub="Target: ≤ 1.0"             good={hdm <= 1} />
+          <MetricPill icon={Zap}         label="Waktu Kompresor Menyala"         value={`${duty.toFixed(1)}%`}     sub="Target: ≤ 60%"              good={duty <= 60} />
+          <MetricPill icon={Activity}    label="Frekuensi Nyala Kompresor / Jam" value={`${starts.toFixed(1)}x`}  sub="Target: ≤ 4x/jam"           good={starts <= 4} />
+        </div>
+      </div>
+
 
     </div>
   );

@@ -22,21 +22,21 @@ export default function ServiceHistorySection({ serviceLogs }: ServiceHistorySec
   );
 
   const [showAll, setShowAll] = useState(false);
-  const displayedLogs = showAll ? sorted : sorted.slice(0, 5);
+  const displayedLogs = showAll ? sorted : sorted.slice(0, 3);
 
   return (
-    <section className={styles.sectionPanel}>
+    <section className={styles.panel}>
       <div className={styles.panelHeader}>
         <div className={styles.panelHeaderLeft}>
-          <Wrench size={16} color="var(--color-cobalt-blue)" />
+          <Wrench size={16} color="#60a5fa" />
           <h2>Riwayat Servis</h2>
         </div>
       </div>
-      <div className={styles.panelContent} style={{ padding: '24px' }}>
+      <div className={styles.panelContent} style={{ padding: '20px' }}>
         {sorted.length === 0 ? (
           <div className={styles.emptyState}>
-            <Wrench size={40} style={{ marginBottom: '16px', color: 'var(--color-space-grey)', opacity: 0.6 }} />
-            <p style={{ color: 'var(--color-space-grey)', textAlign: 'center' }}>Belum ada riwayat servis</p>
+            <Wrench size={40} style={{ marginBottom: '16px', color: '#94a3b8', opacity: 0.6 }} />
+            <p style={{ color: '#94a3b8', textAlign: 'center' }}>Belum ada riwayat servis</p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -44,24 +44,37 @@ export default function ServiceHistorySection({ serviceLogs }: ServiceHistorySec
               const taskType = log.task_type || 'CORRECTIVE';
               const tc = TASK_COLOR[taskType] || TASK_COLOR.CORRECTIVE;
               return (
-                <div key={log.id || idx} className={styles.historyItem}>
+                <div
+                  key={log.id || idx}
+                  className={styles.historyItem}
+                  style={{
+                    backgroundColor: 'var(--neu-bg, rgba(8,20,50,0.8))',
+                    border: 'none',
+                    borderRadius: '12px',
+                    padding: '14px',
+                    boxShadow: '-3px -3px 8px rgba(255,255,255,0.04), 3px 3px 8px rgba(0,31,63,0.1)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px'
+                  }}
+                >
                   {/* Row 1: Call ID, Jenis, Tanggal, Status */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                      <span className={styles.historyCallId}>{log.call_id || log.id}</span>
+                      <span className={styles.historyCallId} style={{ color: '#93c5fd', fontWeight: 800 }}>{log.call_id || log.id}</span>
                       <span style={{
                         fontSize: '0.63rem', fontWeight: 800, padding: '2px 8px', borderRadius: '4px',
                         background: tc.bg, color: tc.color,
                       }}>
                         {TASK_LABEL[taskType] || taskType}
                       </span>
-                      <span className={styles.historyDate}>
+                      <span className={styles.historyDate} style={{ color: '#cbd5e1' }}>
                         {log.service_date
                           ? new Date(log.service_date).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })
                           : '—'}
                       </span>
                       {log.scheduled_date && log.scheduled_date !== log.service_date && (
-                        <span style={{ fontSize: '0.68rem', color: 'var(--color-cobalt-blue)', fontWeight: 600 }}>
+                        <span style={{ fontSize: '0.68rem', color: '#60a5fa', fontWeight: 600 }}>
                           Jadwal: {new Date(log.scheduled_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                         </span>
                       )}
@@ -78,9 +91,9 @@ export default function ServiceHistorySection({ serviceLogs }: ServiceHistorySec
 
                   {/* Row 2: Teknisi & Delivery Date */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-                    <div className={styles.historyTech}>Teknisi: {log.technician_name || '—'}</div>
+                    <div className={styles.historyTech} style={{ color: '#cbd5e1' }}>Teknisi: {log.technician_name || '—'}</div>
                     {log.delivery_date && (
-                      <span style={{ fontSize: '0.68rem', color: 'var(--color-success)', fontWeight: 600 }}>
+                      <span style={{ fontSize: '0.68rem', color: '#34d399', fontWeight: 600 }}>
                         📦 Delivery: {new Date(log.delivery_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </span>
                     )}
@@ -88,7 +101,7 @@ export default function ServiceHistorySection({ serviceLogs }: ServiceHistorySec
 
                   {/* Row 3: Catatan tindakan */}
                   {(log.action_taken || log.notes) && (
-                    <div className={styles.historyNotes}>
+                    <div className={styles.historyNotes} style={{ color: '#f1f5f9' }}>
                       {(log.action_taken || log.notes || '').slice(0, 120)}
                       {(log.action_taken || log.notes || '').length > 120 ? '…' : ''}
                     </div>
@@ -96,7 +109,7 @@ export default function ServiceHistorySection({ serviceLogs }: ServiceHistorySec
 
                   {/* Row 4: Planning notes (hanya jika ada) */}
                   {log.planning_notes && (
-                    <div className={styles.planningNotes}>
+                    <div className={styles.planningNotes} style={{ color: '#e2e8f0' }}>
                       📋 {log.planning_notes}
                     </div>
                   )}
@@ -104,49 +117,39 @@ export default function ServiceHistorySection({ serviceLogs }: ServiceHistorySec
               );
             })}
             
-            {!showAll && sorted.length > 5 && (
+            {!showAll && sorted.length > 3 && (
               <button 
                 onClick={() => setShowAll(true)}
                 style={{
-                  marginTop: '12px', width: '100%', padding: '12px', 
-                  background: 'rgba(0,31,63,0.05)', 
-                  border: 'none', 
-                  borderRadius: '10px', 
-                  color: 'var(--color-cobalt-blue)', 
-                  fontSize: '0.85rem', fontWeight: 700, 
+                  marginTop: '6px', width: '100%', padding: '12px', 
+                  background: 'rgba(255, 255, 255, 0.08)', 
+                  border: '1px solid rgba(255, 255, 255, 0.12)', 
+                  borderRadius: '12px', 
+                  color: '#93c5fd', 
+                  fontSize: '0.82rem', fontWeight: 700, 
                   cursor: 'pointer', textAlign: 'center',
+                  boxShadow: '-2px -2px 5px rgba(255,255,255,0.05), 2px 2px 5px rgba(0,0,0,0.3)',
                   transition: 'all 0.2s',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.background = 'rgba(0,31,63,0.08)';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.background = 'rgba(0,31,63,0.05)';
                 }}
               >
                 Lihat Semua Riwayat Servis ({sorted.length}) <span>›</span>
               </button>
             )}
-            {showAll && sorted.length > 5 && (
+            {showAll && sorted.length > 3 && (
               <button 
                 onClick={() => setShowAll(false)}
                 style={{
-                  marginTop: '12px', width: '100%', padding: '12px', 
-                  background: 'rgba(0,31,63,0.05)', 
-                  border: 'none', 
-                  borderRadius: '10px', 
-                  color: 'var(--color-cobalt-blue)', 
-                  fontSize: '0.85rem', fontWeight: 700, 
+                  marginTop: '6px', width: '100%', padding: '12px', 
+                  background: 'rgba(255, 255, 255, 0.08)', 
+                  border: '1px solid rgba(255, 255, 255, 0.12)', 
+                  borderRadius: '12px', 
+                  color: '#93c5fd', 
+                  fontSize: '0.82rem', fontWeight: 700, 
                   cursor: 'pointer', textAlign: 'center',
+                  boxShadow: '-2px -2px 5px rgba(255,255,255,0.05), 2px 2px 5px rgba(0,0,0,0.3)',
                   transition: 'all 0.2s',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.background = 'rgba(0,31,63,0.08)';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.background = 'rgba(0,31,63,0.05)';
                 }}
               >
                 Sembunyikan <span>‹</span>

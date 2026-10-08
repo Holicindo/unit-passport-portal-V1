@@ -52,8 +52,8 @@ export default function ClientMessages() {
 
     fetchMessages();
 
-    // Poll setiap 5 detik
-    pollRef.current = setInterval(fetchMessages, 5000);
+    // Poll setiap 1 menit (hemat Egress)
+    pollRef.current = setInterval(fetchMessages, 60000);
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [activeConv]);
 

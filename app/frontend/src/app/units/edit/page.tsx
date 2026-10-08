@@ -2,8 +2,8 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { unitApi } from '@/lib/api';
-import { ArrowLeft, Loader2, Save, HelpCircle } from 'lucide-react';
+import { unitApi, healthScoreApi } from '@/lib/api';
+import { ArrowLeft, Loader2, Save, HelpCircle, HeartPulse, RefreshCw } from 'lucide-react';
 import { categorizeUnitType } from '@/lib/utils';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import DatePicker from '@/components/ui/DatePicker';
@@ -38,6 +38,19 @@ function EditUnitForm() {
   const [clientId, setClientId] = useState('');
   const [warrantyStatus, setWarrantyStatus] = useState('ACTIVE');
   const [warrantyExpiry, setWarrantyExpiry] = useState('');
+
+  // IoT Calibration & Health Score V2 Settings
+  const [targetTempMin, setTargetTempMin] = useState<string>('-2');
+  const [targetTempMax, setTargetTempMax] = useState<string>('10');
+  const [compressorNormalAmpere, setCompressorNormalAmpere] = useState<string>('1.5');
+  const [ampereTolerance, setAmpereTolerance] = useState<string>('0.3');
+  const [calTempCabinetOffset, setCalTempCabinetOffset] = useState<string>('0');
+  const [calTempEvapOffset, setCalTempEvapOffset] = useState<string>('0');
+  const [calTempCondenserOffset, setCalTempCondenserOffset] = useState<string>('0');
+  const [calVoltageOffset, setCalVoltageOffset] = useState<string>('0');
+  const [calPowerSlope, setCalPowerSlope] = useState<string>('1');
+  const [calculatingScore, setCalculatingScore] = useState(false);
+  const [scoreNotification, setScoreNotification] = useState<string | null>(null);
 
   // UI
   const [loading, setLoading] = useState(false);
@@ -96,6 +109,17 @@ function EditUnitForm() {
         }
         setExplodedViewUrl(unit.exploded_view_url || '');
         setCircuitDiagramUrl(unit.circuit_diagram_url || '');
+
+        // Populate calibration settings
+        if (unit.target_temp_min !== null && unit.target_temp_min !== undefined) setTargetTempMin(String(unit.target_temp_min));
+        if (unit.target_temp_max !== null && unit.target_temp_max !== undefined) setTargetTempMax(String(unit.target_temp_max));
+        if (unit.compressor_normal_ampere !== null && unit.compressor_normal_ampere !== undefined) setCompressorNormalAmpere(String(unit.compressor_normal_ampere));
+        if (unit.ampere_tolerance !== null && unit.ampere_tolerance !== undefined) setAmpereTolerance(String(unit.ampere_tolerance));
+        if (unit.cal_temp_cabinet_offset !== null && unit.cal_temp_cabinet_offset !== undefined) setCalTempCabinetOffset(String(unit.cal_temp_cabinet_offset));
+        if (unit.cal_temp_evap_offset !== null && unit.cal_temp_evap_offset !== undefined) setCalTempEvapOffset(String(unit.cal_temp_evap_offset));
+        if (unit.cal_temp_condenser_offset !== null && unit.cal_temp_condenser_offset !== undefined) setCalTempCondenserOffset(String(unit.cal_temp_condenser_offset));
+        if (unit.cal_voltage_offset !== null && unit.cal_voltage_offset !== undefined) setCalVoltageOffset(String(unit.cal_voltage_offset));
+        if (unit.cal_power_slope !== null && unit.cal_power_slope !== undefined) setCalPowerSlope(String(unit.cal_power_slope));
       } catch (err: any) {
         setError('Gagal memuat data unit. Pastikan unit ini masih tersedia.');
       } finally {
@@ -147,6 +171,20 @@ function EditUnitForm() {
         exploded_view_url: explodedViewUrl.trim() || undefined,
         circuit_diagram_url: circuitDiagramUrl.trim() || undefined,
       });
+
+      // Update IoT Calibration & Compressor baseline
+      await unitApi.updateCalibration(unitId, {
+        target_temp_min: targetTempMin ? parseFloat(targetTempMin) : undefined,
+        target_temp_max: targetTempMax ? parseFloat(targetTempMax) : undefined,
+        compressor_normal_ampere: compressorNormalAmpere ? parseFloat(compressorNormalAmpere) : undefined,
+        ampere_tolerance: ampereTolerance ? parseFloat(ampereTolerance) : undefined,
+        cal_temp_cabinet_offset: calTempCabinetOffset ? parseFloat(calTempCabinetOffset) : 0,
+        cal_temp_evap_offset: calTempEvapOffset ? parseFloat(calTempEvapOffset) : 0,
+        cal_temp_condenser_offset: calTempCondenserOffset ? parseFloat(calTempCondenserOffset) : 0,
+        cal_voltage_offset: calVoltageOffset ? parseFloat(calVoltageOffset) : 0,
+        cal_power_slope: calPowerSlope ? parseFloat(calPowerSlope) : 1,
+      });
+
       router.push('/units');
     } catch (err: any) {
       const errorMsg = err.response?.data?.message;
@@ -155,6 +193,36 @@ function EditUnitForm() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleTriggerHealthScore = async () => {
+    if (!unitId) return;
+    setCalculatingScore(true);
+    setScoreNotification(null);
+    try {
+      // Simpan kalibrasi dulu sebelum hitung
+      await unitApi.updateCalibration(unitId, {
+        target_temp_min: targetTempMin ? parseFloat(targetTempMin) : undefined,
+        target_temp_max: targetTempMax ? parseFloat(targetTempMax) : undefined,
+        compressor_normal_ampere: compressorNormalAmpere ? parseFloat(compressorNormalAmpere) : undefined,
+        ampere_tolerance: ampereTolerance ? parseFloat(ampereTolerance) : undefined,
+        cal_temp_cabinet_offset: calTempCabinetOffset ? parseFloat(calTempCabinetOffset) : 0,
+        cal_temp_evap_offset: calTempEvapOffset ? parseFloat(calTempEvapOffset) : 0,
+        cal_temp_condenser_offset: calTempCondenserOffset ? parseFloat(calTempCondenserOffset) : 0,
+        cal_voltage_offset: calVoltageOffset ? parseFloat(calVoltageOffset) : 0,
+        cal_power_slope: calPowerSlope ? parseFloat(calPowerSlope) : 1,
+      });
+
+      const { data } = await healthScoreApi.triggerByUnitId(unitId);
+      const score = data?.data?.overall_score ?? data?.overall_score;
+      setScoreNotification(
+        `✅ Skor kesehatan berhasil dihitung ulang: ${score !== undefined ? Number(score).toFixed(1) : 'Sukses'}!`
+      );
+    } catch (e: any) {
+      setScoreNotification(`❌ Gagal menghitung skor: ${e.response?.data?.message || e.message}`);
+    } finally {
+      setCalculatingScore(false);
     }
   };
 
@@ -331,6 +399,159 @@ function EditUnitForm() {
                 onChange={(e) => setCircuitDiagramUrl(e.target.value)}
                 placeholder="https://example.com/circuit-diagram.pdf"
                 autoComplete="off"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Section 5: Kalibrasi & Ambang Batas Sensor IoT (Health Score V2) */}
+        <div className={styles.formSection} style={{ border: '1px solid #E2E8F0', background: '#F8FAFC', borderRadius: '12px', padding: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <h3 className={styles.sectionTitle} style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: '#1E293B' }}>
+              <HeartPulse size={20} style={{ color: '#E11D48' }} />
+              5. Kalibrasi Sensor &amp; Ambang Batas Kompresor
+            </h3>
+            <button
+              type="button"
+              onClick={handleTriggerHealthScore}
+              disabled={calculatingScore}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: '#0284C7',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '8px 14px',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                cursor: calculatingScore ? 'not-allowed' : 'pointer',
+              }}
+            >
+              <RefreshCw size={14} className={calculatingScore ? styles.spin : ''} />
+              {calculatingScore ? 'Menghitung Skor...' : 'Hitung Ulang Health Score'}
+            </button>
+          </div>
+
+          {scoreNotification && (
+            <div
+              style={{
+                padding: '10px 14px',
+                borderRadius: '8px',
+                marginBottom: '16px',
+                fontSize: '0.85rem',
+                background: scoreNotification.startsWith('✅') ? '#DCFCE7' : '#FEE2E2',
+                color: scoreNotification.startsWith('✅') ? '#166534' : '#991B1B',
+              }}
+            >
+              {scoreNotification}
+            </div>
+          )}
+
+          <p style={{ fontSize: '0.8rem', color: '#64748B', marginBottom: '16px' }}>
+            Atur parameter rentang suhu dan arus listrik spesifik untuk model unit ini. Perhitungan Health Score V2 akan otomatis menyesuaikan dengan profil ini.
+          </p>
+
+          <h4 style={{ fontSize: '0.9rem', color: '#334155', margin: '12px 0 8px 0' }}>Ambang Batas Suhu &amp; Arus Kompresor</h4>
+          <div className={styles.grid}>
+            <div className={styles.formGroup}>
+              <label>Target Suhu Min Kabinet (°C)</label>
+              <input
+                type="number"
+                step="0.5"
+                value={targetTempMin}
+                onChange={(e) => setTargetTempMin(e.target.value)}
+                placeholder="Contoh: -2.0"
+              />
+            </div>
+            <div className={styles.formGroup}>
+              <label>Target Suhu Max Kabinet (°C)</label>
+              <input
+                type="number"
+                step="0.5"
+                value={targetTempMax}
+                onChange={(e) => setTargetTempMax(e.target.value)}
+                placeholder="Contoh: 10.0"
+              />
+            </div>
+            <div className={styles.formGroup}>
+              <label>Arus Normal Kompresor (Ampere)</label>
+              <input
+                type="number"
+                step="0.1"
+                value={compressorNormalAmpere}
+                onChange={(e) => setCompressorNormalAmpere(e.target.value)}
+                placeholder="Contoh: 1.5"
+              />
+              <small style={{ color: '#64748B', fontSize: '0.75rem' }}>Arus rata-rata saat kompresor menyala</small>
+            </div>
+            <div className={styles.formGroup}>
+              <label>Toleransi Anomali Arus (± Ampere)</label>
+              <input
+                type="number"
+                step="0.05"
+                value={ampereTolerance}
+                onChange={(e) => setAmpereTolerance(e.target.value)}
+                placeholder="Contoh: 0.3"
+              />
+              <small style={{ color: '#64748B', fontSize: '0.75rem' }}>Penyimpangan di luar batas ini memicu penalti</small>
+            </div>
+          </div>
+
+          <h4 style={{ fontSize: '0.9rem', color: '#334155', margin: '16px 0 8px 0' }}>Offset Kalibrasi Sensor Fisik (1-Point Offset)</h4>
+          <div className={styles.grid3}>
+            <div className={styles.formGroup}>
+              <label>Offset Suhu Kabinet (°C)</label>
+              <input
+                type="number"
+                step="0.1"
+                value={calTempCabinetOffset}
+                onChange={(e) => setCalTempCabinetOffset(e.target.value)}
+                placeholder="0.0"
+              />
+            </div>
+            <div className={styles.formGroup}>
+              <label>Offset Suhu Evaporator (°C)</label>
+              <input
+                type="number"
+                step="0.1"
+                value={calTempEvapOffset}
+                onChange={(e) => setCalTempEvapOffset(e.target.value)}
+                placeholder="0.0"
+              />
+            </div>
+            <div className={styles.formGroup}>
+              <label>Offset Suhu Kondensor (°C)</label>
+              <input
+                type="number"
+                step="0.1"
+                value={calTempCondenserOffset}
+                onChange={(e) => setCalTempCondenserOffset(e.target.value)}
+                placeholder="0.0"
+              />
+            </div>
+          </div>
+
+          <div className={styles.grid} style={{ marginTop: '8px' }}>
+            <div className={styles.formGroup}>
+              <label>Offset Tegangan Listrik (Volt)</label>
+              <input
+                type="number"
+                step="1"
+                value={calVoltageOffset}
+                onChange={(e) => setCalVoltageOffset(e.target.value)}
+                placeholder="0"
+              />
+            </div>
+            <div className={styles.formGroup}>
+              <label>Faktor Pengali Daya (Slope Watt)</label>
+              <input
+                type="number"
+                step="0.05"
+                value={calPowerSlope}
+                onChange={(e) => setCalPowerSlope(e.target.value)}
+                placeholder="1.0"
               />
             </div>
           </div>

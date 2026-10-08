@@ -31,15 +31,13 @@ function TempCard({ label, rawValue, min, max, offset, icon: Icon, isWarning, wa
   const isError = rawValue === null || rawValue === -127 || rawValue === 85;
   const liveValue = isError ? null : rawValue + offset;
   const isAlert = !isError && liveValue !== null && (liveValue > max || liveValue < min);
-  const color    = isError ? '#94a3b8' : isAlert ? '#dc2626' : isWarning ? '#f59e0b' : '#059669';
-  const bg       = isError ? 'rgba(148,163,184,0.08)' : isAlert ? 'rgba(239,68,68,0.06)' : isWarning ? 'rgba(245,158,11,0.08)' : 'rgba(16,185,129,0.06)';
-  const border   = isError ? 'rgba(148,163,184,0.2)' : isAlert ? 'rgba(220,38,38,0.3)' : isWarning ? 'rgba(245,158,11,0.3)' : 'rgba(5,150,105,0.3)';
+  const color    = isError ? '#94a3b8' : isAlert ? '#dc2626' : isWarning ? '#d97706' : '#059669';
 
   return (
     <div style={{
-      background: bg,
-      border: `2px solid ${border}`,
-      borderRadius: '14px',
+      background: 'rgba(13, 35, 70, 0.85)',
+      border: '1px solid rgba(255, 255, 255, 0.08)',
+      borderRadius: '16px',
       padding: '16px 14px',
       display: 'flex',
       flexDirection: 'column',
@@ -47,38 +45,47 @@ function TempCard({ label, rawValue, min, max, offset, icon: Icon, isWarning, wa
       flex: '1 1 0',
       minWidth: '160px',
       transition: 'all 0.3s ease',
-      boxShadow: isAlert ? '0 4px 16px rgba(220,38,38,0.1)' : 'none',
+      boxShadow: '-3px -3px 7px rgba(255,255,255,0.05), 4px 4px 12px rgba(0,0,0,0.5)',
       position: 'relative',
     }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ background: color + '22', padding: '6px', borderRadius: '8px' }}>
+          <div style={{
+            background: 'rgba(8, 18, 50, 0.9)',
+            boxShadow: 'inset -2px -2px 5px rgba(255,255,255,0.05), inset 2px 2px 5px rgba(0,0,0,0.4)',
+            padding: '7px',
+            borderRadius: '10px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
             <Icon size={16} color={color} />
           </div>
-          <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--color-deep-navy)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#f1f5f9', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             {label}
           </span>
         </div>
         {isAlert ? (
           <div style={{
-            fontSize: '0.62rem', color: '#fff', fontWeight: 800,
-            background: '#ef4444', padding: '3px 8px',
+            fontSize: '0.62rem', color: '#dc2626', fontWeight: 800,
+            background: 'rgba(220,38,38,0.1)', padding: '3px 8px',
             borderRadius: '20px', letterSpacing: '0.05em',
-            boxShadow: '0 2px 8px rgba(239,68,68,0.4)',
+            border: '1px solid rgba(220,38,38,0.25)',
           }}>KRITIS</div>
         ) : isWarning ? (
           <div style={{
-            fontSize: '0.62rem', color: '#fff', fontWeight: 800,
-            background: '#f59e0b', padding: '3px 8px',
+            fontSize: '0.62rem', color: '#d97706', fontWeight: 800,
+            background: 'rgba(217,119,6,0.1)', padding: '3px 8px',
             borderRadius: '20px', letterSpacing: '0.05em',
-            boxShadow: '0 2px 8px rgba(245,158,11,0.4)',
+            border: '1px solid rgba(217,119,6,0.25)',
           }}>{warningLabel || 'PERHATIAN'}</div>
         ) : !isError && (
           <div style={{
-            fontSize: '0.62rem', color: '#10b981', fontWeight: 800,
-            background: 'rgba(16,185,129,0.15)', padding: '3px 8px',
-            borderRadius: '20px', letterSpacing: '0.05em', border: '1px solid rgba(16,185,129,0.3)'
+            fontSize: '0.62rem', color: '#059669', fontWeight: 800,
+            background: 'rgba(5,150,105,0.1)', padding: '3px 8px',
+            borderRadius: '20px', letterSpacing: '0.05em',
+            border: '1px solid rgba(5,150,105,0.25)',
           }}>NORMAL</div>
         )}
       </div>
@@ -93,30 +100,45 @@ function TempCard({ label, rawValue, min, max, offset, icon: Icon, isWarning, wa
         </div>
       </div>
 
-      <div style={{ height: '1px', background: 'rgba(0,0,0,0.06)', margin: '4px 0' }} />
+      <div style={{ height: '1px', background: 'rgba(255,255,255,0.06)', margin: '4px 0' }} />
 
-      {/* 3 Metrics: Calibration, Min, Max */}
+      {/* 3 Metrics: Calibration, Min, Max (Neumorphic Inset) */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
         {/* Kalibrasi */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', background: 'rgba(0,0,0,0.03)', padding: '6px 8px', borderRadius: '8px', border: '1px dashed rgba(0,0,0,0.1)' }}>
+        <div style={{
+          display: 'flex', flexDirection: 'column', gap: '2px',
+          background: 'rgba(8, 18, 50, 0.9)',
+          boxShadow: 'inset -2px -2px 4px rgba(255,255,255,0.05), inset 2px 2px 5px rgba(0,0,0,0.4)',
+          padding: '6px 8px', borderRadius: '10px',
+        }}>
           <span style={{ fontSize: '0.62rem', fontWeight: 700, color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}>
             <Settings2 size={10} /> Offset
           </span>
-          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-deep-navy)', fontFamily: 'monospace' }}>
+          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#f1f5f9', fontFamily: 'monospace' }}>
             {offset > 0 ? '+' : ''}{offset.toFixed(1)}°
           </span>
         </div>
         {/* Min */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', background: 'rgba(0,0,0,0.03)', padding: '6px 8px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.05)' }}>
+        <div style={{
+          display: 'flex', flexDirection: 'column', gap: '2px',
+          background: 'rgba(8, 18, 50, 0.9)',
+          boxShadow: 'inset -2px -2px 4px rgba(255,255,255,0.05), inset 2px 2px 5px rgba(0,0,0,0.4)',
+          padding: '6px 8px', borderRadius: '10px',
+        }}>
           <span style={{ fontSize: '0.62rem', fontWeight: 700, color: '#64748b' }}>Min Suhu</span>
-          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-deep-navy)', fontFamily: 'monospace' }}>
+          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#f1f5f9', fontFamily: 'monospace' }}>
             {min.toFixed(1)}°
           </span>
         </div>
         {/* Max */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', background: 'rgba(0,0,0,0.03)', padding: '6px 8px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.05)' }}>
+        <div style={{
+          display: 'flex', flexDirection: 'column', gap: '2px',
+          background: 'rgba(8, 18, 50, 0.9)',
+          boxShadow: 'inset -2px -2px 4px rgba(255,255,255,0.05), inset 2px 2px 5px rgba(0,0,0,0.4)',
+          padding: '6px 8px', borderRadius: '10px',
+        }}>
           <span style={{ fontSize: '0.62rem', fontWeight: 700, color: '#64748b' }}>Max Suhu</span>
-          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-deep-navy)', fontFamily: 'monospace' }}>
+          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#f1f5f9', fontFamily: 'monospace' }}>
             {max.toFixed(1)}°
           </span>
         </div>
@@ -129,31 +151,30 @@ function DoorStatus({ label, isOpen }: { label: string; isOpen: boolean | null }
   // Sensor pintu sudah terpasang — gunakan data real dari ESP32
   const actuallyOpen = isOpen === true;
   const statusColor = actuallyOpen ? '#d97706' : '#059669';
-  const bg    = actuallyOpen ? 'rgba(245,158,11,0.16)' : 'rgba(16,185,129,0.16)';
-  const bdr   = actuallyOpen ? 'rgba(217,119,6,0.55)' : 'rgba(5,150,105,0.5)';
 
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: '14px',
       padding: '14px 18px',
-      background: bg,
-      border: `2px solid ${bdr}`,
-      borderRadius: '12px',
+      background: 'rgba(13, 35, 70, 0.85)',
+      border: actuallyOpen ? '1px solid rgba(217,119,6,0.25)' : '1px solid rgba(255,255,255,0.07)',
+      borderRadius: '14px',
       boxShadow: actuallyOpen
-        ? '0 2px 10px rgba(217,119,6,0.15)'
-        : '0 2px 10px rgba(5,150,105,0.15)',
+        ? '-3px -3px 8px rgba(255,255,255,0.05), 3px 3px 10px rgba(0,0,0,0.5)'
+        : '-3px -3px 8px rgba(255,255,255,0.05), 3px 3px 10px rgba(0,0,0,0.5)',
+      transition: 'all 0.3s ease',
     }}>
       <div style={{
-        width: '36px', height: '36px', borderRadius: '50%',
-        background: `${statusColor}22`,
-        border: `2px solid ${statusColor}44`,
+        width: '38px', height: '38px', borderRadius: '50%',
+        background: 'rgba(8, 18, 50, 0.9)',
+        boxShadow: 'inset -2px -2px 5px rgba(255,255,255,0.05), inset 2px 2px 5px rgba(0,0,0,0.4)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         flexShrink: 0,
       }}>
-        {actuallyOpen ? <DoorOpen size={18} color="#f59e0b" /> : <DoorClosed size={18} color="#10b981" />}
+        {actuallyOpen ? <DoorOpen size={18} color="#d97706" /> : <DoorClosed size={18} color="#059669" />}
       </div>
       <div style={{ flex: 1 }}>
-        <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>{label}</div>
+        <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>{label}</div>
         <div style={{ fontSize: '0.95rem', fontWeight: 800, color: statusColor }}>
           {actuallyOpen ? 'BUKA' : 'TUTUP'}
         </div>
@@ -231,8 +252,8 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
 
   useEffect(() => {
     fetchData(false);
-    // Auto-refresh via background fetch (10 seconds)
-    const interval = setInterval(() => fetchData(true), 10000);
+    // Auto-refresh via background fetch (60 seconds, hemat Egress)
+    const interval = setInterval(() => fetchData(true), 60000);
     return () => clearInterval(interval);
   }, [fetchData]);
 
@@ -278,23 +299,41 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', paddingBottom: '8px', background: 'transparent' }}>
 
-      {/* Status Bar */}
+      {/* Status Bar - Neumorphic Badge */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '10px 16px',
-        background: isOffline ? 'rgba(239,68,68,0.08)' : data ? 'rgba(16,185,129,0.08)' : 'rgba(100,116,139,0.08)',
-        border: `1.5px solid ${isOffline ? 'rgba(239,68,68,0.25)' : data ? 'rgba(16,185,129,0.25)' : 'rgba(100,116,139,0.2)'}`,
-        borderRadius: '10px', fontSize: '0.78rem', fontWeight: 700,
+        padding: '10px 14px',
+        background: 'rgba(8, 18, 50, 0.95)',
+        border: '1px solid rgba(255,255,255,0.06)',
+        borderRadius: '12px',
+        boxShadow: 'inset -2px -2px 6px rgba(255,255,255,0.04), inset 3px 3px 8px rgba(0,0,0,0.6)',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '7px', color: isOffline ? '#ef4444' : data ? '#10b981' : '#64748b' }}>
-          {isOffline ? <WifiOff size={15} /> : data ? <Wifi size={15} /> : <WifiOff size={15} />}
-          <span style={{ fontWeight: 800 }}>
-            {isOffline ? `OFFLINE (${dataAge} menit lalu)` : data ? 'LIVE — Terhubung' : 'Belum Ada Data IoT'}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {isOffline ? (
+            <WifiOff size={16} color="#ff8577" strokeWidth={2.5} style={{ flexShrink: 0 }} />
+          ) : data ? (
+            <Wifi size={16} color="#ff8577" strokeWidth={2.5} style={{ flexShrink: 0 }} />
+          ) : (
+            <WifiOff size={16} color="#94a3b8" strokeWidth={2} style={{ flexShrink: 0 }} />
+          )}
+          <span style={{ 
+            fontWeight: 800, 
+            fontSize: '0.8rem',
+            color: isOffline ? '#ff8577' : data ? '#ff8577' : '#cbd5e1',
+            letterSpacing: '0.01em',
+            lineHeight: 1
+          }}>
+            {isOffline 
+              ? `OFFLINE (${dataAge} menit lalu)` 
+              : data 
+                ? 'IoT Aktif — Analisis Kesehatan Mesin' 
+                : 'Belum Ada Data IoT'
+            }
           </span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           {timeSince !== null && (
-            <span style={{ color: '#94a3b8', fontWeight: 600, fontSize: '0.72rem' }}>
+            <span style={{ color: '#94a3b8', fontWeight: 600, fontSize: '0.7rem' }}>
               {timeSince < 60
                 ? `${timeSince} dtk lalu`
                 : `${Math.floor(timeSince / 60)} mnt lalu`
@@ -305,13 +344,13 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
             onClick={() => fetchData(true)}
             disabled={refreshing}
             style={{
-              background: refreshing ? 'rgba(46,91,255,0.12)' : 'rgba(0,31,63,0.06)',
-              border: `1px solid ${refreshing ? 'rgba(46,91,255,0.3)' : 'rgba(0,31,63,0.12)'}`,
-              borderRadius: '6px', padding: '4px 10px',
+              background: refreshing ? 'rgba(46,91,255,0.15)' : 'rgba(13,35,70,0.85)',
+              border: `1px solid ${refreshing ? 'rgba(46,91,255,0.3)' : 'rgba(255,255,255,0.1)'}`,
+              borderRadius: '6px', padding: '5px 10px',
               cursor: refreshing ? 'not-allowed' : 'pointer',
-              color: refreshing ? '#2E5BFF' : '#475569',
-              display: 'flex', alignItems: 'center', gap: '5px',
-              fontSize: '0.72rem', fontWeight: 700, fontFamily: 'inherit',
+              color: refreshing ? '#7da8ff' : '#cbd5e1',
+              display: 'flex', alignItems: 'center', gap: '4px',
+              fontSize: '0.7rem', fontWeight: 700, fontFamily: 'inherit',
               transition: 'all 0.2s ease',
               opacity: refreshing ? 0.8 : 1,
             }}
@@ -329,9 +368,9 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
       )}
 
       {!data && !error && (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', textAlign: 'center', color: '#64748b', background: 'var(--neu-bg)', borderRadius: '12px', border: '1.5px dashed rgba(100,116,139,0.3)' }}>
-          <Wifi size={40} color="#2E5BFF" style={{ marginBottom: '14px', opacity: 0.5 }} />
-          <p style={{ marginBottom: '6px', fontWeight: 700, color: 'var(--color-deep-navy)', fontSize: '0.95rem' }}>Perangkat IoT Belum Terhubung</p>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', textAlign: 'center', color: '#64748b', background: 'rgba(8, 18, 50, 0.6)', borderRadius: '12px', border: '1.5px dashed rgba(255,255,255,0.1)' }}>
+          <Wifi size={40} color="#60a5fa" style={{ marginBottom: '14px', opacity: 0.5 }} />
+          <p style={{ marginBottom: '6px', fontWeight: 700, color: '#f1f5f9', fontSize: '0.95rem' }}>Perangkat IoT Belum Terhubung</p>
           <p style={{ fontSize: '0.78rem', lineHeight: 1.6, color: '#64748b', maxWidth: '260px' }}>Unit ini belum memiliki IoT Device ID. Hubungi admin untuk mengkonfigurasi perangkat sensor.</p>
         </div>
       )}
@@ -342,7 +381,7 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '10px' }}>
               <Thermometer size={15} color="#2E5BFF" />
-              <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--color-deep-navy)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Sensor Suhu</span>
+              <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Sensor Suhu</span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '10px' }}>
               <TempCard label="Kabinet"    rawValue={data.temp_cabinet}    min={limits.cabinet.min} max={limits.cabinet.max} offset={offsets.cabinet} icon={ShelvingUnit} />
@@ -362,9 +401,8 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
 
           {/* Kelistrikan */}
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '10px' }}>
-              <Zap size={15} color="#2E5BFF" />
-              <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--color-deep-navy)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Kelistrikan (PZEM)</span>
+            <div style={{ marginBottom: '10px' }}>
+              <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Kelistrikan</span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(85px, 1fr))', gap: '10px' }}>
               {[
@@ -374,13 +412,14 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
                 { label: 'Daya',    value: data.power,   unit: 'W', alert: false },
               ].map(({ label, value, unit, alert }) => (
                 <div key={label} style={{
-                  background: alert ? 'rgba(239,68,68,0.08)' : 'rgba(0,31,63,0.04)',
-                  border: `1.5px solid ${alert ? 'rgba(239,68,68,0.3)' : 'rgba(0,31,63,0.08)'}`,
-                  borderRadius: '12px', padding: '14px 10px', textAlign: 'center'
+                  background: 'rgba(13, 35, 70, 0.85)',
+                  boxShadow: '-3px -3px 8px rgba(255,255,255,0.05), 3px 3px 10px rgba(0,0,0,0.5)',
+                  borderRadius: '14px', padding: '14px 10px', textAlign: 'center',
+                  border: alert ? '1px solid rgba(220,38,38,0.4)' : '1px solid rgba(255,255,255,0.06)',
                 }}>
                   <div style={{
                     fontSize: '1.4rem', fontWeight: 900,
-                    color: alert ? '#ef4444' : (value && value !== 0) ? 'var(--color-deep-navy)' : '#94a3b8',
+                    color: alert ? '#dc2626' : (value && value !== 0) ? '#f1f5f9' : '#94a3b8',
                     fontFamily: 'monospace', lineHeight: 1, letterSpacing: '-0.02em',
                   }}>
                     {value !== null && value !== 0 ? (
@@ -397,31 +436,135 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
                 </div>
               ))}
             </div>
+
+            {/* ── Estimasi Beban Komponen ─────────────────────────────── */}
+            {data.current !== null && data.current > 0 && (() => {
+              const totalA = data.current;
+
+              // ── Nilai kalibrasi (PZEM, diukur teknisi per komponen) ──
+              const CAL_COMP  = 6.16; // Kompresor running
+              const CAL_KOND  = 0.42; // Fan Kondensor
+              const CAL_EVAP  = 1.31; // Fan Evaporator
+              const CAL_TOTAL = CAL_COMP + CAL_KOND + CAL_EVAP; // 7.89 A
+
+              // ── Offset koreksi tang ampere ───────────────────────────
+              const OFF_COMP  = -0.02;
+              const OFF_KOND  = -0.04;
+              const OFF_EVAP  = -0.11;
+
+              // ── Proporsi setiap komponen terhadap total ──────────────
+              const R_COMP  = CAL_COMP  / CAL_TOTAL; // 78.1%
+              const R_KOND  = CAL_KOND  / CAL_TOTAL; //  5.3%
+              const R_EVAP  = CAL_EVAP  / CAL_TOTAL; // 16.6%
+
+              // ── Deteksi state unit ───────────────────────────────────
+              const isIdle    = totalA < 0.2;
+              const isFanOnly = totalA >= 0.2 && totalA < 4.0;
+              const isAllOn   = totalA >= 4.0;
+
+              // ── Estimasi arus per komponen ───────────────────────────
+              // Saat ALL ON: proporsional + koreksi offset
+              // Saat FAN ONLY: hanya dua fan aktif, kompresor OFF
+              const estComp  = isAllOn   ? parseFloat((totalA * R_COMP + OFF_COMP).toFixed(2)) : null;
+              const estKond  = isAllOn   ? parseFloat((totalA * R_KOND + OFF_KOND).toFixed(2))
+                             : isFanOnly ? parseFloat((totalA * 0.24).toFixed(2)) : null;
+              const estEvap  = isAllOn   ? parseFloat((totalA * R_EVAP + OFF_EVAP).toFixed(2))
+                             : isFanOnly ? parseFloat((totalA * 0.76).toFixed(2)) : null;
+
+              // ── Alert checks (sesuai threshold teknisi) ──────────────
+              const alertEvap = estEvap !== null && estEvap > 2.0;
+              const alertComp = estComp !== null && estComp > 8.0;
+
+              // ── Status unit keseluruhan ──────────────────────────────
+              const unitStatus =
+                isIdle    ? 'STANDBY / DEFROST' :
+                isFanOnly ? 'HANYA FAN AKTIF'   :
+                            'SEMUA KOMPONEN ON';
+              const statusColor =
+                isIdle    ? '#64748b' :
+                isFanOnly ? '#d97706' :
+                            '#059669';
+
+              const components = [
+                { label: 'Kompresor',     est: estComp, baseline: CAL_COMP, active: isAllOn,             alert: alertComp },
+                { label: 'Fan Kondensor', est: estKond, baseline: CAL_KOND, active: isAllOn || isFanOnly, alert: false },
+                { label: 'Fan Evaporator',est: estEvap, baseline: CAL_EVAP, active: isAllOn || isFanOnly, alert: alertEvap },
+              ];
+
+              return (
+                <div style={{ marginTop: '12px', borderTop: '1px solid rgba(0,0,0,0.06)', paddingTop: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                      Estimasi Beban Komponen
+                    </span>
+                    <span style={{ fontSize: '0.65rem', fontWeight: 700, color: statusColor, background: `${statusColor}18`, padding: '2px 8px', borderRadius: '20px', border: `1px solid ${statusColor}40` }}>
+                      {unitStatus}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                    {components.map(({ label, est, baseline, active, alert }) => {
+                      const c  = !active ? '#94a3b8' : alert ? '#dc2626' : '#059669';
+                      return (
+                        <div key={label} style={{
+                          background: 'rgba(8, 18, 50, 0.9)',
+                          boxShadow: 'inset -2px -2px 4px rgba(255,255,255,0.05), inset 2px 2px 5px rgba(0,0,0,0.4)',
+                          borderRadius: '12px', padding: '10px 8px', textAlign: 'center',
+                          border: alert ? '1px solid rgba(220,38,38,0.3)' : '1px solid rgba(255,255,255,0.05)',
+                        }}>
+                          <div style={{ fontSize: '0.62rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>
+                            {label}
+                          </div>
+                          <div style={{ fontSize: '1.1rem', fontWeight: 900, color: c, fontFamily: 'monospace', lineHeight: 1 }}>
+                            {est !== null ? `${est.toFixed(2)} A` : '—'}
+                          </div>
+                          <div style={{ fontSize: '0.6rem', color: '#94a3b8', marginTop: '4px', fontWeight: 600 }}>
+                            {active ? `Ref: ${baseline.toFixed(2)} A` : 'Tidak Aktif'}
+                          </div>
+                          {alert && (
+                            <div style={{ fontSize: '0.58rem', color: '#dc2626', fontWeight: 800, marginTop: '4px', background: 'rgba(220,38,38,0.1)', borderRadius: '4px', padding: '2px 4px' }}>
+                              PERIKSA!
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div style={{ fontSize: '0.6rem', color: '#94a3b8', marginTop: '8px', textAlign: 'center', fontWeight: 500 }}>
+                    * Estimasi proporsional — akurasi optimal saat semua komponen aktif bersamaan
+                  </div>
+                </div>
+              );
+            })()}
           </div>
 
           {/* Status Pintu */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '10px' }}>
               <DoorClosed size={15} color="#2E5BFF" />
-              <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--color-deep-navy)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Status Pintu</span>
+              <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Status Pintu</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {(unit?.specs?.door_count === 4 || unitModel?.includes('CX1K')) ? (
-                <>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                    <DoorStatus label="Pintu 1 (Atas Kiri)" isOpen={data.is_door1_open} />
-                    <DoorStatus label="Pintu 3 (Atas Kanan)" isOpen={data.is_door3_open ?? null} />
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                    <DoorStatus label="Pintu 2 (Bawah Kiri)" isOpen={data.is_door2_open} />
-                    <DoorStatus label="Pintu 4 (Bawah Kanan)" isOpen={data.is_door4_open ?? null} />
-                  </div>
-                </>
-              ) : (
-                <>
+              {/* Tampilkan 4 Pintu jika data P3/P4 ada, atau spesifikasi unit 4 pintu, atau serial A26051860 */}
+              {(
+                unit?.specs?.door_count === 4 ||
+                unitModel?.includes('CX1K') ||
+                unit?.serial_number === 'A26051860' ||
+                data.is_door3_open !== undefined && data.is_door3_open !== null ||
+                data.is_door4_open !== undefined && data.is_door4_open !== null
+              ) ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '8px' }}>
                   <DoorStatus label="Pintu 1" isOpen={data.is_door1_open} />
                   <DoorStatus label="Pintu 2" isOpen={data.is_door2_open} />
-                </>
+                  <DoorStatus label="Pintu 3" isOpen={data.is_door3_open ?? false} />
+                  <DoorStatus label="Pintu 4" isOpen={data.is_door4_open ?? false} />
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '8px' }}>
+                  <DoorStatus label="Pintu 1" isOpen={data.is_door1_open} />
+                  <DoorStatus label="Pintu 2" isOpen={data.is_door2_open} />
+                </div>
               )}
             </div>
           </div>

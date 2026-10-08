@@ -28,6 +28,9 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { MessagesModule } from './modules/messages/messages.module';
 import { IotModule } from './modules/iot/iot.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { UnitHealthScore } from './modules/health-score/entities/unit-health-score.entity';
+import { HealthScoreModule } from './modules/health-score/health-score.module';
 
 @Module({
   imports: [
@@ -52,7 +55,7 @@ import { IotModule } from './modules/iot/iot.module';
           Client, Unit, Warranty, Partner,
           ServiceLog, ServiceLogAttachment, OwnershipHistory,
           User, ServiceReport, Notification, Conversation, ChatMessage,
-          IotTelemetryLog,
+          IotTelemetryLog, UnitHealthScore,
         ],
         synchronize: config.get<string>('DB_SYNC') === 'true',
         logging: config.get<string>('DB_LOGGING') === 'true',
@@ -71,6 +74,8 @@ import { IotModule } from './modules/iot/iot.module';
     NotificationsModule,
     MessagesModule,
     IotModule,
+    ScheduleModule.forRoot(),
+    HealthScoreModule,
   ],
   controllers: [AppController],
   providers: [AppService],

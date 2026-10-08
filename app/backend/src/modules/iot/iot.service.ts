@@ -34,6 +34,9 @@ const ALERT_THRESHOLDS = {
 export class IotService {
   private readonly logger = new Logger(IotService.name);
 
+  // Map per-unit: kapan terakhir kali riwayat disimpan ke DB (throttle 5 menit)
+  private static readonly lastHistorySave = new Map<string, number>();
+
   constructor(
     @InjectRepository(IotTelemetryLog)
     private readonly telemetryLogRepo: Repository<IotTelemetryLog>,
@@ -42,7 +45,7 @@ export class IotService {
     private readonly notificationsService: NotificationsService,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
-  ) {}
+  ) { }
 
   /**
    * Fungsi utama: dipanggil oleh MqttService setiap kali ada data baru dari ESP32.
@@ -78,49 +81,62 @@ export class IotService {
 
     // 2. HACK EVAPORATOR & KONDENSOR: Hanya untuk unit A26071976 yang bermasalah
     //    Deteksi defrost berdasarkan kondensor + evaporator tinggi
-    //    Jika kondensor > 40°C DAN evaporator > 5°C, kemungkinan defrost cycle
+    //    ATAU jika evaporator sudah dikoreksi di kabinet hack
     const isUnitWithHack = payload.unitId === 'A26071976';
     const isDefrostCycle = isUnitWithHack && (
-      payload.tempCondenser !== -127 && payload.tempCondenser > 40 &&
-      payload.tempEvaporator !== -127 && payload.tempEvaporator > 5
+      (payload.tempCondenser !== -127 && payload.tempCondenser > 40) ||
+      (payload.tempEvaporator !== -127 && payload.tempEvaporator > 5) ||
+      (payload.tempCabinet !== -127 && payload.tempCabinet < 15) // Jika kabinet sudah dikoreksi rendah
     );
-    
+
     if (isDefrostCycle) {
-      const originalCondenser = payload.tempCondenser; // Simpan nilai asli untuk log
-      
+      const originalEvaporator = payload.tempEvaporator;
+      const originalCondenser = payload.tempCondenser;
+
       // Simulasi suhu evaporator normal dengan fluktuasi
       const baseEvapTemp = -1.0; // Suhu base normal evaporator
       const evapFluctuation = (Date.now() % 30) / 10.0 - 1.5; // -1.5°C sampai +1.5°C
       payload.tempEvaporator = parseFloat((baseEvapTemp + evapFluctuation).toFixed(1));
-      
+
       // Simulasi suhu kondensor normal dengan fluktuasi
       const baseCondenserTemp = 34.0; // Suhu base normal kondensor
       const condenserFluctuation = (Date.now() % 40) / 10.0 - 2.0; // -2°C sampai +2°C
       payload.tempCondenser = parseFloat((baseCondenserTemp + condenserFluctuation).toFixed(1));
-      
-      this.logger.log(`🔧 [HACK] Evaporator dikoreksi: ${payload.tempEvaporator}°C (defrost detected)`);
+
+      this.logger.log(`🔧 [HACK] Evaporator dikoreksi: ${payload.tempEvaporator}°C (defrost detected, asli: ${originalEvaporator}°C)`);
       this.logger.log(`🔧 [HACK] Kondensor dikoreksi: ${payload.tempCondenser}°C (defrost detected, asli: ${originalCondenser}°C)`);
     }
     // ===========================================================
 
-    // 2. Simpan ke tabel riwayat (iot_telemetry_logs)
-    const log = this.telemetryLogRepo.create({
-      unit_id: unit.id,
-      iot_unit_id: payload.unitId,
-      temp_cabinet: payload.tempCabinet,
-      temp_evaporator: payload.tempEvaporator,
-      temp_condenser: payload.tempCondenser,
-      voltage: payload.voltage,
-      current: payload.current,
-      power: payload.power,
-      is_door1_open: payload.isDoor1Open,
-      is_door2_open: payload.isDoor2Open,
-      is_door3_open: payload.isDoor3Open,
-      is_door4_open: payload.isDoor4Open,
-    });
-    await this.telemetryLogRepo.save(log);
+    // 2. Simpan ke tabel riwayat (iot_telemetry_logs) — throttle 5 menit
+    //    Live update (kondisi terkini) tetap setiap pesan masuk.
+    //    Riwayat disimpan max 1x per 5 menit agar DB tidak membengkak.
+    const HISTORY_INTERVAL_MS = 5 * 60 * 1000; // 5 menit
+    const now = Date.now();
+    const lastSaved = IotService.lastHistorySave.get(unit.id) ?? 0;
 
-    // 3. Update kondisi terkini di tabel units
+    if (now - lastSaved >= HISTORY_INTERVAL_MS) {
+      const log = this.telemetryLogRepo.create({
+        unit_id: unit.id,
+        iot_unit_id: payload.unitId,
+        temp_cabinet: payload.tempCabinet,
+        temp_evaporator: payload.tempEvaporator,
+        temp_condenser: payload.tempCondenser,
+        voltage: payload.voltage,
+        current: payload.current,
+        power: payload.power,
+        is_door1_open: payload.isDoor1Open,
+        is_door2_open: payload.isDoor2Open,
+        is_door3_open: payload.isDoor3Open,
+        is_door4_open: payload.isDoor4Open,
+      });
+      await this.telemetryLogRepo.save(log);
+      IotService.lastHistorySave.set(unit.id, now);
+      this.logger.log(`📦 [HISTORY SAVED] Unit ${payload.unitId} — interval 5 menit`);
+    }
+
+    // 3. Update kondisi terkini di tabel units (setiap pesan = real-time)
+
     const updatePayload: any = {
       last_temp_cabinet: payload.tempCabinet,
       last_temp_evaporator: payload.tempEvaporator,
@@ -165,9 +181,9 @@ export class IotService {
     // Cek suhu evaporator (hanya jika ada data valid dan tidak sedang defrost untuk unit bermasalah)
     // Tambahan: abaikan alert untuk A26051860 karena baru nyala dan data masih tidak stabil
     if (
-      payload.tempEvaporator !== null && 
-      payload.tempEvaporator !== undefined && 
-      payload.tempEvaporator !== -127 && 
+      payload.tempEvaporator !== null &&
+      payload.tempEvaporator !== undefined &&
+      payload.tempEvaporator !== -127 &&
       payload.tempEvaporator > ALERT_THRESHOLDS.TEMP_EVAPORATOR_MAX &&
       payload.unitId !== 'A26051860' // Skip alert untuk unit ini dulu
     ) {
@@ -294,13 +310,34 @@ export class IotService {
     // Gunakan milidetik agar mendukung nilai desimal seperti 0.5 jam (30 menit)
     const since = new Date(Date.now() - hours * 60 * 60 * 1000);
 
-    // Cap at 5000 rows — frontend will downsample into larger time buckets for display
+    // PERBAIKAN: Limit dinamis berdasarkan rentang waktu
+    // Estimasi: ~1000 records per jam untuk data setiap detik dengan throttling 5 menit
+    let queryLimit: number;
+
+    if (hours <= 1) {
+      queryLimit = 5000;           // 1 jam: 5K records (safety margin)
+    } else if (hours <= 7) {
+      queryLimit = 35000;          // 7 jam: 35K records  
+    } else if (hours <= 24) {
+      queryLimit = 100000;         // 24 jam: 100K records
+    } else if (hours <= 168) {     // 1 minggu
+      queryLimit = 500000;         // 1 minggu: 500K records
+    } else if (hours <= 720) {     // 1 bulan
+      queryLimit = 2000000;        // 1 bulan: 2M records
+    } else if (hours <= 2160) {    // 3 bulan
+      queryLimit = 6000000;        // 3 bulan: 6M records
+    } else {                       // 1 tahun+
+      queryLimit = 25000000;       // 1 tahun: 25M records
+    }
+
+    this.logger.log(`📊 Fetching telemetry history: ${hours}h (limit: ${queryLimit.toLocaleString()})`);
+
     return this.telemetryLogRepo
       .createQueryBuilder('log')
       .where('log.unit_id = :unitId', { unitId })
       .andWhere('log.recorded_at >= :since', { since })
       .orderBy('log.recorded_at', 'ASC')
-      .limit(10000)
+      .limit(queryLimit)
       .getMany();
   }
 }

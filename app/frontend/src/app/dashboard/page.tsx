@@ -31,6 +31,7 @@ const StatsGrid = dynamic(() => import('@/components/dashboard/StatsGrid'), {
 });
 
 import IotAlertsAndAnalyticsWidget from './components/IotAlertsAndAnalyticsWidget';
+import UnitHealthScoreWidget from './components/UnitHealthScoreWidget';
 
 export default function DashboardPage() {
   const {
@@ -75,6 +76,8 @@ export default function DashboardPage() {
       <div style={{ marginTop: '16px' }}>
         <IotAlertsAndAnalyticsWidget activeClients={activeClients} />
       </div>
+
+      <UnitHealthScoreWidget />
 
       <div className={styles.bottomSection}>
         {/* LEFT COLUMN */}

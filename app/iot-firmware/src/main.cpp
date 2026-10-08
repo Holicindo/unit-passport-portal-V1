@@ -7,256 +7,434 @@
 #include <ArduinoJson.h>
 #include <WiFiManager.h>
 
-// --- KONFIGURASI MQTT ---
-const char* mqtt_server = "broker.hivemq.com"; // MQTT Publik gratis untuk tes POC
-const int mqtt_port = 1883;
+// =============================================================================
+// KONFIGURASI MQTT
+// =============================================================================
+const char* mqtt_server = "broker.hivemq.com";
+const int   mqtt_port   = 1883;
 
-// --- IDENTITAS ALAT ---
-// ⚙️  GANTI nilai unit_id ini agar cocok dengan kolom iot_unit_id di database Supabase.
-//     Caranya: buka Admin Dashboard → pilih unit yang akan dipasang ESP32 ini
-//     → isi field "IoT Unit ID" dengan nilai yang sama persis dengan di bawah ini.
-//     Contoh: jika serial number unit adalah "HLC-COOL-001", set iot_unit_id = "HC-0001"
-const char* unit_id = "A26071976";
-const char* mqtt_topic = "holicindo/units/A26071976/telemetry";
+// =============================================================================
+// IDENTITAS UNIT
+// Sesuaikan dengan serial number unit yang akan dipasang.
+// Nilai ini harus sama persis dengan kolom serial_number atau iot_unit_id di DB.
+// =============================================================================
+const char* unit_id    = "A26051860";
+const char* mqtt_topic = "holicindo/units/A26051860/telemetry";
 
-// --- INISIALISASI KONEKSI ---
-WiFiClient espClient;
-PubSubClient client(espClient);
+// =============================================================================
+// DATA KALIBRASI UNIT (isi setelah unit berjalan penuh)
+// =============================================================================
+struct UnitCalibration {
+    float compressor_normal_ampere  = 4.2;   // Ampere normal kompressor
+    float fan_evap_normal_ampere    = 0.8;   // Ampere normal fan evaporator
+    float kondensor_normal_ampere   = 1.2;   // Ampere normal fan kondensor
+    float cabinet_temp_min          = -2.0;  // Suhu kabinet minimum (°C)
+    float cabinet_temp_max          = 10.0;  // Suhu kabinet maksimum (°C)
+    float cabinet_temp_critical     = 15.0;  // Suhu kabinet critical (°C)
+    int   normal_cooldown_minutes   = 15;    // Waktu normal cooldown (menit)
+    int   defrost_cycle_minutes     = 20;    // Durasi normal defrost (menit)
+    int   compressor_max_off_minutes= 30;    // Max kompressor boleh off (menit)
+    float ampere_tolerance          = 0.3;   // Toleransi ampere (±)
+} calibration;
 
-// --- INISIALISASI SENSOR ---
-// PZEM-004T v4 pada Serial2 (Pindah ke RX=18, TX=19 untuk menghindari konflik internal PSRAM ESP32)
-PZEM004Tv30 pzem(Serial2, 18, 19);
+// =============================================================================
+// PIN DEFINITION
+// D25 & D26 mendukung INPUT_PULLUP internal ESP32 (tidak butuh resistor tambahan!)
+// PZEM → Serial2, RX=18, TX=19
+// DS18B20 → D13
+// =============================================================================
+const int DOOR1_PIN   = 25;   // Pintu 1 -> support INPUT_PULLUP
+const int DOOR2_PIN   = 26;   // Pintu 2 -> support INPUT_PULLUP
+const int DOOR3_PIN   = 27;   // Pintu 3 -> support INPUT_PULLUP
+const int DOOR4_PIN   = 14;   // Pintu 4 -> support INPUT_PULLUP
+const int DS18B20_PIN = 13;   // Sensor suhu DS18B20
 
-// DS18B20 pada GPIO 13 (Pin Aman)
-const int oneWireBus = 13;
-OneWire oneWire(oneWireBus);
+// =============================================================================
+// INISIALISASI OBJEK
+// =============================================================================
+WiFiClient    espClient;
+PubSubClient  client(espClient);
+PZEM004Tv30   pzem(Serial2, 18, 19);   // Serial2: RX=18, TX=19
+OneWire       oneWire(DS18B20_PIN);
 DallasTemperature sensors(&oneWire);
 
-// Sensor Pintu 1 pada GPIO 27
-const int doorSensor1Pin = 27;
-// Sensor Pintu 2 pada GPIO 26
-const int doorSensor2Pin = 26;
+unsigned long lastMsg       = 0;
+unsigned long lastTempReq   = 0;    // Waktu terakhir requestTemperatures() dipanggil
+bool          tempRequested  = false; // Flag: apakah konversi sedang berjalan?
+const unsigned long SEND_INTERVAL    = 2000;  // Kirim setiap 2 detik
+const unsigned long TEMP_CONV_TIME   = 750;   // DS18B20 butuh ~750ms konversi 12-bit
 
-unsigned long lastMsg = 0;
+// =============================================================================
+// ANOMALY DURATION TRACKING
+// =============================================================================
+unsigned long compressor_off_start = 0;
+unsigned long led_anomaly_start    = 0;
+unsigned long overheat_start       = 0;
+bool compressor_was_off  = false;
+bool led_was_anomaly     = false;
+bool was_overheating     = false;
 
-void setup_wifi() {
-  Serial.println("\nMemulai Sistem WiFiManager...");
-  
-  // Inisialisasi WiFiManager
-  WiFiManager wm;
-  
+// =============================================================================
+// HELPER FUNCTIONS
+// =============================================================================
 
-  // ==========================================
-  const char* custom_css = 
-    "<style>"
-    "body { background-color: #F4F7FB; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1e293b; margin:0; padding: 10px; box-sizing:border-box; }"
-    "h1 { display: none; }"
-    /* Card wrapper — lebih lebar */
-    ".wrap { background: #ffffff; padding: 28px 24px 20px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,31,63,0.08); width: 100%; max-width: 480px; margin: 16px auto; box-sizing:border-box; }"
-    /* Semua tombol default full-width */
-    "a { display:block; text-decoration:none; margin-bottom:10px; }"
-    "button { background-color: #2E5BFF !important; color: white; border: none; border-radius: 12px; padding: 14px 20px; font-size: 16px; font-weight: bold; width: 100%; box-shadow: 0 4px 15px rgba(46,91,255,0.25); transition: all 0.3s; display:block; box-sizing:border-box; cursor:pointer; }"
-    "button:active { transform: scale(0.97); opacity:0.9; }"
-    /* Row khusus Info & Exit — kanan kiri, tombol lebih kecil */
-    ".btn-row { display:flex; gap:10px; margin-bottom:10px; }"
-    ".btn-row a { flex:1; margin-bottom:0; }"
-    ".btn-row button { padding: 9px 8px !important; font-size:14px !important; border-radius:10px !important; opacity:0.82; box-shadow: none !important; }"
-    /* Input */
-    "input[type=text], input[type=password] { border-radius: 8px !important; border: 1.5px solid #cbd5e1 !important; padding: 12px !important; font-size: 15px !important; margin-bottom: 10px !important; width:100%; box-sizing:border-box; }"
-    "input:focus { outline: none; border-color: #2E5BFF !important; box-shadow: 0 0 0 3px rgba(46,91,255,0.1) !important; }"
-    /* Logo */
-    ".holicindo-logo { text-align: center; margin-bottom: 20px; }"
-    ".holicindo-logo svg { width: 56px; height: 60px; color: #2E5BFF; margin-bottom: 10px; }"
-    ".holicindo-logo h2 { color: #001F3F; font-size: 24px; font-weight: 900; margin: 0; letter-spacing: 2px; }"
-    ".holicindo-subtitle { font-size: 12px; color: #64748b; font-weight: 600; margin-top: 5px; }"
-    ".holicindo-footer { text-align: center; font-size: 11px; color: #94a3b8; margin-top: 24px; font-weight: 600; }"
-    "hr { border: none; border-top: 1px solid #e2e8f0; margin: 14px 0; }"
-    "</style>"
-    "<script>"
-    "window.onload = function() {"
-    "  var wrap = document.querySelector('.wrap');"
-    "  if(wrap) {"
-    /* Logo asli Holicindo dari holic-icon.svg (inline SVG) */
-    "    var logoSvg = '<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 200 210\" fill=\"none\">' +"
-    "      '<polyline points=\"100,8 8,182 20,198 180,198 192,182 100,8\" stroke=\"currentColor\" stroke-width=\"10\" stroke-linejoin=\"miter\" stroke-linecap=\"square\" fill=\"none\"/>' +"
-    "      '<line x1=\"93\" y1=\"20\" x2=\"93\" y2=\"198\" stroke=\"currentColor\" stroke-width=\"8\" stroke-linecap=\"square\"/>' +"
-    "      '<line x1=\"107\" y1=\"20\" x2=\"107\" y2=\"198\" stroke=\"currentColor\" stroke-width=\"8\" stroke-linecap=\"square\"/>' +"
-    "      '<polyline points=\"107,75 150,75 150,128\" stroke=\"currentColor\" stroke-width=\"8\" stroke-linecap=\"square\" stroke-linejoin=\"miter\" fill=\"none\"/>' +"
-    "      '<polyline points=\"107,87 138,87 138,128\" stroke=\"currentColor\" stroke-width=\"8\" stroke-linecap=\"square\" stroke-linejoin=\"miter\" fill=\"none\"/>' +"
-    "      '<polyline points=\"107,128 168,128 168,175\" stroke=\"currentColor\" stroke-width=\"8\" stroke-linecap=\"square\" stroke-linejoin=\"miter\" fill=\"none\"/>' +"
-    "      '<polyline points=\"107,140 156,140 156,175\" stroke=\"currentColor\" stroke-width=\"8\" stroke-linecap=\"square\" stroke-linejoin=\"miter\" fill=\"none\"/>' +"
-    "      '</svg>';"
-    "    var logoHtml = '<div class=\"holicindo-logo\">' + logoSvg +"
-    "      '<h2>HOLICINDO</h2>' +"
-    "      '<div class=\"holicindo-subtitle\">Unit Passport Configuration</div>' +"
-    "      '</div>';"
-    "    wrap.insertAdjacentHTML('afterbegin', logoHtml);"
-    /* Cari anchor Info & Exit, wrap jadi row */
-    "    var anchors = wrap.querySelectorAll('a');"
-    "    var infoA = null, exitA = null;"
-    "    for(var i=0;i<anchors.length;i++) {"
-    "      var txt = anchors[i].innerText || anchors[i].textContent;"
-    "      txt = txt.trim();"
-    "      if(txt === 'Info') infoA = anchors[i];"
-    "      else if(txt === 'Exit') exitA = anchors[i];"
-    "    }"
-    "    if(infoA && exitA) {"
-    "      var row = document.createElement('div');"
-    "      row.className = 'btn-row';"
-    "      infoA.parentNode.insertBefore(row, infoA);"
-    "      row.appendChild(infoA);"
-    "      row.appendChild(exitA);"
-    "    }"
-    "    var footerHtml = '<div class=\"holicindo-footer\">\u00a9 2026 Holicindo IoT System</div>';"
-    "    wrap.insertAdjacentHTML('beforeend', footerHtml);"
-    "  }"
-    "};"
-    "</script>";
-
-  // Terapkan custom styling ke halaman
-  wm.setCustomHeadElement(custom_css);
-  
-  // Mencoba connect ke WiFi yang tersimpan (di memori Flash)
-  // Apabila jaringan tidak ditemukan, ESP32 akan otomatis berubah menjadi Access Point
-  // dan memancarkan hotspot dengan nama: "Setup Unit Holicindo"
-  bool res = wm.autoConnect("Setup Unit Holicindo");
-  
-  if(!res) {
-    Serial.println("Gagal terhubung. ESP32 akan restart otomatis...");
-    delay(3000);
-    ESP.restart(); // Melakukan restart otomatis jika terjadi kegagalan
-    delay(5000);
-  }
-  
-  // Jika sampai sini berarti berhasil terkoneksi ke jaringan
-  Serial.println("\nWiFi Sukses Terkoneksi!");
-  Serial.print("IP Address: ");
-  Serial.println(WiFi.localIP());
+int getDurationMinutes(unsigned long start_time) {
+    if (start_time == 0) return 0;
+    return (millis() - start_time) / 60000;
 }
 
-void reconnect() {
-  while (!client.connected()) {
-    Serial.print("Mencoba menghubungkan ke MQTT Broker...");
-    // Attempt to connect (using unit_id as the MQTT client ID)
-    if (client.connect(unit_id)) {
-      Serial.println("Sukses terkoneksi MQTT!");
+bool isCompressorOn(float current_ampere) {
+    float lower = calibration.compressor_normal_ampere - calibration.ampere_tolerance;
+    float upper = calibration.compressor_normal_ampere + calibration.ampere_tolerance;
+    return (current_ampere >= lower && current_ampere <= upper);
+}
+
+bool isMainPowerOn(float voltage) {
+    return voltage > 180.0;
+}
+
+// =============================================================================
+// HEALTH STATUS
+// =============================================================================
+struct HealthStatus {
+    String status;
+    String alert_message;
+    bool   technician_dispatch;
+};
+
+HealthStatus calculateHealthStatus(
+    float cabinet_temp, float evap_temp, float condenser_temp,
+    float voltage, float current,
+    bool door_closed
+) {
+    HealthStatus health;
+    health.technician_dispatch = false;
+
+    bool main_power   = isMainPowerOn(voltage);
+    bool compressor_on = isCompressorOn(current);
+
+    // CRITICAL: Kompressor mati padahal power ON dan suhu kabinet tinggi
+    if (main_power && !compressor_on && cabinet_temp > calibration.cabinet_temp_max) {
+        if (!compressor_was_off) {
+            compressor_off_start = millis();
+            compressor_was_off   = true;
+        }
+        int duration = getDurationMinutes(compressor_off_start);
+        if (duration > calibration.compressor_max_off_minutes) {
+            health.status               = "CRITICAL";
+            health.alert_message        = "Compressor Not Starting - " + String(duration) + " mins";
+            health.technician_dispatch  = true;
+            return health;
+        }
     } else {
-      Serial.print("Gagal, rc=");
-      Serial.print(client.state());
-      Serial.println(" mencoba lagi dalam 5 detik...");
-      delay(5000);
+        compressor_was_off   = false;
+        compressor_off_start = 0;
     }
-  }
+
+    // CRITICAL: Suhu kabinet melebihi batas critical
+    if (cabinet_temp > calibration.cabinet_temp_critical && compressor_on) {
+        if (!was_overheating) {
+            overheat_start   = millis();
+            was_overheating  = true;
+        }
+        int duration = getDurationMinutes(overheat_start);
+        if (duration > calibration.normal_cooldown_minutes) {
+            health.status               = "CRITICAL";
+            health.alert_message        = "Cooling Failure - Temp: " + String(cabinet_temp, 1) + "°C";
+            health.technician_dispatch  = true;
+            return health;
+        }
+    } else {
+        was_overheating = false;
+        overheat_start  = 0;
+    }
+
+    // CRITICAL: Listrik mati
+    if (!main_power) {
+        health.status               = "CRITICAL";
+        health.alert_message        = "Power Outage";
+        health.technician_dispatch  = true;
+        return health;
+    }
+
+    // DEFROST cycle
+    if (cabinet_temp > calibration.cabinet_temp_min &&
+        cabinet_temp < calibration.cabinet_temp_critical &&
+        evap_temp > 0 && compressor_on) {
+        health.status        = "DEFROST";
+        health.alert_message = "Normal Defrost Cycle";
+        return health;
+    }
+
+    // NORMAL
+    health.status        = "NORMAL";
+    health.alert_message = "All Systems Operational";
+    return health;
 }
 
+// =============================================================================
+// WiFi SETUP (WiFiManager — captive portal jika belum ada config)
+// =============================================================================
+void setup_wifi() {
+    Serial.println("\nMemulai WiFiManager...");
+
+    WiFiManager wm;
+
+    const char* custom_css =
+        "<style>"
+        "body{background:#F4F7FB;font-family:'Segoe UI',sans-serif;color:#1e293b;margin:0;padding:10px}"
+        ".wrap{background:#fff;padding:28px 24px;border-radius:20px;box-shadow:0 10px 40px rgba(0,31,63,.08);max-width:480px;margin:16px auto}"
+        "button{background:#2E5BFF!important;color:#fff;border:none;border-radius:12px;padding:14px;font-size:16px;font-weight:700;width:100%;cursor:pointer}"
+        "input[type=text],input[type=password]{border-radius:8px!important;border:1.5px solid #cbd5e1!important;padding:12px!important;font-size:15px!important;width:100%;box-sizing:border-box}"
+        "</style>";
+
+    wm.setCustomHeadElement(custom_css);
+
+    Serial.println("\n>>> MENGHUBUNGKAN KE WIFI... <<<");
+    bool res = wm.autoConnect("Setup Unit Holicindo");
+    if (!res) {
+        Serial.println("Gagal konek WiFi. Restart...");
+        delay(3000);
+        ESP.restart();
+    }
+
+    Serial.println("WiFi berhasil terkoneksi!");
+    Serial.print("IP: ");
+    Serial.println(WiFi.localIP());
+}
+
+// =============================================================================
+// MQTT RECONNECT
+// =============================================================================
+void reconnect() {
+    while (!client.connected()) {
+        Serial.print("Menghubungkan MQTT (broker.hivemq.com)...");
+        String clientId = "ESP32-";
+        clientId += unit_id;
+        clientId += "-";
+        clientId += String(random(0xffff), HEX);
+
+        if (client.connect(clientId.c_str())) {
+            Serial.println(" OK!");
+        } else {
+            Serial.print(" Gagal, rc=");
+            Serial.print(client.state());
+            Serial.println(". Coba lagi 5 detik...");
+            delay(5000);
+        }
+    }
+}
+
+// =============================================================================
+// SETUP
+// =============================================================================
 void setup() {
-  // Setup Serial Monitor untuk melihat log di laptop
-  Serial.begin(115200);
-  
-  // Memulai sensor suhu
-  sensors.begin();
-  
-  // Setup Sensor Pintu (Menggunakan Pull-Up internal agar tidak perlu resistor tambahan)
-  pinMode(doorSensor1Pin, INPUT_PULLUP);
-  pinMode(doorSensor2Pin, INPUT_PULLUP);
-  
-  // Memulai koneksi WiFi dan MQTT
-  setup_wifi();
-  client.setServer(mqtt_server, mqtt_port);
-  
-  Serial.println("Setup Selesai. Alat siap membaca sensor...");
-}
+    Serial.begin(115200);
+    delay(500);
 
-void loop() {
-  if (!client.connected()) {
-    reconnect();
-  }
-  client.loop();
+    Serial.println("=================================");
+    Serial.println("  HOLICINDO IoT Firmware v2.0   ");
+    Serial.println("=================================");
 
-  unsigned long now = millis();
-  // Kirim data setiap 10 detik
-  if (now - lastMsg > 10000) {
-    lastMsg = now;
-
-    // 1. BACA 3 SENSOR SUHU
+    // Inisialisasi sensor suhu
+    sensors.begin();
+    sensors.setWaitForConversion(false); // Non-blocking: jangan block loop 750ms
     int deviceCount = sensors.getDeviceCount();
-    Serial.print("Jumlah sensor DS18B20 terdeteksi: ");
+    Serial.print("DS18B20 sensor ditemukan: ");
     Serial.println(deviceCount);
 
-    sensors.requestTemperatures(); 
-    float tempCabinet    = sensors.getTempCByIndex(0);
-    float tempEvaporator = sensors.getTempCByIndex(1);
-    float tempCondenser  = sensors.getTempCByIndex(2);
-
-    // ── Sanitasi nilai DS18B20 ──────────────────────────────────────────────
-    // -127.0 = DEVICE_DISCONNECTED_C (sensor copot / tidak terpasang)
-    //  85.0  = POR default value DS18B20 (power-on reset / konversi gagal)
-    if (tempCabinet    == 85.0 || tempCabinet    == -127.0) tempCabinet    = -127.0;
-    if (tempEvaporator == 85.0 || tempEvaporator == -127.0) tempEvaporator = -127.0;
-    if (tempCondenser  == 85.0 || tempCondenser  == -127.0) tempCondenser  = -127.0;
-    // ────────────────────────────────────────────────────────────────────────
-
-    // === HACK SEMENTARA: KABINET SENSOR BACA SUHU RUANGAN ===
-    // Jika sensor kabinet terbaca > 25°C padahal evaporator dingin (< 15°C),
-    // berarti sambungan kabel sensor bermasalah (baca suhu ruangan, bukan kabinet).
-    // Hack: hitung dari suhu evaporator. Kabinet biasanya ~75% dari suhu Evap.
-    // Contoh: Evap 7.9°C → Kabinet = 5.9 ~ 7.3°C (mirip real 5.7°C)
-    if (tempCabinet != -127.0 && tempCabinet > 25.0 && tempEvaporator != -127.0 && tempEvaporator < 15.0) {
-      tempCabinet = (tempEvaporator * 0.75) + ((millis() % 15) / 10.0);
-    }
-    // ==========================================================
-
-    // === HACK: MEMALSUKAN SUHU KONDENSOR JIKA FISIKNYA MATI ===
-    // Menggunakan rumus termodinamika buatan: Suhu Kondensor bergantung pada 
-    // seberapa panas Kabinet dan Evaporator, ditambah fluktuasi natural.
-    if (tempCondenser == -127.0) {
-      float refCab = (tempCabinet == -127.0) ? 25.0 : tempCabinet;
-      float refEvap = (tempEvaporator == -127.0) ? 10.0 : tempEvaporator;
-      
-      // Rumus: Base 33°C + (25% Suhu Kabinet) + (10% Suhu Evap) + (Fluktuasi 0-1.4°C)
-      tempCondenser = 33.0 + (refCab * 0.25) + (refEvap * 0.1) + ((millis() % 15) / 10.0);
-    }
-    // ==========================================================
-
-    // 2. BACA SENSOR KELISTRIKAN
-    float voltage = pzem.voltage();
-    float current = pzem.current();
-    float power = pzem.power();
-
-    // 3. BACA SENSOR PINTU
-    // Magnet menempel (pintu tertutup) = LOW (0). Magnet menjauh (pintu terbuka) = HIGH (1).
-    bool isDoor1Open = digitalRead(doorSensor1Pin) == HIGH;
-    bool isDoor2Open = digitalRead(doorSensor2Pin) == HIGH;
-
-    // Validasi Jika PZEM tidak terbaca (belum dicolok listrik AC), isi dengan 0
-    if(isnan(voltage)) {
-        voltage = 0.0; 
-        current = 0.0; 
-        power = 0.0;
+    // Scan & print ROM address setiap sensor agar urutan fisik jelas
+    DeviceAddress tempAddress;
+    for (int i = 0; i < deviceCount; i++) {
+        if (sensors.getAddress(tempAddress, i)) {
+            Serial.print("  [Index ");
+            Serial.print(i);
+            Serial.print("] ROM ID: ");
+            for (uint8_t b = 0; b < 8; b++) {
+                if (tempAddress[b] < 16) Serial.print("0");
+                Serial.print(tempAddress[b], HEX);
+                if (b < 7) Serial.print(":");
+            }
+            Serial.println();
+        }
     }
 
-    // 4. BUAT PAYLOAD JSON
-    // StaticJsonDocument<256> (diperbesar sedikit karena data bertambah)
-    StaticJsonDocument<256> doc;
-    doc["unitId"] = unit_id;
-    doc["tempCabinet"] = tempCabinet;
-    doc["tempEvaporator"] = tempEvaporator;
-    doc["tempCondenser"] = tempCondenser;
-    doc["voltage"] = voltage;
-    doc["current"] = current;
-    doc["power"] = power;
-    doc["isDoor1Open"] = isDoor1Open;
-    doc["isDoor3Open"] = isDoor2Open; // Dikirim ke Pintu 3 (Atas Kanan) di sistem web
-    
+    // Setup pin pintu — D25/D26/D27/D14 menggunakan INPUT_PULLUP internal ESP32
+    pinMode(DOOR1_PIN, INPUT_PULLUP);
+    pinMode(DOOR2_PIN, INPUT_PULLUP);
+    pinMode(DOOR3_PIN, INPUT_PULLUP);
+    pinMode(DOOR4_PIN, INPUT_PULLUP);
+    Serial.println("Door pins configured: D25 (Pintu1), D26 (Pintu2), D27 (Pintu3), D14 (Pintu4) with INPUT_PULLUP");
 
-    char jsonBuffer[256];
-    serializeJson(doc, jsonBuffer);
+    // Tes baca awal
+    Serial.print("Door 1 init read: ");
+    Serial.println(digitalRead(DOOR1_PIN) == LOW ? "CLOSED" : "OPEN");
+    Serial.print("Door 2 init read: ");
+    Serial.println(digitalRead(DOOR2_PIN) == LOW ? "CLOSED" : "OPEN");
+    Serial.print("Door 3 init read: ");
+    Serial.println(digitalRead(DOOR3_PIN) == LOW ? "CLOSED" : "OPEN");
+    Serial.print("Door 4 init read: ");
+    Serial.println(digitalRead(DOOR4_PIN) == LOW ? "CLOSED" : "OPEN");
 
-    // 4. PRINT KE SERIAL & PUBLISH KE MQTT
-    Serial.print("Mengirim Payload: ");
-    Serial.println(jsonBuffer);
-    
-    // Publikasi data ke MQTT
-    client.publish(mqtt_topic, jsonBuffer);
-  }
-}
+    // Koneksi WiFi & MQTT
+    setup_wifi();
+    client.setServer(mqtt_server, mqtt_port);
+    client.setBufferSize(512); // PENTING: default PubSubClient hanya 128/256 bytes, JSON kita butuh 512 bytes
+
+    Serial.println("Setup selesai. Mulai kirim data tiap 2 detik (real-time mode)...\n");
+}
+
+// =============================================================================
+// LOOP
+// =============================================================================
+void loop() {
+    if (!client.connected()) {
+        reconnect();
+    }
+    client.loop();
+
+    unsigned long now = millis();
+
+    // ── Kick off async DS18B20 conversion tiap SEND_INTERVAL ────────────────
+    if (!tempRequested && (now - lastMsg >= SEND_INTERVAL)) {
+        sensors.requestTemperatures(); // Mulai konversi (non-blocking)
+        lastTempReq    = now;
+        tempRequested  = true;
+    }
+
+    // ── Baca & kirim setelah konversi selesai (≥750ms) ──────────────────────
+    if (tempRequested && (now - lastTempReq >= TEMP_CONV_TIME)) {
+        tempRequested = false;
+        lastMsg = now;
+
+        // ── 1. BACA SENSOR SUHU DS18B20 ─────────────────────────────────
+        // (requestTemperatures() sudah dipanggil async di atas, tinggal baca)
+
+        // Koreksi Index: Pada unit dengan 3 sensor tertancap,
+        // ROM ID Kondensor terurut di Index 1 dan Evaporator di Index 2.
+        float tempCabinet    = sensors.getTempCByIndex(0);
+        float tempCondenser  = sensors.getTempCByIndex(1); // Index 1 = Kondensor
+        float tempEvaporator = sensors.getTempCByIndex(2); // Index 2 = Evaporator
+
+        // Sanitasi: -127 = sensor tidak terpasang, 85 = power-on reset DS18B20
+        if (tempCabinet    == 85.0 || tempCabinet    == -127.0) tempCabinet    = -127.0;
+        if (tempEvaporator == 85.0 || tempEvaporator == -127.0) tempEvaporator = -127.0;
+        if (tempCondenser  == 85.0 || tempCondenser  == -127.0) tempCondenser  = -127.0;
+
+        Serial.println("--- SENSOR SUHU ---");
+        Serial.print("Kabinet   : "); Serial.print(tempCabinet);    Serial.println("°C");
+        Serial.print("Evaporator: "); Serial.print(tempEvaporator); Serial.println("°C");
+        Serial.print("Kondensor : "); Serial.print(tempCondenser);  Serial.println("°C");
+
+        // ── 2. BACA PZEM (Kelistrikan) ───────────────────────────────────
+        float voltage = pzem.voltage();
+        float current = pzem.current();
+        float power   = pzem.power();
+
+        if (isnan(voltage) || voltage == 0) {
+            Serial.println("⚠️  PZEM tidak terbaca — cek kabel TX/RX dan power AC");
+            voltage = 0.0;
+            current = 0.0;
+            power   = 0.0;
+        } else {
+            Serial.println("--- KELISTRIKAN (PZEM REAL-TIME) ---");
+            Serial.print("Tegangan Total : "); Serial.print(voltage); Serial.println(" V");
+            Serial.print("Arus Total     : "); Serial.print(current); Serial.println(" A");
+            Serial.print("Daya Total     : "); Serial.print(power);   Serial.println(" W");
+
+            Serial.println("\n--- TARGET KALIBRASI BEBAN ARUS (BENCHMARK) ---");
+            Serial.print("  [1] Kompresor Normal       : "); Serial.print(calibration.compressor_normal_ampere); Serial.println(" A (±0.3A)");
+            Serial.print("  [2] Fan Kondensor Normal    : "); Serial.print(calibration.kondensor_normal_ampere); Serial.println(" A");
+            Serial.print("  [3] Fan Evaporator Normal   : "); Serial.print(calibration.fan_evap_normal_ampere); Serial.println(" A");
+            float total_estimated = calibration.compressor_normal_ampere + calibration.kondensor_normal_ampere + calibration.fan_evap_normal_ampere;
+            Serial.print("  [*] Estimasi Total Peak ON  : ~"); Serial.print(total_estimated); Serial.println(" A");
+
+            Serial.println("--- DIAGNOSA STATUS KOMPONEN ---");
+            if (current < 0.2) {
+                Serial.println("  Status: IDLE / STANDBY (Kompresor & Fan Mati / Defrost)");
+            } else if (current >= (calibration.compressor_normal_ampere - calibration.ampere_tolerance)) {
+                Serial.print("  Status: KOMPRESOR AKTIF (ON) - Arus Terdeteksi ");
+                Serial.print(current);
+                Serial.println(" A (Normal Range)");
+            } else if (current > 0.5 && current < (calibration.compressor_normal_ampere - calibration.ampere_tolerance)) {
+                Serial.print("  Status: HANYA FAN AKTIF (Kompresor OFF) - Arus Terdeteksi ");
+                Serial.print(current);
+                Serial.println(" A");
+            } else {
+                Serial.print("  Status: BEBAN TIDAK DIKENAL / ANOMALI (");
+                Serial.print(current);
+                Serial.println(" A)");
+            }
+        }
+
+        // ── 3. BACA SENSOR PINTU (D25, D26, D27, D14) ────────────────────
+        int rawD25 = digitalRead(DOOR1_PIN);
+        int rawD26 = digitalRead(DOOR2_PIN);
+        int rawD27 = digitalRead(DOOR3_PIN);
+        int rawD14 = digitalRead(DOOR4_PIN);
+
+        // Dengan INPUT_PULLUP internal:
+        //   Kabel nyambung / magnet dekat (closed) -> Pin terhubung ke GND -> LOW (0) -> isDoorOpen = false
+        //   Kabel lepas / magnet jauh (open)     -> Ditarik pull-up ke 3.3V -> HIGH (1) -> isDoorOpen = true
+        bool isDoor1Open = (rawD25 == HIGH);
+        bool isDoor2Open = (rawD26 == HIGH);
+        bool isDoor3Open = (rawD27 == HIGH);
+        bool isDoor4Open = (rawD14 == HIGH);
+
+        Serial.println("--- STATUS PINTU ---");
+        Serial.print("Pintu 1 (D25): "); Serial.print(isDoor1Open ? "BUKA (OPEN)" : "TUTUP (CLOSED)");
+        Serial.print("  [Raw Pin: "); Serial.print(rawD25); Serial.println("]");
+        Serial.print("Pintu 2 (D26): "); Serial.print(isDoor2Open ? "BUKA (OPEN)" : "TUTUP (CLOSED)");
+        Serial.print("  [Raw Pin: "); Serial.print(rawD26); Serial.println("]");
+        Serial.print("Pintu 3 (D27): "); Serial.print(isDoor3Open ? "BUKA (OPEN)" : "TUTUP (CLOSED)");
+        Serial.print("  [Raw Pin: "); Serial.print(rawD27); Serial.println("]");
+        Serial.print("Pintu 4 (D14): "); Serial.print(isDoor4Open ? "BUKA (OPEN)" : "TUTUP (CLOSED)");
+        Serial.print("  [Raw Pin: "); Serial.print(rawD14); Serial.println("]");
+
+        // Semua pintu harus tertutup agar dihitung door_closed
+        bool allDoorsClosed = (!isDoor1Open && !isDoor2Open && !isDoor3Open && !isDoor4Open);
+
+        // ── 4. HITUNG HEALTH STATUS ──────────────────────────────────────
+        HealthStatus health = calculateHealthStatus(
+            tempCabinet, tempEvaporator, tempCondenser,
+            voltage, current,
+            allDoorsClosed
+        );
+
+        Serial.println("--- HEALTH STATUS ---");
+        Serial.print("Status : "); Serial.println(health.status);
+        Serial.print("Pesan  : "); Serial.println(health.alert_message);
+        Serial.print("Teknisi: "); Serial.println(health.technician_dispatch ? "DIPERLUKAN" : "TIDAK");
+
+        // ── 5. BUAT PAYLOAD JSON (4 Pintu) ──────────────────────────────
+        StaticJsonDocument<512> doc;
+
+        doc["unitId"]         = unit_id;
+        doc["tempCabinet"]    = tempCabinet;
+        doc["tempEvaporator"] = tempEvaporator;
+        doc["tempCondenser"]  = tempCondenser;
+        doc["voltage"]        = voltage;
+        doc["current"]        = current;
+        doc["power"]          = power;
+        doc["isDoor1Open"]    = isDoor1Open;
+        doc["isDoor2Open"]    = isDoor2Open;
+        doc["isDoor3Open"]    = isDoor3Open;
+        doc["isDoor4Open"]    = isDoor4Open;
+
+        // Data tambahan health (referensi)
+        doc["healthStatus"]   = health.status;
+        doc["healthMsg"]      = health.alert_message;
+        doc["techDispatch"]   = health.technician_dispatch;
+
+        char jsonBuffer[512];
+        serializeJson(doc, jsonBuffer);
+
+        // ── 6. KIRIM KE MQTT ─────────────────────────────────────────────
+        Serial.println("--- MQTT PUBLISH ---");
+        Serial.println(jsonBuffer);
+
+        bool ok = client.publish(mqtt_topic, jsonBuffer);
+        Serial.println(ok ? "✅ Terkirim!" : "❌ Gagal kirim MQTT");
+        Serial.println();
+    }
+}

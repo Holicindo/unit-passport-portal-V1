@@ -172,6 +172,11 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
             </div>
           );
         })}
+
+        {/* Version Footer di paling bawah nav, teks bersih center tanpa wrap box */}
+        <div className={styles.sidebarFooter}>
+          <span className={styles.versionWatermark}>Versi 2.0.0</span>
+        </div>
       </nav>
     </aside>
   );

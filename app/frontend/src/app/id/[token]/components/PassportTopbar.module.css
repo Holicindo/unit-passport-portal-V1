@@ -12,12 +12,14 @@
   justify-content: space-between;
   height: 56px;
   padding: 0 24px;
-  background: #E8EAEE;
-  border-bottom: none;
+  background: rgba(8, 18, 45, 0.98);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
   box-shadow:
-    0 4px 12px rgba(0, 31, 63, 0.08),
-    0 2px 0 rgba(255, 255, 255, 0.7) inset;
+    0 4px 20px rgba(0, 0, 0, 0.4),
+    0 1px 0 rgba(255, 255, 255, 0.05) inset;
   flex-shrink: 0;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 /* ── Logo (left) ───────────────────────────────────────────────────────── */
@@ -31,7 +33,7 @@
 .topbarLogoIcon {
   display: inline-flex;
   align-items: center;
-  color: var(--color-cobalt-blue);
+  color: #60a5fa;
   flex-shrink: 0;
 }
 
@@ -40,7 +42,7 @@
   font-weight: 800;
   font-size: 1rem;
   letter-spacing: 0.1em;
-  color: var(--color-deep-navy);
+  color: #f1f5f9;
   white-space: nowrap;
   line-height: 1;
 }
@@ -72,50 +74,43 @@
   height: 30px;
   padding: 0 12px;
   border-radius: 8px;
-  border: none;
-  background: var(--color-light-tech-grey, #E8EAEE);
-  color: var(--color-space-grey);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
+  color: #94a3b8;
   font-family: var(--font-heading);
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.03em;
   cursor: pointer;
-  transition: box-shadow 0.15s, color 0.15s;
+  transition: all 0.15s;
   white-space: nowrap;
   outline: none;
   line-height: 1;
   appearance: none;
   box-shadow:
-    -3px -3px 7px rgba(255, 255, 255, 0.85),
-     3px  3px 7px rgba(0, 31, 63, 0.12);
+    -2px -2px 5px rgba(255, 255, 255, 0.04),
+    2px 2px 5px rgba(0, 0, 0, 0.3);
 }
 
 .iconBtn:hover {
-  color: var(--color-deep-navy);
-  box-shadow:
-    -2px -2px 5px rgba(255, 255, 255, 0.8),
-     2px  2px 5px rgba(0, 31, 63, 0.15);
+  color: #f1f5f9;
+  background: rgba(255, 255, 255, 0.09);
 }
 
 .iconBtn:active {
   box-shadow:
-    inset 2px 2px 5px rgba(0, 31, 63, 0.1),
-    inset -2px -2px 5px rgba(255, 255, 255, 0.85);
+    inset 2px 2px 5px rgba(0, 0, 0, 0.3),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.04);
 }
 
 /* cobalt accent for QR button */
 .iconBtnAccent {
-  color: var(--color-cobalt-blue);
-  box-shadow:
-    -3px -3px 7px rgba(255, 255, 255, 0.85),
-     3px  3px 7px rgba(46, 91, 255, 0.2);
+  color: #60a5fa;
+  border-color: rgba(96, 165, 250, 0.2);
 }
 
 .iconBtnAccent:hover {
-  box-shadow:
-    -2px -2px 5px rgba(255, 255, 255, 0.8),
-     2px  2px 5px rgba(46, 91, 255, 0.25);
-  color: var(--color-cobalt-blue);
+  color: #93c5fd;
 }
 
 /* ── Badge ─────────────────────────────────────────────────────────────── */
@@ -136,15 +131,19 @@
   text-transform: uppercase;
   white-space: nowrap;
   line-height: 1;
-  color: var(--color-cobalt-blue);
-  background-color: rgba(46, 91, 255, 0.08);
-  border: 1px solid rgba(46, 91, 255, 0.2);
+  color: #93c5fd;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(96, 165, 250, 0.25);
   cursor: pointer;
   transition: all 0.2s ease;
+  box-shadow:
+    -2px -2px 5px rgba(255, 255, 255, 0.04),
+    2px 2px 5px rgba(0, 0, 0, 0.3);
 }
 
 .topbarBadge:hover {
-  background-color: rgba(46, 91, 255, 0.12);
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(96, 165, 250, 0.4);
 }
 
 .badgeDesktop { display: inline; }

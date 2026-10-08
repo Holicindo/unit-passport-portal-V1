@@ -59,6 +59,7 @@ export const unitApi = {
   requestService: (id: string, data: any) => api.post(`/units/${id}/request-service`, data),
   create: (data: any) => api.post('/units', data),
   update: (id: string, data: any) => api.patch(`/units/${id}`, data),
+  updateCalibration: (id: string, data: any) => api.patch(`/units/${id}/calibration`, data),
   delete: (id: string) => api.delete(`/units/${id}`),
   uploadMedia: (files: File[]) => {
     const formData = new FormData();
@@ -153,4 +154,11 @@ export const iotApi = {
   getLatest: (unitId: string) => api.get(`/units/${unitId}/telemetry/latest`),
   getHistory: (unitId: string, hours: number = 24) => api.get(`/units/${unitId}/telemetry/history?hours=${hours}`),
   getActiveAlerts: () => api.get('/units/iot/alerts'),
+};
+
+export const healthScoreApi = {
+  getActive: () => api.get('/health-scores/active'),
+  getByUnitId: (unitId: string) => api.get(`/health-scores/unit/${unitId}`),
+  trigger: () => api.post('/health-scores/trigger'),
+  triggerByUnitId: (unitId: string) => api.post(`/health-scores/trigger/${unitId}`),
 };
