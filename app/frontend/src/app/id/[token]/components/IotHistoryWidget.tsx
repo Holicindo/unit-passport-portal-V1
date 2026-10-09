@@ -419,12 +419,12 @@ function ElectricalLineChart({ data }: { data: HistoryPoint[] }) {
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 const TIME_RANGES = [
-  { label: '1 Jam', hours: 1, bucketMin: 5 },   // 5 menit - detail tinggi untuk troubleshooting
-  { label: '7 Jam', hours: 7, bucketMin: 5 },   // 5 menit - detail tinggi untuk analisis harian
-  { label: '24 Jam', hours: 24, bucketMin: 5 },   // 5 menit - analisis harian detail
-  { label: '1 Bulan', hours: 720, bucketMin: 30 },   // 30 menit - tren bulanan optimal
-  { label: '3 Bulan', hours: 2160, bucketMin: 60 },   // 1 jam - tren triwulan
-  { label: '1 Tahun', hours: 8760, bucketMin: 240 },   // 4 jam - tren tahunan
+  { label: '1 Jam', hours: 1 },
+  { label: '7 Jam', hours: 7 },
+  { label: '24 Jam', hours: 24 },
+  { label: '1 Bulan', hours: 720 },
+  { label: '3 Bulan', hours: 2160 },
+  { label: '1 Tahun', hours: 8760 },
 ];
 
 interface IotHistoryWidgetProps {
@@ -504,73 +504,30 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
     return point;
   };
 
-  const downsample = (points: HistoryPoint[], bucketMin: number) => {
-    if (!points || points.length === 0) return [];
-
-    // Untuk interval konsisten 5 menit, kita perlu mengelompokkan berdasarkan slot waktu yang tepat
-    const bucketMs = bucketMin * 60 * 1000; // 5 menit = 300,000ms
-
-    // Group data berdasarkan slot waktu 5 menit
-    const buckets = new Map<number, HistoryPoint[]>();
-
-    for (const point of points) {
-      const time = new Date(point.recorded_at).getTime();
-
-      // PERBAIKAN: Gunakan Math.round untuk pembulatan yang lebih akurat
-      // supaya data terbaru tidak hilang atau masuk ke slot yang salah
-      const slotTime = Math.round(time / bucketMs) * bucketMs;
-
-      if (!buckets.has(slotTime)) {
-        buckets.set(slotTime, []);
-      }
-      buckets.get(slotTime)!.push(point);
-    }
-
-    // Ambil satu data per slot (yang paling dekat dengan waktu slot atau yang terbaru)
-    const result: HistoryPoint[] = [];
-
-    for (const [slotTime, pointsInSlot] of buckets) {
-      // PERBAIKAN: Ambil data terbaru dalam slot jika ada lebih dari 1 data
-      const bestPoint = pointsInSlot.reduce((latest, current) => {
-        return new Date(current.recorded_at) > new Date(latest.recorded_at) ? current : latest;
-      });
-
-      result.push(bestPoint);
-    }
-
-    return result.sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
-  };
-
   const fetchHistory = useCallback(async (isManual = false) => {
     if (isManual) setRefreshing(true);
     else if (data.length === 0) setLoading(true);
 
     try {
       const range = TIME_RANGES[rangeIdx];
+      
+      // Backend sudah mengembalikan data yang sudah diagregasi dengan bucket interval optimal
+      // Tidak perlu lagi downsample di browser!
       const res = await iotApi.getHistory(unitId, range.hours);
       const raw: HistoryPoint[] = res.data || [];
+      
+      // Apply hack untuk unit bermasalah (tetap dipertahankan)
+      const mapped = raw.map(applyHack);
 
-      // Filter data to exactly match the selected time range and apply downsampling
-      const since = new Date(Date.now() - range.hours * 60 * 60 * 1000);
-      const filtered = raw
-        .filter(p => new Date(p.recorded_at) >= since)
-        .map(applyHack); // terapkan koreksi sensor yang sama dengan backend
-
-      const downsampled = downsample(filtered, range.bucketMin);
-
-      // Enhanced logging untuk semua rentang waktu
+      // Enhanced logging
       console.log(`📊 ${range.label} Data Summary:`, {
         range: `${range.hours}h`,
-        currentTime: new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }),
-        sinceTime: since.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }),
-        rawDataCount: raw.length.toLocaleString(),
-        filteredCount: filtered.length.toLocaleString(),
-        downsampledCount: downsampled.length.toLocaleString(),
-        bucketSize: `${range.bucketMin} min`,
-        latestData: downsampled.length > 0 ? new Date(downsampled[downsampled.length - 1].recorded_at).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }) : 'none'
+        dataPoints: mapped.length.toLocaleString(),
+        latestData: mapped.length > 0 ? new Date(mapped[mapped.length - 1].recorded_at).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }) : 'none',
+        note: 'Pre-aggregated by backend SQL'
       });
 
-      setData(downsampled);
+      setData(mapped);
     } catch (error) {
       // API unavailable or failed
       console.error('Failed to fetch telemetry history:', error);
@@ -1273,8 +1230,13 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-        <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>
+      <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
+        {data.length > 0 && (
+          <span style={{ fontSize: '0.68rem', color: '#60a5fa', fontWeight: 600 }}>
+            Periode: {formatTime(data[0].recorded_at)} s.d. {formatTime(data[data.length - 1].recorded_at)} WIB
+          </span>
+        )}
+        <span style={{ fontSize: '0.68rem', color: '#94a3b8', marginLeft: 'auto' }}>
           {tableRows.length} titik data · interval 5 menit
         </span>
       </div>

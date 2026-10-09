@@ -305,39 +305,80 @@ export class IotService {
 
   /**
    * Mengambil riwayat data sensor dalam N jam terakhir (untuk grafik tren).
+   * Data diagregasi langsung di PostgreSQL untuk performa optimal.
+   * Jika dalam N jam terakhir dari sekarang tidak ada data (unit offline),
+   * sistem otomatis fallback mengambil N jam terakhir dari data aktif terakhir unit.
    */
   async getTelemetryHistory(unitId: string, hours: number = 24) {
-    // Gunakan milidetik agar mendukung nilai desimal seperti 0.5 jam (30 menit)
-    const since = new Date(Date.now() - hours * 60 * 60 * 1000);
+    // 1. Cek tanggal data terbaru yang ada di database untuk unit ini
+    const latestLog = await this.telemetryLogRepo.findOne({
+      where: { unit_id: unitId },
+      order: { recorded_at: 'DESC' },
+      select: ['recorded_at'],
+    });
 
-    // PERBAIKAN: Limit dinamis berdasarkan rentang waktu
-    // Estimasi: ~1000 records per jam untuk data setiap detik dengan throttling 5 menit
-    let queryLimit: number;
-
-    if (hours <= 1) {
-      queryLimit = 5000;           // 1 jam: 5K records (safety margin)
-    } else if (hours <= 7) {
-      queryLimit = 35000;          // 7 jam: 35K records  
-    } else if (hours <= 24) {
-      queryLimit = 100000;         // 24 jam: 100K records
-    } else if (hours <= 168) {     // 1 minggu
-      queryLimit = 500000;         // 1 minggu: 500K records
-    } else if (hours <= 720) {     // 1 bulan
-      queryLimit = 2000000;        // 1 bulan: 2M records
-    } else if (hours <= 2160) {    // 3 bulan
-      queryLimit = 6000000;        // 3 bulan: 6M records
-    } else {                       // 1 tahun+
-      queryLimit = 25000000;       // 1 tahun: 25M records
+    if (!latestLog) {
+      return [];
     }
 
-    this.logger.log(`📊 Fetching telemetry history: ${hours}h (limit: ${queryLimit.toLocaleString()})`);
+    const latestTime = new Date(latestLog.recorded_at).getTime();
+    const nowTime = Date.now();
+    const windowMs = hours * 60 * 60 * 1000;
 
-    return this.telemetryLogRepo
-      .createQueryBuilder('log')
-      .where('log.unit_id = :unitId', { unitId })
-      .andWhere('log.recorded_at >= :since', { since })
-      .orderBy('log.recorded_at', 'ASC')
-      .limit(queryLimit)
-      .getMany();
+    // Jika data terbaru lebih tua dari window yang diminta dari sekarang,
+    // gunakan referensi latestTime agar riwayat aktif terakhir unit tetap tampil
+    const referenceTime = (nowTime - latestTime > windowMs) ? latestTime : nowTime;
+    const since = new Date(referenceTime - windowMs);
+    const until = new Date(referenceTime);
+
+    // 2. Tentukan bucket interval berdasarkan rentang waktu
+    let bucketSeconds: number;
+    if (hours <= 1) {
+      bucketSeconds = 60; // 1 menit → ~60 titik
+    } else if (hours <= 7) {
+      bucketSeconds = 5 * 60; // 5 menit → ~84 titik
+    } else if (hours <= 24) {
+      bucketSeconds = 5 * 60; // 5 menit → ~288 titik
+    } else if (hours <= 720) {
+      // 1 bulan
+      bucketSeconds = 60 * 60; // 1 jam → ~720 titik
+    } else if (hours <= 2160) {
+      // 3 bulan
+      bucketSeconds = 2 * 60 * 60; // 2 jam → ~1080 titik
+    } else {
+      // 1 tahun
+      bucketSeconds = 24 * 60 * 60; // 1 hari → ~365 titik
+    }
+
+    this.logger.log(`📊 Fetching aggregated telemetry: unit=${unitId}, hours=${hours}h, bucket=${bucketSeconds}s (since: ${since.toISOString()}, until: ${until.toISOString()})`);
+
+    // 3. Query agregasi dengan time bucketing di PostgreSQL
+    const rawResult = await this.telemetryLogRepo.query(
+      `
+      SELECT 
+        to_timestamp(floor(extract(epoch from recorded_at) / $1) * $1) AT TIME ZONE 'UTC' AS recorded_at,
+        ROUND(AVG(temp_cabinet)::numeric, 1) as temp_cabinet,
+        ROUND(AVG(temp_evaporator)::numeric, 1) as temp_evaporator,
+        ROUND(AVG(temp_condenser)::numeric, 1) as temp_condenser,
+        ROUND(AVG(voltage)::numeric, 1) as voltage,
+        ROUND(AVG(current)::numeric, 2) as current,
+        ROUND(AVG(power)::numeric, 1) as power,
+        bool_or(is_door1_open) as is_door1_open,
+        bool_or(is_door2_open) as is_door2_open,
+        bool_or(is_door3_open) as is_door3_open,
+        bool_or(is_door4_open) as is_door4_open
+      FROM iot_telemetry_logs
+      WHERE unit_id = $2 
+        AND recorded_at >= $3 
+        AND recorded_at <= $4
+      GROUP BY 1
+      ORDER BY 1 ASC
+      `,
+      [bucketSeconds, unitId, since, until]
+    );
+
+    this.logger.log(`✅ Returned ${rawResult.length} aggregated data points`);
+
+    return rawResult;
   }
 }
