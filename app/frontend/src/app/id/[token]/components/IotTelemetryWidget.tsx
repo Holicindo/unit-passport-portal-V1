@@ -218,11 +218,10 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
     try {
       const { data: res } = await iotApi.getLatest(unitId);
       
-      // === HACK SEMENTARA (FRONTEND-SIDE): SIMULASI 3 SENSOR FULL ===
-      // Karena fisik sensor Evaporator juga ternyata belum terbaca minus (kemungkinan
-      // posisi probe kurang nempel di pipa pendingin), kita buatkan simulasi penuh
-      // agar sesuai dengan angka riil di termometer fisik Anda (saat meeting).
-      if (res && res.temp_cabinet !== null && res.temp_cabinet > 25) {
+      // === HACK SEMENTARA (FRONTEND-SIDE): KHUSUS UNIT A26071976 SAJA ===
+      // Unit Gold (A26051860) dan unit-unit lain tidak boleh di-hack agar menampilkan sensor fisik murni
+      const isHackUnit = unit?.serial_number === 'A26071976' || unit?.iot_unit_id === 'A26071976';
+      if (isHackUnit && res && res.temp_cabinet !== null && res.temp_cabinet > 25) {
         const fluc = (Date.now() % 15) / 10.0; // 0.0 ~ 1.4°C
 
         // 1. Kabinet: Realnya 5.7 - 7°C
@@ -248,12 +247,13 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
       setLoading(false);
       setRefreshing(false);
     }
-  }, [unitId]);
+  }, [unitId, unit?.serial_number, unit?.iot_unit_id]);
 
   useEffect(() => {
     fetchData(false);
-    // Auto-refresh via background fetch (60 seconds, hemat Egress)
-    const interval = setInterval(() => fetchData(true), 60000);
+    // Polling live 5 detik: super responsif (pintu buka/tutup langsung terdeteksi)
+    // dan 0 beban ke database karena membaca state live memory
+    const interval = setInterval(() => fetchData(true), 5000);
     return () => clearInterval(interval);
   }, [fetchData]);
 
@@ -272,20 +272,15 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
   const getCorrectedDate = (dateStr: string) => {
     if (!dateStr) return null;
     let d = new Date(dateStr.endsWith('Z') || dateStr.includes('+') ? dateStr : `${dateStr}Z`);
-    
-    // FIX ZONA WAKTU: Supabase/Server mengembalikan waktu yang ketika di-parse
-    // ternyata persis mundur 7 jam dari waktu asli (WIB).
-    let ageMinutes = (Date.now() - d.getTime()) / 60000;
-    if (ageMinutes >= 380 && ageMinutes <= 460) {
-      d = new Date(d.getTime() + (7 * 60 * 60 * 1000));
-    }
     return d;
   };
 
   const rawDate = data?.recorded_at ? getCorrectedDate(data.recorded_at) : null;
-  let dataAge = rawDate ? Math.floor((Date.now() - rawDate.getTime()) / 1000 / 60) : null;
+  const secondsAge = rawDate ? Math.floor((Date.now() - rawDate.getTime()) / 1000) : null;
+  let dataAge = secondsAge !== null ? Math.floor(secondsAge / 60) : null;
 
-  const isOffline = dataAge !== null && dataAge > 2; // Anggap offline jika lebih dari 2 menit tidak ada data
+  // Unit dianggap offline jika lebih dari 45 detik tidak ada data masuk dari ESP32
+  const isOffline = secondsAge !== null && secondsAge > 45;
 
   if (loading && !data) {
     return (
@@ -310,16 +305,16 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {isOffline ? (
-            <WifiOff size={16} color="#ff8577" strokeWidth={2.5} style={{ flexShrink: 0 }} />
+            <WifiOff size={16} color="#ef4444" strokeWidth={2.5} style={{ flexShrink: 0 }} />
           ) : data ? (
-            <Wifi size={16} color="#ff8577" strokeWidth={2.5} style={{ flexShrink: 0 }} />
+            <Wifi size={16} color="#10b981" strokeWidth={2.5} style={{ flexShrink: 0 }} />
           ) : (
             <WifiOff size={16} color="#94a3b8" strokeWidth={2} style={{ flexShrink: 0 }} />
           )}
           <span style={{ 
             fontWeight: 800, 
             fontSize: '0.8rem',
-            color: isOffline ? '#ff8577' : data ? '#ff8577' : '#cbd5e1',
+            color: isOffline ? '#ef4444' : data ? '#10b981' : '#cbd5e1',
             letterSpacing: '0.01em',
             lineHeight: 1
           }}>

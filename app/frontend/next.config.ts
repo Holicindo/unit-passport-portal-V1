@@ -1,6 +1,8 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  reactStrictMode: false, // TEMPORARY: Disable to debug auth redirect loop
+  
   // Allow images from external sources (backend)
   images: {
     remotePatterns: [

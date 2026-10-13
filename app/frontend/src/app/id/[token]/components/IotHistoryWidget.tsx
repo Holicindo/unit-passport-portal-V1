@@ -4,6 +4,55 @@ import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { BarChart2, TableProperties, RefreshCw, TrendingDown, TrendingUp, Minus, Download, ChevronDown, Settings2, X, Check, FileText } from 'lucide-react';
 import { iotApi, unitApi } from '@/lib/api';
 
+// ─── Component Current Calculation (from IotTelemetryWidget logic) ───────────
+// Kalibrasi teknisi (Ampere)
+const CAL_COMP = 6.16;   // Kompresor
+const CAL_KOND = 0.42;   // Fan Kondensor
+const CAL_EVAP = 1.31;   // Fan Evaporator
+const CAL_TOTAL = CAL_COMP + CAL_KOND + CAL_EVAP; // 7.89 A
+
+// Offset koreksi
+const OFF_COMP = -0.02;
+const OFF_KOND = -0.04;
+const OFF_EVAP = -0.11;
+
+// Rasio proporsional
+const R_COMP = CAL_COMP / CAL_TOTAL; // 78.1%
+const R_KOND = CAL_KOND / CAL_TOTAL; // 5.3%
+const R_EVAP = CAL_EVAP / CAL_TOTAL; // 16.6%
+
+/**
+ * Calculate estimated component currents from total current
+ * Based on calibration data from technician measurements
+ */
+export function calculateComponentCurrents(totalA: number | null | undefined): ComponentCurrents {
+  if (totalA === null || totalA === undefined || totalA <= 0) {
+    return { comp: 0, kond: 0, evap: 0, state: 'OFF' };
+  }
+  
+  if (totalA < 0.2) {
+    return { comp: 0, kond: 0, evap: 0, state: 'STANDBY' };
+  }
+  
+  if (totalA < 4.0) {
+    // Mode Fan Only (Kompresor istirahat)
+    return {
+      comp: 0,
+      kond: parseFloat((totalA * 0.24).toFixed(2)),
+      evap: parseFloat((totalA * 0.76).toFixed(2)),
+      state: 'FAN_ONLY'
+    };
+  }
+  
+  // Mode All ON (Kompresor + Semua Fan running)
+  return {
+    comp: Math.max(0, parseFloat((totalA * R_COMP + OFF_COMP).toFixed(2))),
+    kond: Math.max(0, parseFloat((totalA * R_KOND + OFF_KOND).toFixed(2))),
+    evap: Math.max(0, parseFloat((totalA * R_EVAP + OFF_EVAP).toFixed(2))),
+    state: 'ALL_ON'
+  };
+}
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface HistoryPoint {
   recorded_at: string;
@@ -13,6 +62,13 @@ interface HistoryPoint {
   voltage?: number | null;
   current?: number | null;
   power?: number | null;
+}
+
+interface ComponentCurrents {
+  comp: number;
+  kond: number;
+  evap: number;
+  state: 'OFF' | 'STANDBY' | 'FAN_ONLY' | 'ALL_ON';
 }
 
 interface SensorSummary {
@@ -31,13 +87,25 @@ interface ElectricalSummary {
   voltage: SensorSummary;
   current: SensorSummary;
   power: SensorSummary;
+  compressor: SensorSummary;
+  fanEvaporator: SensorSummary;
+  fanCondenser: SensorSummary;
 }
 
 // ─── Mock Data Generator ──────────────────────────────────────────────────────
 // (Removed: using real IoT data only)// ─── Helper: Compute Summary ─────────────────────────────────────────────────
 function computeSummary(data: HistoryPoint[]): Summary {
   function calc(key: keyof HistoryPoint): SensorSummary {
-    const vals = data.map(d => d[key] as number).filter(v => v !== null && v !== -127 && v !== 85);
+    // Convert string to number and filter out invalid values
+    const vals = data
+      .map(d => {
+        const val = d[key];
+        if (val === null || val === undefined) return null;
+        const num = typeof val === 'string' ? Number(val) : val as number;
+        return isNaN(num) ? null : num;
+      })
+      .filter(v => v !== null && v !== -127 && v !== 85) as number[];
+    
     if (vals.length === 0) return { avg: null, min: null, max: null };
     return {
       avg: parseFloat((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1)),
@@ -54,7 +122,16 @@ function computeSummary(data: HistoryPoint[]): Summary {
 
 function computeElectricalSummary(data: HistoryPoint[]): ElectricalSummary {
   function calc(key: keyof HistoryPoint, decimals: number = 1): SensorSummary {
-    const vals = data.map(d => d[key] as number).filter(v => v !== null && v !== undefined && !isNaN(v) && v > 0);
+    // Convert string to number and filter out invalid values
+    const vals = data
+      .map(d => {
+        const val = d[key];
+        if (val === null || val === undefined) return null;
+        const num = typeof val === 'string' ? Number(val) : val as number;
+        return (isNaN(num) || num <= 0) ? null : num;
+      })
+      .filter(v => v !== null) as number[];
+    
     if (vals.length === 0) return { avg: null, min: null, max: null };
     return {
       avg: parseFloat((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(decimals)),
@@ -62,10 +139,40 @@ function computeElectricalSummary(data: HistoryPoint[]): ElectricalSummary {
       max: parseFloat(Math.max(...vals).toFixed(decimals)),
     };
   }
+  
+  // Calculate component currents from history data
+  const compCurrent: number[] = [];
+  const kondCurrent: number[] = [];
+  const evapCurrent: number[] = [];
+  
+  data.forEach(d => {
+    if (d.current) {
+      const currentNum = typeof d.current === 'string' ? Number(d.current) : d.current;
+      if (!isNaN(currentNum) && currentNum > 0) {
+        const components = calculateComponentCurrents(currentNum);
+        if (components.comp > 0) compCurrent.push(components.comp);
+        if (components.kond > 0) kondCurrent.push(components.kond);
+        if (components.evap > 0) evapCurrent.push(components.evap);
+      }
+    }
+  });
+  
+  function calcArray(arr: number[]): SensorSummary {
+    if (arr.length === 0) return { avg: null, min: null, max: null };
+    return {
+      avg: parseFloat((arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(2)),
+      min: parseFloat(Math.min(...arr).toFixed(2)),
+      max: parseFloat(Math.max(...arr).toFixed(2)),
+    };
+  }
+  
   return {
     voltage: calc('voltage', 1),
     current: calc('current', 2),
     power: calc('power', 1),
+    compressor: calcArray(compCurrent),
+    fanEvaporator: calcArray(evapCurrent),
+    fanCondenser: calcArray(kondCurrent),
   };
 }
 
@@ -159,37 +266,44 @@ function SensorLineChart({ data }: { data: HistoryPoint[] }) {
   }
 
   return (
-    <div style={{ background: 'transparent', borderRadius: '4px', overflow: 'hidden', padding: '10px 0' }}>
+    <div style={{ 
+      background: 'rgba(8, 18, 50, 0.9)',
+      border: '1px solid rgba(255, 255, 255, 0.08)',
+      boxShadow: 'inset -3px -3px 8px rgba(255,255,255,0.03), inset 4px 4px 12px rgba(0,0,0,0.6)',
+      borderRadius: '14px', 
+      overflow: 'hidden', 
+      padding: '20px 10px' 
+    }}>
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
 
         {/* Top Legend matching image style */}
         <g transform={`translate(${PAD_LEFT}, 25)`}>
           {/* Kabinet */}
-          <text x="0" y="0" fontSize="14" fill="#4b5563" fontWeight="bold" fontFamily="sans-serif">Kabinet°C</text>
+          <text x="0" y="0" fontSize="14" fill="#94a3b8" fontWeight="bold" fontFamily="sans-serif">Kabinet°C</text>
           <line x1="75" y1="-5" x2="115" y2="-5" stroke="#10b981" strokeWidth="3" />
 
           {/* Evaporator */}
-          <text x="145" y="0" fontSize="14" fill="#4b5563" fontWeight="bold" fontFamily="sans-serif">Evaporator°C</text>
+          <text x="145" y="0" fontSize="14" fill="#94a3b8" fontWeight="bold" fontFamily="sans-serif">Evaporator°C</text>
           <line x1="240" y1="-5" x2="280" y2="-5" stroke="#2E5BFF" strokeWidth="3" />
 
           {/* Kondensor */}
-          <text x="310" y="0" fontSize="14" fill="#4b5563" fontWeight="bold" fontFamily="sans-serif">Kondensor°C</text>
+          <text x="310" y="0" fontSize="14" fill="#94a3b8" fontWeight="bold" fontFamily="sans-serif">Kondensor°C</text>
           <line x1="400" y1="-5" x2="440" y2="-5" stroke="#ef4444" strokeWidth="3" />
         </g>
 
         {/* Chart Frame Border */}
-        <rect x={PAD_LEFT} y={PAD_TOP} width={chartW} height={chartH} fill="none" stroke="rgba(0,0,0,0.15)" strokeWidth="1" />
+        <rect x={PAD_LEFT} y={PAD_TOP} width={chartW} height={chartH} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
 
         {/* Horizontal Grid Lines */}
         {yLabels.map(v => (
           <g key={`y-${v}`}>
-            <line x1={PAD_LEFT} y1={yOf(v)} x2={W - PAD_RIGHT} y2={yOf(v)} stroke="rgba(0,0,0,0.1)" strokeWidth="1" strokeDasharray="5 5" />
+            <line x1={PAD_LEFT} y1={yOf(v)} x2={W - PAD_RIGHT} y2={yOf(v)} stroke="rgba(255,255,255,0.06)" strokeWidth="1" strokeDasharray="5 5" />
             {/* Left Y label */}
-            <text x={PAD_LEFT - 12} y={yOf(v)} textAnchor="end" dominantBaseline="middle" fontSize="14" fill="#64748b" fontFamily="monospace">
+            <text x={PAD_LEFT - 12} y={yOf(v)} textAnchor="end" dominantBaseline="middle" fontSize="14" fill="#94a3b8" fontFamily="monospace">
               {v.toFixed(1)}
             </text>
             {/* Right Y label (mirrored) */}
-            <text x={W - PAD_RIGHT + 12} y={yOf(v)} textAnchor="start" dominantBaseline="middle" fontSize="14" fill="#64748b" fontFamily="monospace">
+            <text x={W - PAD_RIGHT + 12} y={yOf(v)} textAnchor="start" dominantBaseline="middle" fontSize="14" fill="#94a3b8" fontFamily="monospace">
               {v.toFixed(1)}
             </text>
           </g>
@@ -200,15 +314,15 @@ function SensorLineChart({ data }: { data: HistoryPoint[] }) {
           const x = xOf(i);
           return (
             <g key={`x-${idx}`}>
-              <line x1={x} y1={PAD_TOP} x2={x} y2={PAD_TOP + chartH} stroke="rgba(0,0,0,0.1)" strokeWidth="1" strokeDasharray="5 5" />
+              <line x1={x} y1={PAD_TOP} x2={x} y2={PAD_TOP + chartH} stroke="rgba(255,255,255,0.04)" strokeWidth="1" strokeDasharray="5 5" />
               {/* Tick Mark on X axis */}
-              <line x1={x} y1={PAD_TOP + chartH} x2={x} y2={PAD_TOP + chartH + 6} stroke="rgba(0,0,0,0.2)" strokeWidth="1" />
+              <line x1={x} y1={PAD_TOP + chartH} x2={x} y2={PAD_TOP + chartH + 6} stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
               {/* Date Line */}
-              <text x={x} y={PAD_TOP + chartH + 22} textAnchor="middle" fontSize="12" fill="#64748b" fontFamily="monospace">
+              <text x={x} y={PAD_TOP + chartH + 22} textAnchor="middle" fontSize="12" fill="#94a3b8" fontFamily="monospace">
                 {dateLine}
               </text>
               {/* Time Line */}
-              <text x={x} y={PAD_TOP + chartH + 38} textAnchor="middle" fontSize="12" fill="#64748b" fontFamily="monospace">
+              <text x={x} y={PAD_TOP + chartH + 38} textAnchor="middle" fontSize="12" fill="#94a3b8" fontFamily="monospace">
                 {timeLine}
               </text>
             </g>
@@ -285,13 +399,13 @@ function SummaryCard({ label, summary, color, unit = '°' }: { label: string; su
   );
 }
 
-// ─── SVG Line Chart (Kelistrikan: Tegangan V & Arus A) ─────────────────────────
+// ─── SVG Line Chart (Kelistrikan: Tegangan V & Arus A + Component Breakdown) ──
 function ElectricalLineChart({ data }: { data: HistoryPoint[] }) {
   const W = 1000;
-  const H = 420;
+  const H = 480; // Increased height for better visibility
   const PAD_LEFT = 80;
   const PAD_RIGHT = 80;
-  const PAD_TOP = 60;
+  const PAD_TOP = 90; // More space for legend
   const PAD_BOTTOM = 60;
   const chartW = W - PAD_LEFT - PAD_RIGHT;
   const chartH = H - PAD_TOP - PAD_BOTTOM;
@@ -322,13 +436,24 @@ function ElectricalLineChart({ data }: { data: HistoryPoint[] }) {
     return PAD_TOP + chartH - ((val - aMin) / aRange) * chartH;
   }
 
-  function buildPath(type: 'voltage' | 'current') {
+  function buildPath(type: 'voltage' | 'current' | 'compressor' | 'fanEvap' | 'fanKond') {
     const pts: [number, number][] = [];
     data.forEach((d, i) => {
       if (type === 'voltage' && d.voltage !== null && d.voltage !== undefined && d.voltage > 0) {
         pts.push([xOf(i), yOfV(d.voltage)]);
       } else if (type === 'current' && d.current !== null && d.current !== undefined) {
         pts.push([xOf(i), yOfA(d.current)]);
+      } else if (type !== 'voltage' && type !== 'current' && d.current !== null && d.current !== undefined) {
+        // Component currents
+        const components = calculateComponentCurrents(d.current);
+        let val = 0;
+        if (type === 'compressor') val = components.comp;
+        else if (type === 'fanEvap') val = components.evap;
+        else if (type === 'fanKond') val = components.kond;
+        
+        if (val > 0) {
+          pts.push([xOf(i), yOfA(val)]);
+        }
       }
     });
     if (pts.length === 0) return '';
@@ -357,17 +482,45 @@ function ElectricalLineChart({ data }: { data: HistoryPoint[] }) {
   }
 
   return (
-    <div style={{ position: 'relative', width: '100%', overflowX: 'auto', background: '#fff', borderRadius: '14px', border: '1px solid rgba(0,31,63,0.08)', padding: '12px' }}>
+    <div style={{ 
+      position: 'relative', 
+      width: '100%', 
+      overflowX: 'auto', 
+      background: 'rgba(8, 18, 50, 0.9)',
+      border: '1px solid rgba(255, 255, 255, 0.08)',
+      boxShadow: 'inset -3px -3px 8px rgba(255,255,255,0.03), inset 4px 4px 12px rgba(0,0,0,0.6)',
+      borderRadius: '14px', 
+      padding: '20px 12px' 
+    }}>
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block', minWidth: '600px' }}>
-        {/* Top Legend */}
-        <g transform={`translate(${PAD_LEFT}, 24)`}>
-          <line x1="0" y1="0" x2="30" y2="0" stroke="#f59e0b" strokeWidth="3" />
-          <circle cx="15" cy="0" r="3.5" fill="#f59e0b" />
-          <text x="38" y="4" fontSize="12" fill="#0f172a" fontWeight="800" fontFamily="sans-serif">Tegangan (V) - Kiri</text>
+        {/* Top Legend - Simple badges like temperature chart */}
+        <g transform={`translate(${PAD_LEFT}, 25)`}>
+          {/* Tegangan (V) - Left axis */}
+          <text x="0" y="0" fontSize="13" fill="#94a3b8" fontWeight="bold" fontFamily="sans-serif">Tegangan (V)</text>
+          <text x="95" y="0" fontSize="11" fill="#64748b" fontWeight="600" fontFamily="sans-serif">(Kiri)</text>
+          <line x1="145" y1="-5" x2="185" y2="-5" stroke="#f59e0b" strokeWidth="3" />
 
-          <line x1="200" y1="0" x2="230" y2="0" stroke="#2E5BFF" strokeWidth="3" />
-          <circle cx="215" cy="0" r="3.5" fill="#2E5BFF" />
-          <text x="238" y="4" fontSize="12" fill="#0f172a" fontWeight="800" fontFamily="sans-serif">Arus (A) - Kanan</text>
+          {/* Arus Total (A) - Right axis */}
+          <text x="210" y="0" fontSize="13" fill="#94a3b8" fontWeight="bold" fontFamily="sans-serif">Arus Total (A)</text>
+          <text x="320" y="0" fontSize="11" fill="#64748b" fontWeight="600" fontFamily="sans-serif">(Kanan)</text>
+          <line x1="380" y1="-5" x2="420" y2="-5" stroke="#2E5BFF" strokeWidth="3" />
+
+          {/* Kompresor (A) */}
+          <text x="445" y="0" fontSize="13" fill="#94a3b8" fontWeight="bold" fontFamily="sans-serif">Kompresor (A)</text>
+          <text x="565" y="0" fontSize="11" fill="#64748b" fontWeight="600" fontFamily="sans-serif">(Kanan)</text>
+          <line x1="625" y1="-5" x2="665" y2="-5" stroke="#6366f1" strokeWidth="3" />
+        </g>
+
+        <g transform={`translate(${PAD_LEFT}, 45)`}>
+          {/* Fan Evap (A) */}
+          <text x="0" y="0" fontSize="13" fill="#94a3b8" fontWeight="bold" fontFamily="sans-serif">Fan Evap (A)</text>
+          <text x="105" y="0" fontSize="11" fill="#64748b" fontWeight="600" fontFamily="sans-serif">(Kanan)</text>
+          <line x1="165" y1="-5" x2="205" y2="-5" stroke="#06b6d4" strokeWidth="2.5" strokeDasharray="4 2" />
+
+          {/* Fan Kond (A) */}
+          <text x="230" y="0" fontSize="13" fill="#94a3b8" fontWeight="bold" fontFamily="sans-serif">Fan Kond (A)</text>
+          <text x="335" y="0" fontSize="11" fill="#64748b" fontWeight="600" fontFamily="sans-serif">(Kanan)</text>
+          <line x1="395" y1="-5" x2="435" y2="-5" stroke="#10b981" strokeWidth="2.5" strokeDasharray="4 2" />
         </g>
 
         {/* Grid lines (from V axis) */}
@@ -375,7 +528,7 @@ function ElectricalLineChart({ data }: { data: HistoryPoint[] }) {
           const y = yOfV(v);
           return (
             <g key={`v-${v}`}>
-              <line x1={PAD_LEFT} y1={y} x2={PAD_LEFT + chartW} y2={y} stroke="rgba(0,0,0,0.06)" strokeWidth="1" strokeDasharray="3 3" />
+              <line x1={PAD_LEFT} y1={y} x2={PAD_LEFT + chartW} y2={y} stroke="rgba(255,255,255,0.06)" strokeWidth="1" strokeDasharray="3 3" />
               <text x={PAD_LEFT - 12} y={y + 4} textAnchor="end" fontSize="11" fill="#f59e0b" fontFamily="monospace" fontWeight="700">
                 {v}V
               </text>
@@ -398,20 +551,23 @@ function ElectricalLineChart({ data }: { data: HistoryPoint[] }) {
           const x = xOf(i);
           return (
             <g key={`x-${i}`}>
-              <line x1={x} y1={PAD_TOP} x2={x} y2={PAD_TOP + chartH} stroke="rgba(0,0,0,0.05)" strokeWidth="1" strokeDasharray="5 5" />
-              <line x1={x} y1={PAD_TOP + chartH} x2={x} y2={PAD_TOP + chartH + 5} stroke="rgba(0,0,0,0.2)" strokeWidth="1" />
-              <text x={x} y={PAD_TOP + chartH + 20} textAnchor="middle" fontSize="11" fill="#64748b" fontFamily="monospace">{dateLine}</text>
-              <text x={x} y={PAD_TOP + chartH + 34} textAnchor="middle" fontSize="11" fill="#64748b" fontFamily="monospace">{timeLine}</text>
+              <line x1={x} y1={PAD_TOP} x2={x} y2={PAD_TOP + chartH} stroke="rgba(255,255,255,0.04)" strokeWidth="1" strokeDasharray="5 5" />
+              <line x1={x} y1={PAD_TOP + chartH} x2={x} y2={PAD_TOP + chartH + 5} stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
+              <text x={x} y={PAD_TOP + chartH + 20} textAnchor="middle" fontSize="11" fill="#94a3b8" fontFamily="monospace">{dateLine}</text>
+              <text x={x} y={PAD_TOP + chartH + 34} textAnchor="middle" fontSize="11" fill="#94a3b8" fontFamily="monospace">{timeLine}</text>
             </g>
           );
         })}
 
         {/* Border */}
-        <rect x={PAD_LEFT} y={PAD_TOP} width={chartW} height={chartH} fill="none" stroke="rgba(0,31,63,0.12)" strokeWidth="1" />
+        <rect x={PAD_LEFT} y={PAD_TOP} width={chartW} height={chartH} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
 
-        {/* Lines */}
-        <path d={buildPath('voltage')} fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeLinejoin="miter" />
+        {/* Lines - draw in order so voltage/current are on top */}
+        <path d={buildPath('fanKond')} fill="none" stroke="#10b981" strokeWidth="2" strokeLinejoin="miter" strokeDasharray="4 2" />
+        <path d={buildPath('fanEvap')} fill="none" stroke="#06b6d4" strokeWidth="2" strokeLinejoin="miter" strokeDasharray="4 2" />
+        <path d={buildPath('compressor')} fill="none" stroke="#6366f1" strokeWidth="2.5" strokeLinejoin="miter" />
         <path d={buildPath('current')} fill="none" stroke="#2E5BFF" strokeWidth="2.5" strokeLinejoin="miter" />
+        <path d={buildPath('voltage')} fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeLinejoin="miter" />
       </svg>
     </div>
   );
@@ -550,7 +706,10 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
   const electricalSummary = useMemo(() => computeElectricalSummary(tableSource), [tableSource]);
 
   // Table rows — oldest first, limited to 20 unless expanded
-  const tableRows = useMemo(() => [...tableSource], [tableSource]);
+  const tableRows = useMemo(() => {
+    // Filter out any invalid rows
+    return tableSource.filter(row => row && row.recorded_at);
+  }, [tableSource]);
   const visibleRows = showAllRows ? tableRows : tableRows.slice(0, 20);
 
   const formatTime = (iso: string) => {
@@ -569,32 +728,61 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
   const exportCsv = () => {
     // Use downsampled data for export
     const exportRows = data;
+    
+    // Get unit serial number from unit object
+    const serialNumber = unit?.serial_number || unitId || 'Unknown';
+    // Get period label and clean it (remove spaces)
+    const periodLabel = TIME_RANGES[rangeIdx].label.replace(/\s+/g, '');
+    
     if (activeTab === 'electrical') {
       const elSummary = computeElectricalSummary(exportRows);
-      const header = 'Waktu (WIB),Tegangan (V),Arus Total (A),Daya (W)\n';
-      const rows = exportRows.map(d =>
-        `${formatTime(d.recorded_at)},${d.voltage?.toFixed(1) ?? ''},${d.current?.toFixed(2) ?? ''},${d.power?.toFixed(1) ?? ''}`
-      ).join('\n');
-      const summaryRow = `\nRATA-RATA (${exportRows.length} DATA),${elSummary.voltage.avg ?? ''},${elSummary.current.avg ?? ''},${elSummary.power.avg ?? ''}`;
+      const header = 'Waktu (WIB),Tegangan (V),Arus Total (A),Daya (W),Kompresor (A),Fan Evap (A),Fan Kond (A)\n';
+      const rows = exportRows.map(d => {
+        // Safe number conversion
+        const voltage = d.voltage ? Number(d.voltage) : null;
+        const current = d.current !== null && d.current !== undefined ? Number(d.current) : null;
+        const power = d.power ? Number(d.power) : null;
+        
+        const comp = calculateComponentCurrents(current ?? 0);
+        
+        const voltageStr = voltage !== null && !isNaN(voltage) ? voltage.toFixed(1) : '';
+        const currentStr = current !== null && !isNaN(current) ? current.toFixed(2) : '';
+        const powerStr = power !== null && !isNaN(power) ? power.toFixed(1) : '';
+        const compStr = comp.comp > 0 ? comp.comp.toFixed(2) : '';
+        const evapStr = comp.evap > 0 ? comp.evap.toFixed(2) : '';
+        const kondStr = comp.kond > 0 ? comp.kond.toFixed(2) : '';
+        
+        return `${formatTime(d.recorded_at)},${voltageStr},${currentStr},${powerStr},${compStr},${evapStr},${kondStr}`;
+      }).join('\n');
+      const summaryRow = `\nRATA-RATA (${exportRows.length} DATA),${elSummary.voltage.avg ?? ''},${elSummary.current.avg ?? ''},${elSummary.power.avg ?? ''},${elSummary.compressor.avg ?? ''},${elSummary.fanEvaporator.avg ?? ''},${elSummary.fanCondenser.avg ?? ''}`;
       const blob = new Blob([header + rows + summaryRow], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `electrical-history-${unitId}-${TIME_RANGES[rangeIdx].label}.csv`;
+      a.download = `Riwayat_Kelistrikan_${serialNumber}_${periodLabel}.csv`;
       a.click();
       URL.revokeObjectURL(url);
     } else {
       const rawSummary = computeSummary(exportRows);
       const header = 'Waktu (WIB),Kabinet (°C),Evaporator (°C),Kondensor (°C)\n';
-      const rows = exportRows.map(d =>
-        `${formatTime(d.recorded_at)},${d.temp_cabinet?.toFixed(1) ?? ''},${d.temp_evaporator?.toFixed(1) ?? ''},${d.temp_condenser?.toFixed(1) ?? ''}`
-      ).join('\n');
+      const rows = exportRows.map(d => {
+        // Safe number conversion
+        const cabinet = d.temp_cabinet !== null && d.temp_cabinet !== undefined ? Number(d.temp_cabinet) : null;
+        const evaporator = d.temp_evaporator !== null && d.temp_evaporator !== undefined ? Number(d.temp_evaporator) : null;
+        const condenser = d.temp_condenser !== null && d.temp_condenser !== undefined ? Number(d.temp_condenser) : null;
+        
+        const cabinetStr = cabinet !== null && !isNaN(cabinet) ? cabinet.toFixed(1) : '';
+        const evaporatorStr = evaporator !== null && !isNaN(evaporator) ? evaporator.toFixed(1) : '';
+        const condenserStr = condenser !== null && !isNaN(condenser) ? condenser.toFixed(1) : '';
+        
+        return `${formatTime(d.recorded_at)},${cabinetStr},${evaporatorStr},${condenserStr}`;
+      }).join('\n');
       const summaryRow = `\nRATA-RATA (${exportRows.length} DATA),${rawSummary.cabinet.avg ?? ''},${rawSummary.evaporator.avg ?? ''},${rawSummary.condenser.avg ?? ''}`;
       const blob = new Blob([header + rows + summaryRow], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `sensor-history-${unitId}-${TIME_RANGES[rangeIdx].label}.csv`;
+      a.download = `Riwayat_Suhu_${serialNumber}_${periodLabel}.csv`;
       a.click();
       URL.revokeObjectURL(url);
     }
@@ -1290,9 +1478,14 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
                     </tr>
                   </thead>
                   <tbody>
-                    {visibleRows.map((row, i) => {
-                      const evap = row.temp_evaporator;
-                      const isDefrost = evap !== null && evap > 0;
+                    {visibleRows.filter(row => row && row.recorded_at).map((row, i) => {
+                      // Safe number conversion for temperature values
+                      const cabinet = row.temp_cabinet !== null && row.temp_cabinet !== undefined ? Number(row.temp_cabinet) : null;
+                      const evaporator = row.temp_evaporator !== null && row.temp_evaporator !== undefined ? Number(row.temp_evaporator) : null;
+                      const condenser = row.temp_condenser !== null && row.temp_condenser !== undefined ? Number(row.temp_condenser) : null;
+                      
+                      const isDefrost = evaporator !== null && evaporator > 0;
+                      
                       return (
                         <tr key={i} style={{
                           borderBottom: '1px solid rgba(255,255,255,0.04)',
@@ -1305,12 +1498,12 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
                             {formatTime(row.recorded_at)}
                           </td>
                           <td style={{ padding: '8px 14px', fontFamily: 'monospace', fontWeight: 700, color: '#10b981' }}>
-                            {row.temp_cabinet?.toFixed(1) ?? '—'}
+                            {cabinet !== null && !isNaN(cabinet) ? cabinet.toFixed(1) : '—'}
                           </td>
                           <td style={{ padding: '8px 14px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                               <span style={{ fontFamily: 'monospace', fontWeight: 700, color: isDefrost ? '#f59e0b' : '#2E5BFF' }}>
-                                {row.temp_evaporator?.toFixed(1) ?? '—'}
+                                {evaporator !== null && !isNaN(evaporator) ? evaporator.toFixed(1) : '—'}
                               </span>
                               {isDefrost && (
                                 <span style={{ fontSize: '0.6rem', fontWeight: 800, color: '#f59e0b', background: 'rgba(245,158,11,0.12)', padding: '1px 5px', borderRadius: '4px', border: '1px solid rgba(245,158,11,0.25)' }}>
@@ -1320,7 +1513,7 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
                             </div>
                           </td>
                           <td style={{ padding: '8px 14px', fontFamily: 'monospace', fontWeight: 700, color: '#ef4444' }}>
-                            {row.temp_condenser?.toFixed(1) ?? '—'}
+                            {condenser !== null && !isNaN(condenser) ? condenser.toFixed(1) : '—'}
                           </td>
                         </tr>
                       );
@@ -1371,6 +1564,13 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
             <SummaryCard label="Daya" summary={electricalSummary.power} color="#10b981" unit=" W" />
           </div>
 
+          {/* Summary Stats Estimasi Beban Komponen */}
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <SummaryCard label="Kompresor" summary={electricalSummary.compressor} color="#6366f1" unit=" A" />
+            <SummaryCard label="Fan Evaporator" summary={electricalSummary.fanEvaporator} color="#06b6d4" unit=" A" />
+            <SummaryCard label="Fan Kondensor" summary={electricalSummary.fanCondenser} color="#10b981" unit=" A" />
+          </div>
+
           {/* Chart View Kelistrikan */}
           {view === 'chart' && (
             <div style={{ width: '100%', paddingBottom: '10px' }}>
@@ -1398,7 +1598,7 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78rem' }}>
                   <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
                     <tr style={{ background: 'rgba(8, 18, 50, 0.95)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                      {['No', 'Waktu (WIB)', 'Tegangan (V)', 'Arus Total (A)', 'Daya (W)', 'Status Beban'].map(h => (
+                      {['No', 'Waktu (WIB)', 'Tegangan (V)', 'Arus Total (A)', 'Daya (W)', 'Kompresor (A)', 'Fan Evap (A)', 'Fan Kond (A)', 'Status Beban'].map(h => (
                         <th key={h} style={{ padding: '12px 14px', textAlign: h === 'No' ? 'center' : 'left', fontWeight: 800, color: '#94a3b8', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
                           {h}
                         </th>
@@ -1406,14 +1606,21 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
                     </tr>
                   </thead>
                   <tbody>
-                    {visibleRows.map((row, i) => {
-                      const cur = row.current ?? 0;
+                    {visibleRows.filter(row => row && row.recorded_at).map((row, i) => {
+                      const cur = Number(row.current) || 0;
                       const isIdle = cur < 0.2;
                       const isFan = cur >= 0.2 && cur < 4.0;
                       const isComp = cur >= 4.0;
                       const statusBadge = isIdle ? { label: 'Standby / Defrost', color: '#64748b', bg: 'rgba(100,116,139,0.15)' }
                         : isFan ? { label: 'Fan Aktif', color: '#d97706', bg: 'rgba(217,119,6,0.12)' }
                           : { label: 'Kompresor ON', color: '#059669', bg: 'rgba(5,150,105,0.12)' };
+
+                      const componentCurrents = calculateComponentCurrents(cur);
+                      
+                      // Safe number conversion
+                      const voltage = row.voltage ? Number(row.voltage) : null;
+                      const current = row.current !== null && row.current !== undefined ? Number(row.current) : null;
+                      const power = row.power ? Number(row.power) : null;
 
                       return (
                         <tr key={i} style={{
@@ -1427,13 +1634,22 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
                             {formatTime(row.recorded_at)}
                           </td>
                           <td style={{ padding: '8px 14px', fontFamily: 'monospace', fontWeight: 700, color: '#f59e0b' }}>
-                            {row.voltage ? `${row.voltage.toFixed(1)} V` : '—'}
+                            {voltage !== null && !isNaN(voltage) ? `${voltage.toFixed(1)} V` : '—'}
                           </td>
                           <td style={{ padding: '8px 14px', fontFamily: 'monospace', fontWeight: 700, color: '#7da8ff' }}>
-                            {row.current !== null && row.current !== undefined ? `${row.current.toFixed(2)} A` : '—'}
+                            {current !== null && !isNaN(current) ? `${current.toFixed(2)} A` : '—'}
                           </td>
                           <td style={{ padding: '8px 14px', fontFamily: 'monospace', fontWeight: 700, color: '#10b981' }}>
-                            {row.power ? `${row.power.toFixed(1)} W` : '—'}
+                            {power !== null && !isNaN(power) ? `${power.toFixed(1)} W` : '—'}
+                          </td>
+                          <td style={{ padding: '8px 14px', fontFamily: 'monospace', fontWeight: 700, color: '#6366f1' }}>
+                            {componentCurrents.comp > 0 ? `${componentCurrents.comp.toFixed(2)} A` : '—'}
+                          </td>
+                          <td style={{ padding: '8px 14px', fontFamily: 'monospace', fontWeight: 700, color: '#06b6d4' }}>
+                            {componentCurrents.evap > 0 ? `${componentCurrents.evap.toFixed(2)} A` : '—'}
+                          </td>
+                          <td style={{ padding: '8px 14px', fontFamily: 'monospace', fontWeight: 700, color: '#10b981' }}>
+                            {componentCurrents.kond > 0 ? `${componentCurrents.kond.toFixed(2)} A` : '—'}
                           </td>
                           <td style={{ padding: '8px 14px' }}>
                             <span style={{ fontSize: '0.62rem', fontWeight: 800, color: statusBadge.color, background: statusBadge.bg, padding: '2px 8px', borderRadius: '4px' }}>
@@ -1458,6 +1674,15 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
                       </td>
                       <td style={{ padding: '12px 14px', fontFamily: 'monospace', fontWeight: 900, color: '#10b981' }}>
                         {electricalSummary.power.avg !== null ? `${electricalSummary.power.avg} W` : '—'}
+                      </td>
+                      <td style={{ padding: '12px 14px', fontFamily: 'monospace', fontWeight: 900, color: '#6366f1' }}>
+                        {electricalSummary.compressor.avg !== null ? `${electricalSummary.compressor.avg} A` : '—'}
+                      </td>
+                      <td style={{ padding: '12px 14px', fontFamily: 'monospace', fontWeight: 900, color: '#06b6d4' }}>
+                        {electricalSummary.fanEvaporator.avg !== null ? `${electricalSummary.fanEvaporator.avg} A` : '—'}
+                      </td>
+                      <td style={{ padding: '12px 14px', fontFamily: 'monospace', fontWeight: 900, color: '#10b981' }}>
+                        {electricalSummary.fanCondenser.avg !== null ? `${electricalSummary.fanCondenser.avg} A` : '—'}
                       </td>
                       <td style={{ padding: '12px 14px' }}></td>
                     </tr>

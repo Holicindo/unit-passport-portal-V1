@@ -25,7 +25,15 @@ export default function ClientLayoutWrapper({ children }: { children: React.Reac
     document.documentElement.removeAttribute('data-theme');
     document.body.removeAttribute('data-theme');
 
-    if (hideLayout) {
+    if (isClientPortal || isPartnerPortal) {
+      document.body.style.display = 'block';
+      document.body.style.margin = '0';
+      document.body.style.padding = '0';
+      document.body.style.overflowX = 'hidden';
+      document.body.style.background = '#dde2e8';
+      document.body.style.width = '100vw';
+      document.body.style.height = 'auto';
+    } else if (isLoginPage) {
       // Login page: Force full coverage without margins
       document.body.style.display = 'block';
       document.body.style.margin = '0';
@@ -34,6 +42,23 @@ export default function ClientLayoutWrapper({ children }: { children: React.Reac
       document.body.style.background = '#0b1120';
       document.body.style.width = '100vw';
       document.body.style.height = '100vh';
+    } else if (isPassportPage) {
+      // Passport detail unit page: Full coverage dark background, no white gutters
+      document.body.style.display = 'block';
+      document.body.style.margin = '0';
+      document.body.style.padding = '0';
+      document.body.style.overflowX = 'hidden';
+      document.body.style.background = '#060d20';
+      document.body.style.width = '100vw';
+      document.body.style.height = 'auto';
+    } else if (hideLayout) {
+      document.body.style.display = 'block';
+      document.body.style.margin = '0';
+      document.body.style.padding = '0';
+      document.body.style.overflowX = 'hidden';
+      document.body.style.background = '#f0f1f7';
+      document.body.style.width = '100vw';
+      document.body.style.height = 'auto';
     } else {
       // Dashboard pages: Reset to normal layout
       document.body.style.display = 'flex';
@@ -44,7 +69,7 @@ export default function ClientLayoutWrapper({ children }: { children: React.Reac
       document.body.style.width = '';
       document.body.style.height = '';
     }
-  }, [pathname, hideLayout]);
+  }, [pathname, hideLayout, isClientPortal, isPartnerPortal, isLoginPage, isPassportPage]);
 
   return (
     <>
@@ -63,7 +88,11 @@ export default function ClientLayoutWrapper({ children }: { children: React.Reac
         {!hideLayout && <TopBar onToggleSidebar={toggleSidebar} isSidebarOpen={sidebarOpen} />}
 
         <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <div className="page-content" suppressHydrationWarning>
+          <div
+            className={!hideLayout ? 'page-content' : undefined}
+            style={hideLayout ? { flex: 1, display: 'flex', flexDirection: 'column', width: '100%', padding: 0, margin: 0 } : undefined}
+            suppressHydrationWarning
+          >
             {children}
           </div>
         </main>

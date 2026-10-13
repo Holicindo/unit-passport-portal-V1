@@ -3,29 +3,26 @@
    Base: #E4E6EF | Holicindo Brand Identity
    ============================================================ */
 
-/* ── Chat Layout — Neumorphic card ── */
+/* ── Chat Layout — Clean Flat Card ── */
 .chatLayout {
   display: grid;
   grid-template-columns: 300px 1fr;
   gap: 0;
   height: calc(100vh - 180px);
   min-height: 500px;
-  background: #E4E6EF;
-  border-radius: 20px;
-  border: none;
+  background: #FFFFFF;
+  border-radius: 16px;
+  border: 1px solid #E2E8F0;
   overflow: hidden;
-  box-shadow:
-    -6px -6px 10px rgba(255, 255, 255, 0.72),
-     6px  6px 12px rgba(0, 31, 63, 0.14),
-     0 1px 3px rgba(0, 31, 63, 0.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 /* ── Panel Kiri: Daftar Percakapan ── */
 .convPanel {
-  border-right: 1px solid rgba(0, 31, 63, 0.06);
+  border-right: 1px solid #E2E8F0;
   display: flex;
   flex-direction: column;
-  background: rgba(232, 234, 238, 0.60);
+  background: #F8FAFC;
 }
 
 .convHeader {
@@ -112,13 +109,11 @@
      2px  2px 5px rgba(0, 31, 63, 0.10);
 }
 
-/* Item aktif — neumorphic inset */
+/* Item aktif — clean flat highlight */
 .convItemActive {
-  background: var(--neu-base);
-  box-shadow:
-    inset 2px 2px 5px rgba(0, 31, 63, 0.07),
-    inset -2px -2px 5px rgba(255, 255, 255, 0.92);
-  border: none;
+  background: #EFF6FF !important;
+  border-left: 3px solid #2E5BFF !important;
+  box-shadow: none !important;
 }
 
 .convAvatar {
@@ -364,36 +359,32 @@
   align-items: center;
 }
 
-/* Input — neumorphic inset */
+/* Input — clean flat */
 .chatInput {
   flex: 1;
   height: 42px;
-  border: none;
-  border-radius: 12px;
+  border: 1px solid #CBD5E1;
+  border-radius: 10px;
   padding: 0 16px;
   font-size: 0.875rem;
-  color: var(--brand-deep-navy);
-  background: var(--neu-base);
+  color: #1E293B;
+  background: #FFFFFF;
   outline: none;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   font-family: var(--font-body);
-  box-shadow:
-    inset 3px 3px 7px rgba(0, 31, 63, 0.07),
-    inset -3px -3px 7px rgba(255, 255, 255, 0.92);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .chatInput:focus {
-  box-shadow:
-    inset 4px 4px 8px rgba(0, 31, 63, 0.09),
-    inset -4px -4px 8px rgba(255, 255, 255, 0.95),
-    0 0 0 2px rgba(46, 91, 255, 0.18);
+  border-color: var(--brand-cobalt-blue);
+  box-shadow: 0 0 0 3px rgba(46, 91, 255, 0.12);
 }
 
-/* Tombol kirim — neumorphic Cobalt Blue */
+/* Tombol kirim — clean flat Cobalt Blue */
 .sendBtn {
   width: 42px;
   height: 42px;
-  border-radius: 12px;
+  border-radius: 10px;
   background: var(--brand-cobalt-blue);
   color: var(--brand-optic-white);
   border: none;
@@ -401,26 +392,20 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   flex-shrink: 0;
-  box-shadow:
-    -2px -2px 5px rgba(255, 255, 255, 0.20),
-     2px  2px 6px rgba(0, 20, 80, 0.28);
+  box-shadow: 0 2px 4px rgba(46, 91, 255, 0.25);
 }
 
 .sendBtn:hover:not(:disabled) {
   background: #1e47e6;
   transform: translateY(-1px);
-  box-shadow:
-    -3px -3px 7px rgba(255, 255, 255, 0.25),
-     3px  3px 9px rgba(0, 20, 80, 0.35);
+  box-shadow: 0 4px 8px rgba(46, 91, 255, 0.35);
 }
 
 .sendBtn:active:not(:disabled) {
-  box-shadow:
-    inset 2px 2px 5px rgba(0, 20, 80, 0.30),
-    inset -2px -2px 5px rgba(46, 91, 255, 0.20);
   transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(46, 91, 255, 0.25);
 }
 
 .sendBtn:disabled {

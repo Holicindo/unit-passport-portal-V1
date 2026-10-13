@@ -219,6 +219,7 @@ export default function ClientFleet() {
           </div>
           
           <CustomSelect
+            className={styles.citySelect}
             value={cityFilter}
             onChange={(val) => { setCityFilter(val); setPage(1); }}
             options={[
@@ -335,13 +336,13 @@ export default function ClientFleet() {
                           <td data-label="Model" className={styles.fleetCardModelCell}>
                             {unit.model_name || '-'}
                           </td>
-                          {/* col-3: kota */}
+                          {/* col-3: lokasi */}
+                          <td className={styles.hiddenOnMobile} data-label="Lokasi" style={{ color: 'var(--brand-space-grey)', fontSize: '0.82rem', maxWidth: '220px', whiteSpace: 'normal', lineHeight: '1.4' }}>
+                            {unit.outlet_branch || unit.current_client?.address || '-'}
+                          </td>
+                          {/* col-4: kota */}
                           <td data-label="Kota" className={styles.fleetCardCityCell}>
                             {unit.city || unit.specs?.city || unit.current_client?.city || '-'}
-                          </td>
-                          {/* hidden on mobile */}
-                          <td className={styles.hiddenOnMobile} data-label="Lokasi" style={{ color: 'var(--brand-space-grey)', fontSize: '0.8rem', maxWidth: '250px', whiteSpace: 'normal', lineHeight: '1.4' }}>
-                            {unit.outlet_branch || unit.current_client?.address || '-'}
                           </td>
                           <td className={styles.hiddenOnMobile} data-label="Garansi Habis">
                             {warrantyExp ? (
@@ -368,7 +369,7 @@ export default function ClientFleet() {
                               <span style={{ color: 'var(--brand-space-grey)', fontSize: '0.78rem', fontStyle: 'italic' }}>Belum ada</span>
                             )}
                           </td>
-                          {/* status: visible on desktop, hidden on mobile (badge is already in header) */}
+                          {/* status: visible on desktop, hidden on mobile */}
                           <td className={styles.hiddenOnMobile} data-label="Status">
                             <StatusBadge status={unit.status} />
                           </td>
@@ -377,7 +378,7 @@ export default function ClientFleet() {
                             <Link
                               href={`/client-portal/units/${encodeURIComponent(unit.id)}`}
                               className={styles.cardAction}
-                              style={{ gap: 4 }}
+                              style={{ gap: 4, display: 'inline-flex', justifyContent: 'flex-end' }}
                             >
                               Lihat <Eye size={13} />
                             </Link>
