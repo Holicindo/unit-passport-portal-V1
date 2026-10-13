@@ -101,6 +101,7 @@ function UserAvatar({
 
 export default function ClientPortalLayout({ children }: { children: React.ReactNode }) {
   const [user, setUser]               = useState<any>(null);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notifCount, setNotifCount]   = useState(0);
   const [notifPanelOpen, setNotifPanelOpen] = useState(false);
@@ -115,26 +116,62 @@ export default function ClientPortalLayout({ children }: { children: React.React
   const searchRef   = useRef<HTMLDivElement>(null);
   const notifRef    = useRef<HTMLDivElement>(null);
 
-  // Baca user dari localStorage — data sesuai yang didaftarkan
+  // Baca user dari localStorage — SINGLE RUN dengan sessionStorage guard
   useEffect(() => {
+    // Check if auth has been done in this session to prevent double-run in Strict Mode
+    const authDone = sessionStorage.getItem('client-portal-auth-checked');
+    
+    if (authDone === 'true') {
+      console.log('[ClientPortal] Auth already done in this session');
+      // Still need to set user from localStorage
+      const rawUser = localStorage.getItem('user');
+      if (rawUser) {
+        try {
+          const parsed = JSON.parse(rawUser);
+          if (parsed.role === 'CLIENT') {
+            setUser(parsed);
+          }
+        } catch {}
+      }
+      setIsAuthChecking(false);
+      return;
+    }
+
+    console.log('[ClientPortal] First auth check in session, pathname:', pathname);
+    sessionStorage.setItem('client-portal-auth-checked', 'true');
+    
     const rawUser = localStorage.getItem('user');
     const token   = localStorage.getItem('token');
 
+    console.log('[ClientPortal] Token:', !!token, 'User:', !!rawUser);
+
     if (!token || !rawUser) {
-      router.push('/login');
+      console.log('[ClientPortal] Missing auth, redirect to login');
+      setIsAuthChecking(false);
+      window.location.href = '/login'; // Force hard redirect
       return;
     }
+
     try {
       const parsed = JSON.parse(rawUser);
+      console.log('[ClientPortal] User role:', parsed.role, 'email:', parsed.email);
+      
       if (parsed.role !== 'CLIENT') {
-        router.push('/dashboard');
+        console.log('[ClientPortal] Wrong role, redirect to admin dashboard');
+        setIsAuthChecking(false);
+        window.location.href = '/dashboard'; // Force hard redirect
         return;
       }
+      
+      console.log('[ClientPortal] Auth SUCCESS - setting user');
       setUser(parsed);
-    } catch {
-      router.push('/login');
+      setIsAuthChecking(false);
+    } catch (err) {
+      console.error('[ClientPortal] JSON parse error:', err);
+      setIsAuthChecking(false);
+      window.location.href = '/login';
     }
-  }, [router]);
+  }, []); // Run only once on mount
 
   // Tutup dropdown saat klik di luar
   useEffect(() => {
@@ -196,6 +233,33 @@ export default function ClientPortalLayout({ children }: { children: React.React
     router.push('/login');
   };
 
+  // Show loading state while checking auth
+  if (isAuthChecking) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #eaecf0 0%, #c0c8d2 50%, #dde2e8 100%)'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ 
+            width: '40px', 
+            height: '40px', 
+            border: '4px solid rgba(46, 91, 255, 0.2)', 
+            borderTopColor: '#2E5BFF',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 16px'
+          }} />
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          <p style={{ color: '#475569', fontSize: '0.875rem', fontWeight: 600 }}>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!user) return null;
 
   // Data dari user yang terdaftar — bukan hardcode
@@ -215,11 +279,11 @@ export default function ClientPortalLayout({ children }: { children: React.React
           <div className={styles.navLogoIcon}>
             <HolicLogo size={22} />
           </div>
-          <span className={styles.navBrandName}>Holicindo</span>
+          <span className={styles.navBrandName}>Holicindo Client Portal</span>
         </Link>
 
-        {/* Menu Tengah */}
-        <div className={styles.navMenu}>
+        {/* Menu Tengah - Hide on desktop, show on mobile/tablet */}
+        <div className={`${styles.navMenu} ${styles.navMenuHideDesktop}`}>
           {navItems.map(({ href, label, icon: Icon }) => {
             const isActive = pathname === href || pathname.startsWith(href + '/');
             return (
@@ -235,92 +299,8 @@ export default function ClientPortalLayout({ children }: { children: React.React
           })}
         </div>
 
-        {/* Kanan: Search + Notif + Avatar */}
+        {/* Kanan: Notif + Avatar (Search removed) */}
         <div className={styles.navRight}>
-
-          {/* Search */}
-          <div ref={searchRef} style={{ position: 'relative' }}>
-            <button
-              className={styles.navIconBtn}
-              aria-label="Cari"
-              onClick={() => { setSearchOpen(v => !v); setNotifPanelOpen(false); setDropdownOpen(false); }}
-              style={{ background: searchOpen ? 'var(--neu-base)' : undefined, boxShadow: searchOpen ? 'var(--neu-shadow-inset)' : undefined }}
-            >
-              <Search size={18} />
-            </button>
-            {searchOpen && (
-              <div style={{
-                position: 'absolute', top: 'calc(100% + 8px)', right: 0,
-                width: '320px',
-                background: '#E4E6EF',
-                border: 'none',
-                borderRadius: '16px',
-                boxShadow: '-6px -6px 10px rgba(255,255,255,0.72), 6px 6px 12px rgba(0,31,63,0.14), 0 1px 3px rgba(0,31,63,0.05)',
-                zIndex: 300, overflow: 'hidden',
-              }}>
-                <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(0,31,63,0.06)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Search size={15} color="var(--brand-space-grey)" style={{ flexShrink: 0 }} />
-                  <input
-                    autoFocus
-                    type="text"
-                    placeholder="Cari serial number atau model..."
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    style={{
-                      flex: 1, border: 'none', outline: 'none',
-                      fontSize: '0.875rem', fontFamily: 'var(--font-body)',
-                      color: 'var(--brand-deep-navy)', background: 'transparent',
-                      backgroundColor: 'transparent',
-                    }}
-                  />
-                  {searchQuery && (
-                    <button onClick={() => setSearchQuery('')} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--brand-space-grey)', display: 'flex' }}>
-                      <X size={14} />
-                    </button>
-                  )}
-                </div>
-                {searchQuery && (
-                  <div>
-                    {searchResults.length === 0 ? (
-                      <div style={{ padding: '20px', textAlign: 'center', color: 'var(--brand-space-grey)', fontSize: '0.82rem', fontFamily: 'var(--font-body)' }}>
-                        Tidak ada unit ditemukan
-                      </div>
-                    ) : (
-                      searchResults.map(u => (
-                        <button
-                          key={u.id}
-                          onClick={() => { router.push(`/client-portal/units/${encodeURIComponent(u.id)}`); setSearchOpen(false); setSearchQuery(''); }}
-                          style={{
-                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                            width: '100%', padding: '12px 16px', border: 'none',
-                            background: 'transparent', cursor: 'pointer', textAlign: 'left',
-                            borderBottom: '1px solid var(--brand-light-grey)',
-                          }}
-                          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.55)')}
-                          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                        >
-                          <div>
-                            <div style={{ fontWeight: 700, fontSize: '0.875rem', color: 'var(--brand-deep-navy)', fontFamily: 'var(--font-heading)' }}>
-                              {u.serial_number}
-                            </div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--brand-space-grey)', fontFamily: 'var(--font-body)' }}>
-                              {u.model_name} · {u.current_client?.city || '—'}
-                            </div>
-                          </div>
-                          <ChevronRight size={14} color="var(--brand-space-grey)" />
-                        </button>
-                      ))
-                    )}
-                  </div>
-                )}
-                {!searchQuery && (
-                  <div style={{ padding: '16px', textAlign: 'center', color: 'var(--brand-space-grey)', fontSize: '0.78rem', fontFamily: 'var(--font-body)' }}>
-                    Ketik untuk mencari unit di fleet Anda
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
 
           {/* Notifikasi */}
           <div ref={notifRef} style={{ position: 'relative' }}>

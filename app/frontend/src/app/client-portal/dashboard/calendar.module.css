@@ -10,10 +10,9 @@
 
 /* Pressed/active state saat diklik */
 .eventActive {
-  background: rgba(255, 255, 255, 0.10) !important;
-  box-shadow:
-    inset 2px 2px 5px rgba(0, 0, 0, 0.35),
-    inset -2px -2px 5px rgba(3, 86, 197, 0.25) !important;
+  background: rgba(46, 91, 255, 0.15) !important;
+  border-radius: 8px;
+  box-shadow: 0 0 0 2px #2E5BFF !important;
 }
 
 /* Dot indicator di bawah angka tanggal (diganti warna teks) */

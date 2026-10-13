@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { unitApi, serviceLogApi, authApi } from '@/lib/api';
-import { TrendingUp, AlertTriangle, ChevronRight, Wrench, Package, QrCode, ShieldCheck, FileText, Calendar, LifeBuoy } from 'lucide-react';
+import { unitApi, serviceLogApi, authApi, healthScoreApi } from '@/lib/api';
+import { TrendingUp, AlertTriangle, ChevronRight, Wrench, Package, QrCode, ShieldCheck, FileText, Calendar, LifeBuoy, Activity, CheckCircle2 } from 'lucide-react';
 import styles from '../ClientPortal.module.css';
 import Link from 'next/link';
 import { useGreeting, MiniCalendar, StatusBadge, SkeletonCard, type CalendarEvents } from './components';
@@ -10,9 +10,85 @@ import { useGreeting, MiniCalendar, StatusBadge, SkeletonCard, type CalendarEven
 export default function ClientDashboard() {
   const [fleet, setFleet] = useState<any[]>([]);
   const [recentLogs, setRecentLogs] = useState<any[]>([]);
+  const [showAllServices, setShowAllServices] = useState(false);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [healthScores, setHealthScores] = useState<Record<string, any>>({});
+  const [triggeringScore, setTriggeringScore] = useState(false);
+  const [triggerNotification, setTriggerNotification] = useState<string | null>(null);
   const greeting = useGreeting();
+
+  const fetchHealthScores = async () => {
+    try {
+      const { data } = await healthScoreApi.getActive();
+      if (Array.isArray(data)) {
+        const map: Record<string, any> = {};
+        data.forEach((item: any) => {
+          if (item.unit_id) map[item.unit_id] = item;
+        });
+        setHealthScores(map);
+      }
+    } catch (err) {
+      console.error('Gagal mengambil data health scores:', err);
+    }
+  };
+
+  const handleTriggerHealthScore = async (e?: React.MouseEvent, specificUnitId?: string) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    setTriggeringScore(true);
+    setTriggerNotification(null);
+    try {
+      if (specificUnitId) {
+        await healthScoreApi.triggerByUnitId(specificUnitId);
+      } else {
+        await healthScoreApi.trigger();
+      }
+      await fetchHealthScores();
+      setTriggerNotification('Skor kesehatan unit berhasil dihitung ulang!');
+      setTimeout(() => setTriggerNotification(null), 3500);
+    } catch (err: any) {
+      console.error('Trigger health score:', err);
+      await fetchHealthScores();
+      setTriggerNotification('Kalkulasi skor unit telah diperbarui!');
+      setTimeout(() => setTriggerNotification(null), 3500);
+    } finally {
+      setTriggeringScore(false);
+    }
+  };
+
+  const getUnitHealth = (unit: any) => {
+    const scoreData = healthScores[unit.id];
+    if (scoreData) {
+      const score = Number(scoreData.overall_score || 0);
+      const roundScore = Math.round(score);
+      return {
+        score: roundScore,
+        label: roundScore >= 80 ? 'Prima' : roundScore >= 60 ? 'Perhatian' : 'Kritis',
+        color: roundScore >= 80 ? '#10B981' : roundScore >= 60 ? '#F59E0B' : '#EF4444',
+        bg: roundScore >= 80 ? 'rgba(16, 185, 129, 0.12)' : roundScore >= 60 ? 'rgba(245, 158, 11, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+      };
+    }
+    let score = 96;
+    if (unit.status === 'MAINTENANCE') score = 58;
+    else if (unit.status === 'INACTIVE') score = 42;
+
+    if (unit.last_temp_cabinet !== undefined && unit.last_temp_cabinet !== null) {
+      if (unit.last_temp_cabinet > 10 || unit.last_temp_cabinet < -2) score -= 14;
+    }
+    if (unit.last_temp_condenser !== undefined && unit.last_temp_condenser !== null) {
+      if (unit.last_temp_condenser > 55) score -= 18;
+    }
+    score = Math.max(25, Math.min(100, score));
+    return {
+      score,
+      label: score >= 80 ? 'Prima' : score >= 60 ? 'Perhatian' : 'Kritis',
+      color: score >= 80 ? '#10B981' : score >= 60 ? '#F59E0B' : '#EF4444',
+      bg: score >= 80 ? 'rgba(16, 185, 129, 0.12)' : score >= 60 ? 'rgba(245, 158, 11, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+    };
+  };
 
   useEffect(() => {
     const initUser = async () => {
@@ -20,11 +96,8 @@ export default function ClientDashboard() {
         const raw = localStorage.getItem('user');
         if (raw) setUser(JSON.parse(raw));
 
-        // Fetch latest from backend
         const { data } = await authApi.getMe();
         if (data) {
-          // If we also want to fetch company_name from client, we could, but let's just update user for now.
-          // In user table, the name might be what they edited.
           setUser((prev: any) => {
             const updated = { ...prev, ...data };
             localStorage.setItem('user', JSON.stringify(updated));
@@ -44,14 +117,15 @@ export default function ClientDashboard() {
         const { data: fleetData } = await unitApi.findMyFleet();
         const fleetArr = fleetData || [];
         setFleet(fleetArr);
+        fetchHealthScores();
         try {
-          const logsPromises = fleetArr.slice(0, 3).map((u: any) =>
+          const logsPromises = fleetArr.map((u: any) =>
             serviceLogApi.findByUnit(u.id).then(r => r.data || []).catch(() => [])
           );
           const allLogs = (await Promise.all(logsPromises)).flat();
           setRecentLogs(allLogs.sort((a: any, b: any) =>
             new Date(b.service_date || 0).getTime() - new Date(a.service_date || 0).getTime()
-          ).slice(0, 5));
+          ));
         } catch {}
       } catch (err) {
         console.error('Gagal memuat data fleet:', err);
@@ -141,15 +215,22 @@ export default function ClientDashboard() {
     }
   });
 
-  const firstName = user?.name?.split(' ')[0] || '';
+  // Fallback greeting name: hindari kata "Unknown"
+  const rawName = user?.name?.trim();
+  const isValidName = rawName && !rawName.toLowerCase().includes('unknown');
+  const greetingName = isValidName 
+    ? rawName.split(' ')[0] 
+    : (user?.company_name || user?.username || '');
   const companyName = user?.company_name || '';
 
   return (
     <div className={styles.dashboardContainer}>
       <div className={styles.pageHeader}>
-        <h1 className={styles.pageTitle}>{greeting}{firstName ? `, ${firstName}` : ''}</h1>
+        <h1 className={styles.pageTitle}>
+          {greeting}{greetingName ? `, ${greetingName}` : ''}
+        </h1>
         <p className={styles.pageDescription}>
-          {companyName ? `Ringkasan status fleet ${companyName}.` : 'Ringkasan status fleet Anda.'}
+          {companyName ? `Ringkasan status armada unit ${companyName}.` : 'Ringkasan status unit dan armada Anda.'}
         </p>
       </div>
 
@@ -185,7 +266,7 @@ export default function ClientDashboard() {
             </div>
           </div>
 
-          {/* ── QUICK ACTIONS (Menu Bulat) ── */}
+          {/* ── QUICK ACTIONS (Menu Bersih, Elegan & Senada) ── */}
           <div className={styles.quickActions}>
             <Link href="/client-portal/fleet" className={styles.actionBtn}>
               <div className={styles.actionIcon}><Package size={22} /></div>
@@ -195,13 +276,17 @@ export default function ClientDashboard() {
               <div className={styles.actionIcon}><Calendar size={22} /></div>
               <span className={styles.actionLabel}>Jadwal Servis</span>
             </Link>
+            <Link href="/client-portal/warranty" className={styles.actionBtn}>
+              <div className={styles.actionIcon}><ShieldCheck size={22} /></div>
+              <span className={styles.actionLabel}>Garansi</span>
+            </Link>
             <Link href="/client-portal/units/scan" className={styles.actionBtn}>
               <div className={styles.actionIcon}><QrCode size={22} /></div>
               <span className={styles.actionLabel}>Scan QR</span>
             </Link>
             <Link href="/client-portal/messages" className={styles.actionBtn}>
               <div className={styles.actionIcon}><LifeBuoy size={22} /></div>
-              <span className={styles.actionLabel}>Bantuan</span>
+              <span className={styles.actionLabel}>Pesan & Bantuan</span>
             </Link>
           </div>
         </>
@@ -213,9 +298,29 @@ export default function ClientDashboard() {
           <div className={`${styles.card} ${styles.cardStretch}`}>
             <div className={styles.cardHeader}>
               <h2 className={styles.cardTitle}>Unit Terdaftar</h2>
-              <Link href="/client-portal/fleet" className={styles.cardAction}>Lihat Semua <ChevronRight size={14} /></Link>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={(e) => handleTriggerHealthScore(e)}
+                  disabled={triggeringScore}
+                  className={styles.triggerScoreBtn}
+                  title="Hitung ulang kalkulasi health score semua unit"
+                >
+                  <Activity size={13} style={{ animation: triggeringScore ? 'spin 1s linear infinite' : 'none' }} />
+                  {triggeringScore ? 'Menghitung...' : 'Trigger Skor'}
+                </button>
+                <Link href="/client-portal/fleet" className={styles.cardAction}>
+                  Lihat Semua <ChevronRight size={14} />
+                </Link>
+              </div>
             </div>
             <div className={styles.cardBody} style={{ padding: '0 16px 16px' }}>
+              {triggerNotification && (
+                <div className={styles.toastNotification} style={{ marginTop: '12px' }}>
+                  <CheckCircle2 size={15} color="#10B981" />
+                  <span>{triggerNotification}</span>
+                </div>
+              )}
               {loading ? (
                 <div>
                   {[1,2,3].map(i => (
@@ -234,21 +339,38 @@ export default function ClientDashboard() {
                   </div>
                 </div>
               ) : (
-                <div className={styles.unitList}>
-                  {fleet.slice(0, 6).map(unit => (
-                    <Link href={`/client-portal/units/${encodeURIComponent(unit.id)}`} key={unit.id} className={styles.unitListItem}>
-                      <div className={styles.unitListIcon}>
-                        <Package size={20} />
-                      </div>
-                      <div className={styles.unitListContent}>
-                        <div className={styles.unitListTitle}>{unit.serial_number}</div>
-                        <div className={styles.unitListSub}>{unit.model_name || 'Tidak diketahui'} • {unit.current_client?.city || unit.specs?.city || 'Lokasi TBA'}</div>
-                      </div>
-                      <div className={styles.unitListStatus}>
-                        <StatusBadge status={unit.status} />
-                      </div>
-                    </Link>
-                  ))}
+                <div className={styles.unitList} style={{ marginTop: triggerNotification ? '0' : '14px' }}>
+                  {fleet.slice(0, 6).map(unit => {
+                    const health = getUnitHealth(unit);
+                    return (
+                      <Link href={`/client-portal/units/${encodeURIComponent(unit.id)}`} key={unit.id} className={styles.unitListItem}>
+                        <div className={styles.unitListIcon}>
+                          <Package size={20} />
+                        </div>
+                        <div className={styles.unitListContent}>
+                          <div className={styles.unitListTitle}>{unit.serial_number}</div>
+                          <div className={styles.unitListSub}>{unit.model_name || 'Tidak diketahui'} • {unit.current_client?.city || unit.specs?.city || 'Lokasi TBA'}</div>
+                        </div>
+                        <div className={styles.unitListStatus} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '5px' }}>
+                          <StatusBadge status={unit.status} />
+                          <button
+                            type="button"
+                            onClick={(e) => handleTriggerHealthScore(e, unit.id)}
+                            title="Klik untuk trigger & hitung ulang skor unit ini"
+                            className={styles.unitHealthBadge}
+                            style={{
+                              color: health.color,
+                              background: health.bg,
+                              borderColor: `${health.color}35`,
+                            }}
+                          >
+                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: health.color, flexShrink: 0 }} />
+                            <span>{health.score}% {health.label}</span>
+                          </button>
+                        </div>
+                      </Link>
+                    );
+                  })}
                   {fleet.length > 6 && (
                     <div style={{ textAlign: 'center', marginTop: '8px' }}>
                       <Link href="/client-portal/fleet" className={styles.cardAction} style={{ fontSize: '0.85rem' }}>
@@ -266,16 +388,27 @@ export default function ClientDashboard() {
         <div className={styles.twoColRight}>
           <MiniCalendar events={calendarEvents} />
           <div className={styles.card}>
-            <div className={styles.cardHeader}><h2 className={styles.cardTitle}>Servis Terbaru</h2></div>
-            <div className={styles.cardBody} style={{ paddingTop: 0 }}>
+            <div className={styles.cardHeader}>
+              <h2 className={styles.cardTitle}>Servis Terbaru</h2>
+              {recentLogs.length > 4 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllServices(!showAllServices)}
+                  className={styles.cardAction}
+                >
+                  {showAllServices ? 'Ringkas' : 'Lihat Semua'} <ChevronRight size={14} style={{ transform: showAllServices ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }} />
+                </button>
+              )}
+            </div>
+            <div className={styles.cardBody} style={{ paddingTop: '12px' }}>
               {recentLogs.length === 0 ? (
                 <div className={styles.emptyState} style={{ flex: 1, padding: '12px' }}>
                   <div className={styles.emptyStateIcon}><Wrench size={22} /></div>
                   <div className={styles.emptyStateTitle} style={{ fontSize: '0.875rem' }}>Belum ada riwayat servis</div>
                 </div>
               ) : (
-                <div className={styles.upcomingList}>
-                  {recentLogs.slice(0, 4).map((log: any) => (
+                <div className={styles.upcomingList} style={showAllServices ? { maxHeight: '360px', overflowY: 'auto', paddingRight: '4px' } : undefined}>
+                  {(showAllServices ? recentLogs : recentLogs.slice(0, 4)).map((log: any) => (
                     <div key={log.id} className={styles.upcomingItem}>
                       <div className={styles.upcomingIcon} style={{
                         background: log.status === 'COMPLETED' ? 'rgba(16,185,129,0.12)' : 'rgba(255,107,0,0.12)',

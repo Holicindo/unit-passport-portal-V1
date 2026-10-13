@@ -229,8 +229,8 @@ export default function ScanQrPage() {
   return (
     <div>
       {/* Breadcrumb */}
-      <button className={scanStyles.backBtn} onClick={() => router.back()}>
-        <ArrowLeft size={16} /> Kembali
+      <button className={styles.pageBackBtn} onClick={() => router.push('/client-portal/dashboard')}>
+        <ArrowLeft size={15} /> Beranda
       </button>
 
       <div className={styles.pageHeader}>

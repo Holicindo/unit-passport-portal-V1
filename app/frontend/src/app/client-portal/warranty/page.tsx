@@ -174,7 +174,7 @@ export default function ClientWarranty() {
   return (
     <div>
       <button className={styles.pageBackBtn} onClick={() => router.push('/client-portal/dashboard')}>
-        <ArrowLeft size={15} /> Dashboard
+        <ArrowLeft size={15} /> Beranda
       </button>
       <div className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>Status Garansi</h1>

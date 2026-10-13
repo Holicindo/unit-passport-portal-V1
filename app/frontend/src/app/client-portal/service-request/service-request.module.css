@@ -31,22 +31,17 @@
 
 /* ── Form Card ── */
 .formCard {
-  background: rgba(255, 255, 255, 0.78);
-  border: 1px solid rgba(200, 210, 220, 0.5);
-  border-top: 1px solid rgba(255, 255, 255, 0.95);
-  border-left: 1px solid rgba(255, 255, 255, 0.85);
-  border-radius: 16px;
-  box-shadow:
-    0 2px 8px rgba(15, 23, 42, 0.05),
-    0 8px 24px rgba(15, 23, 42, 0.07),
-    inset 0 1px 0 rgba(255, 255, 255, 1);
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
   overflow: hidden;
 }
 
 /* ── Sections dalam form ── */
 .section {
   padding: 24px;
-  border-bottom: 1px solid rgba(0, 31, 63, 0.06);
+  border-bottom: 1px solid #F1F5F9;
 }
 
 .section:last-child { border-bottom: none; }
@@ -77,27 +72,23 @@
   width: 100%;
   appearance: none;
   -webkit-appearance: none;
-  border: none;
-  border-radius: 12px;
+  border: 1px solid #CBD5E1;
+  border-radius: 10px;
   padding: 12px 44px 12px 16px;
   font-size: 0.875rem;
-  color: var(--brand-deep-navy);
-  background: #E4E6EF;
+  color: #1E293B;
+  background: #FFFFFF;
   outline: none;
   cursor: pointer;
   font-family: var(--font-body);
   font-weight: 500;
-  box-shadow:
-    inset 3px 3px 7px rgba(0, 31, 63, 0.07),
-    inset -3px -3px 7px rgba(255, 255, 255, 0.92);
-  transition: box-shadow 0.2s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
 }
 
 .select:focus {
-  box-shadow:
-    inset 4px 4px 8px rgba(0, 31, 63, 0.09),
-    inset -4px -4px 8px rgba(255, 255, 255, 0.95),
-    0 0 0 2px rgba(46, 91, 255, 0.18);
+  border-color: var(--brand-cobalt-blue);
+  box-shadow: 0 0 0 3px rgba(46, 91, 255, 0.12);
 }
 
 .selectIcon {
@@ -183,28 +174,24 @@
 
 .input,
 .textarea {
-  border: none;
+  border: 1px solid #CBD5E1;
   border-radius: 10px;
   padding: 10px 14px;
   font-size: 0.875rem;
-  color: var(--brand-deep-navy);
-  background: #E4E6EF;
+  color: #1E293B;
+  background: #FFFFFF;
   outline: none;
-  transition: box-shadow 0.2s;
+  transition: all 0.2s ease;
   font-family: var(--font-body);
   width: 100%;
-  box-shadow:
-    inset 3px 3px 7px rgba(0, 31, 63, 0.07),
-    inset -3px -3px 7px rgba(255, 255, 255, 0.92);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   box-sizing: border-box;
 }
 
 .input:focus,
 .textarea:focus {
-  box-shadow:
-    inset 4px 4px 8px rgba(0, 31, 63, 0.09),
-    inset -4px -4px 8px rgba(255, 255, 255, 0.95),
-    0 0 0 2px rgba(46, 91, 255, 0.18);
+  border-color: var(--brand-cobalt-blue);
+  box-shadow: 0 0 0 3px rgba(46, 91, 255, 0.12);
 }
 
 .textarea {
@@ -237,14 +224,11 @@
 }
 
 .infoCard {
-  background: rgba(255, 255, 255, 0.78);
-  border: 1px solid rgba(200, 210, 220, 0.5);
-  border-radius: 16px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
   padding: 20px;
-  box-shadow:
-    0 2px 8px rgba(15, 23, 42, 0.05),
-    0 8px 24px rgba(15, 23, 42, 0.07),
-    inset 0 1px 0 rgba(255, 255, 255, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
 .infoCardIcon {
@@ -297,17 +281,14 @@
 }
 
 .successCard {
-  background: rgba(255, 255, 255, 0.78);
-  border: 1px solid rgba(200, 210, 220, 0.5);
-  border-radius: 20px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
   padding: 48px 40px;
   max-width: 480px;
   width: 100%;
   text-align: center;
-  box-shadow:
-    0 2px 8px rgba(15, 23, 42, 0.05),
-    0 16px 48px rgba(15, 23, 42, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 1);
+  box-shadow: 0 4px 20px rgba(0, 31, 63, 0.08);
 }
 
 .successIcon { margin-bottom: 20px; }

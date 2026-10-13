@@ -130,14 +130,15 @@ export default function ClientMessages() {
 
   return (
     <div>
+      <button
+        className={styles.pageBackBtn}
+        onClick={() => router.push('/client-portal/dashboard')}
+      >
+        <ArrowLeft size={15} /> Beranda
+      </button>
+
       <div className={styles.pageHeader}>
-        <button
-          className={msgStyles.pageBackBtn}
-          onClick={() => router.push('/client-portal/dashboard')}
-        >
-          <ArrowLeft size={16} /> Dashboard
-        </button>
-        <h1 className={styles.pageTitle}>Pesan</h1>
+        <h1 className={styles.pageTitle}>Pesan & Bantuan</h1>
         <p className={styles.pageDescription}>
           Komunikasi langsung dengan tim Holicindo untuk dukungan unit Anda.
         </p>

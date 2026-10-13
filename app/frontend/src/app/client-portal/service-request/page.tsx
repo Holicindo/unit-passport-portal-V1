@@ -109,8 +109,8 @@ export default function ServiceRequestPage() {
   return (
     <div>
       {/* Breadcrumb */}
-      <button className={srStyles.backBtn} onClick={() => router.back()}>
-        <ArrowLeft size={16} /> Kembali
+      <button className={styles.pageBackBtn} onClick={() => router.push('/client-portal/dashboard')}>
+        <ArrowLeft size={15} /> Beranda
       </button>
 
       <div className={styles.pageHeader}>

@@ -158,6 +158,23 @@ export class IotService {
 
     await this.unitRepo.update(unit.id, updatePayload);
 
+    // Simpan ke in-memory cache live stream (instan untuk polling cepat tanpa nambah baris di DB)
+    IotService.liveTelemetryMap.set(unit.id, {
+      unit_id: unit.id,
+      iot_unit_id: payload.unitId,
+      temp_cabinet: payload.tempCabinet,
+      temp_evaporator: payload.tempEvaporator,
+      temp_condenser: payload.tempCondenser,
+      voltage: payload.voltage,
+      current: payload.current,
+      power: payload.power,
+      is_door1_open: payload.isDoor1Open,
+      is_door2_open: payload.isDoor2Open,
+      is_door3_open: payload.isDoor3Open,
+      is_door4_open: payload.isDoor4Open,
+      recorded_at: new Date().toISOString(),
+    });
+
     this.logger.log(`✅ [IOT SAVED DB] Unit ID: ${unit.id} (${payload.unitId}) | Last Seen: ${new Date().toLocaleTimeString()}`);
 
     // 4. Periksa kondisi alert
@@ -293,10 +310,38 @@ export class IotService {
     return activeAlerts;
   }
 
+  // Cache memori telemetry live tercepat per unit ID (agar real-time 0 delay dan 0 write beban ke DB)
+  private static readonly liveTelemetryMap = new Map<string, any>();
+
   /**
    * Mengambil data kondisi terkini sebuah unit (untuk widget real-time).
+   * Prioritas 1: In-memory live cache dari MQTT (instan <100ms)
+   * Prioritas 2: Kolom live di tabel units
+   * Prioritas 3: Row terakhir di tabel riwayat
    */
   async getLatestTelemetry(unitId: string) {
+    if (IotService.liveTelemetryMap.has(unitId)) {
+      return IotService.liveTelemetryMap.get(unitId);
+    }
+
+    const unit = await this.unitRepo.findOne({ where: { id: unitId } });
+    if (unit && unit.last_seen_at) {
+      return {
+        unit_id: unit.id,
+        temp_cabinet: unit.last_temp_cabinet ?? null,
+        temp_evaporator: unit.last_temp_evaporator ?? null,
+        temp_condenser: unit.last_temp_condenser ?? null,
+        voltage: unit.last_voltage ?? null,
+        current: (unit as any).last_current ?? null,
+        power: unit.last_power ?? null,
+        is_door1_open: unit.is_door1_open ?? null,
+        is_door2_open: unit.is_door2_open ?? null,
+        is_door3_open: unit.is_door3_open ?? null,
+        is_door4_open: unit.is_door4_open ?? null,
+        recorded_at: unit.last_seen_at.toISOString(),
+      };
+    }
+
     return this.telemetryLogRepo.findOne({
       where: { unit_id: unitId },
       order: { recorded_at: 'DESC' },
