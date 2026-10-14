@@ -5,6 +5,9 @@ import { ServiceLog } from './entities/service-log.entity';
 import { ServiceLogAttachment } from './entities/service-log-attachment.entity';
 import { CreateServiceLogDto } from './dto/create-service-log.dto';
 import { StorageService } from '../storage/storage.service';
+import { User } from '../auth/entities/user.entity';
+import { Notification, NotificationType } from '../notifications/entities/notification.entity';
+
 
 @Injectable()
 export class ServiceLogsService {
@@ -97,7 +100,64 @@ export class ServiceLogsService {
       log.completed_at = new Date();
     }
 
-    return this.logRepo.save(log);
+    const saved = await this.logRepo.save(log);
+
+    // Kirim notifikasi lonceng ke akun Klien yang memiliki unit ini
+    await this.notifyClientServiceUpdate(saved.id, saved.status, saved.technician_name, saved.scheduled_date);
+
+    return saved;
+  }
+
+  private async notifyClientServiceUpdate(logId: string, status: string, techName?: string, schedDate?: Date | null) {
+    try {
+      const fullLog = await this.logRepo.findOne({
+        where: { id: logId },
+        relations: ['unit', 'unit.current_client'],
+      });
+      const clientId = fullLog?.unit?.current_client?.id;
+      if (!clientId) return;
+
+      const userRepo = this.logRepo.manager.getRepository(User);
+      const notifRepo = this.logRepo.manager.getRepository(Notification);
+
+      const clientUsers = await userRepo.find({
+        where: { client_id: clientId },
+      });
+
+      const sn = fullLog.unit.serial_number;
+      const model = fullLog.unit.model_name;
+      const schedStr = schedDate
+        ? new Date(schedDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+        : null;
+
+      let title = 'Update Permintaan Servis';
+      let content = `Status servis unit ${sn} (${model}) diperbarui menjadi "${status}".`;
+
+      if (techName && !techName.toLowerCase().includes('pending') && !techName.toLowerCase().includes('alokasi')) {
+        content += ` Teknisi yang ditugaskan: ${techName}.`;
+      }
+      if (schedStr) {
+        content += ` Rencana kunjungan: ${schedStr}.`;
+      }
+      if (status === 'COMPLETED') {
+        title = 'Servis Selesai';
+        content = `Pengerjaan servis unit ${sn} (${model}) telah selesai. Laporan servis telah tercatat di sistem Holicindo.`;
+      }
+
+      for (const cu of clientUsers) {
+        const notif = notifRepo.create({
+          user_id: cu.id,
+          type: NotificationType.ALERT,
+          sender_name: 'Holicindo HQ',
+          title,
+          content,
+          is_read: false,
+        });
+        await notifRepo.save(notif);
+      }
+    } catch (err) {
+      console.error('Failed to notify client user on service log update:', err);
+    }
   }
 
   async bulkReschedule(ids: string[], newDate: string, newDeliveryDate?: string) {

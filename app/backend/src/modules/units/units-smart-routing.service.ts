@@ -4,6 +4,8 @@ import { Repository } from 'typeorm';
 import { Unit } from './entities/unit.entity';
 import { Partner } from '../partners/entities/partner.entity';
 import { ServiceLog } from '../service-logs/entities/service-log.entity';
+import { Notification, NotificationType } from '../notifications/entities/notification.entity';
+import { User, UserRole } from '../auth/entities/user.entity';
 
 @Injectable()
 export class UnitsSmartRoutingService {
@@ -32,6 +34,37 @@ export class UnitsSmartRoutingService {
     }
   }
 
+  private async notifyAdminsNewRequest(unit: Unit, body: any, isPartner: boolean, partnerName?: string) {
+    try {
+      const userRepo = this.unitRepo.manager.getRepository(User);
+      const notifRepo = this.unitRepo.manager.getRepository(Notification);
+      const admins = await userRepo.find({
+        where: [
+          { role: UserRole.ADMIN },
+          { role: UserRole.SUPER_ADMIN },
+        ],
+      });
+
+      const clientName = unit.current_client?.company_name || 'Klien';
+      const destination = isPartner ? `Partner: ${partnerName}` : 'Holicindo HQ';
+      const content = `Permintaan servis baru untuk unit SN: ${unit.serial_number} (${unit.model_name}) dari ${clientName}. Masalah: ${body.notes || '-'}. Kontak: ${body.contact_name || '-'} (${body.contact_phone || '-'}). Alokasi: ${destination}.`;
+
+      for (const admin of admins) {
+        const notif = notifRepo.create({
+          user_id: admin.id,
+          type: NotificationType.ALERT,
+          sender_name: clientName,
+          title: 'Permintaan Servis Baru',
+          content,
+          is_read: false,
+        });
+        await notifRepo.save(notif);
+      }
+    } catch (err) {
+      console.error('Failed to notify admins of new service request:', err);
+    }
+  }
+
   private async routeToPartner(unit: Unit, partner: Partner, targetCity: string, body: any) {
     const logRepo = this.unitRepo.manager.getRepository(ServiceLog);
     const newLog = logRepo.create({
@@ -44,6 +77,9 @@ export class UnitsSmartRoutingService {
       status: 'PENDING',
     } as any);
     await logRepo.save(newLog);
+
+    // Kirim notifikasi lonceng ke Admin
+    await this.notifyAdminsNewRequest(unit, body, true, partner.partner_name);
 
     return {
       success: true,
@@ -66,6 +102,9 @@ export class UnitsSmartRoutingService {
       status: 'PENDING',
     } as any);
     await logRepo.save(newLog);
+
+    // Kirim notifikasi lonceng ke Admin
+    await this.notifyAdminsNewRequest(unit, body, false);
 
     const hqWaNumber = '+6281-2871-20358';
     const waText = `Halo Holicindo HQ, saya ingin meminta servis untuk:\n\n*Serial Number:* ${unit.serial_number}\n*Model:* ${unit.model_name}\n*Lokasi:* ${targetCity}\n*Catatan Kendala:* ${body.notes || '-'}\n\nMohon bantuannya untuk assign teknisi secara manual. Terima kasih!`;

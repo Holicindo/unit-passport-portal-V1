@@ -37,6 +37,8 @@ export default function ServicePage() {
   const [expandedCallIds, setExpandedCallIds] = useState<Record<string, boolean>>({});
   const [quickStatusLog, setQuickStatusLog] = useState<any | null>(null);
   const [quickStatusValue, setQuickStatusValue] = useState<string>('');
+  const [quickTechnician, setQuickTechnician] = useState<string>('');
+  const [quickScheduledDate, setQuickScheduledDate] = useState<string>('');
 
   // Form states
   const [selectedUnitId, setSelectedUnitId] = useState('');
@@ -120,10 +122,19 @@ export default function ServicePage() {
     if (!quickStatusLog || !quickStatusValue) return;
     try {
       const { serviceLogApi } = await import('@/lib/api');
-      await serviceLogApi.update(quickStatusLog.id, { status: quickStatusValue });
+      await serviceLogApi.update(quickStatusLog.id, {
+        status: quickStatusValue,
+        technician_name: quickTechnician ? quickTechnician.trim() : undefined,
+        scheduled_date: quickScheduledDate || undefined,
+      });
       await fetchData();
-    } catch { alert('Gagal mengubah status.'); }
-    finally { setQuickStatusLog(null); setQuickStatusValue(''); }
+    } catch { alert('Gagal memperbarui status servis.'); }
+    finally {
+      setQuickStatusLog(null);
+      setQuickStatusValue('');
+      setQuickTechnician('');
+      setQuickScheduledDate('');
+    }
   };
 
   return (
@@ -231,7 +242,12 @@ export default function ServicePage() {
                           className={`${styles.badge} ${mainLog.status === 'PENDING' ? styles.badgePending : mainLog.status === 'IN PROGRESS' ? styles.badgeInProgress : mainLog.status === 'COMPLETED' ? styles.badgeCompleted : styles.badgeCancelled}`}
                           style={{ cursor: 'pointer' }}
                           title="Klik untuk ubah status"
-                          onClick={() => { setQuickStatusLog(mainLog); setQuickStatusValue(mainLog.status); }}
+                          onClick={() => {
+                            setQuickStatusLog(mainLog);
+                            setQuickStatusValue(mainLog.status);
+                            setQuickTechnician(mainLog.technician_name && !mainLog.technician_name.includes('Pending') ? mainLog.technician_name : '');
+                            setQuickScheduledDate(mainLog.scheduled_date ? mainLog.scheduled_date.split('T')[0] : '');
+                          }}
                         >{mainLog.status}</span>
                       </td>
                     </tr>
@@ -319,26 +335,56 @@ export default function ServicePage() {
       {/* Quick Status Modal */}
       {quickStatusLog && (
         <div className={styles.modalOverlay} onClick={() => setQuickStatusLog(null)}>
-          <div className={styles.modalCard} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px', padding: '28px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <h3 className={styles.modalTitle}>Ubah Status</h3>
-            <p style={{ fontSize: '0.9rem', color: 'var(--color-space-grey)' }}>Call ID: <strong>{quickStatusLog.call_id || quickStatusLog.id}</strong></p>
-            <select
-              value={quickStatusValue}
-              onChange={(e) => setQuickStatusValue(e.target.value)}
-              style={{ padding: '10px 14px', borderRadius: '10px', border: '1px solid #E2E8F0', fontSize: '0.9rem', color: 'var(--color-deep-navy)', outline: 'none', width: '100%' }}
-            >
-              <option value="PENDING">PENDING</option>
-              <option value="IN PROGRESS">IN PROGRESS</option>
-              <option value="COMPLETED">COMPLETED</option>
-              <option value="CANCELED">CANCELED</option>
-            </select>
+          <div className={styles.modalCard} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <h3 className={styles.modalTitle} style={{ margin: 0 }}>Update Status & Penugasan Servis</h3>
+            <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', fontSize: '0.85rem', color: 'var(--color-space-grey)', border: '1px solid #e2e8f0' }}>
+              <div>Unit: <strong style={{ color: 'var(--color-deep-navy)' }}>{quickStatusLog.unit?.model_name || 'Unit'}</strong> (SN: {quickStatusLog.unit?.serial_number || '-'})</div>
+              <div style={{ marginTop: '3px' }}>Call ID: <strong style={{ color: 'var(--color-deep-navy)' }}>#{quickStatusLog.call_id || quickStatusLog.id}</strong></div>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>Status Servis</label>
+              <select
+                value={quickStatusValue}
+                onChange={(e) => setQuickStatusValue(e.target.value)}
+                style={{ padding: '9px 12px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.875rem', color: 'var(--color-deep-navy)', outline: 'none', width: '100%', background: '#fff' }}
+              >
+                <option value="PENDING">PENDING</option>
+                <option value="IN PROGRESS">IN PROGRESS</option>
+                <option value="COMPLETED">COMPLETED</option>
+                <option value="CANCELED">CANCELED</option>
+              </select>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>Nama Teknisi yang Ditugaskan</label>
+              <input
+                type="text"
+                placeholder="Contoh: Budi Santoso / Tim Teknisi Holicindo"
+                value={quickTechnician}
+                onChange={(e) => setQuickTechnician(e.target.value)}
+                style={{ padding: '9px 12px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.875rem', color: 'var(--color-deep-navy)', outline: 'none', width: '100%', background: '#fff' }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>Rencana Kunjungan / Servis</label>
+              <input
+                type="date"
+                value={quickScheduledDate}
+                onChange={(e) => setQuickScheduledDate(e.target.value)}
+                style={{ padding: '9px 12px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.875rem', color: 'var(--color-deep-navy)', outline: 'none', width: '100%', background: '#fff' }}
+              />
+            </div>
+
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '8px' }}>
               <button className={styles.cancelBtn} onClick={() => setQuickStatusLog(null)}>Batal</button>
-              <button className={styles.saveBtn} onClick={handleQuickStatusSave}>Ya, Ubah Status</button>
+              <button className={styles.saveBtn} onClick={handleQuickStatusSave}>Simpan & Notifikasi Klien</button>
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 }

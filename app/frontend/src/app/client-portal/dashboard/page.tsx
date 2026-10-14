@@ -6,10 +6,12 @@ import { TrendingUp, AlertTriangle, ChevronRight, Wrench, Package, QrCode, Shiel
 import styles from '../ClientPortal.module.css';
 import Link from 'next/link';
 import { useGreeting, MiniCalendar, StatusBadge, SkeletonCard, type CalendarEvents } from './components';
+import LiveServiceTrackerModal from './LiveServiceTrackerModal';
 
 export default function ClientDashboard() {
   const [fleet, setFleet] = useState<any[]>([]);
   const [recentLogs, setRecentLogs] = useState<any[]>([]);
+  const [selectedTrackerLog, setSelectedTrackerLog] = useState<any | null>(null);
   const [showAllServices, setShowAllServices] = useState(false);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
@@ -120,11 +122,17 @@ export default function ClientDashboard() {
         fetchHealthScores();
         try {
           const logsPromises = fleetArr.map((u: any) =>
-            serviceLogApi.findByUnit(u.id).then(r => r.data || []).catch(() => [])
+            serviceLogApi.findByUnit(u.id).then(r => {
+              const items = Array.isArray(r.data) ? r.data : (r.data?.data || []);
+              return items.map((l: any) => ({
+                ...l,
+                unit: l.unit || u,
+              }));
+            }).catch(() => [])
           );
           const allLogs = (await Promise.all(logsPromises)).flat();
           setRecentLogs(allLogs.sort((a: any, b: any) =>
-            new Date(b.service_date || 0).getTime() - new Date(a.service_date || 0).getTime()
+            new Date(b.created_at || b.service_date || 0).getTime() - new Date(a.created_at || a.service_date || 0).getTime()
           ));
         } catch {}
       } catch (err) {
@@ -407,32 +415,92 @@ export default function ClientDashboard() {
                   <div className={styles.emptyStateTitle} style={{ fontSize: '0.875rem' }}>Belum ada riwayat servis</div>
                 </div>
               ) : (
-                <div className={styles.upcomingList} style={showAllServices ? { maxHeight: '360px', overflowY: 'auto', paddingRight: '4px' } : undefined}>
-                  {(showAllServices ? recentLogs : recentLogs.slice(0, 4)).map((log: any) => (
-                    <div key={log.id} className={styles.upcomingItem}>
-                      <div className={styles.upcomingIcon} style={{
-                        background: log.status === 'COMPLETED' ? 'rgba(16,185,129,0.12)' : 'rgba(255,107,0,0.12)',
-                        color: log.status === 'COMPLETED' ? '#10b981' : 'var(--brand-safety-orange)',
-                        boxShadow: 'var(--neu-shadow-sm)',
-                      }}><Wrench size={18} /></div>
-                      <div className={styles.upcomingContent}>
-                        <div className={styles.upcomingTitle}>{log.unit?.model_name || log.unit?.serial_number || 'Unit'}</div>
-                        <div className={styles.upcomingMeta}>
-                          {(log.issue_description || 'Servis rutin').slice(0, 42)}
-                          {(log.issue_description?.length || 0) > 42 ? '...' : ''}
+                <div className={styles.upcomingList} style={showAllServices ? { maxHeight: '380px', overflowY: 'auto', paddingRight: '4px' } : undefined}>
+                  {(showAllServices ? recentLogs : recentLogs.slice(0, 4)).map((log: any) => {
+                    const status = log.status || 'PENDING';
+                    const isPending = status === 'PENDING';
+                    const isInProgress = status === 'IN PROGRESS';
+                    const isCompleted = status === 'COMPLETED';
+
+                    return (
+                      <div key={log.id} className={styles.upcomingItem} style={{ alignItems: 'flex-start' }}>
+                        <div className={styles.upcomingIcon} style={{
+                          background: isCompleted ? 'rgba(16,185,129,0.12)' : isInProgress ? 'rgba(46,91,255,0.12)' : 'rgba(255,107,0,0.12)',
+                          color: isCompleted ? '#10b981' : isInProgress ? '#2e5bff' : 'var(--brand-safety-orange)',
+                          boxShadow: 'var(--neu-shadow-sm)',
+                          marginTop: '2px',
+                        }}><Wrench size={18} /></div>
+                        <div className={styles.upcomingContent}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                            <div className={styles.upcomingTitle}>{log.unit?.model_name || log.unit?.serial_number || 'Unit'}</div>
+                            <span style={{
+                              fontSize: '0.68rem',
+                              fontWeight: 700,
+                              padding: '1px 6px',
+                              borderRadius: '4px',
+                              textTransform: 'uppercase',
+                              background: isCompleted ? 'rgba(16,185,129,0.1)' : isInProgress ? 'rgba(46,91,255,0.1)' : 'rgba(255,107,0,0.1)',
+                              color: isCompleted ? '#059669' : isInProgress ? '#2e5bff' : '#d95d00',
+                              border: `1px solid ${isCompleted ? 'rgba(16,185,129,0.2)' : isInProgress ? 'rgba(46,91,255,0.2)' : 'rgba(255,107,0,0.2)'}`,
+                            }}>
+                              {status === 'IN PROGRESS' ? 'Sedang Dikerjakan' : status === 'COMPLETED' ? 'Selesai' : status}
+                            </span>
+                          </div>
+                          <div className={styles.upcomingMeta}>
+                            {(log.issue_description || 'Servis unit').slice(0, 46)}
+                            {(log.issue_description?.length || 0) > 46 ? '...' : ''}
+                          </div>
+                          <div style={{ marginTop: '6px' }}>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedTrackerLog(log)}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                                fontSize: '0.735rem',
+                                fontWeight: 600,
+                                color: '#2e5bff',
+                                background: 'rgba(46, 91, 255, 0.08)',
+                                border: '1px solid rgba(46, 91, 255, 0.22)',
+                                padding: '3px 10px',
+                                borderRadius: '12px',
+                                cursor: 'pointer',
+                                transition: 'all 0.15s ease',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = '#2e5bff';
+                                e.currentTarget.style.color = '#ffffff';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'rgba(46, 91, 255, 0.08)';
+                                e.currentTarget.style.color = '#2e5bff';
+                              }}
+                            >
+                              Lihat Live Service Tracker
+                            </button>
+                          </div>
+                        </div>
+                        <div className={styles.upcomingDate}>
+                          {log.service_date ? new Date(log.service_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
                         </div>
                       </div>
-                      <div className={styles.upcomingDate}>
-                        {log.service_date ? new Date(log.service_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
           </div>
         </div>
       </div>
+
+      {selectedTrackerLog && (
+        <LiveServiceTrackerModal
+          log={selectedTrackerLog}
+          onClose={() => setSelectedTrackerLog(null)}
+        />
+      )}
     </div>
   );
 }
+

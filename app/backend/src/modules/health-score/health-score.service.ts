@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { UnitHealthScore, LifecycleState } from './entities/unit-health-score.entity';
 import { IotTelemetryLog } from '../iot/entities/iot-telemetry-log.entity';
 import { Unit } from '../units/entities/unit.entity';
+import { IotService } from '../iot/iot.service';
 
 // ─── STATISTICAL HELPERS ──────────────────────────────────────────────────────
 function getPercentile(arr: number[], q: number): number {
@@ -67,6 +68,7 @@ export class HealthScoreService {
     private readonly telemetryLogRepo: Repository<IotTelemetryLog>,
     @InjectRepository(Unit)
     private readonly unitRepo: Repository<Unit>,
+    private readonly iotService: IotService,
   ) {}
 
   // ─── CRON: SETIAP JAM ──────────────────────────────────────────────────────
@@ -123,13 +125,18 @@ export class HealthScoreService {
       current:        (log.current         ?? 0),
     }));
 
+    // ─── KONSTANTA STANDAR KELISTRIKAN REFRIGERASI ─────────────────────────
+    // Fan Evaporator umumnya tetap menyala saat kompresor istirahat (0.03A – 0.30A).
+    // Arus <= 0.35A dikategorikan sebagai STANDBY (Kompresor OFF, Fan Evap ON), BUKAN kompresor berjalan!
+    const STANDBY_FAN_MAX_CURRENT = 0.35;
+
     // ─── BAGIAN A: METRIK DASAR ─────────────────────────────────────────────
     let validTIBCount = 0, totalValidCount = 0, hdmAcc = 0;
     let onTimeMs = 0, validTimeMs = 0;
 
-    // Voltage
+    // Voltage: Batas aman tegangan kerja kompresor 195V – 245V (PLN standar 220V ±10%)
     let voltAnomalyCount = 0, voltTotalCount = 0;
-    const VOLT_MIN = 180, VOLT_MAX = 250;
+    const VOLT_MIN = 195, VOLT_MAX = 245;
 
     calLogs.forEach(log => {
       const isDoorOpen = !!(log.is_door1_open || log.is_door2_open || log.is_door3_open || log.is_door4_open);
@@ -137,7 +144,8 @@ export class HealthScoreService {
 
       if (!isDoorOpen) {
         validTimeMs += 10000;
-        if (current > 0.5) onTimeMs += 10000;
+        // Kompresor hanya dihitung ON jika arus melebihi threshold fan evaporator standby
+        if (current > STANDBY_FAN_MAX_CURRENT) onTimeMs += 10000;
       }
 
       if (!isDoorOpen && log.temp_cabinet !== -127 && log.temp_cabinet !== null) {
@@ -146,7 +154,7 @@ export class HealthScoreService {
         hdmAcc += Math.max(0, log.temp_cabinet - targetMax) * (10 / 60);
       }
 
-      // Voltage anomaly check
+      // Voltage anomaly check (fluktuasi tegangan yang membebani motor kompresor)
       const v = log.voltage ?? 0;
       if (v > 10) { // ignore 0 (no sensor reading)
         voltTotalCount++;
@@ -170,11 +178,12 @@ export class HealthScoreService {
       const current = log.current ?? 0;
       const logTime = log.recorded_at.getTime();
 
-      if (current > 0.5 && !isOn) {
+      // Kompresor ON jika arus > STANDBY_FAN_MAX_CURRENT
+      if (current > STANDBY_FAN_MAX_CURRENT && !isOn) {
         isOn = true;
         onStartTime = logTime;
         currentCycle = { startIdx: i };
-      } else if (current <= 0.5 && isOn) {
+      } else if (current <= STANDBY_FAN_MAX_CURRENT && isOn) {
         isOn = false;
         if (currentCycle) {
           currentCycle.endIdx = i;
@@ -186,7 +195,7 @@ export class HealthScoreService {
     });
 
     // ─── BAGIAN C: PER-CYCLE FEATURE EXTRACTION ────────────────────────────
-    let validCyclesCount = 0, shortCycles = 0;
+    let validCyclesCount = 0, shortCycles = 0, longCyclesCount = 0;
     let sumCoolingRate = 0, validCoolingRateCount = 0;
     let sumCondenserPeak = 0;
     let sumEvapCoolingRate = 0, sumEvapDrop = 0, sumCabEvapDiff = 0;
@@ -207,6 +216,9 @@ export class HealthScoreService {
 
       validCyclesCount++;
       if (cycle.durationMin < 5) shortCycles++;
+      // Kompresor normalnya mati tiap 2 jam (120 menit).
+      // Jika jalan > 120 menit non-stop = anomali durasi kerja (kondensor kotor / freon kurang / ruang sempit)
+      if (cycle.durationMin > 120) longCyclesCount++;
       if (maxCond > -999) sumCondenserPeak += maxCond;
 
       const startT = calLogs[cycle.startIdx].recorded_at.getTime();
@@ -299,16 +311,17 @@ export class HealthScoreService {
     // ─── BAGIAN D [V4 BARU]: DOOR RECOVERY ────────────────────────────────
     let doorWasOpen = false;
     const doorCloseEvents: { idx: number; closeTime: number }[] = [];
-    let doorEventCount = 0;
 
     calLogs.forEach((log, i) => {
       const isOpen = !!(log.is_door1_open || log.is_door2_open || log.is_door3_open || log.is_door4_open);
-      if (!doorWasOpen && isOpen) doorEventCount++; // count door OPEN events
       if (doorWasOpen && !isOpen) {
         doorCloseEvents.push({ idx: i, closeTime: log.recorded_at.getTime() });
       }
       doorWasOpen = isOpen;
     });
+
+    // Ambil jumlah event pintu dari IotService real-time counter (lebih akurat dari log DB throttled 5mnt)
+    const doorEventCount = this.iotService.getDoorEventCountToday(unit.id);
 
     let totalRecoveryMin = 0, recoveryCount = 0;
     doorCloseEvents.forEach(event => {
@@ -328,36 +341,89 @@ export class HealthScoreService {
     const pDoorRecovery = linearPenalty(avgDoorRecoveryMin, 10, 30);
 
     // ─── BAGIAN E [V4 BARU]: DEFROST DETECTION ────────────────────────────
-    // Defrost = kompresor OFF + suhu evap naik signifikan
+    // Deteksi defrost dengan 2 metode:
+    // Metode 1: Kompresor OFF (current <= 0.5) + evap naik > 3°C (butuh sensor arus)
+    // Metode 2 (fallback): evap naik > 4°C dalam window 5+ menit berturut-turut
+    //   (digunakan jika current selalu 0 = tidak ada PZEM)
     interface DefrostSeg { durationMin: number; evapRise: number; isAbnormal: boolean; }
     const defrostSegs: DefrostSeg[] = [];
-    let offStart: number | null = null;
-    let offStartIdx: number | null = null;
 
-    calLogs.forEach((log, i) => {
-      const current = log.current ?? 0;
-      if (current <= 0.5 && offStart === null) {
-        offStart = log.recorded_at.getTime();
-        offStartIdx = i;
-      } else if (current > 0.5 && offStart !== null && offStartIdx !== null) {
-        const durationMin = (log.recorded_at.getTime() - offStart) / 60000;
-        if (durationMin >= 5) {
-          const evapTemps = calLogs.slice(offStartIdx, i)
-            .map(l => l.temp_evaporator)
-            .filter((t): t is number => t !== null && t !== undefined && t !== -127);
+    // Deteksi apakah ada data arus yang valid (sensor arus terpasang)
+    const hasCurrentSensor = calLogs.some(l => (l.current ?? 0) > 0.1);
 
-          if (evapTemps.length >= 3) {
-            const evapRise = evapTemps[evapTemps.length - 1] - evapTemps[0];
-            if (evapRise > 3) { // evap naik > 3°C = ada defrost
-              const isAbnormal = durationMin > 60 || evapRise > 25;
-              defrostSegs.push({ durationMin, evapRise, isAbnormal });
+    if (hasCurrentSensor) {
+      // ── Metode 1: Berbasis kompresor OFF ──
+      let offStart: number | null = null;
+      let offStartIdx: number | null = null;
+
+      calLogs.forEach((log, i) => {
+        const current = log.current ?? 0;
+        if (current <= 0.5 && offStart === null) {
+          offStart = log.recorded_at.getTime();
+          offStartIdx = i;
+        } else if (current > 0.5 && offStart !== null && offStartIdx !== null) {
+          const durationMin = (log.recorded_at.getTime() - offStart) / 60000;
+          if (durationMin >= 5) {
+            const evapTemps = calLogs.slice(offStartIdx, i)
+              .map(l => l.temp_evaporator)
+              .filter((t): t is number => t !== null && t !== undefined && t !== -127);
+
+            if (evapTemps.length >= 3) {
+              const evapRise = evapTemps[evapTemps.length - 1] - evapTemps[0];
+              if (evapRise > 3) {
+                const isAbnormal = durationMin > 60 || evapRise > 25;
+                defrostSegs.push({ durationMin, evapRise, isAbnormal });
+              }
             }
           }
+          offStart = null;
+          offStartIdx = null;
         }
-        offStart = null;
-        offStartIdx = null;
+      });
+    } else {
+      // ── Metode 2 (fallback): Berbasis suhu evap langsung, tanpa sensor arus ──
+      // Scan window geser 5 menit: cari titik di mana evap naik > 4°C
+      const WINDOW_ROWS = 6; // ~5 menit jika log tiap ~50 detik
+      const EVAP_RISE_THRESHOLD = 4.0; // °C kenaikan minimum untuk dianggap defrost
+      let inDefrost = false;
+      let defrostStart = 0;
+      let defrostStartIdx = 0;
+
+      for (let i = WINDOW_ROWS; i < calLogs.length; i++) {
+        const cur = calLogs[i];
+        const ref = calLogs[i - WINDOW_ROWS];
+        const curEvap = cur.temp_evaporator;
+        const refEvap = ref.temp_evaporator;
+
+        if (curEvap === null || curEvap === undefined || curEvap === -127) continue;
+        if (refEvap === null || refEvap === undefined || refEvap === -127) continue;
+
+        const evapRise = curEvap - refEvap;
+
+        if (!inDefrost && evapRise >= EVAP_RISE_THRESHOLD) {
+          inDefrost = true;
+          defrostStart = ref.recorded_at.getTime();
+          defrostStartIdx = i - WINDOW_ROWS;
+        } else if (inDefrost && evapRise < 1.0) {
+          // Defrost selesai saat evap berhenti naik
+          const durationMin = (cur.recorded_at.getTime() - defrostStart) / 60000;
+          // Ambil evapRise total selama segmen
+          const segTemps = calLogs.slice(defrostStartIdx, i)
+            .map(l => l.temp_evaporator)
+            .filter((t): t is number => t !== null && t !== undefined && t !== -127);
+          const totalEvapRise = segTemps.length > 1 ? segTemps[segTemps.length - 1] - segTemps[0] : 0;
+          const isAbnormal = durationMin > 60 || totalEvapRise > 25;
+          defrostSegs.push({ durationMin, evapRise: totalEvapRise, isAbnormal });
+          inDefrost = false;
+        }
       }
-    });
+      // Tutup segmen yang masih terbuka di akhir data
+      if (inDefrost) {
+        const last = calLogs[calLogs.length - 1];
+        const durationMin = (last.recorded_at.getTime() - defrostStart) / 60000;
+        defrostSegs.push({ durationMin, evapRise: EVAP_RISE_THRESHOLD, isAbnormal: durationMin > 60 });
+      }
+    }
 
     const defrostCycleCount      = defrostSegs.length;
     const defrostAnomalyFraction = defrostCycleCount > 0
@@ -394,17 +460,26 @@ export class HealthScoreService {
     const normalAmpere = unit.compressor_normal_ampere || 1.5;
     const tolerance    = unit.ampere_tolerance || 0.3;
     let compressorAnomalyCount = 0, totalCompressorOnCount = 0;
+    let criticalOverAmpCount = 0; // Lonjakan ekstrem > 12A atau kompresor melemah
 
     calLogs.forEach(log => {
       const current = log.current ?? 0;
-      if (current > 0.5) {
+      // Kompresor dievaluasi HANYA saat ON (di atas batas standby Fan Evap 0.35A)
+      // Arus <= 0.35A adalah Standby Fan Evaporator normal, BUKAN kebocoran arus kompresor!
+      if (current > STANDBY_FAN_MAX_CURRENT) {
         totalCompressorOnCount++;
-        if (current < (normalAmpere - tolerance) || current > (normalAmpere + tolerance)) {
+        // Deteksi lonjakan arus ekstrem / kompresor melemah (> 12A atau melebihi 2x normal ampere)
+        if (current >= 12.0 || current > Math.max(8.0, normalAmpere * 2.2)) {
+          criticalOverAmpCount++;
+          compressorAnomalyCount += 2; // Beri bobot dobel untuk lonjakan ekstrem
+        } else if (current < (normalAmpere - tolerance) || current > (normalAmpere + tolerance)) {
           compressorAnomalyCount++;
         }
       }
     });
-    const compressorAnomalyRatio = totalCompressorOnCount > 0 ? compressorAnomalyCount / totalCompressorOnCount : 0;
+    const compressorAnomalyRatio = totalCompressorOnCount > 0
+      ? Math.min(1.0, compressorAnomalyCount / totalCompressorOnCount)
+      : 0;
 
     // ─── BAGIAN H: HITUNG SEMUA PENALTI V4 ───────────────────────────────
 
@@ -440,19 +515,21 @@ export class HealthScoreService {
 
     const subCondenserScore = 100 * (1 - ((pCondPeak * 0.55) + (pCondRise * 0.45)));
 
-    // -- Elektrikal (bobot 22%) --
+    // -- Elektrikal & Kompresor (bobot 22%) --
     // Duty Cycle: ≤60% aman, ≥80% kritis
     const pDuty   = linearPenalty(dutyCyclePercentage, 60, 80);
     // Starts/Hour: ≤4x aman, ≥6x kritis
     const pStarts = linearPenalty(startsPerHour, 4, 6);
     // Short Cycle: ≤10% aman, ≥30% kritis
     const pShort  = linearPenalty(shortCycleFraction, 0.10, 0.30);
-    // Arus Anomali: ≤5% aman, ≥50% kritis
-    const pAmp    = linearPenalty(compressorAnomalyRatio, 0.05, 0.50);
-    // Voltage Anomali: ≤2% aman, ≥20% kritis
-    const pVolt   = linearPenalty(voltageAnomalyRatio, 0.02, 0.20);
+    // Anomali Arus & Lonjakan Kompresor: ≤5% aman, ≥40% kritis
+    const pAmp    = linearPenalty(compressorAnomalyRatio, 0.05, 0.40);
+    // Voltage Anomali: ≤2% aman, ≥15% kritis (tegangan tidak stabil bikin kompresor narik arus besar)
+    const pVolt   = linearPenalty(voltageAnomalyRatio, 0.02, 0.15);
+    // Durasi kompresor jalan > 2 jam non-stop (normalnya cut-off tiap 2 jam)
+    const pLongCycle = linearPenalty(longCyclesCount, 0, 2);
 
-    const subElecPenalty = (pDuty * 0.22) + (pStarts * 0.18) + (pShort * 0.15) + (pAmp * 0.22) + (pVolt * 0.23);
+    const subElecPenalty = (pDuty * 0.20) + (pStarts * 0.15) + (pShort * 0.12) + (pAmp * 0.25) + (pVolt * 0.18) + (pLongCycle * 0.10);
     const subElecScore   = 100 * (1 - subElecPenalty);
 
     // -- Baseline (bobot 13%) -- sudah dihitung di atas
@@ -469,9 +546,12 @@ export class HealthScoreService {
     );
 
     // ─── DIAGNOSTIC EVIDENCE (0–1) ────────────────────────────────────────
-    const evidenceCondenser  = (0.3 * pCondRise) + (0.2 * pCondPeak) + (0.2 * pDuty) + (0.1 * pHDM) + (0.2 * pVolt);
-    const evidenceEvaporator = (0.3 * pCabEvapDiff) + (0.2 * pHDM) + (0.2 * pDuty) + (0.15 * pEvapCool) + (0.15 * pDefrost);
-    const evidenceWeak       = (0.3 * pHDM) + (0.25 * pCool) + (0.15 * pDuty) + (0.15 * pDoorRecovery) + (0.15 * pEvapDrop);
+    // Kondensor Kotor / Ventilasi Bermasalah: kenaikan suhu kondensor + kompresor jalan > 2 jam + duty cycle tinggi
+    const evidenceCondenser  = clamp((0.25 * pCondRise) + (0.20 * pCondPeak) + (0.20 * pDuty) + (0.15 * pLongCycle) + (0.10 * pHDM) + (0.10 * pVolt), 0, 1);
+    // Evaporator Masalah: beda suhu cab-evap + defrost abnormal + laju drop lambat
+    const evidenceEvaporator = clamp((0.30 * pCabEvapDiff) + (0.20 * pHDM) + (0.20 * pDuty) + (0.15 * pEvapCool) + (0.15 * pDefrost), 0, 1);
+    // Pendinginan Lemah / Freon Kurang / Kompresi Melemah: suhu tidak turun + kompresor jalan terus + arus kerja abnormal
+    const evidenceWeak       = clamp((0.25 * pHDM) + (0.20 * pCool) + (0.20 * pDuty) + (0.15 * pLongCycle) + (0.10 * pAmp) + (0.10 * pEvapDrop), 0, 1);
 
     // ─── SIMPAN KE DATABASE ───────────────────────────────────────────────
     const dateStr = new Date().toISOString().split('T')[0];

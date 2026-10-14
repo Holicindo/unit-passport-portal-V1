@@ -60,24 +60,20 @@ export default function ServiceDetailModal({ log, partners, onClose, onUpdate, s
       setSubmitting(true);
       const { serviceLogApi } = await import('@/lib/api');
       const payload = {
-        unitId: log.unit?.id,
-        call_id: log.call_id || log.id,
-        issue_description: log.issue_description,
-        task_type: log.task_type || 'CORRECTIVE',
         partnerId: editPartnerId || null,
         technician_name: editTechnician,
         status: editStatus,
         service_date: editDate,
-        scheduled_date: editScheduledDate || undefined,
-        delivery_date: editDeliveryDate || undefined,
+        scheduled_date: editScheduledDate || null,
+        delivery_date: editDeliveryDate || null,
         action_taken: editActionTaken,
-        planning_notes: editPlanningNotes || undefined,
+        planning_notes: editPlanningNotes || null,
         is_allocated: !!(editTechnician || editPartnerId),
       };
-      const { data: created } = await serviceLogApi.create(payload);
-      onUpdate(created);
+      const { data: updated } = await serviceLogApi.update(log.id, payload);
+      onUpdate(updated);
       setIsEditing(false);
-    } catch { alert('Gagal menambah riwayat status servis.'); }
+    } catch { alert('Gagal memperbarui status dan penugasan servis.'); }
     finally { setSubmitting(false); }
   };
 

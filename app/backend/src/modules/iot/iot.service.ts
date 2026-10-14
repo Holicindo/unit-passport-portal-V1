@@ -175,6 +175,10 @@ export class IotService {
       recorded_at: new Date().toISOString(),
     });
 
+    // Track door event (real-time, tidak throttled)
+    const isAnyDoorOpen = !!(payload.isDoor1Open || payload.isDoor2Open || payload.isDoor3Open || payload.isDoor4Open);
+    this.trackDoorEvent(unit.id, isAnyDoorOpen);
+
     this.logger.log(`✅ [IOT SAVED DB] Unit ID: ${unit.id} (${payload.unitId}) | Last Seen: ${new Date().toLocaleTimeString()}`);
 
     // 4. Periksa kondisi alert
@@ -305,6 +309,26 @@ export class IotService {
           last_seen: unit.last_seen_at || new Date(),
         });
       }
+
+      // 4. Check Compressor Over-Current / Kompresor Melemah (> 12A atau beban berlebih)
+      const live = IotService.liveTelemetryMap.get(unit.id);
+      const liveCurrent = live?.current ?? 0;
+      const normalAmp = unit.compressor_normal_ampere || 1.5;
+      if (liveCurrent >= 12.0 || (normalAmp > 0 && liveCurrent > normalAmp * 2.5 && liveCurrent > 1.0)) {
+        activeAlerts.push({
+          id: `ALT-AMP-${unit.id}`,
+          unit_id: unit.id,
+          serial_number: unit.serial_number,
+          model_name: unit.model_name,
+          client_name: unit.current_client?.company_name || 'Klien Umum',
+          type: 'OVER_CURRENT',
+          severity: 'CRITICAL',
+          title: 'Lonjakan Arus Kompresor (Over-Amperage)',
+          value: `${liveCurrent.toFixed(1)}A`,
+          limit: `Normal: ≤${normalAmp}A (Maks: 12A)`,
+          last_seen: unit.last_seen_at || new Date(),
+        });
+      }
     });
 
     return activeAlerts;
@@ -312,6 +336,36 @@ export class IotService {
 
   // Cache memori telemetry live tercepat per unit ID (agar real-time 0 delay dan 0 write beban ke DB)
   private static readonly liveTelemetryMap = new Map<string, any>();
+
+  // ─── DOOR EVENT COUNTER (per unit, per hari, in-memory) ──────────────────
+  // Key: "unitId:YYYY-MM-DD" | Value: { count: number; lastOpen: boolean }
+  private static readonly doorCounterMap = new Map<string, { count: number; lastOpen: boolean }>();
+
+  private getDoorCounterKey(unitId: string): string {
+    const today = new Date().toISOString().split('T')[0];
+    return `${unitId}:${today}`;
+  }
+
+  /** Dipanggil setiap kali telemetri masuk. Mencatat transisi pintu tutup→buka. */
+  private trackDoorEvent(unitId: string, isAnyDoorOpen: boolean): void {
+    const key = this.getDoorCounterKey(unitId);
+    if (!IotService.doorCounterMap.has(key)) {
+      IotService.doorCounterMap.set(key, { count: 0, lastOpen: false });
+    }
+    const counter = IotService.doorCounterMap.get(key)!;
+    // Edge detection: tutup → buka = 1 event
+    if (!counter.lastOpen && isAnyDoorOpen) {
+      counter.count++;
+      this.logger.debug(`🚪 Door open event #${counter.count} for unit ${unitId} today`);
+    }
+    counter.lastOpen = isAnyDoorOpen;
+  }
+
+  /** Digunakan oleh HealthScoreService untuk mengambil jumlah event buka pintu hari ini. */
+  getDoorEventCountToday(unitId: string): number {
+    const key = this.getDoorCounterKey(unitId);
+    return IotService.doorCounterMap.get(key)?.count ?? 0;
+  }
 
   /**
    * Mengambil data kondisi terkini sebuah unit (untuk widget real-time).
