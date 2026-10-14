@@ -221,8 +221,9 @@ export function StatusBadge({ status }: { status: string }) {
   const s = status?.toUpperCase();
   if (s === 'ACTIVE') return <span className={styles.badgeActive}>Aktif</span>;
   if (s === 'MAINTENANCE') return <span className={styles.badgeMaintenance}>Maintenance</span>;
-  if (s === 'INACTIVE') return <span className={styles.badgeInactive}>Tidak Aktif</span>;
+  if (s === 'INACTIVE') return <span className={styles.badgeExpired}>Offline</span>;
   return <span className={styles.badgeInactive}>{status}</span>;
+
 }
 
 // ── Skeleton Card ──
