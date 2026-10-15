@@ -31,4 +31,10 @@ export class RegisterDto {
   @IsString()
   @IsOptional()
   partner_id?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  phone?: string;
 }
+

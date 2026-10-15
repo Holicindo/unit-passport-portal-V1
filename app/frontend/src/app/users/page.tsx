@@ -5,7 +5,7 @@ import styles from './users.module.css';
 import { Plus, Search, ShieldAlert, CheckCircle2, XCircle, Edit3, Trash2, Users, ShieldCheck } from 'lucide-react';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import StatsGrid from '@/components/dashboard/StatsGrid';
-import { userApi } from '@/lib/api';
+import { userApi, authApi } from '@/lib/api';
 import { UserFormModal, DeleteConfirmModal } from './components/UserModals';
 
 type UserRole = 'SUPER_ADMIN' | 'PARTNER' | 'MECHANIC' | 'CLIENT';
@@ -15,6 +15,7 @@ interface User {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   role: UserRole;
   status: UserStatus;
   client_id?: string;
@@ -59,33 +60,26 @@ export default function UsersPage() {
   const openAddModal = () => { setEditingUser(null); setShowModal(true); };
   const openEditModal = (user: User) => { setEditingUser(user); setShowModal(true); };
 
-  const handleSave = async (data: { name: string; email: string; role: UserRole; status: UserStatus; password: string; client_id?: string; partner_id?: string }) => {
+  const handleSave = async (data: { name: string; email: string; phone?: string; role: UserRole; status: UserStatus; password: string; client_id?: string; partner_id?: string }) => {
     try {
       if (editingUser) {
         await userApi.update(editingUser.id, data);
         await fetchUsers();
       } else {
-        const token = localStorage.getItem('token');
-        const res = await fetch(`/api/auth/register`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-          body: JSON.stringify({ 
-            name: data.name, 
-            email: data.email, 
-            password: data.password || 'password123', 
-            role: data.role,
-            client_id: data.client_id,
-            partner_id: data.partner_id
-          }),
+        await authApi.register({ 
+          name: data.name, 
+          email: data.email, 
+          phone: data.phone,
+          password: data.password || 'password123', 
+          role: data.role,
+          client_id: data.client_id,
+          partner_id: data.partner_id
         });
-        if (!res.ok) {
-          const err = await res.json();
-          alert(`Gagal membuat user: ${err.message || 'Unknown error'}`);
-          return;
-        }
         await fetchUsers();
       }
       setShowModal(false);
+
+
     } catch {
       alert('Gagal menyimpan. Periksa koneksi ke server.');
     }

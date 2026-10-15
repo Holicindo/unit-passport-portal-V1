@@ -74,8 +74,9 @@ export default function LoginPage() {
         const redir = params.get('redirect');
         if (redir) router.push(redir);
         else if (userRole === 'CLIENT') router.push('/client-portal/dashboard');
-        else if (userRole === 'PARTNER') router.push('/partner-portal');
+        else if (userRole === 'PARTNER' || userRole === 'MECHANIC') router.push('/partner-portal');
         else router.push('/dashboard');
+
       }
     }
   }, [router]);
@@ -88,9 +89,10 @@ export default function LoginPage() {
       const { data } = await authApi.login({ email, password });
       localStorage.setItem('token', data.access_token);
       localStorage.setItem('user', JSON.stringify(data.user));
+      const role = data.user.role;
       if (redirectUrl) router.push(redirectUrl);
-      else if (data.user.role === 'CLIENT') router.push('/client-portal/dashboard');
-      else if (data.user.role === 'PARTNER') router.push('/partner-portal');
+      else if (role === 'CLIENT') router.push('/client-portal/dashboard');
+      else if (role === 'PARTNER' || role === 'MECHANIC') router.push('/partner-portal');
       else router.push('/dashboard');
     } catch (err: any) {
       console.error('Login error:', err);
@@ -109,8 +111,13 @@ export default function LoginPage() {
       const { data } = await authApi.register({ email, password, name: signupName });
       localStorage.setItem('token', data.access_token);
       localStorage.setItem('user', JSON.stringify(data.user));
-      router.push(redirectUrl || '/dashboard');
+      const role = data.user?.role || 'CLIENT';
+      if (redirectUrl) router.push(redirectUrl);
+      else if (role === 'CLIENT') router.push('/client-portal/dashboard');
+      else if (role === 'PARTNER' || role === 'MECHANIC') router.push('/partner-portal');
+      else router.push('/dashboard');
     } catch (err: any) {
+
       console.error('Signup error:', err);
       setError(err.response?.data?.message || 'Pendaftaran gagal. Silakan coba lagi.');
     } finally {

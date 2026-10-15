@@ -20,11 +20,11 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Interceptor to handle global 401/403 responses
+// Interceptor to handle global 401 Unauthorized responses
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+    if (error.response && error.response.status === 401) {
       if (typeof window !== 'undefined') {
         // Only redirect if not already on login page to avoid redirect loops
         if (window.location.pathname !== '/login') {
@@ -37,6 +37,7 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
 
 export const authApi = {
   login: (credentials: any) => api.post('/auth/login', credentials),

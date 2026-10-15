@@ -10,14 +10,15 @@ type UserRole = 'SUPER_ADMIN' | 'PARTNER' | 'MECHANIC' | 'CLIENT';
 type UserStatus = 'ACTIVE' | 'SUSPENDED';
 
 interface UserFormModalProps {
-  editingUser: { id: string; name: string; email: string; role: UserRole; status: UserStatus; client_id?: string; partner_id?: string } | null;
+  editingUser: { id: string; name: string; email: string; phone?: string; role: UserRole; status: UserStatus; client_id?: string; partner_id?: string } | null;
   onClose: () => void;
-  onSave: (data: { name: string; email: string; role: UserRole; status: UserStatus; password: string; client_id?: string; partner_id?: string }) => void;
+  onSave: (data: { name: string; email: string; phone?: string; role: UserRole; status: UserStatus; password: string; client_id?: string; partner_id?: string }) => void;
 }
 
 export function UserFormModal({ editingUser, onClose, onSave }: UserFormModalProps) {
   const [formName, setFormName] = useState(editingUser?.name || '');
   const [formEmail, setFormEmail] = useState(editingUser?.email || '');
+  const [formPhone, setFormPhone] = useState(editingUser?.phone || '');
   const [formRole, setFormRole] = useState<UserRole>(editingUser?.role || 'CLIENT');
   const [formStatus, setFormStatus] = useState<UserStatus>(editingUser?.status || 'ACTIVE');
   const [formPassword, setFormPassword] = useState('');
@@ -49,13 +50,15 @@ export function UserFormModal({ editingUser, onClose, onSave }: UserFormModalPro
     onSave({ 
       name: formName, 
       email: formEmail, 
+      phone: formPhone || undefined,
       role: formRole, 
       status: formStatus, 
       password: formPassword,
       client_id: formRole === 'CLIENT' ? (formClientId || undefined) : undefined,
-      partner_id: formRole === 'PARTNER' ? (formPartnerId || undefined) : undefined
+      partner_id: (formRole === 'PARTNER' || formRole === 'MECHANIC') ? (formPartnerId || undefined) : undefined
     });
   };
+
 
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
@@ -79,6 +82,12 @@ export function UserFormModal({ editingUser, onClose, onSave }: UserFormModalPro
             <label className={styles.formLabel}>Email</label>
             <input type="email" className={styles.formInput} placeholder="contoh@email.com"
               value={formEmail} onChange={(e) => setFormEmail(e.target.value)} />
+          </div>
+
+          <div className={styles.formGroup}>
+            <label className={styles.formLabel}>Nomor WhatsApp (Aktif)</label>
+            <input type="text" className={styles.formInput} placeholder="Contoh: 081234567890"
+              value={formPhone} onChange={(e) => setFormPhone(e.target.value)} />
           </div>
 
           {!editingUser && (
@@ -131,21 +140,22 @@ export function UserFormModal({ editingUser, onClose, onSave }: UserFormModalPro
             </div>
           )}
 
-          {formRole === 'PARTNER' && (
+          {(formRole === 'PARTNER' || formRole === 'MECHANIC') && (
             <div className={styles.formGroup}>
-              <label className={styles.formLabel}>Hubungkan ke Mitra/Partner (Opsional)</label>
+              <label className={styles.formLabel}>Hubungkan ke Mitra/Partner Regional (Opsional)</label>
               <CustomSelect 
                 value={formPartnerId} 
                 onChange={setFormPartnerId}
                 placeholder="Pilih Mitra/Partner"
                 options={[
-                  { value: '', label: 'Pilih Mitra/Partner...' },
-                  ...partners.map(p => ({ value: p.id, label: p.company_name }))
+                  { value: '', label: 'Holicindo Internal / Tanpa Mitra Khusus' },
+                  ...partners.map(p => ({ value: p.id, label: (p as any).partner_name || p.company_name }))
                 ]} 
               />
             </div>
           )}
         </div>
+
 
         <div className={styles.modalFooter}>
           <button className={styles.secondaryBtn} onClick={onClose}>Batal</button>

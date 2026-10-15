@@ -34,8 +34,10 @@ export class AuthController {
       registerDto.role,
       registerDto.client_id,
       registerDto.partner_id,
+      registerDto.phone,
     );
   }
+
 
   @Get('users')
   @UseGuards(JwtAuthGuard, RolesGuard)

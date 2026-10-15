@@ -16,7 +16,7 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async register(email: string, password: string, name?: string, role?: UserRole, clientId?: string, partnerId?: string) {
+  async register(email: string, password: string, name?: string, role?: UserRole, clientId?: string, partnerId?: string, phone?: string) {
     const existingUser = await this.userRepository.findOne({ where: { email } });
     if (existingUser) {
       throw new ConflictException('Email already exists');
@@ -42,6 +42,7 @@ export class AuthService {
       role: role || UserRole.CLIENT,
       client_id: finalClientId,
       partner_id: partnerId,
+      phone: phone || undefined,
       status: 'ACTIVE',
     });
 
@@ -55,13 +56,14 @@ export class AuthService {
         email: savedUser.email,
         role: savedUser.role,
         name: savedUser.name,
+        phone: savedUser.phone,
       },
     };
   }
 
   async findAll(): Promise<Omit<User, 'password'>[]> {
     const users = await this.userRepository.find({
-      select: ['id', 'name', 'email', 'role', 'status', 'client_id', 'partner_id', 'created_at', 'updated_at'],
+      select: ['id', 'name', 'email', 'phone', 'role', 'status', 'client_id', 'partner_id', 'created_at', 'updated_at'],
       order: { created_at: 'DESC' },
     });
     return users;
@@ -70,11 +72,12 @@ export class AuthService {
   async findById(id: string): Promise<Omit<User, 'password'>> {
     const user = await this.userRepository.findOne({
       where: { id },
-      select: ['id', 'name', 'email', 'role', 'status', 'client_id', 'partner_id', 'created_at', 'updated_at'],
+      select: ['id', 'name', 'email', 'phone', 'role', 'status', 'client_id', 'partner_id', 'created_at', 'updated_at'],
     });
     if (!user) throw new NotFoundException('User not found');
     return user;
   }
+
 
   async updateProfile(userId: string, dto: { name?: string; phone?: string; city?: string }) {
     const user = await this.userRepository.findOne({ where: { id: userId } });
@@ -98,7 +101,7 @@ export class AuthService {
     };
   }
 
-  async updateUser(id: string, dto: { name?: string; email?: string; role?: UserRole; status?: string; client_id?: string; partner_id?: string; password?: string }) {
+  async updateUser(id: string, dto: { name?: string; email?: string; phone?: string; role?: UserRole; status?: string; client_id?: string; partner_id?: string; password?: string }) {
     const user = await this.userRepository.findOne({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
 
@@ -109,6 +112,7 @@ export class AuthService {
     }
 
     if (dto.name !== undefined) user.name = dto.name;
+    if (dto.phone !== undefined) user.phone = dto.phone;
     if (dto.role !== undefined) user.role = dto.role;
     if (dto.status !== undefined) user.status = dto.status;
     if (dto.client_id !== undefined) user.client_id = dto.client_id;
@@ -117,6 +121,7 @@ export class AuthService {
     if (dto.password) {
       user.password = await bcrypt.hash(dto.password, 10);
     }
+
 
     const saved = await this.userRepository.save(user);
     const { password, ...result } = saved;
