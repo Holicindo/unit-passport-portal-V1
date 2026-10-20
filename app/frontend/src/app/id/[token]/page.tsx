@@ -44,6 +44,7 @@ export default function QrPassportPage() {
   const autoUnitType = unit ? getUnitType(unit.model_name) : 'MESIN';
   const [photoIdx, setPhotoIdx] = useState(0);
   const [showReportSelector, setShowReportSelector] = useState(false);
+  const [iotSlideTab, setIotSlideTab] = useState<'realtime' | 'history'>('realtime');
 
   useEffect(() => {
     if (!unit) return;
@@ -586,7 +587,7 @@ export default function QrPassportPage() {
                     </div>
                   )}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <button className={styles.btnPrimary} onClick={() => { setTechName(user?.name || ''); setShowLogModal(true); }} style={{ background: 'var(--neu-bg, rgba(8,20,50,0.8))', color: '#10b981', border: '1px solid rgba(0,31,63,0.1)', boxShadow: '-3px -3px 8px rgba(255,255,255,0.04), 3px 3px 8px rgba(0,31,63,0.1)' }}><Check size={16} /> Selesaikan &amp; Tutup Tiket</button>
+                    <button className={styles.btnPrimary} onClick={() => { setTechName(user?.name || ''); setLogStatus('COMPLETED'); setShowLogModal(true); }} style={{ background: 'var(--neu-bg, rgba(8,20,50,0.8))', color: '#10b981', border: '1px solid rgba(0,31,63,0.1)', boxShadow: '-3px -3px 8px rgba(255,255,255,0.04), 3px 3px 8px rgba(0,31,63,0.1)' }}><Check size={16} /> Selesaikan &amp; Tutup Tiket</button>
                     <button className={styles.btnPrimary} onClick={() => { setTechName(user?.name || ''); setLogStatus('PENDING'); setShowLogModal(true); }} style={{ background: 'var(--neu-bg, rgba(8,20,50,0.8))', color: '#3b82f6', border: '1px solid rgba(0,31,63,0.1)', boxShadow: '-3px -3px 8px rgba(255,255,255,0.04), 3px 3px 8px rgba(0,31,63,0.1)' }}><Wrench size={16} /> Tambah Catatan Servis</button>
                     <button className={styles.btnPrimary} onClick={() => setShowReportSelector(true)} style={{ background: 'var(--neu-bg, rgba(8,20,50,0.8))', color: '#60a5fa', border: '1px solid rgba(0,31,63,0.1)', boxShadow: '-3px -3px 8px rgba(255,255,255,0.04), 3px 3px 8px rgba(0,31,63,0.1)' }}><FilePlus size={16} /> Buat Laporan Digital</button>
                   </div>
@@ -837,39 +838,89 @@ export default function QrPassportPage() {
               </section>
             )}
 
-            {/* IoT — Admin/Partner: Raw Sensor Real-Time */}
+            {/* IoT — Admin/Partner: Slide Carousel (Sensor Real-Time <-> Riwayat Sensor) */}
             {(isPartner || isAdmin) && unit.id && (
               <section className={`${styles.panel} ${styles.iotPanel}`}>
                 <div className={styles.panelHeader}>
-                  <div className={styles.panelHeaderLeft}>
-                    <Activity size={16} color="var(--color-cobalt-blue)" />
-                    <h2>Sensor Real-Time</h2>
-                  </div>
-                  <span style={{ fontSize: '0.65rem', fontWeight: 700, background: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.25)', borderRadius: '20px', padding: '3px 8px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                    <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#10b981', display: 'inline-block', animation: 'pulse 1.5s infinite' }} />
-                    LIVE
-                  </span>
-                </div>
-                <div className={styles.panelContent}>
-                  <IotTelemetryWidget unitId={unit.id} unitModel={unit.model_name} unit={unit} />
-                </div>
-              </section>
-            )}
+                  <div className={styles.iotSlideHeader}>
+                    <div className={styles.panelHeaderLeft}>
+                      {iotSlideTab === 'realtime' ? (
+                        <>
+                          <Activity size={16} color="var(--color-cobalt-blue)" />
+                          <h2>Sensor Real-Time</h2>
+                        </>
+                      ) : (
+                        <>
+                          <BarChart2 size={16} color="var(--color-cobalt-blue)" />
+                          <h2>Riwayat Sensor</h2>
+                        </>
+                      )}
+                    </div>
 
-            {/* IoT Sensor History — Admin/Partner only */}
-            {(isPartner || isAdmin) && unit.id && (
-              <section className={`${styles.panel} ${styles.iotPanel}`}>
-                <div className={styles.panelHeader}>
-                  <div className={styles.panelHeaderLeft}>
-                    <BarChart2 size={16} color="var(--color-cobalt-blue)" />
-                    <h2>Riwayat Sensor</h2>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      {/* Tab Switcher */}
+                      <div className={styles.iotSlideTabs}>
+                        <button
+                          type="button"
+                          className={`${styles.iotSlideTabItem} ${iotSlideTab === 'realtime' ? styles.iotSlideTabItemActive : ''}`}
+                          onClick={() => setIotSlideTab('realtime')}
+                        >
+                          Real-Time
+                        </button>
+                        <button
+                          type="button"
+                          className={`${styles.iotSlideTabItem} ${iotSlideTab === 'history' ? styles.iotSlideTabItemActive : ''}`}
+                          onClick={() => setIotSlideTab('history')}
+                        >
+                          Riwayat
+                        </button>
+                      </div>
+
+                      {/* Status Badges */}
+                      {iotSlideTab === 'realtime' ? (
+                        <span style={{ fontSize: '0.65rem', fontWeight: 700, background: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.25)', borderRadius: '20px', padding: '3px 8px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#10b981', display: 'inline-block', animation: 'pulse 1.5s infinite' }} />
+                          LIVE
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: '0.65rem', fontWeight: 700, background: 'rgba(46,91,255,0.1)', color: '#2E5BFF', border: '1px solid rgba(46,91,255,0.2)', borderRadius: '20px', padding: '3px 8px' }}>
+                          Histori & Avg
+                        </span>
+                      )}
+
+                      {/* Navigation Prev & Next (< >) */}
+                      <div className={styles.iotSlideNav}>
+                        <button
+                          type="button"
+                          aria-label="Slide sebelumnya"
+                          title="Sensor Real-Time"
+                          className={styles.iotSlideBtn}
+                          disabled={iotSlideTab === 'realtime'}
+                          onClick={() => setIotSlideTab('realtime')}
+                        >
+                          <ChevronLeft size={16} />
+                        </button>
+                        <button
+                          type="button"
+                          aria-label="Slide berikutnya"
+                          title="Riwayat Sensor"
+                          className={styles.iotSlideBtn}
+                          disabled={iotSlideTab === 'history'}
+                          onClick={() => setIotSlideTab('history')}
+                        >
+                          <ChevronRight size={16} />
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <span style={{ fontSize: '0.65rem', fontWeight: 700, background: 'rgba(46,91,255,0.1)', color: '#2E5BFF', border: '1px solid rgba(46,91,255,0.2)', borderRadius: '20px', padding: '3px 8px' }}>
-                    Histori & Avg
-                  </span>
                 </div>
+
                 <div className={styles.panelContent}>
-                  <IotHistoryWidget unitId={unit.id} unit={unit} onUnitUpdate={loadUnitData} />
+                  {iotSlideTab === 'realtime' ? (
+                    <IotTelemetryWidget unitId={unit.id} unitModel={unit.model_name} unit={unit} />
+                  ) : (
+                    <IotHistoryWidget unitId={unit.id} unit={unit} onUnitUpdate={loadUnitData} />
+                  )}
                 </div>
               </section>
             )}

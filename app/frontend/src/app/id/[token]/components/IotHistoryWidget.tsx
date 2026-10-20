@@ -1062,7 +1062,7 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
         <polyline points="107,128 168,128 168,175" stroke="currentColor" stroke-width="8" stroke-linecap="square" stroke-linejoin="miter" fill="none"/>
         <polyline points="107,140 156,140 156,175" stroke="currentColor" stroke-width="8" stroke-linecap="square" stroke-linejoin="miter" fill="none"/>
       </svg>
-      <span>Holicindo</span>
+      <span>HOLIC</span>
     </div>
   </div>
 

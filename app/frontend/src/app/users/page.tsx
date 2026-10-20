@@ -8,7 +8,7 @@ import StatsGrid from '@/components/dashboard/StatsGrid';
 import { userApi, authApi } from '@/lib/api';
 import { UserFormModal, DeleteConfirmModal } from './components/UserModals';
 
-type UserRole = 'SUPER_ADMIN' | 'PARTNER' | 'MECHANIC' | 'CLIENT';
+type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'PARTNER' | 'MECHANIC' | 'CLIENT';
 type UserStatus = 'ACTIVE' | 'SUSPENDED';
 
 interface User {
@@ -20,14 +20,15 @@ interface User {
   status: UserStatus;
   client_id?: string;
   partner_id?: string;
-  lastLogin?: string;
+  last_login?: string;
   created_at?: string;
 }
 
-const roleLabels: Record<UserRole, string> = {
+const roleLabels: Record<string, string> = {
   SUPER_ADMIN: 'Super Admin',
+  ADMIN: 'Admin',
   PARTNER: 'Partner',
-  MECHANIC: 'Mekanik',
+  MECHANIC: 'Teknisi',
   CLIENT: 'Klien',
 };
 
@@ -60,7 +61,7 @@ export default function UsersPage() {
   const openAddModal = () => { setEditingUser(null); setShowModal(true); };
   const openEditModal = (user: User) => { setEditingUser(user); setShowModal(true); };
 
-  const handleSave = async (data: { name: string; email: string; phone?: string; role: UserRole; status: UserStatus; password: string; client_id?: string; partner_id?: string }) => {
+  const handleSave = async (data: { name: string; email: string; phone?: string; role: string; status: UserStatus; password: string; client_id?: string; partner_id?: string }) => {
     try {
       if (editingUser) {
         await userApi.update(editingUser.id, data);
@@ -147,7 +148,7 @@ export default function UsersPage() {
             </div>
             <CustomSelect options={[
               { value: '', label: 'Semua Role' }, { value: 'SUPER_ADMIN', label: 'Super Admin' },
-              { value: 'PARTNER', label: 'Partner' }, { value: 'MECHANIC', label: 'Mekanik' }, { value: 'CLIENT', label: 'Klien' },
+              { value: 'MECHANIC', label: 'Teknisi' }, { value: 'CLIENT', label: 'Klien' },
             ]} value={filterRole} onChange={(val) => setFilterRole(val)} placeholder="Filter Role..." />
           </div>
           <div className="dtToolbarRight">
@@ -207,7 +208,7 @@ export default function UsersPage() {
                     )}
                   </button>
                 </td>
-                <td className={styles.lastLoginCell}>{user.lastLogin || 'Belum pernah'}</td>
+                <td className={styles.lastLoginCell}>{user.last_login ? new Date(user.last_login).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Belum pernah'}</td>
                 <td className={styles.tableThRight}>
                   <div className={styles.actionsContainer}>
                     <button className={styles.actionBtn} title="Edit Pengguna" onClick={() => openEditModal(user)}><Edit3 size={16} /></button>

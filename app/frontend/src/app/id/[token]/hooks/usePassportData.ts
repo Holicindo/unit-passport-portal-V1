@@ -89,8 +89,8 @@ export function usePassportData() {
   // Access control
   const isGuest = !user;
   const isClient = user?.role === 'CLIENT';
-  const isPartner = user?.role === 'PARTNER';
-  const isAdmin = user?.role === 'ADMIN';
+  const isPartner = user?.role === 'PARTNER' || user?.role === 'MECHANIC';
+  const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
   const belongsToClient = isClient && unit?.current_client?.id === user?.client_id;
   const hasClientRestriction = isClient && !belongsToClient;
 

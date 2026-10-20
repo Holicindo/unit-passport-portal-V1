@@ -6,20 +6,20 @@ import { CustomSelect } from '@/components/ui/CustomSelect';
 import { clientApi, partnerApi } from '@/lib/api';
 import styles from '../users.module.css';
 
-type UserRole = 'SUPER_ADMIN' | 'PARTNER' | 'MECHANIC' | 'CLIENT';
+type UserRole = 'SUPER_ADMIN' | 'MECHANIC' | 'CLIENT';
 type UserStatus = 'ACTIVE' | 'SUSPENDED';
 
 interface UserFormModalProps {
-  editingUser: { id: string; name: string; email: string; phone?: string; role: UserRole; status: UserStatus; client_id?: string; partner_id?: string } | null;
+  editingUser: { id: string; name: string; email: string; phone?: string; role: string; status: UserStatus; client_id?: string; partner_id?: string } | null;
   onClose: () => void;
-  onSave: (data: { name: string; email: string; phone?: string; role: UserRole; status: UserStatus; password: string; client_id?: string; partner_id?: string }) => void;
+  onSave: (data: { name: string; email: string; phone?: string; role: string; status: UserStatus; password: string; client_id?: string; partner_id?: string }) => void;
 }
 
 export function UserFormModal({ editingUser, onClose, onSave }: UserFormModalProps) {
   const [formName, setFormName] = useState(editingUser?.name || '');
   const [formEmail, setFormEmail] = useState(editingUser?.email || '');
   const [formPhone, setFormPhone] = useState(editingUser?.phone || '');
-  const [formRole, setFormRole] = useState<UserRole>(editingUser?.role || 'CLIENT');
+  const [formRole, setFormRole] = useState<string>(editingUser?.role || 'CLIENT');
   const [formStatus, setFormStatus] = useState<UserStatus>(editingUser?.status || 'ACTIVE');
   const [formPassword, setFormPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -55,7 +55,7 @@ export function UserFormModal({ editingUser, onClose, onSave }: UserFormModalPro
       status: formStatus, 
       password: formPassword,
       client_id: formRole === 'CLIENT' ? (formClientId || undefined) : undefined,
-      partner_id: (formRole === 'PARTNER' || formRole === 'MECHANIC') ? (formPartnerId || undefined) : undefined
+      partner_id: formRole === 'MECHANIC' ? (formPartnerId || undefined) : undefined
     });
   };
 
@@ -107,11 +107,10 @@ export function UserFormModal({ editingUser, onClose, onSave }: UserFormModalPro
           <div className={styles.formRow}>
             <div className={styles.formGroup}>
               <label className={styles.formLabel}>Role</label>
-              <CustomSelect value={formRole} onChange={(val) => setFormRole(val as UserRole)}
+              <CustomSelect value={formRole} onChange={(val) => setFormRole(val)}
                 options={[
                   { value: 'SUPER_ADMIN', label: 'Super Admin' },
-                  { value: 'PARTNER', label: 'Partner' },
-                  { value: 'MECHANIC', label: 'Mekanik' },
+                  { value: 'MECHANIC', label: 'Teknisi' },
                   { value: 'CLIENT', label: 'Klien' },
                 ]} />
             </div>
@@ -140,7 +139,7 @@ export function UserFormModal({ editingUser, onClose, onSave }: UserFormModalPro
             </div>
           )}
 
-          {(formRole === 'PARTNER' || formRole === 'MECHANIC') && (
+          {formRole === 'MECHANIC' && (
             <div className={styles.formGroup}>
               <label className={styles.formLabel}>Hubungkan ke Mitra/Partner Regional (Opsional)</label>
               <CustomSelect 

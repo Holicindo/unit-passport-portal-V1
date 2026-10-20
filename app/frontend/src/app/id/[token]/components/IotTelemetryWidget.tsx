@@ -37,108 +37,108 @@ function TempCard({ label, rawValue, min, max, offset, icon: Icon, isWarning, wa
     <div style={{
       background: 'rgba(13, 35, 70, 0.85)',
       border: '1px solid rgba(255, 255, 255, 0.08)',
-      borderRadius: '16px',
-      padding: '16px 14px',
+      borderRadius: '13px',
+      padding: '12px 12px',
       display: 'flex',
       flexDirection: 'column',
-      gap: '12px',
+      gap: '8px',
       flex: '1 1 0',
-      minWidth: '160px',
+      minWidth: '140px',
       transition: 'all 0.3s ease',
-      boxShadow: '-3px -3px 7px rgba(255,255,255,0.05), 4px 4px 12px rgba(0,0,0,0.5)',
+      boxShadow: '-2px -2px 6px rgba(255,255,255,0.04), 3px 3px 8px rgba(0,0,0,0.4)',
       position: 'relative',
     }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <div style={{
             background: 'rgba(8, 18, 50, 0.9)',
-            boxShadow: 'inset -2px -2px 5px rgba(255,255,255,0.05), inset 2px 2px 5px rgba(0,0,0,0.4)',
-            padding: '7px',
-            borderRadius: '10px',
+            boxShadow: 'inset -1px -1px 3px rgba(255,255,255,0.05), inset 1px 1px 3px rgba(0,0,0,0.4)',
+            padding: '5px',
+            borderRadius: '8px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}>
-            <Icon size={16} color={color} />
+            <Icon size={14} color={color} />
           </div>
-          <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#f1f5f9', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#f1f5f9', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             {label}
           </span>
         </div>
         {isAlert ? (
           <div style={{
-            fontSize: '0.62rem', color: '#dc2626', fontWeight: 800,
-            background: 'rgba(220,38,38,0.1)', padding: '3px 8px',
-            borderRadius: '20px', letterSpacing: '0.05em',
+            fontSize: '0.58rem', color: '#dc2626', fontWeight: 800,
+            background: 'rgba(220,38,38,0.1)', padding: '2px 6px',
+            borderRadius: '12px', letterSpacing: '0.04em',
             border: '1px solid rgba(220,38,38,0.25)',
           }}>KRITIS</div>
         ) : isWarning ? (
           <div style={{
-            fontSize: '0.62rem', color: '#d97706', fontWeight: 800,
-            background: 'rgba(217,119,6,0.1)', padding: '3px 8px',
-            borderRadius: '20px', letterSpacing: '0.05em',
+            fontSize: '0.58rem', color: '#d97706', fontWeight: 800,
+            background: 'rgba(217,119,6,0.1)', padding: '2px 6px',
+            borderRadius: '12px', letterSpacing: '0.04em',
             border: '1px solid rgba(217,119,6,0.25)',
           }}>{warningLabel || 'PERHATIAN'}</div>
         ) : !isError && (
           <div style={{
-            fontSize: '0.62rem', color: '#059669', fontWeight: 800,
-            background: 'rgba(5,150,105,0.1)', padding: '3px 8px',
-            borderRadius: '20px', letterSpacing: '0.05em',
+            fontSize: '0.58rem', color: '#059669', fontWeight: 800,
+            background: 'rgba(5,150,105,0.1)', padding: '2px 6px',
+            borderRadius: '12px', letterSpacing: '0.04em',
             border: '1px solid rgba(5,150,105,0.25)',
           }}>NORMAL</div>
         )}
       </div>
 
       {/* Main Value */}
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
         <div style={{
-          fontSize: '2.4rem', fontWeight: 900, color, lineHeight: 1,
+          fontSize: '1.75rem', fontWeight: 900, color, lineHeight: 1,
           fontFamily: 'monospace', letterSpacing: '-0.02em',
         }}>
           {isError ? '—' : `${liveValue!.toFixed(1)}°`}
         </div>
       </div>
 
-      <div style={{ height: '1px', background: 'rgba(255,255,255,0.06)', margin: '4px 0' }} />
+      <div style={{ height: '1px', background: 'rgba(255,255,255,0.06)', margin: '2px 0' }} />
 
       {/* 3 Metrics: Calibration, Min, Max (Neumorphic Inset) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
         {/* Kalibrasi */}
         <div style={{
-          display: 'flex', flexDirection: 'column', gap: '2px',
+          display: 'flex', flexDirection: 'column', gap: '1px',
           background: 'rgba(8, 18, 50, 0.9)',
-          boxShadow: 'inset -2px -2px 4px rgba(255,255,255,0.05), inset 2px 2px 5px rgba(0,0,0,0.4)',
-          padding: '6px 8px', borderRadius: '10px',
+          boxShadow: 'inset -1px -1px 3px rgba(255,255,255,0.05), inset 1px 1px 3px rgba(0,0,0,0.4)',
+          padding: '4px 6px', borderRadius: '7px',
         }}>
-          <span style={{ fontSize: '0.62rem', fontWeight: 700, color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <Settings2 size={10} /> Offset
+          <span style={{ fontSize: '0.55rem', fontWeight: 700, color: '#64748b', display: 'flex', alignItems: 'center', gap: '3px' }}>
+            <Settings2 size={9} /> Offset
           </span>
-          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#f1f5f9', fontFamily: 'monospace' }}>
+          <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#f1f5f9', fontFamily: 'monospace' }}>
             {offset > 0 ? '+' : ''}{offset.toFixed(1)}°
           </span>
         </div>
         {/* Min */}
         <div style={{
-          display: 'flex', flexDirection: 'column', gap: '2px',
+          display: 'flex', flexDirection: 'column', gap: '1px',
           background: 'rgba(8, 18, 50, 0.9)',
-          boxShadow: 'inset -2px -2px 4px rgba(255,255,255,0.05), inset 2px 2px 5px rgba(0,0,0,0.4)',
-          padding: '6px 8px', borderRadius: '10px',
+          boxShadow: 'inset -1px -1px 3px rgba(255,255,255,0.05), inset 1px 1px 3px rgba(0,0,0,0.4)',
+          padding: '4px 6px', borderRadius: '7px',
         }}>
-          <span style={{ fontSize: '0.62rem', fontWeight: 700, color: '#64748b' }}>Min Suhu</span>
-          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#f1f5f9', fontFamily: 'monospace' }}>
+          <span style={{ fontSize: '0.55rem', fontWeight: 700, color: '#64748b' }}>Min</span>
+          <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#f1f5f9', fontFamily: 'monospace' }}>
             {min.toFixed(1)}°
           </span>
         </div>
         {/* Max */}
         <div style={{
-          display: 'flex', flexDirection: 'column', gap: '2px',
+          display: 'flex', flexDirection: 'column', gap: '1px',
           background: 'rgba(8, 18, 50, 0.9)',
-          boxShadow: 'inset -2px -2px 4px rgba(255,255,255,0.05), inset 2px 2px 5px rgba(0,0,0,0.4)',
-          padding: '6px 8px', borderRadius: '10px',
+          boxShadow: 'inset -1px -1px 3px rgba(255,255,255,0.05), inset 1px 1px 3px rgba(0,0,0,0.4)',
+          padding: '4px 6px', borderRadius: '7px',
         }}>
-          <span style={{ fontSize: '0.62rem', fontWeight: 700, color: '#64748b' }}>Max Suhu</span>
-          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#f1f5f9', fontFamily: 'monospace' }}>
+          <span style={{ fontSize: '0.55rem', fontWeight: 700, color: '#64748b' }}>Max</span>
+          <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#f1f5f9', fontFamily: 'monospace' }}>
             {max.toFixed(1)}°
           </span>
         </div>
@@ -154,28 +154,26 @@ function DoorStatus({ label, isOpen }: { label: string; isOpen: boolean | null }
 
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: '14px',
-      padding: '14px 18px',
+      display: 'flex', alignItems: 'center', gap: '10px',
+      padding: '8px 12px',
       background: 'rgba(13, 35, 70, 0.85)',
       border: actuallyOpen ? '1px solid rgba(217,119,6,0.25)' : '1px solid rgba(255,255,255,0.07)',
-      borderRadius: '14px',
-      boxShadow: actuallyOpen
-        ? '-3px -3px 8px rgba(255,255,255,0.05), 3px 3px 10px rgba(0,0,0,0.5)'
-        : '-3px -3px 8px rgba(255,255,255,0.05), 3px 3px 10px rgba(0,0,0,0.5)',
+      borderRadius: '11px',
+      boxShadow: '-2px -2px 6px rgba(255,255,255,0.04), 2px 2px 7px rgba(0,0,0,0.4)',
       transition: 'all 0.3s ease',
     }}>
       <div style={{
-        width: '38px', height: '38px', borderRadius: '50%',
+        width: '30px', height: '30px', borderRadius: '50%',
         background: 'rgba(8, 18, 50, 0.9)',
-        boxShadow: 'inset -2px -2px 5px rgba(255,255,255,0.05), inset 2px 2px 5px rgba(0,0,0,0.4)',
+        boxShadow: 'inset -1px -1px 3px rgba(255,255,255,0.05), inset 1px 1px 3px rgba(0,0,0,0.4)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         flexShrink: 0,
       }}>
-        {actuallyOpen ? <DoorOpen size={18} color="#d97706" /> : <DoorClosed size={18} color="#059669" />}
+        {actuallyOpen ? <DoorOpen size={14} color="#d97706" /> : <DoorClosed size={14} color="#059669" />}
       </div>
       <div style={{ flex: 1 }}>
-        <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>{label}</div>
-        <div style={{ fontSize: '0.95rem', fontWeight: 800, color: statusColor }}>
+        <div style={{ fontSize: '0.62rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
+        <div style={{ fontSize: '0.82rem', fontWeight: 800, color: statusColor, lineHeight: 1.1 }}>
           {actuallyOpen ? 'BUKA' : 'TUTUP'}
         </div>
       </div>
@@ -292,28 +290,28 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', paddingBottom: '8px', background: 'transparent' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingBottom: '4px', background: 'transparent' }}>
 
       {/* Status Bar - Neumorphic Badge */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '10px 14px',
+        padding: '7px 12px',
         background: 'rgba(8, 18, 50, 0.95)',
         border: '1px solid rgba(255,255,255,0.06)',
-        borderRadius: '12px',
-        boxShadow: 'inset -2px -2px 6px rgba(255,255,255,0.04), inset 3px 3px 8px rgba(0,0,0,0.6)',
+        borderRadius: '10px',
+        boxShadow: 'inset -1px -1px 4px rgba(255,255,255,0.04), inset 2px 2px 6px rgba(0,0,0,0.5)',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           {isOffline ? (
-            <WifiOff size={16} color="#ef4444" strokeWidth={2.5} style={{ flexShrink: 0 }} />
+            <WifiOff size={14} color="#ef4444" strokeWidth={2.5} style={{ flexShrink: 0 }} />
           ) : data ? (
-            <Wifi size={16} color="#10b981" strokeWidth={2.5} style={{ flexShrink: 0 }} />
+            <Wifi size={14} color="#10b981" strokeWidth={2.5} style={{ flexShrink: 0 }} />
           ) : (
-            <WifiOff size={16} color="#94a3b8" strokeWidth={2} style={{ flexShrink: 0 }} />
+            <WifiOff size={14} color="#94a3b8" strokeWidth={2} style={{ flexShrink: 0 }} />
           )}
           <span style={{ 
             fontWeight: 800, 
-            fontSize: '0.8rem',
+            fontSize: '0.74rem',
             color: isOffline ? '#ef4444' : data ? '#10b981' : '#cbd5e1',
             letterSpacing: '0.01em',
             lineHeight: 1
@@ -326,9 +324,9 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
             }
           </span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {timeSince !== null && (
-            <span style={{ color: '#94a3b8', fontWeight: 600, fontSize: '0.7rem' }}>
+            <span style={{ color: '#94a3b8', fontWeight: 600, fontSize: '0.65rem' }}>
               {timeSince < 60
                 ? `${timeSince} dtk lalu`
                 : `${Math.floor(timeSince / 60)} mnt lalu`
@@ -341,16 +339,16 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
             style={{
               background: refreshing ? 'rgba(46,91,255,0.15)' : 'rgba(13,35,70,0.85)',
               border: `1px solid ${refreshing ? 'rgba(46,91,255,0.3)' : 'rgba(255,255,255,0.1)'}`,
-              borderRadius: '6px', padding: '5px 10px',
+              borderRadius: '6px', padding: '4px 8px',
               cursor: refreshing ? 'not-allowed' : 'pointer',
               color: refreshing ? '#7da8ff' : '#cbd5e1',
               display: 'flex', alignItems: 'center', gap: '4px',
-              fontSize: '0.7rem', fontWeight: 700, fontFamily: 'inherit',
+              fontSize: '0.65rem', fontWeight: 700, fontFamily: 'inherit',
               transition: 'all 0.2s ease',
               opacity: refreshing ? 0.8 : 1,
             }}
           >
-            <RefreshCw size={11} style={{ animation: refreshing ? 'spin 0.7s linear infinite' : 'none', transition: 'all 0.2s' }} />
+            <RefreshCw size={10} style={{ animation: refreshing ? 'spin 0.7s linear infinite' : 'none', transition: 'all 0.2s' }} />
             {refreshing ? 'Memperbarui...' : 'Refresh'}
           </button>
         </div>
@@ -394,45 +392,60 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
             </div>
           </div>
 
-          {/* Kelistrikan */}
-          <div>
-            <div style={{ marginBottom: '10px' }}>
-              <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Kelistrikan</span>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(85px, 1fr))', gap: '10px' }}>
-              {[
-                { label: 'Tegangan', value: data.voltage, unit: 'V',
-                  alert: data.voltage !== null && data.voltage > 0 && (data.voltage < 190 || data.voltage > 240) },
-                { label: 'Arus',    value: data.current, unit: 'A', alert: false },
-                { label: 'Daya',    value: data.power,   unit: 'W', alert: false },
-              ].map(({ label, value, unit, alert }) => (
-                <div key={label} style={{
-                  background: 'rgba(13, 35, 70, 0.85)',
-                  boxShadow: '-3px -3px 8px rgba(255,255,255,0.05), 3px 3px 10px rgba(0,0,0,0.5)',
-                  borderRadius: '14px', padding: '14px 10px', textAlign: 'center',
-                  border: alert ? '1px solid rgba(220,38,38,0.4)' : '1px solid rgba(255,255,255,0.06)',
-                }}>
-                  <div style={{
-                    fontSize: '1.4rem', fontWeight: 900,
-                    color: alert ? '#dc2626' : (value && value !== 0) ? '#f1f5f9' : '#94a3b8',
-                    fontFamily: 'monospace', lineHeight: 1, letterSpacing: '-0.02em',
+          {/* Kelistrikan & Estimasi Beban Komponen (Side-by-Side 2 Kolom) */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '12px',
+            alignItems: 'stretch',
+          }}>
+            {/* Kolom Kiri: Kelistrikan */}
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <div style={{ minHeight: '20px', display: 'flex', alignItems: 'center', marginBottom: '6px' }}>
+                <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  Kelistrikan
+                </span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', flex: 1 }}>
+                {[
+                  { label: 'Tegangan', value: data.voltage, unit: 'V',
+                    alert: data.voltage !== null && data.voltage > 0 && (data.voltage < 190 || data.voltage > 240) },
+                  { label: 'Arus',    value: data.current, unit: 'A', alert: false },
+                  { label: 'Daya',    value: data.power,   unit: 'W', alert: false },
+                ].map(({ label, value, unit, alert }) => (
+                  <div key={label} style={{
+                    background: 'rgba(8, 18, 50, 0.9)',
+                    boxShadow: 'inset -1px -1px 3px rgba(255,255,255,0.05), inset 1px 1px 3px rgba(0,0,0,0.4)',
+                    borderRadius: '10px', padding: '8px 6px', textAlign: 'center',
+                    border: alert ? '1px solid rgba(220,38,38,0.3)' : '1px solid rgba(255,255,255,0.05)',
+                    display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+                    minHeight: '68px',
+                    boxSizing: 'border-box',
                   }}>
-                    {value !== null && value !== 0 ? (
-                      <>
-                        {value.toFixed(1)}
-                        <span style={{ fontSize: '0.7rem', fontWeight: 700, marginLeft: '3px', color: '#64748b' }}>{unit}</span>
-                      </>
-                    ) : '—'}
+                    <div style={{ fontSize: '0.58rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.03em', lineHeight: 1.2 }}>
+                      {label}
+                    </div>
+                    <div style={{
+                      fontSize: '0.98rem', fontWeight: 900,
+                      color: alert ? '#dc2626' : (value && value !== 0) ? '#f1f5f9' : '#94a3b8',
+                      fontFamily: 'monospace', lineHeight: 1, margin: 'auto 0',
+                    }}>
+                      {value !== null && value !== 0 ? (
+                        <>
+                          {value.toFixed(1)}
+                          <span style={{ fontSize: '0.58rem', fontWeight: 700, marginLeft: '2px', color: '#64748b' }}>{unit}</span>
+                        </>
+                      ) : '—'}
+                    </div>
+                    <div style={{ fontSize: '0.54rem', color: '#94a3b8', fontWeight: 600, lineHeight: 1.2 }}>
+                      {value !== null && value !== 0 ? (alert ? 'Periksa' : 'Normal') : 'Off'}
+                    </div>
                   </div>
-                  <div style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: '6px' }}>{label}</div>
-                  {(value === null || value === 0) && (
-                    <div style={{ fontSize: '0.62rem', color: '#94a3b8', marginTop: '3px', fontWeight: 600 }}>Belum tercolok</div>
-                  )}
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
 
-            {/* ── Estimasi Beban Komponen ─────────────────────────────── */}
+            {/* Kolom Kanan: Estimasi Beban Komponen */}
             {data.current !== null && data.current > 0 && (() => {
               const totalA = data.current;
 
@@ -458,8 +471,6 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
               const isAllOn   = totalA >= 4.0;
 
               // ── Estimasi arus per komponen ───────────────────────────
-              // Saat ALL ON: proporsional + koreksi offset
-              // Saat FAN ONLY: hanya dua fan aktif, kompresor OFF
               const estComp  = isAllOn   ? parseFloat((totalA * R_COMP + OFF_COMP).toFixed(2)) : null;
               const estKond  = isAllOn   ? parseFloat((totalA * R_KOND + OFF_KOND).toFixed(2))
                              : isFanOnly ? parseFloat((totalA * 0.24).toFixed(2)) : null;
@@ -472,9 +483,9 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
 
               // ── Status unit keseluruhan ──────────────────────────────
               const unitStatus =
-                isIdle    ? 'STANDBY / DEFROST' :
-                isFanOnly ? 'HANYA FAN AKTIF'   :
-                            'SEMUA KOMPONEN ON';
+                isIdle    ? 'STANDBY' :
+                isFanOnly ? 'FAN ONLY' :
+                            'SEMUA ON';
               const statusColor =
                 isIdle    ? '#64748b' :
                 isFanOnly ? '#d97706' :
@@ -482,52 +493,49 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
 
               const components = [
                 { label: 'Kompresor',     est: estComp, baseline: CAL_COMP, active: isAllOn,             alert: alertComp },
-                { label: 'Fan Kondensor', est: estKond, baseline: CAL_KOND, active: isAllOn || isFanOnly, alert: false },
-                { label: 'Fan Evaporator',est: estEvap, baseline: CAL_EVAP, active: isAllOn || isFanOnly, alert: alertEvap },
+                { label: 'Fan Kond.',     est: estKond, baseline: CAL_KOND, active: isAllOn || isFanOnly, alert: false },
+                { label: 'Fan Evap.',     est: estEvap, baseline: CAL_EVAP, active: isAllOn || isFanOnly, alert: alertEvap },
               ];
 
               return (
-                <div style={{ marginTop: '12px', borderTop: '1px solid rgba(0,0,0,0.06)', paddingTop: '12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                    <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                      Estimasi Beban Komponen
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ minHeight: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                      Estimasi Beban
                     </span>
-                    <span style={{ fontSize: '0.65rem', fontWeight: 700, color: statusColor, background: `${statusColor}18`, padding: '2px 8px', borderRadius: '20px', border: `1px solid ${statusColor}40` }}>
+                    <span style={{ fontSize: '0.58rem', fontWeight: 700, color: statusColor, background: `${statusColor}18`, padding: '1px 6px', borderRadius: '12px', border: `1px solid ${statusColor}40` }}>
                       {unitStatus}
                     </span>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', flex: 1 }}>
                     {components.map(({ label, est, baseline, active, alert }) => {
                       const c  = !active ? '#94a3b8' : alert ? '#dc2626' : '#059669';
                       return (
                         <div key={label} style={{
                           background: 'rgba(8, 18, 50, 0.9)',
-                          boxShadow: 'inset -2px -2px 4px rgba(255,255,255,0.05), inset 2px 2px 5px rgba(0,0,0,0.4)',
-                          borderRadius: '12px', padding: '10px 8px', textAlign: 'center',
+                          boxShadow: 'inset -1px -1px 3px rgba(255,255,255,0.05), inset 1px 1px 3px rgba(0,0,0,0.4)',
+                          borderRadius: '10px', padding: '8px 6px', textAlign: 'center',
                           border: alert ? '1px solid rgba(220,38,38,0.3)' : '1px solid rgba(255,255,255,0.05)',
+                          display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+                          minHeight: '68px',
+                          boxSizing: 'border-box',
                         }}>
-                          <div style={{ fontSize: '0.62rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>
+                          <div style={{ fontSize: '0.58rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.03em', lineHeight: 1.2 }}>
                             {label}
                           </div>
-                          <div style={{ fontSize: '1.1rem', fontWeight: 900, color: c, fontFamily: 'monospace', lineHeight: 1 }}>
+                          <div style={{
+                            fontSize: '0.98rem', fontWeight: 900, color: c,
+                            fontFamily: 'monospace', lineHeight: 1, margin: 'auto 0',
+                          }}>
                             {est !== null ? `${est.toFixed(2)} A` : '—'}
                           </div>
-                          <div style={{ fontSize: '0.6rem', color: '#94a3b8', marginTop: '4px', fontWeight: 600 }}>
-                            {active ? `Ref: ${baseline.toFixed(2)} A` : 'Tidak Aktif'}
+                          <div style={{ fontSize: '0.54rem', color: '#94a3b8', fontWeight: 600, lineHeight: 1.2 }}>
+                            {active ? `Ref: ${baseline.toFixed(2)} A` : 'Off'}
                           </div>
-                          {alert && (
-                            <div style={{ fontSize: '0.58rem', color: '#dc2626', fontWeight: 800, marginTop: '4px', background: 'rgba(220,38,38,0.1)', borderRadius: '4px', padding: '2px 4px' }}>
-                              PERIKSA!
-                            </div>
-                          )}
                         </div>
                       );
                     })}
-                  </div>
-
-                  <div style={{ fontSize: '0.6rem', color: '#94a3b8', marginTop: '8px', textAlign: 'center', fontWeight: 500 }}>
-                    * Estimasi proporsional — akurasi optimal saat semua komponen aktif bersamaan
                   </div>
                 </div>
               );

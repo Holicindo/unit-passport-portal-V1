@@ -1,6 +1,7 @@
 'use client';
 
-import { ArrowLeft } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import { LOG_TYPE_OPTIONS, LOG_STATUS_OPTIONS } from '../constants';
 import styles from '../id.module.css';
@@ -31,7 +32,24 @@ export default function PartnerLogModal({
   logStatus, setLogStatus,
   logComponents, setLogComponents,
 }: PartnerLogModalProps) {
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  useEffect(() => {
+    if (!show) {
+      setShowConfirm(false);
+    }
+  }, [show]);
+
   if (!show) return null;
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (logStatus === 'COMPLETED' && !showConfirm) {
+      setShowConfirm(true);
+      return;
+    }
+    onSubmit(e);
+  };
 
   return (
     <div className={styles.modalOverlay}>
@@ -46,7 +64,7 @@ export default function PartnerLogModal({
           <button onClick={onClose} className={styles.closeBtn}>×</button>
         </div>
 
-        <form onSubmit={onSubmit} className={styles.modalForm}>
+        <form onSubmit={handleFormSubmit} className={styles.modalForm}>
           {/* Unit info summary */}
           <div style={{
             background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
@@ -82,16 +100,74 @@ export default function PartnerLogModal({
 
           <div className={styles.formGroup}>
             <label>Status Penyelesaian *</label>
-            <CustomSelect value={logStatus} onChange={(val) => setLogStatus(val)} options={LOG_STATUS_OPTIONS} />
+            <CustomSelect value={logStatus} onChange={(val) => { setLogStatus(val); setShowConfirm(false); }} options={LOG_STATUS_OPTIONS} />
           </div>
 
-          <button type="submit" className={styles.btnSubmit} disabled={loading} style={{
-            background: logStatus === 'COMPLETED'
-              ? 'linear-gradient(135deg, #059669 0%, #047857 100%)'
-              : 'linear-gradient(135deg, #184cf4 0%, #0a2eb5 100%)',
-          }}>
-            {loading ? 'Menyimpan...' : logStatus === 'COMPLETED' ? 'Simpan & Tutup Tiket' : 'Simpan Catatan Servis'}
-          </button>
+          {showConfirm ? (
+            <div style={{
+              background: 'rgba(255, 107, 0, 0.12)',
+              border: '1px solid rgba(255, 107, 0, 0.35)',
+              borderRadius: '12px',
+              padding: '16px',
+              marginTop: '4px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '12px',
+              textAlign: 'center',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#FFB800', fontWeight: 700, fontSize: '0.9rem' }}>
+                <AlertCircle size={20} />
+                Yakin udah selesai? Mau tutup tiket servis ini?
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', width: '100%' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm(false)}
+                  style={{
+                    padding: '10px 14px',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    borderRadius: '8px',
+                    color: '#cbd5e1',
+                    fontWeight: 700,
+                    fontSize: '0.88rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Belum
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    setShowConfirm(false);
+                    onSubmit(e);
+                  }}
+                  disabled={loading}
+                  style={{
+                    padding: '10px 14px',
+                    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                    border: 'none',
+                    borderRadius: '8px',
+                    color: '#ffffff',
+                    fontWeight: 800,
+                    fontSize: '0.88rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {loading ? 'Menyimpan...' : 'Udah'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button type="submit" className={styles.btnSubmit} disabled={loading} style={{
+              background: logStatus === 'COMPLETED'
+                ? 'linear-gradient(135deg, #059669 0%, #047857 100%)'
+                : 'linear-gradient(135deg, #184cf4 0%, #0a2eb5 100%)',
+            }}>
+              {loading ? 'Menyimpan...' : logStatus === 'COMPLETED' ? 'Simpan & Tutup Tiket' : 'Simpan Catatan Servis'}
+            </button>
+          )}
         </form>
       </div>
     </div>

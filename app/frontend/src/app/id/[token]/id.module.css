@@ -2020,3 +2020,83 @@
   border-top: var(--border-card);
   margin-top: 40px;
 }
+
+/* ============================================================
+   IOT SLIDE CAROUSEL / SWITCHER
+   ============================================================ */
+.iotSlideHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 12px;
+}
+
+.iotSlideNav {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.iotSlideBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.35);
+  padding: 0;
+}
+
+.iotSlideBtn:hover:not(:disabled) {
+  background: var(--color-cobalt-blue);
+  border-color: var(--color-cobalt-blue);
+  transform: scale(1.06);
+  box-shadow: 0 4px 12px rgba(46, 91, 255, 0.35);
+}
+
+.iotSlideBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.iotSlideTabs {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 3px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 4px;
+}
+
+.iotSlideTabItem {
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-heading);
+  letter-spacing: 0.03em;
+}
+
+.iotSlideTabItem:hover {
+  color: #ffffff;
+}
+
+.iotSlideTabItemActive {
+  background: var(--color-cobalt-blue);
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(46, 91, 255, 0.4);
+}

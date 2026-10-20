@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { unitApi, clientApi } from '@/lib/api';
+import { unitApi, clientApi, serviceLogApi, api } from '@/lib/api';
 
 export function useSmartRouting(
   unit: any,
@@ -44,7 +44,7 @@ export function useSmartRouting(
 
   // Load clients when Admin views the page so we can use it for inline edits and transfer modal
   useEffect(() => {
-    if (user?.role === 'ADMIN') {
+    if (user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') {
       const fetchClients = async () => {
         try {
           const res = await clientApi.findAll(200);
@@ -100,24 +100,40 @@ export function useSmartRouting(
     e.preventDefault();
     setLogLoading(true);
     try {
-      const storedToken = localStorage.getItem('token');
-      const res = await fetch('/api/service-logs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${storedToken}` },
-        body: JSON.stringify({
-          unitId: unit.id, service_date: new Date().toISOString(),
+      const pendingTicket = unit?.service_logs?.find((l: any) => l.status === 'PENDING');
+
+      if (pendingTicket && logStatus === 'COMPLETED') {
+        await serviceLogApi.update(pendingTicket.id, {
+          status: 'COMPLETED',
+          action_taken: logNotes || 'Servis selesai dan tiket ditutup oleh teknisi.',
+          technician_name: techName || user?.name,
+          replaced_sparepart: logComponents || undefined,
+        });
+        showToast('Tiket servis berhasil diselesaikan & ditutup!', 'success');
+      } else {
+        await serviceLogApi.create({
+          unitId: unit.id,
+          service_date: new Date().toISOString(),
           technician_name: techName || user?.name,
           issue_description: logType === 'PREVENTIVE' ? 'Perawatan Rutin (PM)' : 'Perbaikan Masalah / Kerusakan',
-          action_taken: logNotes, status: logStatus || 'COMPLETED',
-        }),
-      });
-      if (res.ok) {
-        showToast('Log servis berhasil ditambahkan!', 'success');
-        closeLogModal(); setTechName(''); setLogNotes('');
-        loadUnitData();
-      } else { showToast('Gagal menyimpan log servis.', 'error'); }
-    } catch { showToast('Gagal menghubungi server.', 'error'); }
-    finally { setLogLoading(false); }
+          action_taken: logNotes || 'Catatan servis ditambahkan oleh teknisi.',
+          status: logStatus || 'COMPLETED',
+          replaced_sparepart: logComponents || undefined,
+        });
+        showToast('Log servis berhasil disimpan!', 'success');
+      }
+
+      closeLogModal();
+      setTechName('');
+      setLogNotes('');
+      setLogComponents('');
+      loadUnitData();
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Gagal menyimpan log servis.';
+      showToast(Array.isArray(msg) ? msg.join(', ') : msg, 'error');
+    } finally {
+      setLogLoading(false);
+    }
   };
 
   const handleTransfer = async (e: React.FormEvent) => {
@@ -125,18 +141,21 @@ export function useSmartRouting(
     if (!targetClientId) { showToast('Pilih klien tujuan terlebih dahulu!', 'info'); return; }
     setTransferLoading(true);
     try {
-      const storedToken = localStorage.getItem('token');
-      const res = await fetch(`/api/units/${unit.id}/transfer`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${storedToken}` },
-        body: JSON.stringify({ toClientId: targetClientId, reason: transferReason || 'Transfer kepemilikan rutin', notes: 'Dibuat otomatis dari dashboard transfer digital' }),
+      await api.post(`/units/${unit.id}/transfer`, {
+        toClientId: targetClientId,
+        reason: transferReason || 'Transfer kepemilikan rutin',
+        notes: 'Dibuat otomatis dari dashboard transfer digital',
       });
-      if (res.ok) {
-        showToast('Kepemilikan unit berhasil dipindahkan!', 'success');
-        setShowTransferModal(false); setTransferReason(''); loadUnitData();
-      } else { showToast('Gagal melakukan transfer kepemilikan.', 'error'); }
-    } catch { showToast('Gagal menghubungi server.', 'error'); }
-    finally { setTransferLoading(false); }
+      showToast('Kepemilikan unit berhasil dipindahkan!', 'success');
+      setShowTransferModal(false);
+      setTransferReason('');
+      loadUnitData();
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Gagal melakukan transfer kepemilikan.';
+      showToast(Array.isArray(msg) ? msg.join(', ') : msg, 'error');
+    } finally {
+      setTransferLoading(false);
+    }
   };
 
   return {

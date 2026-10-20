@@ -20,7 +20,7 @@ export default function PassportHeader({
       <div className={styles.topBar}>
         <div className={styles.logo}>
           <span className={styles.logoIcon}>⬡</span>
-          <span className={styles.logoText}>HOLICINDO</span>
+          <span className={styles.logoText}>HOLIC</span>
         </div>
         <span className={styles.poweredBy}>Unit Passport</span>
       </div>

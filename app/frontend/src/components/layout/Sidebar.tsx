@@ -124,7 +124,7 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
         <div className={styles.logoWrapper}>
           <HolicIcon className={styles.logoImg} />
         </div>
-        <span className={styles.logoText}>HOLICINDO</span>
+        <span className={styles.logoText}>HOLIC</span>
       </div>
 
       <nav className={styles.nav}>

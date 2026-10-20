@@ -45,8 +45,8 @@ export interface PassportTopbarProps extends AccessState {
 
 export type BadgeConfig = { text: string; shortText: string };
 export function getBadgeConfig(access: AccessState): BadgeConfig {
-  if (access.isAdmin)              return { text: 'LEVEL 4: ADMINISTRATOR', shortText: 'LV 4' };
-  if (access.isPartner)            return { text: 'LEVEL 3: TECHNICAL PARTNER', shortText: 'LV 3' };
+  if (access.isAdmin) return { text: 'LEVEL 4: ADMINISTRATOR', shortText: 'LV 4' };
+  if (access.isPartner) return { text: 'LEVEL 3: TECHNICAL PARTNER', shortText: 'LV 3' };
   if (access.hasClientRestriction) return { text: 'LEVEL 2: RESTRICTED', shortText: 'LV 2' };
   if (access.isClient && access.belongsToClient) return { text: 'LEVEL 2: FLEET OWNER', shortText: 'LV 2' };
   return { text: 'LEVEL 1: PUBLIC SCAN', shortText: 'LV 1' }; // fallback / isGuest
@@ -100,8 +100,8 @@ export default function PassportTopbar({
     <header className={styles.topbar} role="banner">
       {/* Left: brand logo */}
       <div className={styles.topbarLogo} aria-label="Holicindo">
-        <span className={styles.topbarLogoIcon}><HolicLogo size={26} /></span>
-        <span className={styles.topbarLogoText}>HOLICINDO</span>
+        <span className={styles.topbarLogoIcon}><HolicLogo size={32} /></span>
+        <span className={styles.topbarLogoText}>HOLIC</span>
       </div>
 
       {/* Right: access badge */}

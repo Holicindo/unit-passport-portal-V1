@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { unitApi, reportApi } from '@/lib/api';
-import { Save, Camera, ArrowLeft, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Save, Camera, ArrowLeft, Loader2, Eye, EyeOff, ChevronDown, Thermometer } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import Cooling2ReportForm from '@/components/reports/Cooling2ReportForm';
@@ -42,6 +42,26 @@ export default function Cooling2FormPage() {
   const [photos, setPhotos]           = useState<File[]>([]);
   const [photoUrls, setPhotoUrls]     = useState<string[]>([]);
   const [form, setForm]               = useState<any>(EMPTY_FORM);
+  const [showTypeDropdown, setShowTypeDropdown] = useState(false);
+
+  const coolingTypes = [
+    { label: '1 SUHU', sublabel: 'Single Temperature', path: '/reports/cooling', current: false },
+    { label: '2 SUHU', sublabel: 'Cake & RTD', path: '/reports/cooling2', current: true },
+    { label: '3 SUHU', sublabel: 'Cake, Ambient & RTD', path: '/reports/cooling3', current: false },
+    { label: 'WARM', sublabel: 'Warm / Cooler Showcase', path: '/reports/reportwarm', current: false },
+  ];
+
+  const handleSwitchType = (path: string) => {
+    if (path === '/reports/cooling2') { setShowTypeDropdown(false); return; }
+    const params = new URLSearchParams();
+    const unitId = searchParams.get('unit') || searchParams.get('unitId') || unit?.id;
+    const svcLog = searchParams.get('serviceLogId');
+    if (unitId) params.set('unit', unitId);
+    if (svcLog) params.set('serviceLogId', svcLog);
+    const qs = params.toString();
+    router.push(qs ? `${path}?${qs}` : path);
+    setShowTypeDropdown(false);
+  };
 
   useEffect(() => {
     unitApi.findAll(1, 1000).then(({ data }) => {
@@ -107,8 +127,49 @@ export default function Cooling2FormPage() {
     <div className={styles.pageWrapper}>
       <div className={styles.toolbar}>
         <button className={styles.backBtn} onClick={() => router.back()}><ArrowLeft size={16} /></button>
-        <h1 className={styles.title}>{isEditMode ? 'EDIT' : 'NEW'} COOLING SYSTEM REPORT 2 SUHU (CAKE & RTD)</h1>
-        <div style={{ marginLeft: 'auto' }}>
+        {/* ── Cooling Type Switcher Dropdown ── */}
+        <div style={{ position: 'relative', flex: 1 }}>
+          <button
+            id="cooling-type-switcher"
+            onClick={() => !isEditMode && setShowTypeDropdown(v => !v)}
+            style={{ background: 'none', border: 'none', padding: 0, cursor: isEditMode ? 'default' : 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+          >
+            <h1 className={styles.title} style={{ margin: 0 }}>
+              {isEditMode ? 'EDIT' : 'NEW'} COOLING SYSTEM REPORT 2 SUHU (CAKE & RTD)
+            </h1>
+            {!isEditMode && (
+              <ChevronDown size={18} color="rgba(255,255,255,0.7)" style={{ transition: 'transform 0.2s', transform: showTypeDropdown ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }} />
+            )}
+          </button>
+
+          {showTypeDropdown && (
+            <>
+              <div onClick={() => setShowTypeDropdown(false)} style={{ position: 'fixed', inset: 0, zIndex: 999 }} />
+              <div style={{ position: 'absolute', top: 'calc(100% + 10px)', left: 0, zIndex: 1000, background: '#1e293b', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '12px', boxShadow: '0 16px 40px rgba(0,0,0,0.4)', minWidth: '260px', overflow: 'hidden' }}>
+                <div style={{ padding: '10px 14px 8px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                  <span style={{ fontSize: '10px', fontWeight: 800, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Ganti Tipe Cooling Report</span>
+                </div>
+                {coolingTypes.map((t) => (
+                  <button key={t.path} onClick={() => handleSwitchType(t.path)}
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: t.current ? 'rgba(46,91,255,0.2)' : 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.06)', cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s' }}
+                    onMouseEnter={e => { if (!t.current) (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.06)'; }}
+                    onMouseLeave={e => { if (!t.current) (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
+                  >
+                    <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: t.current ? 'rgba(46,91,255,0.3)' : 'rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Thermometer size={16} color={t.current ? '#60a5fa' : 'rgba(255,255,255,0.5)'} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '12px', fontWeight: 800, color: t.current ? '#60a5fa' : '#ffffff', fontFamily: 'var(--font-heading, Inter)' }}>COOLING {t.label}</div>
+                      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', marginTop: '2px' }}>{t.sublabel}</div>
+                    </div>
+                    {t.current && <div style={{ marginLeft: 'auto', fontSize: '10px', fontWeight: 700, color: '#60a5fa', background: 'rgba(96,165,250,0.15)', padding: '2px 8px', borderRadius: '10px' }}>AKTIF</div>}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+        <div style={{ marginLeft: 'auto', flexShrink: 0 }}>
           <button className={showPreview ? styles.previewBtnActive : styles.previewBtn} onClick={() => setShowPreview(v => !v)}>
             {showPreview ? <><EyeOff size={15} /> Kembali ke Form</> : <><Eye size={15} /> Preview Laporan</>}
           </button>

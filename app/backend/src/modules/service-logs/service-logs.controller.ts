@@ -16,8 +16,8 @@ export class ServiceLogsController {
   constructor(private readonly serviceLogsService: ServiceLogsService) {}
 
   @Get()
-  @Roles(UserRole.ADMIN, UserRole.PARTNER)
-  @ApiOperation({ summary: 'Admin/Partner: Get all service logs with pagination' })
+  @Roles(UserRole.ADMIN, UserRole.PARTNER, UserRole.MECHANIC)
+  @ApiOperation({ summary: 'Admin/Partner/Mechanic: Get all service logs with pagination' })
   findAll(
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10,
@@ -26,19 +26,19 @@ export class ServiceLogsController {
   }
 
   @Post()
-  @Roles(UserRole.PARTNER, UserRole.ADMIN)
-  @ApiOperation({ summary: 'Partner/Admin: Create a new service log (Close Ticket)' })
+  @Roles(UserRole.PARTNER, UserRole.MECHANIC, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Partner/Mechanic/Admin: Create a new service log (Close Ticket)' })
   @ApiResponse({ status: 201, description: 'Service log created successfully' })
   create(@Body() createServiceLogDto: CreateServiceLogDto, @Request() req: any) {
-    // If partner, automatically assign their partner_id
-    if (req.user.role === UserRole.PARTNER) {
+    // If partner or mechanic, automatically assign their partner_id
+    if (req.user.role === UserRole.PARTNER || req.user.role === UserRole.MECHANIC) {
       createServiceLogDto.partnerId = req.user.partner_id;
     }
     return this.serviceLogsService.create(createServiceLogDto);
   }
 
   @Get('unit/:unitId')
-  @Roles(UserRole.CLIENT, UserRole.PARTNER, UserRole.ADMIN)
+  @Roles(UserRole.CLIENT, UserRole.PARTNER, UserRole.MECHANIC, UserRole.ADMIN)
   @ApiOperation({ summary: 'Get service history for a specific unit' })
   findByUnit(@Param('unitId') unitId: string) {
     return this.serviceLogsService.findByUnit(unitId);
@@ -73,8 +73,8 @@ export class ServiceLogsController {
   }
 
   @Put(':id')
-  @Roles(UserRole.PARTNER, UserRole.ADMIN)
-  @ApiOperation({ summary: 'Partner/Admin: Update an existing service log' })
+  @Roles(UserRole.PARTNER, UserRole.MECHANIC, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Partner/Mechanic/Admin: Update an existing service log' })
   update(@Param('id') id: string, @Body() body: any) {
     return this.serviceLogsService.update(id, body);
   }

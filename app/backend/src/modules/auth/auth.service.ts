@@ -63,7 +63,7 @@ export class AuthService {
 
   async findAll(): Promise<Omit<User, 'password'>[]> {
     const users = await this.userRepository.find({
-      select: ['id', 'name', 'email', 'phone', 'role', 'status', 'client_id', 'partner_id', 'created_at', 'updated_at'],
+      select: ['id', 'name', 'email', 'phone', 'role', 'status', 'client_id', 'partner_id', 'last_login', 'created_at', 'updated_at'],
       order: { created_at: 'DESC' },
     });
     return users;
@@ -72,7 +72,7 @@ export class AuthService {
   async findById(id: string): Promise<Omit<User, 'password'>> {
     const user = await this.userRepository.findOne({
       where: { id },
-      select: ['id', 'name', 'email', 'phone', 'role', 'status', 'client_id', 'partner_id', 'created_at', 'updated_at'],
+      select: ['id', 'name', 'email', 'phone', 'role', 'status', 'client_id', 'partner_id', 'last_login', 'created_at', 'updated_at'],
     });
     if (!user) throw new NotFoundException('User not found');
     return user;
@@ -166,6 +166,10 @@ export class AuthService {
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
+
+    // Update last_login timestamp
+    user.last_login = new Date();
+    await this.userRepository.save(user);
 
     const payload = { sub: user.id, email: user.email, role: user.role, client_id: user.client_id, partner_id: user.partner_id };
     return {

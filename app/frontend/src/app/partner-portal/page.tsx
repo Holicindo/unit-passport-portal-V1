@@ -1,28 +1,46 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { serviceLogApi, unitApi } from '@/lib/api';
-import { Wrench, Search, LogOut, QrCode, AlertCircle, Loader2, ChevronDown, CheckCircle2 } from 'lucide-react';
+import { 
+  Wrench, Search, LogOut, QrCode, AlertCircle, Loader2, ChevronDown, CheckCircle2,
+  Layers, Zap, BookOpen, PlayCircle, FileText, ChevronRight
+} from 'lucide-react';
 import dynamic from 'next/dynamic';
 import styles from './partner-portal.module.css';
-import { TicketCard, NoteModal } from './components/TicketComponents';
+import { 
+  TicketCard, CompletedTicketCard, TicketSlider, NoteModal, ConfirmCloseModal,
+  Ticket 
+} from './components/TicketComponents';
 
 const QrScannerModal = dynamic(() => import('@/components/layout/QrScannerModal'), { ssr: false });
 
 export default function PartnerPortalPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
-  const [tickets, setTickets] = useState<any[]>([]);
+  const [pendingTickets, setPendingTickets] = useState<Ticket[]>([]);
+  const [completedTickets, setCompletedTickets] = useState<Ticket[]>([]);
+  const [activeTab, setActiveTab] = useState<'ALL' | 'PENDING' | 'COMPLETED'>('PENDING');
   const [loading, setLoading] = useState(true);
   const [searchSn, setSearchSn] = useState('');
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState('');
   const [showScanner, setShowScanner] = useState(false);
+
+  // Note Modal
   const [noteModalOpen, setNoteModalOpen] = useState(false);
   const [noteText, setNoteText] = useState('');
   const [selectedUnit, setSelectedUnit] = useState<any>(null);
+
+  // Confirmation Modal (Yakin udah selesai? Belum / Udah)
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [ticketToClose, setTicketToClose] = useState<Ticket | null>(null);
+  const [closingLoading, setClosingLoading] = useState(false);
+
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [stats, setStats] = useState({ today: 0, pending: 0, completed: 0 });
+  const ticketsSectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const raw = localStorage.getItem('user');
@@ -30,7 +48,7 @@ export default function PartnerPortalPage() {
     if (!token || !raw) { router.push('/login'); return; }
     try {
       const parsed = JSON.parse(raw);
-      if (parsed.role !== 'PARTNER') { router.push('/login'); return; }
+      if (parsed.role !== 'PARTNER' && parsed.role !== 'MECHANIC') { router.push('/login'); return; }
       setUser(parsed);
     } catch { router.push('/login'); }
   }, [router]);
@@ -42,55 +60,47 @@ export default function PartnerPortalPage() {
       try {
         const res = await serviceLogApi.findAll(1, 100);
         const all: any[] = res.data?.data ?? res.data ?? [];
-        // Filter: PENDING tickets for this partner AND only for UNTSTRBCKS123
-        const mine = all.filter(
-          (log: any) =>
-            log.status === 'PENDING' &&
-            log.partner?.id === user.partner_id &&
-            log.unit?.serial_number === 'UNTSTRBCKS123'
-        );
-        if (mine.length === 0) {
-          // Mock fallback for UNTSTRBCKS123
-          setTickets([
-            {
-              id: 'MOCK-TKT-SBUX',
-              status: 'PENDING',
-              issue_description: 'Suhu chiller kurang dingin, hanya mencapai 10 derajat celcius. Mesin berbunyi agak kasar.',
-              service_date: new Date().toISOString(),
-              unit: {
-                id: 'sbux-unit',
-                model_name: 'SHOWCASE TESTING',
-                serial_number: 'UNTSTRBCKS123',
-                qr_token: 'holi-cp-untstrbcks123',
-              },
-              partner: { id: user.partner_id },
-            },
-          ]);
-        } else {
-          setTickets(mine);
-        }
-      } catch {
-        setTickets([
-          {
-            id: 'MOCK-TKT-SBUX',
-            status: 'PENDING',
-            issue_description: 'Suhu chiller kurang dingin, hanya mencapai 10 derajat celcius. Mesin berbunyi agak kasar.',
-            service_date: new Date().toISOString(),
-            unit: {
-              id: 'sbux-unit',
-              model_name: 'SHOWCASE TESTING',
-              serial_number: 'UNTSTRBCKS123',
-              qr_token: 'holi-cp-untstrbcks123',
-            },
-            partner: { id: user.partner_id },
-          },
-        ]);
+        
+        // Filter tickets for this technician / partner
+        const minePending = all.filter((log: any) => {
+          if (log.status !== 'PENDING') return false;
+          if (user.partner_id) {
+            return log.partner?.id === user.partner_id || log.technician_name === user.name;
+          }
+          return !log.partner || log.technician_name === user.name || log.partner?.id;
+        });
+
+        const mineCompleted = all.filter((log: any) => {
+          if (log.status !== 'COMPLETED') return false;
+          if (user.partner_id) {
+            return log.partner?.id === user.partner_id || log.technician_name === user.name;
+          }
+          return true;
+        });
+
+        setStats({
+          today: minePending.length,
+          pending: minePending.length,
+          completed: mineCompleted.length,
+        });
+
+        setPendingTickets(minePending);
+        setCompletedTickets(mineCompleted);
+      } catch (err) {
+        console.error('Failed to fetch tickets:', err);
+        setPendingTickets([]);
+        setCompletedTickets([]);
       } finally {
         setLoading(false);
       }
     };
     fetchTickets();
   }, [user]);
+
+  const handleTabChange = (tab: 'ALL' | 'PENDING' | 'COMPLETED') => {
+    setActiveTab(tab);
+    ticketsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   const handleSearch = async () => {
     if (!searchSn.trim()) return;
@@ -117,34 +127,83 @@ export default function PartnerPortalPage() {
   };
 
   // Open note modal for a ticket
-  const openNoteModal = (log: any) => {
+  const openNoteModal = (log: Ticket) => {
     setSelectedUnit(log.unit ?? null);
     setNoteText(log.action_taken || '');
     setNoteModalOpen(true);
   };
 
-  // Close ticket directly (without note)
-  const handleCloseTicket = async (logId: string) => {
-    await serviceLogApi.update(logId, { status: 'COMPLETED', action_taken: noteText || 'Selesai' });
-    setTickets(prev => prev.filter(t => t.id !== logId));
-    setNoteModalOpen(false);
-    setNoteText('');
+  // Step 1: Initiate close ticket -> trigger confirmation modal
+  const handleInitiateClose = (log: Ticket) => {
+    setTicketToClose(log);
+    setConfirmOpen(true);
   };
 
-  // Save note and close ticket (used from modal)
-  const saveNote = async () => {
+  // Step 2: Confirm close ticket (User clicks "Udah")
+  const handleConfirmClose = async () => {
+    if (!ticketToClose) return;
+    setClosingLoading(true);
+    const actionTakenText = ticketToClose.action_taken || noteText || 'Servis selesai dan tiket ditutup oleh teknisi.';
+    
+    try {
+      if (!ticketToClose.id.startsWith('MOCK-')) {
+        await serviceLogApi.update(ticketToClose.id, {
+          status: 'COMPLETED',
+          action_taken: actionTakenText,
+        });
+      }
+
+      const closedTicket: Ticket = {
+        ...ticketToClose,
+        status: 'COMPLETED',
+        action_taken: actionTakenText,
+        completed_at: new Date().toISOString(),
+      };
+
+      // Move ticket from pending to completed list
+      setPendingTickets(prev => prev.filter(t => t.id !== ticketToClose.id));
+      setCompletedTickets(prev => [closedTicket, ...prev]);
+
+      setStats(prev => ({
+        today: Math.max(0, prev.today - 1),
+        pending: Math.max(0, prev.pending - 1),
+        completed: prev.completed + 1,
+      }));
+
+      setConfirmOpen(false);
+      setTicketToClose(null);
+      setNoteModalOpen(false);
+      setNoteText('');
+    } catch (err) {
+      console.warn('Update service log failed:', err);
+      setConfirmOpen(false);
+    } finally {
+      setClosingLoading(false);
+    }
+  };
+
+  // Save note from modal -> opens confirmation modal
+  const handleSaveNoteFromModal = () => {
     if (!selectedUnit) return;
-    const log = tickets.find((t: any) => t.unit?.id === selectedUnit.id);
-    if (!log) return;
-    await serviceLogApi.update(log.id, { status: 'COMPLETED', action_taken: noteText });
-    setTickets(prev => prev.filter(t => t.id !== log.id));
+    const log = pendingTickets.find((t: any) => t.unit?.id === selectedUnit.id || t.unit?.serial_number === selectedUnit.serial_number);
+    if (!log) {
+      setNoteModalOpen(false);
+      setNoteText('');
+      return;
+    }
+    setTicketToClose({ ...log, action_taken: noteText });
     setNoteModalOpen(false);
-    setNoteText('');
+    setConfirmOpen(true);
   };
-
-
 
   if (!user) return null;
+
+  // Determine tickets to display based on active tab
+  // Tugas Hari Ini and Pending ONLY show active pending tasks, never completed tickets
+  const displayedTickets = 
+    activeTab === 'COMPLETED'
+      ? completedTickets
+      : pendingTickets;
 
   return (
     <div className={styles.pageWrapper}>
@@ -153,13 +212,13 @@ export default function PartnerPortalPage() {
         <div className={styles.headerMain}>
           <div className={styles.brandRow}>
             <div className={styles.brandIcon}>
-              <Wrench size={22  } color="#ffffff" />
+              <Wrench size={20} color="#ffffff" />
             </div>
             <div className={styles.brandText}>
-              <div className={styles.brandLabel}>PARTNER PORTAL</div>
-              <div className={styles.brandSub}>Holicindo Service Network</div>
+              <div className={styles.brandLabel}>Holicindo Service Portal</div>
             </div>
           </div>
+
           <div className={styles.profileDropdownContainer}>
             <button className={styles.profileChip} onClick={() => setDropdownOpen(!dropdownOpen)}>
               <div className={styles.profileAvatar}>{user.name?.charAt(0)?.toUpperCase() || 'T'}</div>
@@ -183,34 +242,56 @@ export default function PartnerPortalPage() {
             )}
           </div>
         </div>
+
         {/* Badge row */}
         <div className={styles.headerBadgeRow}>
-          <span className={styles.levelBadge}>LEVEL 3: TECHNICAL PARTNER</span>
+          <span className={styles.levelBadge}>LEVEL 3: TEKNISI MITRA RESMI</span>
         </div>
       </header>
 
       <div className={styles.container}>
+        {/* Clickable Quick Stats (Filter tabs) */}
         <section className={styles.statsSection}>
-          <div className={styles.statCard}>
-            <div className={styles.statIcon} style={{color: '#2E5BFF', background: 'rgba(46, 91, 255, 0.15)'}}><QrCode size={18}/></div>
-            <div className={styles.statInfo}>
-              <div className={styles.statValue}>3</div>
-              <div className={styles.statLabel}>Tugas Hari Ini</div>
+          <div
+            className={`${styles.statCard} ${activeTab === 'ALL' ? styles.statCardAllActive : ''}`}
+            onClick={() => handleTabChange('ALL')}
+            title="Klik untuk melihat semua tugas"
+          >
+            <div className={styles.statHeader}>
+              <div className={styles.statIcon} style={{ color: '#2E5BFF', background: 'rgba(46, 91, 255, 0.15)' }}>
+                <QrCode size={14} />
+              </div>
+              <div className={styles.statValue}>{stats.today}</div>
             </div>
+            <div className={styles.statLabel}>Tugas Hari Ini</div>
           </div>
-          <div className={styles.statCard}>
-            <div className={styles.statIcon} style={{color: '#FF6B00', background: 'rgba(255, 107, 0, 0.15)'}}><AlertCircle size={18}/></div>
-            <div className={styles.statInfo}>
-              <div className={styles.statValue}>1</div>
-              <div className={styles.statLabel}>Pending</div>
+
+          <div
+            className={`${styles.statCard} ${activeTab === 'PENDING' ? styles.statCardPendingActive : ''}`}
+            onClick={() => handleTabChange('PENDING')}
+            title="Klik untuk melihat tiket menunggu"
+          >
+            <div className={styles.statHeader}>
+              <div className={styles.statIcon} style={{ color: '#FF6B00', background: 'rgba(255, 107, 0, 0.15)' }}>
+                <AlertCircle size={14} />
+              </div>
+              <div className={styles.statValue}>{stats.pending}</div>
             </div>
+            <div className={styles.statLabel}>Menunggu</div>
           </div>
-          <div className={styles.statCard}>
-            <div className={styles.statIcon} style={{color: '#00d68f', background: 'rgba(0, 214, 143, 0.15)'}}><CheckCircle2 size={18}/></div>
-            <div className={styles.statInfo}>
-              <div className={styles.statValue}>2</div>
-              <div className={styles.statLabel}>Selesai</div>
+
+          <div
+            className={`${styles.statCard} ${activeTab === 'COMPLETED' ? styles.statCardCompletedActive : ''}`}
+            onClick={() => handleTabChange('COMPLETED')}
+            title="Klik untuk melihat riwayat tiket selesai"
+          >
+            <div className={styles.statHeader}>
+              <div className={styles.statIcon} style={{ color: '#00d68f', background: 'rgba(0, 214, 143, 0.15)' }}>
+                <CheckCircle2 size={14} />
+              </div>
+              <div className={styles.statValue}>{stats.completed}</div>
             </div>
+            <div className={styles.statLabel}>Selesai</div>
           </div>
         </section>
 
@@ -218,8 +299,8 @@ export default function PartnerPortalPage() {
           <div className={styles.sectionLabel}>Mulai Servis</div>
           <button className={styles.scanBtn} onClick={() => setShowScanner(true)}>
             <QrCode size={28} />
-            <span>SCAN QR UNIT</span>
-            <span className={styles.scanBtnSub}>Arahkan kamera ke QR code pada mesin</span>
+            <span>PINDAI QR UNIT</span>
+            <span className={styles.scanBtnSub}>Arahkan kamera ke kode QR pada mesin</span>
           </button>
 
           <div className={styles.orDivider}>
@@ -232,7 +313,7 @@ export default function PartnerPortalPage() {
             <input
               className={styles.searchInput}
               type="text"
-              placeholder="Masukkan Serial Number..."
+              placeholder="Masukkan nomor seri mesin..."
               value={searchSn}
               onChange={e => { setSearchSn(e.target.value); setSearchError(''); }}
               onKeyDown={e => e.key === 'Enter' && handleSearch()}
@@ -248,11 +329,16 @@ export default function PartnerPortalPage() {
           )}
         </section>
 
-        <section className={styles.ticketsSection}>
+        {/* Dynamic Ticket Section (Pending / Completed History) */}
+        <section ref={ticketsSectionRef} className={styles.ticketsSection} id="ticketsSection">
           <div className={styles.sectionLabel}>
-            Tiket Aktif Saya
-            {tickets.length > 0 && (
-              <span className={styles.ticketCount}>{tickets.length}</span>
+            {activeTab === 'COMPLETED'
+              ? 'Riwayat Tiket Selesai'
+              : activeTab === 'PENDING'
+              ? 'Tiket Aktif / Pending'
+              : 'Tugas Hari Ini'}
+            {displayedTickets.length > 0 && (
+              <span className={styles.ticketCount}>{displayedTickets.length}</span>
             )}
           </div>
 
@@ -261,21 +347,26 @@ export default function PartnerPortalPage() {
               <Loader2 size={24} className={styles.spin} />
               <span>Memuat tiket...</span>
             </div>
-          ) : tickets.length === 0 ? (
+          ) : displayedTickets.length === 0 ? (
             <div className={styles.emptyTickets}>
               <Wrench size={36} style={{ opacity: 0.3, marginBottom: '12px' }} />
-              <div>Tidak ada tiket aktif</div>
-              <div className={styles.emptyTicketsSub}>Scan QR unit untuk memulai servis baru</div>
+              <div>
+                {activeTab === 'COMPLETED'
+                  ? 'Belum ada tiket yang selesai'
+                  : 'Tidak ada tugas aktif'}
+              </div>
+              <div className={styles.emptyTicketsSub}>
+                {activeTab === 'COMPLETED'
+                  ? 'Selesaikan tiket servis untuk melihat riwayat di sini'
+                  : 'Scan QR unit untuk memulai servis baru'}
+              </div>
             </div>
           ) : (
-            <div className={styles.ticketList}>
-              {tickets.map(log => (
-                <TicketCard key={log.id} log={log}
-                  onCloseTicket={(id) => handleCloseTicket(id)}
-                  onOpenNote={(l) => openNoteModal(l)}
-                  onOpenUnit={(l) => l.unit?.qr_token && router.push(`/id/${l.unit.qr_token}`)} />
-              ))}
-            </div>
+            <TicketSlider
+              tickets={displayedTickets}
+              onCloseTicket={(l) => handleInitiateClose(l)}
+              onOpenNote={(l) => openNoteModal(l)}
+            />
           )}
         </section>
       </div>
@@ -285,21 +376,25 @@ export default function PartnerPortalPage() {
 
       {/* Modal for adding service note */}
       {noteModalOpen && (
-        <NoteModal noteText={noteText} setNoteText={setNoteText} onSave={saveNote} onClose={() => setNoteModalOpen(false)} />
+        <NoteModal
+          noteText={noteText}
+          setNoteText={setNoteText}
+          onSave={handleSaveNoteFromModal}
+          onClose={() => setNoteModalOpen(false)}
+        />
       )}
 
-      {/* Technical Docs Section (shown after tickets) */}
-      {selectedUnit && (
-        <section className={styles.techDocs}>
-          <h2>Dokumen Teknis</h2>
-          <div className={styles.docGrid}>
-            <a href={selectedUnit.exploded_view_url} className={styles.docCard}>Exploded View</a>
-            <a href={selectedUnit.wiring_diagram_url} className={styles.docCard}>Wiring Diagram</a>
-            <a href={selectedUnit.manual_url} className={styles.docCard}>Manual</a>
-            <a href={selectedUnit.tutorial_url} className={styles.docCard}>Tutorial</a>
-          </div>
-        </section>
-      )}
+      {/* Confirmation Modal: "Yakin udah selesai? Mau tutup tiket servis ini?" */}
+      <ConfirmCloseModal
+        isOpen={confirmOpen}
+        ticket={ticketToClose}
+        loading={closingLoading}
+        onConfirm={handleConfirmClose}
+        onCancel={() => {
+          setConfirmOpen(false);
+          setTicketToClose(null);
+        }}
+      />
 
     </div>
   );
