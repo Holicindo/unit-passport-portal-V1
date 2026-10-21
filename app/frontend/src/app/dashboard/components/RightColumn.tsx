@@ -11,7 +11,7 @@ interface Props {
   frequentCallIds: { id: string; sn: string; visits: number; issue: string }[];
   overdueCallIds: { callId: string; sn: string; daysOpen: number; issue: string }[];
   warrantyCategories: WarrantyCategories;
-  newServiceRequests?: { id: string; client: string; issue: string; timeAgo: string; status: string }[];
+  newServiceRequests?: { id: string; call_id?: string; sn?: string; client: string; issue: string; timeAgo: string; status: string }[];
 }
 
 export function FrequentComplaintsCard({ loading, frequentCallIds }: { loading: boolean; frequentCallIds: Props['frequentCallIds'] }) {

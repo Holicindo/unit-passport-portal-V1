@@ -141,7 +141,7 @@ export default function ServiceFormModal(props: ServiceFormModalProps) {
 
           {/* ── SECTION 1: Tipe Tiket & Call ID ── */}
           <div style={sectionStyle}>
-            <SectionHeader size={14} title="Tipe & ID Tiket" />
+            <SectionHeader icon={<Hash size={14} />} title="Tipe & ID Tiket" />
 
             {/* Radio Toggle — pill style */}
             <div style={{ display: 'flex', background: '#E2E8F0', borderRadius: '8px', padding: '3px', gap: '3px' }}>
@@ -198,7 +198,7 @@ export default function ServiceFormModal(props: ServiceFormModalProps) {
 
           {/* ── SECTION 2: Unit Mesin ── */}
           <div style={sectionStyle}>
-            <SectionHeader size={14} title="Unit Bermasalah" />
+            <SectionHeader icon={<Cpu size={14} />} title="Unit Bermasalah" />
 
             <div>
               <label style={labelStyle}>Customer, Branch & Serial Number *</label>
@@ -245,7 +245,7 @@ export default function ServiceFormModal(props: ServiceFormModalProps) {
 
           {/* ── SECTION 3: Laporan Kendala ── */}
           <div style={sectionStyle}>
-            <SectionHeader size={14} title="Laporan Kendala" />
+            <SectionHeader icon={<ClipboardList size={14} />} title="Laporan Kendala" />
 
             <div>
               <label style={labelStyle}>Jenis Pekerjaan *</label>

@@ -12,8 +12,8 @@ export interface SelectReportTypeModalProps {
   unitReports?: any[];
   isAdmin?: boolean;
   editBlocks?: any;
-  toggleEdit?: (block: string) => void;
-  cancelEdit?: (block: string) => void;
+  toggleEdit?: (block: any) => void;
+  cancelEdit?: (block: any) => void;
   isSaving?: boolean;
   editData?: any;
   handleEditChange?: (field: string, value: any) => void;

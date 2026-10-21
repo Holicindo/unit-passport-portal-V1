@@ -317,21 +317,31 @@ export default function CustomerHealthWidget({ unitId }: Props) {
               gap: 8,
               padding: '6px 16px',
               borderRadius: 20,
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              background: showAnalytics ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.22)',
-              color: showAnalytics ? '#f1f5f9' : '#94a3b8',
+              border: showAnalytics ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid rgba(46, 91, 255, 0.4)',
+              background: showAnalytics 
+                ? 'linear-gradient(135deg, #1d4ed8, #1e40af)' 
+                : 'linear-gradient(135deg, #2E5BFF, #1a3fd4)',
+              color: '#ffffff',
               fontSize: '.72rem',
-              fontWeight: 700,
+              fontWeight: 800,
               fontFamily: 'var(--font-heading)',
               letterSpacing: '.03em',
               cursor: 'pointer',
               transition: 'all 0.2s ease',
-              boxShadow: 'none',
+              boxShadow: '-2px -2px 6px rgba(255, 255, 255, 0.1), 3px 3px 8px rgba(0, 0, 0, 0.35), 0 3px 10px rgba(46, 91, 255, 0.35)',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.filter = 'brightness(1.1)';
+              e.currentTarget.style.transform = 'translateY(-1px)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.filter = 'none';
+              e.currentTarget.style.transform = 'none';
             }}
           >
-            <Activity size={13} color={showAnalytics ? '#60a5fa' : '#94a3b8'} />
+            <Activity size={13} color="#ffffff" />
             <span>{showAnalytics ? 'Tutup Analitik Lanjutan' : 'Analitik Lanjutan'}</span>
-            {showAnalytics ? <ChevronUp size={14} color={showAnalytics ? '#60a5fa' : '#94a3b8'} /> : <ChevronDown size={14} color="#94a3b8" />}
+            {showAnalytics ? <ChevronUp size={14} color="#ffffff" /> : <ChevronDown size={14} color="#ffffff" />}
           </button>
         </div>
       </div>
