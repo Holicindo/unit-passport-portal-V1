@@ -54,8 +54,8 @@ function formatDate(dateStr: string | null) {
 
 export default function ServiceHistorySection({ serviceLogs }: ServiceHistorySectionProps) {
   const router = useRouter();
-  const [showAll, setShowAll] = useState(false);
   const [expandedCallIds, setExpandedCallIds] = useState<Record<string, boolean>>({});
+  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
 
   // Group logs by call_id / id sama persis dengan log servis
   const groupedList = React.useMemo(() => {
@@ -82,43 +82,114 @@ export default function ServiceHistorySection({ serviceLogs }: ServiceHistorySec
     });
   }, [serviceLogs]);
 
-  const displayedGroups = showAll ? groupedList : groupedList.slice(0, 3);
-
   const toggleExpand = (cid: string) => {
     setExpandedCallIds(prev => ({ ...prev, [cid]: !prev[cid] }));
   };
 
+  const scrollLeft = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: -340, behavior: 'smooth' });
+    }
+  };
+
+  const scrollRight = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: 340, behavior: 'smooth' });
+    }
+  };
+
   return (
-    <section className={styles.panel}>
+    <section className={styles.panel} style={{ overflow: 'hidden' }}>
       <div className={styles.panelHeader}>
         <div className={styles.panelHeaderLeft}>
           <Wrench size={16} color="#60a5fa" />
           <h2>Riwayat Servis</h2>
+          {groupedList.length > 0 && (
+            <span style={{
+              fontSize: '0.7rem',
+              fontWeight: 800,
+              background: 'rgba(255,255,255,0.08)',
+              color: '#93c5fd',
+              padding: '2px 8px',
+              borderRadius: '20px',
+              border: '1px solid rgba(255,255,255,0.12)'
+            }}>
+              {groupedList.length} Tiket
+            </span>
+          )}
         </div>
-        {groupedList.length > 0 && (
-          <span style={{
-            fontSize: '0.7rem',
-            fontWeight: 800,
-            background: 'rgba(255,255,255,0.08)',
-            color: '#93c5fd',
-            padding: '2px 8px',
-            borderRadius: '20px',
-            border: '1px solid rgba(255,255,255,0.12)'
-          }}>
-            {groupedList.length} Tiket
-          </span>
+
+        {groupedList.length > 1 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <button
+              type="button"
+              onClick={scrollLeft}
+              title="Slide Sebelumnya"
+              style={{
+                background: 'rgba(255,255,255,0.08)',
+                border: '1px solid rgba(255,255,255,0.15)',
+                color: '#93c5fd',
+                borderRadius: '8px',
+                width: '30px',
+                height: '30px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+            >
+              ‹
+            </button>
+            <button
+              type="button"
+              onClick={scrollRight}
+              title="Slide Berikutnya"
+              style={{
+                background: 'rgba(255,255,255,0.08)',
+                border: '1px solid rgba(255,255,255,0.15)',
+                color: '#93c5fd',
+                borderRadius: '8px',
+                width: '30px',
+                height: '30px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+            >
+              ›
+            </button>
+          </div>
         )}
       </div>
 
-      <div className={styles.panelContent} style={{ padding: '16px' }}>
+      <div className={styles.panelContent} style={{ padding: '14px' }}>
         {groupedList.length === 0 ? (
           <div className={styles.emptyState}>
             <Wrench size={40} style={{ marginBottom: '16px', color: '#94a3b8', opacity: 0.5 }} />
             <p style={{ color: '#94a3b8', textAlign: 'center', fontSize: '0.85rem' }}>Belum ada riwayat servis untuk unit ini</p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            {displayedGroups.map(({ cid, mainLog, history }) => {
+          <div
+            ref={scrollContainerRef}
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              gap: '14px',
+              overflowX: 'auto',
+              scrollSnapType: 'x mandatory',
+              paddingBottom: '8px',
+              scrollbarWidth: 'thin',
+              scrollbarColor: 'rgba(96, 165, 250, 0.4) transparent',
+            }}
+          >
+            {groupedList.map(({ cid, mainLog, history }) => {
               const taskType = mainLog.task_type || 'CORRECTIVE';
               const tc = TASK_COLOR[taskType] || TASK_COLOR.CORRECTIVE;
               const { issue, contact } = parseIssue(mainLog.issue_description);
@@ -131,6 +202,8 @@ export default function ServiceHistorySection({ serviceLogs }: ServiceHistorySec
                 <div
                   key={cid}
                   style={{
+                    flex: '0 0 min(340px, 85vw)',
+                    scrollSnapAlign: 'start',
                     backgroundColor: 'rgba(13, 35, 70, 0.75)',
                     border: isCompleted 
                       ? '1px solid rgba(16, 185, 129, 0.25)' 
@@ -405,63 +478,6 @@ export default function ServiceHistorySection({ serviceLogs }: ServiceHistorySec
                 </div>
               );
             })}
-
-            {/* View More / Less */}
-            {!showAll && groupedList.length > 3 && (
-              <button
-                type="button"
-                onClick={() => setShowAll(true)}
-                style={{
-                  marginTop: '4px',
-                  width: '100%',
-                  padding: '12px',
-                  background: 'rgba(255, 255, 255, 0.06)',
-                  border: '1px solid rgba(255, 255, 255, 0.12)',
-                  borderRadius: '12px',
-                  color: '#93c5fd',
-                  fontSize: '0.82rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  textAlign: 'center',
-                  boxShadow: '-2px -2px 5px rgba(255,255,255,0.04), 2px 2px 6px rgba(0,0,0,0.3)',
-                  transition: 'all 0.2s',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px',
-                }}
-              >
-                Lihat Semua Riwayat Servis ({groupedList.length}) <span>›</span>
-              </button>
-            )}
-
-            {showAll && groupedList.length > 3 && (
-              <button
-                type="button"
-                onClick={() => setShowAll(false)}
-                style={{
-                  marginTop: '4px',
-                  width: '100%',
-                  padding: '12px',
-                  background: 'rgba(255, 255, 255, 0.06)',
-                  border: '1px solid rgba(255, 255, 255, 0.12)',
-                  borderRadius: '12px',
-                  color: '#93c5fd',
-                  fontSize: '0.82rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  textAlign: 'center',
-                  boxShadow: '-2px -2px 5px rgba(255,255,255,0.04), 2px 2px 6px rgba(0,0,0,0.3)',
-                  transition: 'all 0.2s',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px',
-                }}
-              >
-                Sembunyikan <span>‹</span>
-              </button>
-            )}
           </div>
         )}
       </div>

@@ -256,16 +256,22 @@
   gap: 12px;
 }
 
-/* Baris pertama kolom kanan: Layanan + QR side by side */
+/* Baris pertama kolom kanan: Layanan & Dukungan (kompak) + Manuals (tengah) + QR Passport */
 .topRowGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 220px;
-  gap: 20px;
+  grid-template-columns: minmax(240px, 0.9fr) minmax(280px, 1.3fr) 190px;
+  gap: 16px;
   align-items: stretch;
   min-width: 0;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 1200px) {
+  .topRowGrid {
+    grid-template-columns: minmax(240px, 1fr) minmax(260px, 1.2fr);
+  }
+}
+
+@media (max-width: 768px) {
   .topRowGrid {
     grid-template-columns: 1fr;
   }

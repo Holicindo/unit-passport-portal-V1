@@ -334,95 +334,6 @@ export default function QrPassportPage() {
             </div>
           </section>
 
-          {/* Slide 5: Manuals */}
-          {(isAdmin || isPartner) && (
-          <section className={`${styles.panel} ${styles.iotPanel}`} style={{ borderRadius: "20px" }}>
-            <div className={styles.panelHeader}>
-              <div className={styles.panelHeaderLeft}><BookOpen size={16} color="#60a5fa" /><h2>Manuals</h2></div>
-              {isAdmin && (<div style={{ display: 'flex', gap: '8px' }}>
-                {editBlocks.manuals && <button className={styles.btnCancel} onClick={() => cancelEdit('manuals')}>Batal</button>}
-                <button className={editBlocks.manuals ? styles.btnSave : styles.btnRevise} onClick={() => toggleEdit('manuals')}>{editBlocks.manuals ? (isSaving ? 'Menyimpan…' : 'Simpan') : 'Revisi'}</button>
-              </div>)}
-            </div>
-            <div className={styles.mediaSingleItem} style={{ padding: '16px' }}>
-              {editBlocks.manuals ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <p style={{ fontSize: '0.75rem', color: '#94a3b8', lineHeight: 1.5 }}>Upload diagram sirkular udara (JPG, PNG, atau PDF).</p>
-                  {(() => { const urls = editData.specs?.manuals_urls ? editData.specs.manuals_urls.split(',').filter(Boolean) : []; return urls.length > 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {urls.map((url: string, idx: number) => (<div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', background: 'rgba(0,0,0,0.25)', borderRadius: '10px', boxShadow: 'inset 2px 2px 5px rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                        <FileText size={15} color="#60a5fa" /><span style={{ flex: 1, fontSize: '0.8rem', fontWeight: 600, color: '#f1f5f9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{url.includes('pdf') ? `Diagram PDF ${idx + 1}` : `Diagram Gambar ${idx + 1}`}</span>
-                        <button type="button" onClick={() => window.open(url, '_blank')} style={{ background: 'none', border: 'none', color: '#93c5fd', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, textDecoration: 'underline' }}>Lihat</button>
-                        <button type="button" onClick={() => { const c = (editData.specs?.manuals_urls || '').split(',').filter(Boolean); c.splice(idx, 1); handleEditChange('specs.manuals_urls', c.join(',')); }} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>Hapus</button>
-                      </div>))}
-                    </div>) : null; })()}
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', border: '1px dashed rgba(255,255,255,0.2)', borderRadius: '10px', padding: '10px 14px', cursor: manualsUploading ? 'not-allowed' : 'pointer', color: '#cbd5e1', fontSize: '0.82rem', background: 'rgba(0,0,0,0.2)', boxShadow: 'inset 2px 2px 5px rgba(0,0,0,0.3)', opacity: manualsUploading ? 0.6 : 1 }}>
-                    <ImageIcon size={16} />{manualsUploading ? 'Mengupload...' : 'Klik untuk upload diagram (JPG/PNG/PDF)'}
-                    <input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" multiple style={{ display: 'none' }} disabled={manualsUploading} onChange={(e) => { if (e.target.files?.length) handleManualsUpload(e.target.files); }} />
-                  </label>
-                  {/* YouTube Link Upload */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <label style={{ fontSize: '0.8rem', color: '#cbd5e1', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="#ef4444"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-                      Link Video YouTube (Opsional)
-                    </label>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <input
-                        type="url"
-                        placeholder="https://youtube.com/watch?v=..."
-                        style={{ flex: 1, padding: '10px 12px', background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', boxShadow: 'inset 3px 3px 7px rgba(0,0,0,0.3)', color: '#ffffff', fontSize: '0.82rem', fontFamily: 'inherit', outline: 'none' }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            const val = (e.target as HTMLInputElement).value.trim();
-                            if (val && (val.includes('youtube.com') || val.includes('youtu.be'))) {
-                              const existing = editData.specs?.manuals_urls ? editData.specs.manuals_urls.split(',').filter(Boolean) : [];
-                              handleEditChange('specs.manuals_urls', [...existing, val].join(','));
-                              (e.target as HTMLInputElement).value = '';
-                            }
-                          }
-                        }}
-                        id="youtube-link-input"
-                      />
-                      <button type="button" style={{ padding: '10px 14px', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.35)', borderRadius: '8px', color: '#f87171', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 700, fontFamily: 'inherit', whiteSpace: 'nowrap' }}
-                        onClick={() => {
-                          const inp = document.getElementById('youtube-link-input') as HTMLInputElement;
-                          const val = inp?.value.trim();
-                          if (val && (val.includes('youtube.com') || val.includes('youtu.be'))) {
-                            const existing = editData.specs?.manuals_urls ? editData.specs.manuals_urls.split(',').filter(Boolean) : [];
-                            handleEditChange('specs.manuals_urls', [...existing, val].join(','));
-                            inp.value = '';
-                          }
-                        }}
-                      >+ Tambah</button>
-                    </div>
-                    <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Tekan Enter atau klik Tambah untuk menyimpan link</span>
-                  </div>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {(() => { const urls = unit?.specs?.manuals_urls ? String(unit.specs.manuals_urls).split(',').filter(Boolean) : [];
-                    if (urls.length === 0) return (<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 16px', gap: '10px', background: 'rgba(0,0,0,0.25)', borderRadius: '12px', boxShadow: 'inset 2px 2px 5px rgba(0,0,0,0.3)', border: '1px dashed rgba(255,255,255,0.15)' }}><BookOpen size={28} color="#94a3b8" /><p style={{ color: '#94a3b8', fontSize: '0.82rem', textAlign: 'center' }}>Belum ada diagram</p></div>);
-                    return urls.map((url: string, idx: number) => { const isPdf = url.includes('pdf'); const isImage = /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(url); const isYoutube = url.includes('youtube.com') || url.includes('youtu.be'); return (
-                      <div key={idx}>
-                        {isYoutube ? (
-                          <button className={styles.btnPrimary} style={{ justifyContent: 'space-between', padding: '12px 16px', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.35)', color: '#ffffff', fontFamily: 'inherit' }} onClick={() => window.open(url, '_blank')}>
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="#ef4444"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-                              Video YouTube {idx + 1}
-                            </span>
-                            <ExternalLink size={15} color="#cbd5e1" style={{ flexShrink: 0 }} />
-                          </button>
-                        ) : isImage ? <div onClick={() => window.open(url, '_blank')} style={{ cursor: 'pointer', borderRadius: '12px', overflow: 'hidden', background: '#ffffff', boxShadow: '0 4px 12px rgba(0,0,0,0.25)' }}><img src={url} alt={`Diagram ${idx + 1}`} style={{ width: '100%', display: 'block', objectFit: 'contain', maxHeight: '280px', background: '#ffffff' }} /><div style={{ padding: '10px 14px', background: 'rgba(13,43,94,0.95)', fontSize: '0.78rem', fontWeight: 600, color: '#f1f5f9', display: 'flex', alignItems: 'center', gap: '6px', borderTop: '1px solid rgba(255,255,255,0.1)' }}><ImageIcon size={14} color="#60a5fa" /> Diagram {idx + 1}</div></div>
-                        : <button className={styles.btnPrimary} style={{ justifyContent: 'space-between', padding: '12px 16px', background: 'rgba(255,255,255,0.08)', color: '#ffffff', border: '1px solid rgba(255,255,255,0.12)', boxShadow: '-2px -2px 5px rgba(255,255,255,0.05), 2px 2px 5px rgba(0,0,0,0.3)' }} onClick={() => window.open(url, '_blank')}><span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><FileText size={16} color="#60a5fa" />{isPdf ? `Diagram PDF ${idx + 1}` : `File Diagram ${idx + 1}`}</span><ExternalLink size={16} color="#cbd5e1" /></button>}
-                      </div>); });
-                  })()}
-                </div>
-              )}
-            </div>
-          </section>
-          )}
-
           {/* Slide 6: Ownership */}
           {(!isGuest && !hasClientRestriction) && (
           <section className={`${styles.panel} ${styles.iotPanel}`} style={{ borderRadius: "20px" }}>
@@ -607,9 +518,97 @@ export default function QrPassportPage() {
             </div>
           </section>
 
-              {/* QR Card — di sebelah Layanan & Dukungan */}
-              {isAdmin && <QrCard token={Array.isArray(token) ? token[0] : (token ?? '')} serialNumber={unit.serial_number} modelName={unit.model_name} />}
-            </div>{/* end topRowGrid */}
+          {/* Slide 5: Manuals (Tengah Baris) */}
+          {(isAdmin || isPartner) && (
+          <section className={`${styles.panel} ${styles.iotPanel}`} style={{ borderRadius: "18px", margin: 0 }}>
+            <div className={styles.panelHeader}>
+              <div className={styles.panelHeaderLeft}><BookOpen size={16} color="#60a5fa" /><h2>Manuals</h2></div>
+              {isAdmin && (<div style={{ display: 'flex', gap: '8px' }}>
+                {editBlocks.manuals && <button className={styles.btnCancel} onClick={() => cancelEdit('manuals')}>Batal</button>}
+                <button className={editBlocks.manuals ? styles.btnSave : styles.btnRevise} onClick={() => toggleEdit('manuals')}>{editBlocks.manuals ? (isSaving ? 'Menyimpan…' : 'Simpan') : 'Revisi'}</button>
+              </div>)}
+            </div>
+            <div className={styles.mediaSingleItem} style={{ padding: '14px' }}>
+              {editBlocks.manuals ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <p style={{ fontSize: '0.75rem', color: '#94a3b8', lineHeight: 1.5 }}>Upload diagram sirkular udara (JPG, PNG, atau PDF).</p>
+                  {(() => { const urls = editData.specs?.manuals_urls ? editData.specs.manuals_urls.split(',').filter(Boolean) : []; return urls.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {urls.map((url: string, idx: number) => (<div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', background: 'rgba(0,0,0,0.25)', borderRadius: '10px', boxShadow: 'inset 2px 2px 5px rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                        <FileText size={14} color="#60a5fa" /><span style={{ flex: 1, fontSize: '0.78rem', fontWeight: 600, color: '#f1f5f9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{url.includes('pdf') ? `Diagram PDF ${idx + 1}` : `Diagram Gambar ${idx + 1}`}</span>
+                        <button type="button" onClick={() => window.open(url, '_blank')} style={{ background: 'none', border: 'none', color: '#93c5fd', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600, textDecoration: 'underline' }}>Lihat</button>
+                        <button type="button" onClick={() => { const c = (editData.specs?.manuals_urls || '').split(',').filter(Boolean); c.splice(idx, 1); handleEditChange('specs.manuals_urls', c.join(',')); }} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600 }}>Hapus</button>
+                      </div>))}
+                    </div>) : null; })()}
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', border: '1px dashed rgba(255,255,255,0.2)', borderRadius: '10px', padding: '8px 12px', cursor: manualsUploading ? 'not-allowed' : 'pointer', color: '#cbd5e1', fontSize: '0.78rem', background: 'rgba(0,0,0,0.2)', boxShadow: 'inset 2px 2px 5px rgba(0,0,0,0.3)', opacity: manualsUploading ? 0.6 : 1 }}>
+                    <ImageIcon size={15} />{manualsUploading ? 'Mengupload...' : 'Klik untuk upload diagram'}
+                    <input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" multiple style={{ display: 'none' }} disabled={manualsUploading} onChange={(e) => { if (e.target.files?.length) handleManualsUpload(e.target.files); }} />
+                  </label>
+                  {/* YouTube Link Upload */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '0.75rem', color: '#cbd5e1', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="#ef4444"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                      Link Video YouTube (Opsional)
+                    </label>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <input
+                        type="url"
+                        placeholder="https://youtube.com/..."
+                        style={{ flex: 1, padding: '8px 10px', background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', boxShadow: 'inset 3px 3px 7px rgba(0,0,0,0.3)', color: '#ffffff', fontSize: '0.78rem', fontFamily: 'inherit', outline: 'none' }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const val = (e.target as HTMLInputElement).value.trim();
+                            if (val && (val.includes('youtube.com') || val.includes('youtu.be'))) {
+                              const existing = editData.specs?.manuals_urls ? editData.specs.manuals_urls.split(',').filter(Boolean) : [];
+                              handleEditChange('specs.manuals_urls', [...existing, val].join(','));
+                              (e.target as HTMLInputElement).value = '';
+                            }
+                          }
+                        }}
+                        id="youtube-link-input"
+                      />
+                      <button type="button" style={{ padding: '8px 12px', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.35)', borderRadius: '8px', color: '#f87171', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700, fontFamily: 'inherit', whiteSpace: 'nowrap' }}
+                        onClick={() => {
+                          const inp = document.getElementById('youtube-link-input') as HTMLInputElement;
+                          const val = inp?.value.trim();
+                          if (val && (val.includes('youtube.com') || val.includes('youtu.be'))) {
+                            const existing = editData.specs?.manuals_urls ? editData.specs.manuals_urls.split(',').filter(Boolean) : [];
+                            handleEditChange('specs.manuals_urls', [...existing, val].join(','));
+                            inp.value = '';
+                          }
+                        }}
+                      >+ Tambah</button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {(() => { const urls = unit?.specs?.manuals_urls ? String(unit.specs.manuals_urls).split(',').filter(Boolean) : [];
+                    if (urls.length === 0) return (<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 12px', gap: '8px', background: 'rgba(0,0,0,0.25)', borderRadius: '12px', boxShadow: 'inset 2px 2px 5px rgba(0,0,0,0.3)', border: '1px dashed rgba(255,255,255,0.15)' }}><BookOpen size={24} color="#94a3b8" /><p style={{ color: '#94a3b8', fontSize: '0.78rem', textAlign: 'center' }}>Belum ada diagram</p></div>);
+                    return urls.map((url: string, idx: number) => { const isPdf = url.includes('pdf'); const isImage = /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(url); const isYoutube = url.includes('youtube.com') || url.includes('youtu.be'); return (
+                      <div key={idx}>
+                        {isYoutube ? (
+                          <button className={styles.btnPrimary} style={{ justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.35)', color: '#ffffff', fontFamily: 'inherit', fontSize: '0.78rem' }} onClick={() => window.open(url, '_blank')}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="#ef4444"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                              Video YouTube {idx + 1}
+                            </span>
+                            <ExternalLink size={13} color="#cbd5e1" style={{ flexShrink: 0 }} />
+                          </button>
+                        ) : isImage ? <div onClick={() => window.open(url, '_blank')} style={{ cursor: 'pointer', borderRadius: '10px', overflow: 'hidden', background: '#ffffff', boxShadow: '0 4px 12px rgba(0,0,0,0.25)' }}><img src={url} alt={`Diagram ${idx + 1}`} style={{ width: '100%', display: 'block', objectFit: 'contain', maxHeight: '180px', background: '#ffffff' }} /><div style={{ padding: '8px 12px', background: 'rgba(13,43,94,0.95)', fontSize: '0.74rem', fontWeight: 600, color: '#f1f5f9', display: 'flex', alignItems: 'center', gap: '6px', borderTop: '1px solid rgba(255,255,255,0.1)' }}><ImageIcon size={13} color="#60a5fa" /> Diagram {idx + 1}</div></div>
+                        : <button className={styles.btnPrimary} style={{ justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(255,255,255,0.08)', color: '#ffffff', border: '1px solid rgba(255,255,255,0.12)', fontSize: '0.78rem' }} onClick={() => window.open(url, '_blank')}><span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><FileText size={14} color="#60a5fa" />{isPdf ? `Diagram PDF ${idx + 1}` : `File Diagram ${idx + 1}`}</span><ExternalLink size={14} color="#cbd5e1" /></button>}
+                      </div>); });
+                  })()}
+                </div>
+              )}
+            </div>
+          </section>
+          )}
+
+          {/* QR Card — di sebelah kanan Manuals */}
+          {isAdmin && <QrCard token={Array.isArray(token) ? token[0] : (token ?? '')} serialNumber={unit.serial_number} modelName={unit.model_name} />}
+        </div>{/* end topRowGrid */}
 
 
 
