@@ -1,15 +1,17 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { serviceLogApi, unitApi, partnerApi } from '@/lib/api';
-import { Calendar, Search, Loader2, ArrowLeft, Clock, AlertCircle, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Calendar, Search, Loader2, ArrowLeft, Clock, AlertCircle, ChevronLeft, ChevronRight, X, GripVertical, CheckCircle2, XCircle } from 'lucide-react';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import styles from './planning.module.css';
 import StatsGrid from '@/components/dashboard/StatsGrid';
 
 const TASK_LABELS: Record<string, string> = { CORRECTIVE: 'Perbaikan', PREVENTIVE: 'Perawatan', INSTALLATION: 'Instalasi' };
 const TASK_STYLE: Record<string, string> = { CORRECTIVE: styles.taskCorrective, PREVENTIVE: styles.taskPreventive, INSTALLATION: styles.taskInstallation };
+
+type KanbanCol = 'unallocated' | 'allocated' | 'completed';
 
 function fmtDate(d: string | Date | null) {
   if (!d) return '-';
@@ -42,6 +44,11 @@ export default function ScheduleManagementPage() {
   const [notesModal, setNotesModal] = useState<any | null>(null);
   const [editNotes, setEditNotes] = useState('');
 
+  // Drag & Drop state
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dragOverCol, setDragOverCol] = useState<KanbanCol | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
   const fetchData = async () => {
     setLoading(true);
     setError(null);
@@ -59,7 +66,6 @@ export default function ScheduleManagementPage() {
 
   useEffect(() => { fetchData(); }, []);
 
-  // Filtered logs (exclude completed/canceled for planning view)
   const activeLogs = useMemo(() => {
     return logs.filter(l => {
       const matchTask = taskFilter === 'ALL' || l.task_type === taskFilter;
@@ -70,7 +76,6 @@ export default function ScheduleManagementPage() {
     });
   }, [logs, taskFilter, searchQuery]);
 
-  // Kanban categories
   const unallocated = activeLogs.filter(l => !l.is_allocated && l.status !== 'COMPLETED' && l.status !== 'CANCELED' && l.status !== 'CANCELLED');
   const allocated = activeLogs.filter(l => l.is_allocated && l.status !== 'COMPLETED' && l.status !== 'CANCELED' && l.status !== 'CANCELLED');
   const completed = activeLogs.filter(l => l.status === 'COMPLETED' || l.status === 'CANCELED' || l.status === 'CANCELLED');
@@ -86,23 +91,18 @@ export default function ScheduleManagementPage() {
     return days;
   }, [calMonth, calYear]);
 
-  const getLogsForDay = (day: number) => {
-    return activeLogs.filter(l => {
-      const sd = l.scheduled_date || l.service_date;
-      if (!sd) return false;
-      const d = new Date(sd);
-      return d.getDate() === day && d.getMonth() === calMonth && d.getFullYear() === calYear;
-    });
-  };
-  const getDeliveriesForDay = (day: number) => {
-    return activeLogs.filter(l => {
-      if (!l.delivery_date) return false;
-      const d = new Date(l.delivery_date);
-      return d.getDate() === day && d.getMonth() === calMonth && d.getFullYear() === calYear;
-    });
-  };
+  const getLogsForDay = (day: number) => activeLogs.filter(l => {
+    const sd = l.scheduled_date || l.service_date;
+    if (!sd) return false;
+    const d = new Date(sd);
+    return d.getDate() === day && d.getMonth() === calMonth && d.getFullYear() === calYear;
+  });
+  const getDeliveriesForDay = (day: number) => activeLogs.filter(l => {
+    if (!l.delivery_date) return false;
+    const d = new Date(l.delivery_date);
+    return d.getDate() === day && d.getMonth() === calMonth && d.getFullYear() === calYear;
+  });
 
-  // Bulk actions
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
@@ -123,11 +123,82 @@ export default function ScheduleManagementPage() {
     if (!notesModal) return;
     setSubmitting(true);
     try {
-      await serviceLogApi.update(notesModal.id, { planning_notes: editNotes, is_allocated: true });
+      await serviceLogApi.update(notesModal.id, { internal_notes: editNotes, is_allocated: true });
       setNotesModal(null);
       await fetchData();
     } catch { alert('Gagal menyimpan catatan.'); }
     finally { setSubmitting(false); }
+  };
+
+  // ── Drag & Drop Handlers ──
+  const handleDragStart = (e: React.DragEvent, logId: string) => {
+    setDraggedId(logId);
+    setIsDragging(true);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', logId);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedId(null);
+    setDragOverCol(null);
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent, col: KanbanCol) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverCol(col);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverCol(null);
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetCol: KanbanCol) => {
+    e.preventDefault();
+    setDragOverCol(null);
+    setIsDragging(false);
+
+    const logId = e.dataTransfer.getData('text/plain') || draggedId;
+    setDraggedId(null);
+    if (!logId) return;
+
+    const log = logs.find(l => l.id === logId);
+    if (!log) return;
+
+    const currentCol: KanbanCol =
+      (log.status === 'COMPLETED' || log.status === 'CANCELED' || log.status === 'CANCELLED') ? 'completed'
+        : log.is_allocated ? 'allocated' : 'unallocated';
+
+    if (currentCol === targetCol) return;
+
+    // ── Optimistic update: update local state IMMEDIATELY ──
+    let patchedLog = { ...log };
+    if (targetCol === 'unallocated') {
+      patchedLog.is_allocated = false;
+    } else if (targetCol === 'allocated') {
+      patchedLog.is_allocated = true;
+      if (patchedLog.status === 'PENDING') patchedLog.status = 'IN PROGRESS';
+    } else if (targetCol === 'completed') {
+      patchedLog.is_allocated = true;
+      patchedLog.status = 'COMPLETED';
+    }
+
+    // Update local state instantly (no loading)
+    setLogs(prev => prev.map(l => l.id === logId ? patchedLog : l));
+
+    // Fire API in background (no await on UI side)
+    try {
+      const payload: any = {};
+      if (targetCol === 'unallocated') payload.is_allocated = false;
+      else if (targetCol === 'allocated') { payload.is_allocated = true; payload.status = patchedLog.status; }
+      else if (targetCol === 'completed') { payload.is_allocated = true; payload.status = 'COMPLETED'; }
+      await serviceLogApi.update(logId, payload);
+    } catch {
+      // Rollback on failure
+      setLogs(prev => prev.map(l => l.id === logId ? log : l));
+      alert('Gagal memindahkan tiket. Perubahan dibatalkan.');
+    }
   };
 
   const monthNames = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
@@ -135,37 +206,137 @@ export default function ScheduleManagementPage() {
   const today = new Date();
 
   // Render kanban card
-  const renderCard = (log: any) => (
-    <div key={log.id} className={styles.kanbanCard}>
-      <div className={styles.kanbanCardHeader}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <input type="checkbox" className={styles.kanbanCheckbox} checked={selectedIds.includes(log.id)}
-            onChange={() => toggleSelect(log.id)} onClick={e => e.stopPropagation()} />
-          <span className={styles.kanbanCallId}>{log.call_id || log.id}</span>
+  const renderCard = (log: any) => {
+    const isDragged = draggedId === log.id;
+    const isCompleted = log.status === 'COMPLETED';
+    const isCanceled = log.status === 'CANCELED' || log.status === 'CANCELLED';
+
+    return (
+      <div
+        key={log.id}
+        className={styles.kanbanCard}
+        draggable
+        onDragStart={(e) => handleDragStart(e, log.id)}
+        onDragEnd={handleDragEnd}
+        style={{
+          opacity: isDragged ? 0.35 : 1,
+          cursor: isDragged ? 'grabbing' : 'grab',
+          transition: 'opacity 0.15s, box-shadow 0.15s',
+          boxShadow: isDragged ? '0 16px 40px rgba(0,0,0,0.18)' : undefined,
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+        }}
+      >
+        {/* Card Header: Call ID + Task Type */}
+        <div className={styles.kanbanCardHeader} style={{ cursor: 'grab' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <GripVertical size={14} style={{ color: '#cbd5e1', flexShrink: 0 }} />
+            <input type="checkbox" className={styles.kanbanCheckbox} checked={selectedIds.includes(log.id)}
+              onChange={() => toggleSelect(log.id)} onClick={e => e.stopPropagation()} />
+            <span className={styles.kanbanCallId}>{log.call_id || log.id}</span>
+          </div>
+          <span className={`${styles.kanbanTaskBadge} ${TASK_STYLE[log.task_type] || styles.taskCorrective}`}>
+            {TASK_LABELS[log.task_type] || 'Perbaikan'}
+          </span>
         </div>
-        <span className={`${styles.kanbanTaskBadge} ${TASK_STYLE[log.task_type] || styles.taskCorrective}`}>
-          {TASK_LABELS[log.task_type] || 'Perbaikan'}
-        </span>
+
+        {/* Unit info */}
+        <div>
+          <div className={styles.kanbanUnit}>{log.unit?.model_name || 'Unit'}</div>
+          <div className={styles.kanbanSn}>SN: {log.unit?.serial_number || '-'}</div>
+        </div>
+
+        {/* Date & Status row */}
+        <div className={styles.kanbanMeta}>
+          <Calendar size={12} /> {fmtDate(log.scheduled_date || log.service_date)}
+          {log.delivery_date && <><span style={{ margin: '0 4px' }}>|</span> {fmtDate(log.delivery_date)}</>}
+        </div>
+        <div className={styles.kanbanMeta} style={{ marginTop: '4px' }}>
+          {/* Status badge — lebih dominan di kolom selesai */}
+          {isCompleted ? (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(16,185,129,0.12)', color: '#059669', borderRadius: '5px', padding: '2px 8px', fontSize: '0.72rem', fontWeight: 800, border: '1px solid rgba(16,185,129,0.3)' }}>
+              <CheckCircle2 size={11} /> SELESAI
+            </span>
+          ) : isCanceled ? (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(239,68,68,0.1)', color: '#dc2626', borderRadius: '5px', padding: '2px 8px', fontSize: '0.72rem', fontWeight: 800, border: '1px solid rgba(239,68,68,0.25)' }}>
+              <XCircle size={11} /> BATAL
+            </span>
+          ) : (
+            <span className={`${styles.badge} ${log.status === 'PENDING' ? styles.badgePending : log.status === 'IN PROGRESS' ? styles.badgeInProgress : styles.badgeCancelled}`}>{log.status}</span>
+          )}
+          <span style={{ marginLeft: 'auto', fontSize: '0.72rem', color: '#64748b' }}>{log.technician_name || 'Belum alokasi'}</span>
+        </div>
+
+        {/* Result Servis (read-only) */}
+        {log.planning_notes && (
+          <div className={styles.kanbanNotes} style={{ background: 'rgba(4,120,87,0.06)', borderLeft: '3px solid #10b981', color: '#047857' }}>
+            <span style={{ fontSize: '0.68rem', fontWeight: 700, display: 'block', marginBottom: '2px', opacity: 0.7 }}>RESULT</span>
+            {log.planning_notes.length > 80 ? log.planning_notes.slice(0, 80) + '…' : log.planning_notes}
+          </div>
+        )}
+
+        {/* Catatan Internal Admin */}
+        {log.internal_notes && (
+          <div className={styles.kanbanNotes} style={{ background: 'rgba(100,116,139,0.07)', borderLeft: '3px solid #94a3b8' }}>
+            <span style={{ fontSize: '0.68rem', fontWeight: 700, display: 'block', marginBottom: '2px', opacity: 0.7 }}>CATATAN INTERNAL</span>
+            {log.internal_notes.length > 80 ? log.internal_notes.slice(0, 80) + '…' : log.internal_notes}
+          </div>
+        )}
+
+        <button onClick={() => { setNotesModal(log); setEditNotes(log.internal_notes || ''); }}
+          style={{ marginTop: '6px', width: '100%', background: '#001F3F', border: 'none', borderRadius: '6px', padding: '6px 8px', fontSize: '0.72rem', color: 'white', cursor: 'pointer', fontWeight: 700, transition: 'background 0.2s' }}>
+          {log.internal_notes ? 'Edit Catatan Internal' : 'Tambah Catatan Internal'}
+        </button>
       </div>
-      <div>
-        <div className={styles.kanbanUnit}>{log.unit?.model_name || 'Unit'}</div>
-        <div className={styles.kanbanSn}>SN: {log.unit?.serial_number || '-'}</div>
+    );
+  };
+
+  // Column drop zone wrapper
+  const DropColumn = ({ col, title, count, icon, children, accentColor }: {
+    col: KanbanCol; title: string; count: number; icon: React.ReactNode; children: React.ReactNode; accentColor: string;
+  }) => {
+    const isOver = dragOverCol === col;
+    return (
+      <div
+        className={styles.kanbanColumn}
+        onDragOver={(e) => handleDragOver(e, col)}
+        onDragLeave={handleDragLeave}
+        onDrop={(e) => handleDrop(e, col)}
+        style={{
+          transition: 'background 0.2s, box-shadow 0.2s',
+          background: isOver ? `rgba(${accentColor}, 0.06)` : undefined,
+          boxShadow: isOver ? `inset 0 0 0 2px rgba(${accentColor}, 0.4)` : undefined,
+          borderRadius: isOver ? '12px' : undefined,
+        }}
+      >
+        <div className={styles.kanbanHeader}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {icon}
+            <span className={styles.kanbanTitle}>{title}</span>
+          </div>
+          <span className={styles.kanbanCount}>{count}</span>
+        </div>
+        {isOver && isDragging && (
+          <div style={{
+            margin: '8px 8px 0',
+            padding: '12px',
+            border: `2px dashed rgba(${accentColor}, 0.5)`,
+            borderRadius: '8px',
+            textAlign: 'center',
+            fontSize: '0.78rem',
+            fontWeight: 700,
+            color: `rgba(${accentColor}, 0.7)`,
+            background: `rgba(${accentColor}, 0.04)`,
+          }}>
+            Lepas di sini untuk memindahkan
+          </div>
+        )}
+        <div className={styles.kanbanBody}>
+          {children}
+        </div>
       </div>
-      <div className={styles.kanbanMeta}>
-        <Calendar size={12} /> {fmtDate(log.scheduled_date || log.service_date)}
-        {log.delivery_date && <><span style={{ margin: '0 4px' }}>|</span> {fmtDate(log.delivery_date)}</>}
-      </div>
-      <div className={styles.kanbanMeta}>
-        <span className={`${styles.badge} ${log.status === 'PENDING' ? styles.badgePending : log.status === 'IN PROGRESS' ? styles.badgeInProgress : log.status === 'COMPLETED' ? styles.badgeCompleted : styles.badgeCancelled}`}>{log.status}</span>
-        <span style={{ marginLeft: 'auto', fontSize: '0.72rem' }}>{log.technician_name || 'Belum alokasi'}</span>
-      </div>
-      {log.planning_notes && <div className={styles.kanbanNotes}>{log.planning_notes}</div>}
-      <button onClick={() => { setNotesModal(log); setEditNotes(log.planning_notes || ''); }}
-        style={{ marginTop: '4px', background: 'var(--color-deep-navy)', border: 'none', borderRadius: '6px', padding: '6px 8px', fontSize: '0.72rem', color: 'white', cursor: 'pointer', fontWeight: 700, transition: 'background 0.2s' }}>
-        {log.planning_notes ? 'Edit Catatan' : 'Tambah Catatan'}
-      </button>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className={styles.container}>
@@ -175,7 +346,7 @@ export default function ScheduleManagementPage() {
             <ArrowLeft size={16} /><span>Kembali ke Log Servis</span>
           </button>
           <h2 className={styles.title}>Pengaturan Jadwal</h2>
-          <p className={styles.subtitle}>Kelola jadwal servis, perawatan & pengiriman dalam satu kalender terpadu.</p>
+          <p className={styles.subtitle}>Kelola jadwal servis, perawatan & pengiriman — drag & drop card untuk memindahkan status.</p>
         </div>
         <div className={styles.viewTabs}>
           <button className={`${styles.viewTab} ${viewMode === 'kanban' ? styles.viewTabActive : ''}`} onClick={() => setViewMode('kanban')}>Kanban</button>
@@ -191,8 +362,8 @@ export default function ScheduleManagementPage() {
 
       <StatsGrid loading={loading} items={[
         { label: 'Belum Dialokasi', value: loading ? '...' : unallocated.length, max: 100, icon: AlertCircle, accent: '#FF5722' },
-        { label: 'Sudah Terjadwal', value: loading ? '...' : allocated.length, max: 100, icon: Clock, accent: '#0047AB' },
-        { label: 'Selesai / Batal', value: loading ? '...' : completed.length, max: 100, icon: Calendar, accent: '#0a192f' },
+        { label: 'Sudah Terjadwal', value: loading ? '...' : allocated.length, max: 100, icon: Clock, accent: '#3b82f6' },
+        { label: 'Selesai / Batal', value: loading ? '...' : completed.length, max: 100, icon: Calendar, accent: '#10b981' },
       ]} />
 
       <div className="dtToolbar">
@@ -205,6 +376,11 @@ export default function ScheduleManagementPage() {
             ]} />
         </div>
         <div className="dtToolbarRight">
+          {isDragging && (
+            <span style={{ fontSize: '0.8rem', color: '#2E5BFF', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: 'rgba(46,91,255,0.08)', borderRadius: '8px' }}>
+              <GripVertical size={14} /> Drag ke kolom tujuan...
+            </span>
+          )}
           <div className="dtToolbarSearch">
             <input type="text" placeholder="Cari SN, model, Call ID..." value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)} className="dtToolbarSearchInput" />
@@ -275,36 +451,26 @@ export default function ScheduleManagementPage() {
       ) : (
         /* ============ KANBAN VIEW ============ */
         <div className={styles.kanbanContainer}>
-          <div className={styles.kanbanColumn}>
-            <div className={styles.kanbanHeader}>
-              <span className={styles.kanbanTitle}>Belum Dialokasi</span>
-              <span className={styles.kanbanCount}>{unallocated.length}</span>
-            </div>
-            <div className={styles.kanbanBody}>
-              {unallocated.length === 0 ? <div className={styles.emptyState}><AlertCircle size={24} style={{ opacity: 0.3 }} /><p className={styles.emptyDesc}>Semua tiket sudah dialokasi</p></div>
-                : unallocated.map(renderCard)}
-            </div>
-          </div>
-          <div className={styles.kanbanColumn}>
-            <div className={styles.kanbanHeader}>
-              <span className={styles.kanbanTitle}>Sudah Terjadwal</span>
-              <span className={styles.kanbanCount}>{allocated.length}</span>
-            </div>
-            <div className={styles.kanbanBody}>
-              {allocated.length === 0 ? <div className={styles.emptyState}><Clock size={24} style={{ opacity: 0.3 }} /><p className={styles.emptyDesc}>Belum ada jadwal aktif</p></div>
-                : allocated.map(renderCard)}
-            </div>
-          </div>
-          <div className={styles.kanbanColumn}>
-            <div className={styles.kanbanHeader}>
-              <span className={styles.kanbanTitle}>Selesai / Batal</span>
-              <span className={styles.kanbanCount}>{completed.length}</span>
-            </div>
-            <div className={styles.kanbanBody}>
-              {completed.length === 0 ? <div className={styles.emptyState}><Calendar size={24} style={{ opacity: 0.3 }} /><p className={styles.emptyDesc}>Belum ada yang selesai</p></div>
-                : completed.slice(0, 20).map(renderCard)}
-            </div>
-          </div>
+          <DropColumn col="unallocated" title="Belum Dialokasi" count={unallocated.length}
+            icon={<AlertCircle size={14} style={{ color: '#FF5722' }} />} accentColor="255,87,34">
+            {unallocated.length === 0
+              ? <div className={styles.emptyState}><AlertCircle size={24} style={{ opacity: 0.3 }} /><p className={styles.emptyDesc}>Semua tiket sudah dialokasi</p></div>
+              : unallocated.map(renderCard)}
+          </DropColumn>
+
+          <DropColumn col="allocated" title="Sudah Terjadwal" count={allocated.length}
+            icon={<Clock size={14} style={{ color: '#2E5BFF' }} />} accentColor="46,91,255">
+            {allocated.length === 0
+              ? <div className={styles.emptyState}><Clock size={24} style={{ opacity: 0.3 }} /><p className={styles.emptyDesc}>Belum ada jadwal aktif</p></div>
+              : allocated.map(renderCard)}
+          </DropColumn>
+
+          <DropColumn col="completed" title="Selesai / Batal" count={completed.length}
+            icon={<CheckCircle2 size={14} style={{ color: '#059669' }} />} accentColor="5,150,105">
+            {completed.length === 0
+              ? <div className={styles.emptyState}><Calendar size={24} style={{ opacity: 0.3 }} /><p className={styles.emptyDesc}>Belum ada yang selesai</p></div>
+              : completed.slice(0, 20).map(renderCard)}
+          </DropColumn>
         </div>
       )}
 
@@ -341,15 +507,21 @@ export default function ScheduleManagementPage() {
         <div className={styles.modalOverlay} onClick={() => setNotesModal(null)}>
           <div className={styles.modalCard} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Catatan Planning — {notesModal.call_id || notesModal.id}</h3>
+              <h3 className={styles.modalTitle}>Catatan Internal — {notesModal.call_id || notesModal.id}</h3>
               <button className={styles.closeBtn} onClick={() => setNotesModal(null)}><X size={20} /></button>
             </div>
             <div className={styles.modalBody}>
               <div className={styles.formGroup}>
-                <label>Catatan Internal (hanya untuk admin/teknisi)</label>
+                <label>Catatan Internal Admin <span style={{ fontWeight: 400, color: '#94a3b8' }}>(hanya terlihat oleh admin/teknisi)</span></label>
                 <textarea value={editNotes} onChange={e => setEditNotes(e.target.value)}
                   placeholder="Contoh: Perlu bawa spare part kompresor, koordinasi dengan mitra Surabaya..." rows={4} />
               </div>
+              {notesModal?.planning_notes && (
+                <div style={{ padding: '10px 14px', background: 'rgba(4,120,87,0.06)', borderRadius: '8px', border: '1px solid rgba(16,185,129,0.2)', fontSize: '0.82rem' }}>
+                  <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#047857', display: 'block', marginBottom: '4px', textTransform: 'uppercase' }}>Result Servis (dari Log Servis)</span>
+                  <span style={{ color: '#064e3b' }}>{notesModal.planning_notes}</span>
+                </div>
+              )}
             </div>
             <div className={styles.modalFooter}>
               <button className={styles.cancelBtn} onClick={() => setNotesModal(null)}>Batal</button>

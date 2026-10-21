@@ -3,12 +3,45 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './TopBar.module.css';
-import { Bell, ChevronDown, LogOut, QrCode, Menu } from 'lucide-react';
+import { Bell, ChevronDown, LogOut, QrCode, Menu, Wrench, Thermometer, AlertTriangle, CheckCircle2, Clock, ExternalLink } from 'lucide-react';
 import QrScannerModal from './QrScannerModal';
 
 interface TopBarProps {
   onToggleSidebar: () => void;
   isSidebarOpen: boolean;
+}
+
+function formatTimeAgo(dateStr: string) {
+  if (!dateStr) return '';
+  const ms = new Date().getTime() - new Date(dateStr).getTime();
+  const mins = Math.floor(ms / 60000);
+  if (mins < 1) return 'Baru saja';
+  if (mins < 60) return `${mins} mnt lalu`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} jam lalu`;
+  const days = Math.floor(hours / 24);
+  return `${days} hari lalu`;
+}
+
+function getAlertIcon(title: string) {
+  const t = (title || '').toLowerCase();
+  if (t.includes('servis') || t.includes('request') || t.includes('permintaan')) return <Wrench size={14} style={{ color: '#2E5BFF', flexShrink: 0 }} />;
+  if (t.includes('suhu') || t.includes('temp') || t.includes('iot')) return <Thermometer size={14} style={{ color: '#ef4444', flexShrink: 0 }} />;
+  if (t.includes('alert') || t.includes('bahaya') || t.includes('darurat')) return <AlertTriangle size={14} style={{ color: '#f59e0b', flexShrink: 0 }} />;
+  return <Bell size={14} style={{ color: '#64748b', flexShrink: 0 }} />;
+}
+
+function getAlertLink(alert: any): string | null {
+  const t = (alert.title || '').toLowerCase();
+  const c = (alert.content || '').toLowerCase();
+  // Extract call_id or service log id from content (format: "... SN: A26... ...")
+  if (t.includes('servis') || t.includes('permintaan')) {
+    return '/service';
+  }
+  if (t.includes('iot') || t.includes('suhu') || t.includes('alert')) {
+    return '/dashboard';
+  }
+  return null;
 }
 
 export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) {
@@ -51,22 +84,22 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => {
+  const fetchNotifications = async () => {
     if (!localStorage.getItem('token')) return;
-    const fetchNotifications = async () => {
-      try {
-        const { notificationApi, messageApi } = await import('@/lib/api');
-        const [alertsRes, convsRes] = await Promise.all([
-          notificationApi.getAlerts().catch(() => ({ data: [] })),
-          messageApi.getConversations().catch(() => ({ data: [] })),
-        ]);
-        setAlerts(alertsRes.data || []);
-        setMessages(convsRes.data || []); // Storing conversations as 'messages' state for simplicity right now
-      } catch (e) {
-        console.error('Failed to load notifications', e);
-      }
-    };
+    try {
+      const { notificationApi } = await import('@/lib/api');
+      const alertsRes = await notificationApi.getAlerts().catch(() => ({ data: [] }));
+      setAlerts(alertsRes.data || []);
+    } catch (e) {
+      console.error('Failed to load notifications', e);
+    }
+  };
+
+  useEffect(() => {
     fetchNotifications();
+    // Auto-refresh every 60s to catch new service requests
+    const interval = setInterval(fetchNotifications, 60000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleLogout = () => {
@@ -75,18 +108,27 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
     router.push('/login');
   };
 
-  const markAsRead = async (id: string, type: 'ALERT' | 'MESSAGE') => {
+  const markAsReadAndNavigate = async (alert: any) => {
     try {
       const { notificationApi } = await import('@/lib/api');
-      await notificationApi.markAsRead(id);
-      if (type === 'ALERT') {
-        setAlerts(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
-      } else {
-        setMessages(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
-      }
-    } catch (e) {
-      console.error(e);
+      await notificationApi.markAsRead(alert.id).catch(() => {});
+      setAlerts(prev => prev.map(n => n.id === alert.id ? { ...n, is_read: true } : n));
+    } catch (e) { /* ignore */ }
+
+    const link = getAlertLink(alert);
+    if (link) {
+      setBellOpen(false);
+      router.push(link);
     }
+  };
+
+  const markAllRead = async () => {
+    const unread = alerts.filter(a => !a.is_read);
+    try {
+      const { notificationApi } = await import('@/lib/api');
+      await Promise.all(unread.map(a => notificationApi.markAsRead(a.id).catch(() => {})));
+      setAlerts(prev => prev.map(n => ({ ...n, is_read: true })));
+    } catch (e) { /* ignore */ }
   };
 
   const getDisplayName = () => {
@@ -104,7 +146,6 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
     return user.role;
   };
 
-  const unreadMessagesCount = 0; // TODO: Implement unread count from conversations API
   const unreadAlertsCount = alerts.filter(a => !a.is_read).length;
 
   return (
@@ -121,41 +162,122 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
           <span>Pindai QR</span>
         </button>
 
-
-
-        {/* Inbox disabled for phase 1
-        <div className={styles.iconContainer}>
-          <button className={styles.actionBtn} onClick={() => router.push('/messages')} title="Buka Live Chat (Inbox)">
-            <Mail size={20} />
-            {unreadMessagesCount > 0 && <span className={styles.badge}>{unreadMessagesCount}</span>}
-          </button>
-        </div>
-        */}
-
+        {/* Notification Bell */}
         <div className={styles.iconContainer} ref={bellRef}>
-          <button className={styles.actionBtn} onClick={() => { setBellOpen(!bellOpen); setMailOpen(false); setDropdownOpen(false); }}>
+          <button
+            className={styles.actionBtn}
+            onClick={() => { setBellOpen(!bellOpen); setMailOpen(false); setDropdownOpen(false); }}
+            title="Notifikasi"
+          >
             <Bell size={20} />
-            {unreadAlertsCount > 0 && <span className={styles.badge} style={{ background: '#f59e0b' }}>{unreadAlertsCount}</span>}
+            {unreadAlertsCount > 0 && (
+              <span className={styles.badge} style={{ background: unreadAlertsCount > 0 ? '#ef4444' : '#f59e0b' }}>
+                {unreadAlertsCount > 9 ? '9+' : unreadAlertsCount}
+              </span>
+            )}
           </button>
+
           {bellOpen && (
-            <div className={styles.notificationDropdown}>
-              <div className={styles.notificationHeader}>Notifikasi Terbaru</div>
-              {alerts.length === 0 ? (
-                <div className={styles.notificationItem} style={{ color: 'var(--color-space-grey)' }}>
-                  Belum ada notifikasi baru.
-                </div>
-              ) : (
-                alerts.map(alert => (
-                  <div
-                    key={alert.id}
-                    className={styles.notificationItem}
-                    style={{ background: alert.is_read ? 'transparent' : 'rgba(46, 91, 255, 0.05)' }}
-                    onClick={() => markAsRead(alert.id, 'ALERT')}
+            <div className={styles.notificationDropdown} style={{ width: '340px' }}>
+              {/* Header */}
+              <div className={styles.notificationHeader} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, fontSize: '0.82rem', color: 'var(--color-deep-navy)' }}>
+                  <Bell size={14} /> Notifikasi
+                  {unreadAlertsCount > 0 && (
+                    <span style={{ background: '#ef4444', color: '#fff', borderRadius: '20px', padding: '1px 7px', fontSize: '0.68rem', fontWeight: 800 }}>
+                      {unreadAlertsCount} Baru
+                    </span>
+                  )}
+                </span>
+                {unreadAlertsCount > 0 && (
+                  <button
+                    onClick={markAllRead}
+                    style={{ background: 'none', border: 'none', fontSize: '0.72rem', color: '#2E5BFF', fontWeight: 700, cursor: 'pointer' }}
                   >
-                    <div style={{ fontSize: '0.8rem', fontWeight: 600 }}>{alert.title}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--color-space-grey)', marginTop: '2px' }}>{alert.content}</div>
+                    Baca Semua
+                  </button>
+                )}
+              </div>
+
+              {/* Notification List */}
+              <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                {alerts.length === 0 ? (
+                  <div style={{ padding: '24px 16px', textAlign: 'center' }}>
+                    <CheckCircle2 size={28} style={{ color: '#10b981', margin: '0 auto 8px', display: 'block' }} />
+                    <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-deep-navy)' }}>Semua beres!</div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--color-space-grey)', marginTop: '4px' }}>Belum ada notifikasi baru.</div>
                   </div>
-                ))
+                ) : (
+                  alerts.map(alert => {
+                    const link = getAlertLink(alert);
+                    const isServiceRequest = (alert.title || '').toLowerCase().includes('servis');
+                    return (
+                      <div
+                        key={alert.id}
+                        className={styles.notificationItem}
+                        style={{
+                          background: alert.is_read ? 'transparent' : (isServiceRequest ? 'rgba(46, 91, 255, 0.04)' : 'rgba(239, 68, 68, 0.03)'),
+                          borderLeft: alert.is_read ? 'none' : `3px solid ${isServiceRequest ? '#2E5BFF' : '#ef4444'}`,
+                          cursor: link ? 'pointer' : 'default',
+                          padding: '12px 16px',
+                        }}
+                        onClick={() => markAsReadAndNavigate(alert)}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                          <div style={{
+                            width: '30px', height: '30px', borderRadius: '50%', flexShrink: 0,
+                            background: isServiceRequest ? 'rgba(46, 91, 255, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}>
+                            {getAlertIcon(alert.title)}
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '4px' }}>
+                              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--color-deep-navy)', lineHeight: 1.3 }}>
+                                {alert.title || 'Notifikasi Baru'}
+                              </div>
+                              {!alert.is_read && (
+                                <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: isServiceRequest ? '#2E5BFF' : '#ef4444', flexShrink: 0, marginTop: '4px' }} />
+                              )}
+                            </div>
+                            <div style={{ fontSize: '0.72rem', color: 'var(--color-space-grey)', marginTop: '3px', lineHeight: 1.4 }}>
+                              {(alert.content || '').slice(0, 100)}{(alert.content || '').length > 100 ? '…' : ''}
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '5px' }}>
+                              <div style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                <Clock size={10} /> {formatTimeAgo(alert.created_at)}
+                              </div>
+                              {link && (
+                                <span style={{ fontSize: '0.68rem', color: '#2E5BFF', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                  Lihat Detail <ExternalLink size={10} />
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Footer */}
+              {alerts.length > 0 && (
+                <div style={{
+                  padding: '10px 16px', borderTop: '1px solid rgba(0,0,0,0.05)',
+                  background: 'rgba(242,244,247,0.5)', textAlign: 'center'
+                }}>
+                  <button
+                    onClick={() => { setBellOpen(false); router.push('/service'); }}
+                    style={{
+                      background: 'none', border: 'none', fontSize: '0.75rem',
+                      color: '#2E5BFF', fontWeight: 700, cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', gap: '4px', margin: '0 auto',
+                    }}
+                  >
+                    Buka Log Servis <ExternalLink size={12} />
+                  </button>
+                </div>
               )}
             </div>
           )}

@@ -73,6 +73,9 @@ export class ServiceLog {
   planning_notes!: string;
 
   @Column({ type: 'text', nullable: true })
+  internal_notes!: string;
+
+  @Column({ type: 'text', nullable: true })
   replaced_sparepart!: string;
 
   @Column({ default: false })

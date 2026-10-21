@@ -5,6 +5,7 @@ import {
   Layers, Zap, BookOpen, PlayCircle, ExternalLink, X, FileText, Info, ArrowUpRight
 } from 'lucide-react';
 import { useRef, useState, useEffect } from 'react';
+import { HOLIC_SPAREPARTS_INVENTORY } from '@/lib/spareparts-inventory';
 import styles from '../partner-portal.module.css';
 
 export interface Ticket {
@@ -241,35 +242,159 @@ export interface ConfirmCloseModalProps {
 }
 
 export function ConfirmCloseModal({ isOpen, ticket, loading, onConfirm, onCancel }: ConfirmCloseModalProps) {
+  const [hasSpareparts, setHasSpareparts] = useState<boolean | null>(null);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [customInput, setCustomInput] = useState('');
+  const [selectedCatalogId, setSelectedCatalogId] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
   if (!isOpen) return null;
+
+  const handleSelectCatalog = (id: string) => {
+    setSelectedCatalogId(id);
+    if (!id) return;
+    const item = HOLIC_SPAREPARTS_INVENTORY.find(s => s.id === id);
+    if (item && !selectedItems.includes(item.name)) {
+      setSelectedItems(prev => [...prev, item.name]);
+      setError(null);
+    }
+  };
+
+  const handleAddCustom = () => {
+    const val = customInput.trim();
+    if (!val) return;
+    if (!selectedItems.includes(val)) {
+      setSelectedItems(prev => [...prev, val]);
+      setError(null);
+    }
+    setCustomInput('');
+  };
+
+  const handleRemove = (name: string) => {
+    setSelectedItems(prev => prev.filter(i => i !== name));
+  };
+
+  const handleYes = () => {
+    setHasSpareparts(true);
+    setError(null);
+  };
+
+  const handleNo = () => {
+    onConfirm();
+  };
+
+  const handleFinalConfirm = () => {
+    if (hasSpareparts && selectedItems.length === 0) {
+      setError('Wajib memilih atau mengisi minimal satu nama sparepart yang digunakan.');
+      return;
+    }
+    const sparepartsStr = selectedItems.join('; ');
+    if (ticket && sparepartsStr) {
+      ticket.replaced_sparepart = sparepartsStr;
+    }
+    onConfirm();
+  };
 
   return (
     <div className={styles.noteModalBackdrop} onClick={onCancel}>
-      <div className={styles.confirmModal} onClick={e => e.stopPropagation()}>
+      <div className={styles.confirmModal} onClick={e => e.stopPropagation()} style={{ maxWidth: hasSpareparts ? '500px' : '420px' }}>
         <div className={styles.confirmIconWrap}>
           <AlertCircle size={32} color="#FF6B00" />
         </div>
         <h3 className={styles.confirmTitle}>Konfirmasi Tutup Tiket</h3>
         <p className={styles.confirmMessage}>
-          Yakin udah selesai? Mau tutup tiket servis ini?
+          {hasSpareparts
+            ? 'Pilih atau input sparepart resmi yang dipakai:'
+            : 'Yakin udah selesai? Apakah ada sparepart yang dipakai / diganti?'}
         </p>
 
         {ticket && (
-          <div className={styles.confirmTicketBox}>
+          <div className={styles.confirmTicketBox} style={{ marginBottom: '16px' }}>
             <div className={styles.confirmTicketId}>{ticket.call_id || ticket.id}</div>
             <div className={styles.confirmUnitName}>{ticket.unit?.model_name || 'Unit Servis'}</div>
             <div className={styles.confirmUnitSn}>SN: {ticket.unit?.serial_number || '—'}</div>
           </div>
         )}
 
-        <div className={styles.confirmActions}>
-          <button type="button" onClick={onCancel} className={styles.confirmBtnCancel} disabled={loading}>
-            Belum
-          </button>
-          <button type="button" onClick={onConfirm} className={styles.confirmBtnOk} disabled={loading}>
-            {loading ? <Loader2 size={16} className={styles.spin} /> : 'Udah'}
-          </button>
-        </div>
+        {hasSpareparts === true ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', textAlign: 'left', marginBottom: '16px' }}>
+            {error && (
+              <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', padding: '8px 12px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600 }}>
+                {error}
+              </div>
+            )}
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                Pilih Dari Inventaris Holic *
+              </label>
+              <select
+                value={selectedCatalogId}
+                onChange={(e) => handleSelectCatalog(e.target.value)}
+                style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.82rem', background: '#fff' }}
+              >
+                <option value="">— Cari & Pilih Sparepart —</option>
+                {HOLIC_SPAREPARTS_INVENTORY.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    [{s.category}] {s.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: '4px' }}>
+                Atau Tambah Manual
+              </label>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <input
+                  type="text"
+                  placeholder="Ketik nama part..."
+                  value={customInput}
+                  onChange={(e) => setCustomInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddCustom(); } }}
+                  style={{ flex: 1, padding: '8px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.82rem' }}
+                />
+                <button
+                  type="button"
+                  onClick={handleAddCustom}
+                  style={{ padding: '8px 12px', borderRadius: '6px', border: 'none', background: '#0f172a', color: '#fff', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  Tambah
+                </button>
+              </div>
+            </div>
+
+            {selectedItems.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '120px', overflowY: 'auto' }}>
+                {selectedItems.map((item, idx) => (
+                  <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f1f5f9', padding: '6px 10px', borderRadius: '4px', fontSize: '0.78rem' }}>
+                    <span style={{ fontWeight: 600, color: '#0f172a' }}>{item}</span>
+                    <button type="button" onClick={() => handleRemove(item)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '2px' }}>×</button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className={styles.confirmActions}>
+              <button type="button" onClick={() => setHasSpareparts(null)} className={styles.confirmBtnCancel} disabled={loading}>
+                Kembali
+              </button>
+              <button type="button" onClick={handleFinalConfirm} className={styles.confirmBtnOk} disabled={loading}>
+                {loading ? <Loader2 size={16} className={styles.spin} /> : 'Simpan & Tutup'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className={styles.confirmActions} style={{ gridTemplateColumns: '1fr 1fr' }}>
+            <button type="button" onClick={handleNo} className={styles.confirmBtnCancel} disabled={loading}>
+              Tidak (No)
+            </button>
+            <button type="button" onClick={handleYes} className={styles.confirmBtnOk} disabled={loading}>
+              {loading ? <Loader2 size={16} className={styles.spin} /> : 'Ya, Ada Sparepart'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

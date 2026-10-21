@@ -9,9 +9,18 @@ import {
   TrendingUp, Calendar, Activity, ImageOff, Zap, Wind, Thermometer,
   User, Briefcase, ChevronDown, ChevronUp
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import styles from '../../ClientPortal.module.css';
 import unitStyles from './unit.module.css';
-import UnitHealthWidget from '@/components/iot/UnitHealthWidget';
+
+const UnitHealthWidget = dynamic(() => import('@/components/iot/UnitHealthWidget'), {
+  ssr: false,
+  loading: () => (
+    <div style={{ padding: '24px', textAlign: 'center', color: 'var(--brand-space-grey)', fontSize: '0.85rem' }}>
+      Memuat metrik kesehatan unit...
+    </div>
+  ),
+});
 
 // ── Cooling Circulation Diagram (Menyesuaikan Format Manual QC) ──
 function CoolingCircuitDiagram() {
@@ -376,7 +385,7 @@ export default function ClientUnitDetail() {
             {!serviceRequested ? (
               <button
                 className={`${styles.btnWarning} ${unitStyles.btnRequestMobile}`}
-                onClick={() => setShowModal(true)}
+                onClick={() => router.push(`/client-portal/service-request?unit_id=${encodeURIComponent(unit.id)}`)}
               >
                 <Wrench size={14} /> Request Servis
               </button>
@@ -482,7 +491,7 @@ export default function ClientUnitDetail() {
             <UnitHealthWidget 
               unitId={unit.id} 
               serialNumber={unit.serial_number}
-              onRequestService={() => setShowModal(true)}
+              onRequestService={() => router.push(`/client-portal/service-request?unit_id=${encodeURIComponent(unit.id)}`)}
               emergencyWhatsapp="6281234567890"
             />
           </div>

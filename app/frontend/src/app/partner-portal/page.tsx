@@ -150,6 +150,7 @@ export default function PartnerPortalPage() {
         await serviceLogApi.update(ticketToClose.id, {
           status: 'COMPLETED',
           action_taken: actionTakenText,
+          replaced_sparepart: ticketToClose.replaced_sparepart || undefined,
         });
       }
 

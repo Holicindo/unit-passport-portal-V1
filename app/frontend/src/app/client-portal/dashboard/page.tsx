@@ -5,8 +5,12 @@ import { unitApi, serviceLogApi, authApi, healthScoreApi } from '@/lib/api';
 import { TrendingUp, AlertTriangle, ChevronRight, Wrench, Package, QrCode, ShieldCheck, FileText, Calendar, LifeBuoy, Activity, CheckCircle2 } from 'lucide-react';
 import styles from '../ClientPortal.module.css';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useGreeting, MiniCalendar, StatusBadge, SkeletonCard, type CalendarEvents } from './components';
-import LiveServiceTrackerModal from './LiveServiceTrackerModal';
+
+const LiveServiceTrackerModal = dynamic(() => import('./LiveServiceTrackerModal'), {
+  ssr: false,
+});
 
 export default function ClientDashboard() {
   const [fleet, setFleet] = useState<any[]>([]);

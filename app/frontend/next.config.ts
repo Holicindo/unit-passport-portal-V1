@@ -27,9 +27,10 @@ const nextConfig: NextConfig = {
     ],
   },
 
-  // Increase proxy timeout for bulk operations (default 30s is too short)
+  // Increase proxy timeout for bulk operations & optimize lucide-react compile time
   experimental: {
     proxyTimeout: 300000, // 5 minutes
+    optimizePackageImports: ['lucide-react'],
   },
   
   // Proxy /api requests to the backend to bypass HTTPS -> HTTP Mixed Content Block

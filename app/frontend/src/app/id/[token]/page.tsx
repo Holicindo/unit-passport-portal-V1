@@ -589,7 +589,7 @@ export default function QrPassportPage() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     <button className={styles.btnPrimary} onClick={() => { setTechName(user?.name || ''); setLogStatus('COMPLETED'); setShowLogModal(true); }} style={{ background: 'var(--neu-bg, rgba(8,20,50,0.8))', color: '#10b981', border: '1px solid rgba(0,31,63,0.1)', boxShadow: '-3px -3px 8px rgba(255,255,255,0.04), 3px 3px 8px rgba(0,31,63,0.1)' }}><Check size={16} /> Selesaikan &amp; Tutup Tiket</button>
                     <button className={styles.btnPrimary} onClick={() => { setTechName(user?.name || ''); setLogStatus('PENDING'); setShowLogModal(true); }} style={{ background: 'var(--neu-bg, rgba(8,20,50,0.8))', color: '#3b82f6', border: '1px solid rgba(0,31,63,0.1)', boxShadow: '-3px -3px 8px rgba(255,255,255,0.04), 3px 3px 8px rgba(0,31,63,0.1)' }}><Wrench size={16} /> Tambah Catatan Servis</button>
-                    <button className={styles.btnPrimary} onClick={() => setShowReportSelector(true)} style={{ background: 'var(--neu-bg, rgba(8,20,50,0.8))', color: '#60a5fa', border: '1px solid rgba(0,31,63,0.1)', boxShadow: '-3px -3px 8px rgba(255,255,255,0.04), 3px 3px 8px rgba(0,31,63,0.1)' }}><FilePlus size={16} /> Buat Laporan Digital</button>
+                    <button className={styles.btnPrimary} onClick={() => setShowReportSelector(true)} style={{ background: 'var(--neu-bg, rgba(8,20,50,0.8))', color: '#60a5fa', border: '1px solid rgba(0,31,63,0.1)', boxShadow: '-3px -3px 8px rgba(255,255,255,0.04), 3px 3px 8px rgba(0,31,63,0.1)' }}><FileText size={16} /> QC Reports</button>
                   </div>
                 </div>
               )}
@@ -599,7 +599,7 @@ export default function QrPassportPage() {
                   <h3 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '8px', textAlign: 'center', color: '#ffffff' }}>Administrator Control</h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
                     <button className={styles.btnEmergency} onClick={() => setShowServiceModal(true)}>Request Service</button>
-                    <button className={styles.btnPrimary} onClick={() => setShowReportSelector(true)} style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)' }}><FilePlus size={16} /> Buat Laporan Digital</button>
+                    <button className={styles.btnPrimary} onClick={() => setShowReportSelector(true)} style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)' }}><FileText size={16} /> QC Reports</button>
                     <button className={styles.btnPrimary} onClick={() => setShowTransferModal(true)}>Pindahkan Kepemilikan</button>
                   </div>
                 </div>
@@ -611,214 +611,7 @@ export default function QrPassportPage() {
               {isAdmin && <QrCard token={Array.isArray(token) ? token[0] : (token ?? '')} serialNumber={unit.serial_number} modelName={unit.model_name} />}
             </div>{/* end topRowGrid */}
 
-          {/* QC Reports */}
-          {(!isGuest && !hasClientRestriction) && (
-          <section className={styles.panel} style={{ borderRadius: '18px' }}>
-            <div className={styles.panelHeader}>
-              <div className={styles.panelHeaderLeft}><FileText size={16} color="#60a5fa" /><h2>QC Reports</h2></div>
-              {isAdmin && (<div style={{ display: 'flex', gap: '8px' }}>
-                {editBlocks.qc && <button className={styles.btnCancel} onClick={() => cancelEdit('qc')}>Batal</button>}
-                <button className={editBlocks.qc ? styles.btnSave : styles.btnRevise} onClick={() => toggleEdit('qc')}>{editBlocks.qc ? (isSaving ? 'Menyimpan…' : 'Simpan') : 'Revisi'}</button>
-              </div>)}
-            </div>
-            <div className={styles.mediaSingleItem} style={{ padding: '16px' }}>
-              {editBlocks.qc ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <div>
-                    <p style={{ fontSize: '0.72rem', fontWeight: 700, color: '#8f9bb3', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '10px' }}>Dokumen Laporan</p>
-                    <p style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '12px', lineHeight: 1.5 }}>Laporan Test Run, Sistem Pendingin, dan Inspeksi dibuat melalui modul laporan.</p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      {/* Test Run upload */}
-                      <div>
-                        <p style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-space-grey)', marginBottom: '4px' }}>Test Run Results</p>
-                        {editData.specs?.test_run_url ? (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', color: '#10b981' }}>
-                            <CheckCircle2 size={14} /> File terupload
-                            <button type="button" onClick={() => window.open(editData.specs.test_run_url, '_blank')} style={{ background: 'none', border: 'none', color: '#8bb2ff', cursor: 'pointer', fontSize: '0.75rem', textDecoration: 'underline' }}>Lihat</button>
-                            <button type="button" onClick={() => handleEditChange('specs.test_run_url', '')} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.75rem' }}>Hapus</button>
-                          </div>
-                        ) : (
-                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', border: '1px dashed rgba(255,255,255,0.2)', borderRadius: '8px', padding: '10px 14px', cursor: qcUploading['test_run_url'] ? 'not-allowed' : 'pointer', color: '#8f9bb3', fontSize: '0.82rem', background: 'rgba(255,255,255,0.02)', opacity: qcUploading['test_run_url'] ? 0.6 : 1 }}>
-                            <ImageIcon size={16} />{qcUploading['test_run_url'] ? 'Mengupload...' : 'Klik untuk upload file (PDF/JPG/PNG)'}
-                            <input type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display: 'none' }} disabled={qcUploading['test_run_url']} onChange={(e) => { const f = e.target.files?.[0]; if (f) handleQcFileUpload('test_run_url', f); }} />
-                          </label>
-                        )}
-                      </div>
-                      {/* Cooling report links */}
-                      <div>
-                        <p style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-space-grey)', marginBottom: '4px' }}>Laporan Sistem Pendingin</p>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                          {[{ label: 'Cooling System Report 1 Suhu', path: '/reports/cooling', type: 'COOLING_1' }, { label: 'Cooling System Report 2 Suhu', path: '/reports/cooling2', type: 'COOLING_2' }, { label: 'Cooling System Report 3 Suhu', path: '/reports/cooling3', type: 'COOLING_3' }, { label: 'Cooling System Report Warm', path: '/reports/reportwarm', type: 'COOLING_WARM' }].map(({ label, path, type }) => {
-                            const count = unitReports.filter((r: any) => r.form_type === type).length;
-                            return (<button key={path} type="button" onClick={() => { if (count === 1) { const r = unitReports.find((r: any) => r.form_type === type); if (r) router.push(`/reports/view/${r.id}`); } else if (count > 1) router.push(`/reports/history?unit=${unit?.id}&type=${type}`); else router.push(`${path}?unit=${unit?.id}`); }} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(46,91,255,0.1)', border: '1px solid rgba(46,91,255,0.3)', borderRadius: '8px', padding: '10px 14px', cursor: 'pointer', color: '#8bb2ff', fontSize: '0.82rem', fontFamily: 'inherit', width: '100%' }}>
-                              <FileText size={15} />{label}{count > 0 && <span style={{ marginLeft: '4px', background: 'rgba(16,185,129,0.2)', color: '#10b981', borderRadius: '10px', padding: '1px 6px', fontSize: '0.7rem', fontWeight: 700 }}>{count}</span>}<ExternalLink size={13} style={{ marginLeft: 'auto' }} />
-                            </button>);
-                          })}
-                        </div>
-                      </div>
-                      {/* Inspection report link */}
-                      <div>
-                        <p style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-space-grey)', marginBottom: '4px' }}>Laporan Inspeksi</p>
-                        {(() => { const count = unitReports.filter((r: any) => r.form_type === 'INSPECTION').length; return (
-                          <button type="button" onClick={() => { if (count === 1) { const r = unitReports.find((r: any) => r.form_type === 'INSPECTION'); if (r) router.push(`/reports/view/${r.id}`); } else if (count > 1) router.push(`/reports/history?unit=${unit?.id}&type=INSPECTION`); else router.push(`/reports/inspection?unit=${unit?.id}`); }} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(46,91,255,0.1)', border: '1px solid rgba(46,91,255,0.3)', borderRadius: '8px', padding: '10px 14px', cursor: 'pointer', color: '#8bb2ff', fontSize: '0.82rem', fontFamily: 'inherit', width: '100%' }}>
-                            <FileText size={15} />{count > 0 ? `Lihat ${count} Inspection Report` : 'Buat Inspection Report (QC)'}{count > 0 && <span style={{ background: 'rgba(16,185,129,0.2)', color: '#10b981', borderRadius: '10px', padding: '1px 6px', fontSize: '0.7rem', fontWeight: 700 }}>{count}</span>}<ExternalLink size={13} style={{ marginLeft: 'auto' }} />
-                          </button>); })()}
-                      </div>
-                      {/* ITR upload */}
-                      {(() => { const key = 'itr_url'; return (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                          <label style={{ fontSize: '0.8rem', color: 'var(--color-space-grey)', fontWeight: 600 }}>ITR — Inventory Transfer Request</label>
-                          {editData.specs?.[key] ? (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', color: '#10b981' }}>
-                              <CheckCircle2 size={14} /> File terupload
-                              <button type="button" onClick={() => window.open(editData.specs[key], '_blank')} style={{ background: 'none', border: 'none', color: '#8bb2ff', cursor: 'pointer', fontSize: '0.75rem', textDecoration: 'underline' }}>Lihat</button>
-                              <button type="button" onClick={() => handleEditChange(`specs.${key}`, '')} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.75rem' }}>Hapus</button>
-                            </div>
-                          ) : (
-                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', border: '1px dashed rgba(255,255,255,0.2)', borderRadius: '8px', padding: '10px 14px', cursor: 'pointer', color: '#8f9bb3', fontSize: '0.82rem', background: 'rgba(255,255,255,0.02)', opacity: qcUploading[key] ? 0.6 : 1 }}>
-                              <ImageIcon size={16} />{qcUploading[key] ? 'Mengupload...' : 'Klik untuk upload file (PDF/JPG/PNG)'}
-                              <input type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display: 'none' }} disabled={qcUploading[key]} onChange={(e) => { const f = e.target.files?.[0]; if (f) handleQcFileUpload(key, f); }} />
-                            </label>
-                          )}
-                        </div>); })()}
-                      {/* Work Order upload */}
-                      {(() => { const key = 'work_order_url'; return (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                          <label style={{ fontSize: '0.8rem', color: 'var(--color-space-grey)', fontWeight: 600 }}>Work Order</label>
-                          {editData.specs?.[key] ? (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', color: '#10b981' }}>
-                              <CheckCircle2 size={14} /> File terupload
-                              <button type="button" onClick={() => window.open(editData.specs[key], '_blank')} style={{ background: 'none', border: 'none', color: '#8bb2ff', cursor: 'pointer', fontSize: '0.75rem', textDecoration: 'underline' }}>Lihat</button>
-                              <button type="button" onClick={() => handleEditChange(`specs.${key}`, '')} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.75rem' }}>Hapus</button>
-                            </div>
-                          ) : (
-                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', border: '1px dashed rgba(255,255,255,0.2)', borderRadius: '8px', padding: '10px 14px', cursor: 'pointer', color: '#8f9bb3', fontSize: '0.82rem', background: 'rgba(255,255,255,0.02)', opacity: qcUploading[key] ? 0.6 : 1 }}>
-                              <ImageIcon size={16} />{qcUploading[key] ? 'Mengupload...' : 'Klik untuk upload file (PDF/JPG/PNG)'}
-                              <input type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display: 'none' }} disabled={qcUploading[key]} onChange={(e) => { const f = e.target.files?.[0]; if (f) handleQcFileUpload(key, f); }} />
-                            </label>
-                          )}
-                        </div>); })()}
-                      {/* Component Reports upload */}
-                      {(() => { const key = 'component_reports_url'; return (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                          <label style={{ fontSize: '0.8rem', color: 'var(--color-space-grey)', fontWeight: 600 }}>Component Reports</label>
-                          {editData.specs?.[key] ? (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', color: '#10b981' }}>
-                              <CheckCircle2 size={14} /> File terupload
-                              <button type="button" onClick={() => window.open(editData.specs[key], '_blank')} style={{ background: 'none', border: 'none', color: '#8bb2ff', cursor: 'pointer', fontSize: '0.75rem', textDecoration: 'underline' }}>Lihat</button>
-                              <button type="button" onClick={() => handleEditChange(`specs.${key}`, '')} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.75rem' }}>Hapus</button>
-                            </div>
-                          ) : (
-                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', border: '1px dashed rgba(255,255,255,0.2)', borderRadius: '8px', padding: '10px 14px', cursor: 'pointer', color: '#8f9bb3', fontSize: '0.82rem', background: 'rgba(255,255,255,0.02)', opacity: qcUploading[key] ? 0.6 : 1 }}>
-                              <ImageIcon size={16} />{qcUploading[key] ? 'Mengupload...' : 'Klik untuk upload file (PDF/JPG/PNG)'}
-                              <input type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display: 'none' }} disabled={qcUploading[key]} onChange={(e) => { const f = e.target.files?.[0]; if (f) handleQcFileUpload(key, f); }} />
-                            </label>
-                          )}
-                        </div>); })()}
-                    </div>
-                  </div>
-                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }} />
-                  {/* Glass Dimension dan PIC telah dipindahkan. Data ditarik dari Laporan Inspeksi (Read Only). */}
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  {/* View mode: report buttons + glass/PIC/gallery summaries */}
-                  {(() => {
-                    const coolingTypes = ['COOLING_1', 'COOLING_2', 'COOLING_3', 'COOLING_WARM'];
-                    const coolingLabels: Record<string, string> = { COOLING_1: '1 Suhu', COOLING_2: '2 Suhu (Cake & RTD)', COOLING_3: '3 Suhu (Cake, Ambient & RTD)', COOLING_WARM: 'Warm' };
-                    const coolingCountByType = coolingTypes.reduce((acc, t) => { acc[t] = unitReports.filter((r: any) => r.form_type === t).length; return acc; }, {} as Record<string, number>);
-                    const coolingTotal = Object.values(coolingCountByType).reduce((a, b) => a + b, 0);
-                    const coolingTooltip = coolingTotal > 0 ? coolingTypes.filter(t => coolingCountByType[t] > 0).map(t => `${coolingLabels[t]}: ${coolingCountByType[t]}`).join('\n') : 'Laporan belum dibuat';
-                    const items = [
-                      { label: 'Test Run Results', urlKey: 'test_run_url', desc: null, routePath: null, formType: null },
-                      { label: 'Cooling System Report', urlKey: 'cooling_report_url', desc: coolingTooltip, routePath: '/reports/cooling', formType: '__COOLING__' },
-                      { label: 'Inspection Report', urlKey: 'inspection_url', desc: null, routePath: '/reports/inspection', formType: 'INSPECTION' },
-                      { label: 'ITR', urlKey: 'itr_url', desc: 'Inventory Transfer Request', routePath: null, formType: null },
-                      { label: 'Work Order', urlKey: 'work_order_url', desc: 'Work Order Document', routePath: null, formType: null },
-                      { label: 'Component Reports', urlKey: 'component_reports_url', desc: 'Component Reports Document', routePath: null, formType: null },
-                    ];
-                    return items.map(({ label, urlKey, desc, routePath, formType }) => {
-                      const url = unit?.specs?.[urlKey]; const isReportLink = routePath !== null; const isCooling = formType === '__COOLING__';
-                      const isClickable = isReportLink ? true : !!url; const unitParam = unit?.id ? `?unit=${unit.id}` : '';
-                      const reportCount = isCooling ? coolingTotal : (formType ? unitReports.filter((r: any) => r.form_type === formType).length : 0);
-                      return (
-                        <div key={urlKey} style={{ position: 'relative' }}>
-                          <button type="button" onClick={() => {
-                            if (isReportLink) { if (isCooling) { if (coolingTotal === 1) { const r = unitReports.find((r: any) => coolingTypes.includes(r.form_type)); if (r) router.push(`/reports/view/${r.id}`); } else if (coolingTotal > 1) router.push(`/reports/history?unit=${unit?.id}&type=COOLING_1`); else router.push(`/reports/cooling${unitParam}`); } else { if (reportCount === 1) { const r = unitReports.find((r: any) => r.form_type === formType); if (r) router.push(`/reports/view/${r.id}`); } else if (reportCount > 1) router.push(`/reports/history?unit=${unit?.id}&type=${formType}`); else router.push(`${routePath}${unitParam}`); } } else if (url) window.open(typeof url === 'string' ? url : String(url), '_blank');
-                          }} disabled={!isClickable} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: isClickable ? 'var(--neu-bg, rgba(8,20,50,0.8))' : 'rgba(255,255,255,0.05)', borderRadius: '10px', cursor: isClickable ? 'pointer' : 'not-allowed', border: isClickable ? '1px solid rgba(0,31,63,0.1)' : '1px solid rgba(255,255,255,0.08)', width: '100%', textAlign: 'left', color: isClickable ? '#fff' : '#64748b', fontFamily: 'inherit', fontWeight: isClickable ? 700 : 500, fontSize: '0.88rem', opacity: isClickable ? 1 : 0.6, boxShadow: isClickable ? '-3px -3px 8px rgba(255,255,255,0.04), 3px 3px 8px rgba(0,31,63,0.1)' : 'none' }}>
-                            <FileText size={16} color={isClickable ? '#60a5fa' : '#64748b'} style={{ flexShrink: 0 }} />
-                            <span style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1px' }}>
-                              <span>{label}</span>
-                              {isReportLink && <span style={{ fontSize: '0.68rem', fontWeight: 400, opacity: 0.8 }}>{reportCount > 0 ? `${reportCount} laporan tersedia` : 'Belum ada laporan'}</span>}
-                            </span>
-                            {isReportLink && reportCount > 0 && <span style={{ background: 'rgba(16,185,129,0.2)', color: '#10b981', borderRadius: '10px', padding: '1px 7px', fontSize: '0.7rem', fontWeight: 700 }}>{reportCount}</span>}
-                            {(isReportLink || url) && <ExternalLink size={15} color="rgba(255,255,255,0.8)" style={{ flexShrink: 0 }} />}
-                          </button>
-                        </div>
-                      );
-                    });
-                  })()}
-                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', margin: '4px 0' }} />
-                  {(() => {
-                    const inspReport = unitReports.find((r: any) => r.form_type === 'INSPECTION');
-                    const inspData = inspReport?.data || {};
-                    const kaca = inspData.dimensions?.kaca || {};
-                    const works = inspData.works || [];
-                    const filledWorks = works.filter((w: any) => w.name && w.name.trim() !== '');
-                    const hasKaca = Object.values(kaca).some(v => v);
-                    const hasWorks = filledWorks.length > 0;
-                    return (
-                      <>
-                        {/* Glass Dimension */}
-                        <div style={{ marginBottom: '8px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: hasKaca ? '8px 8px 0 0' : '8px' }}>
-                            <FileText size={15} color="#60a5fa" /><span style={{ flex: 1, fontSize: '0.85rem', color: '#f1f5f9' }}>Glass Dimension (Source: Inspection Report)</span>
-                            {hasKaca ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(16,185,129,0.15)', color: '#34d399', borderRadius: '20px', padding: '2px 8px', fontSize: '0.72rem', fontWeight: 700 }}><Check size={11} /> Ada</span> : <span style={{ background: 'rgba(255,255,255,0.06)', color: '#94a3b8', borderRadius: '20px', padding: '2px 8px', fontSize: '0.72rem', fontWeight: 600 }}>Belum ada data</span>}
-                          </div>
-                          {hasKaca && (
-                            <div style={{ background: 'rgba(0,0,0,0.18)', border: '1px solid rgba(255,255,255,0.06)', borderTop: 'none', borderRadius: '0 0 8px 8px', padding: '8px 12px', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-                              {kaca.depan && <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Depan: <strong style={{ color: '#e2e8f0' }}>{kaca.depan}</strong></span>}
-                              {kaca.samping && <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Samping: <strong style={{ color: '#e2e8f0' }}>{kaca.samping}</strong></span>}
-                              {kaca.atas && <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Atas: <strong style={{ color: '#e2e8f0' }}>{kaca.atas}</strong></span>}
-                              {kaca.pintu && <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Pintu: <strong style={{ color: '#e2e8f0' }}>{kaca.pintu}</strong></span>}
-                              {kaca.tingkatan && <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Rak: <strong style={{ color: '#e2e8f0' }}>{kaca.tingkatan}</strong></span>}
-                            </div>
-                          )}
-                        </div>
 
-                        {/* Production PIC */}
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: hasWorks ? '8px 8px 0 0' : '8px' }}>
-                            <UserCheck size={15} color="#60a5fa" /><span style={{ flex: 1, fontSize: '0.85rem', color: '#f1f5f9' }}>Production PIC (Source: Inspection Report)</span>
-                            {hasWorks ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(16,185,129,0.15)', color: '#34d399', borderRadius: '20px', padding: '2px 8px', fontSize: '0.72rem', fontWeight: 700 }}><Check size={11} /> {filledWorks.length} Personil</span> : <span style={{ background: 'rgba(255,255,255,0.06)', color: '#94a3b8', borderRadius: '20px', padding: '2px 8px', fontSize: '0.72rem', fontWeight: 600 }}>Belum ada data</span>}
-                          </div>
-                          {hasWorks && (
-                            <div style={{ background: 'rgba(0,0,0,0.18)', border: '1px solid rgba(255,255,255,0.06)', borderTop: 'none', borderRadius: '0 0 8px 8px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                              {filledWorks.slice(0, 3).map((w: any, idx: number) => (
-                                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: idx < 2 ? '1px solid rgba(255,255,255,0.05)' : 'none', paddingBottom: idx < 2 ? '8px' : 0 }}>
-                                  <span style={{ fontSize: '0.78rem', color: '#94a3b8', width: '45%' }}>{w.label}</span>
-                                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                                    <span style={{ fontSize: '0.78rem', color: '#e2e8f0', fontWeight: 600 }}>{w.name}</span>
-                                    {w.time && <span style={{ fontSize: '0.68rem', color: '#64748b' }}>Waktu: {w.time} hari</span>}
-                                  </div>
-                                </div>
-                              ))}
-                              {filledWorks.length > 3 && (
-                                <button type="button" onClick={() => setShowAllPicModal(true)} style={{ marginTop: '4px', width: '100%', padding: '8px', background: 'rgba(46,91,255,0.1)', border: '1px solid rgba(46,91,255,0.2)', borderRadius: '6px', color: '#8bb2ff', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', textAlign: 'center' }}>
-                                  Lihat Seluruh PIC Produksi ({filledWorks.length}) <span>›</span>
-                                </button>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </>
-                    );
-                  })()}
-                </div>
-              )}
-            </div>
-          </section>
-          )}
 
             {/* Health Score V2 — Semua role: Customer, Partner, Admin */}
             {unit.id && (
@@ -1007,10 +800,21 @@ export default function QrPassportPage() {
         <PartnerLogModal show={showLogModal} onClose={closeLogModal} onSubmit={handleAddLog} loading={logLoading} unit={unit}
           techName={techName} setTechName={setTechName} logType={logType} setLogType={setLogType} logNotes={logNotes} setLogNotes={setLogNotes}
           logStatus={logStatus} setLogStatus={setLogStatus} logComponents={logComponents} setLogComponents={setLogComponents} />
-        <AdminTransferModal show={showTransferModal} onClose={() => setShowTransferModal(false)} onSubmit={handleTransfer} loading={transferLoading}
-          unit={unit} clients={clients} targetClientId={targetClientId} setTargetClientId={setTargetClientId} transferReason={transferReason} setTransferReason={setTransferReason} />
-        <AllSpecsModal show={showAllSpecsModal} onClose={() => setShowAllSpecsModal(false)} unit={unit} />
-        <SelectReportTypeModal show={showReportSelector} onClose={() => setShowReportSelector(false)} unit={unit} />
+        <SelectReportTypeModal
+          show={showReportSelector}
+          onClose={() => setShowReportSelector(false)}
+          unit={unit}
+          unitReports={unitReports}
+          isAdmin={isAdmin}
+          editBlocks={editBlocks}
+          toggleEdit={toggleEdit}
+          cancelEdit={cancelEdit}
+          isSaving={isSaving}
+          editData={editData}
+          handleEditChange={handleEditChange}
+          qcUploading={qcUploading}
+          handleQcFileUpload={handleQcFileUpload}
+        />
 
         {/* Image Zoom Modal */}
         {showImageModal && (

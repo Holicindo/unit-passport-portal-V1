@@ -63,6 +63,11 @@ export class CreateServiceLogDto {
   @IsOptional()
   planning_notes?: string;
 
+  @ApiProperty({ example: 'Catatan internal admin servis.', required: false })
+  @IsString()
+  @IsOptional()
+  internal_notes?: string;
+
   @ApiProperty({ example: false, required: false })
   @IsBoolean()
   @IsOptional()

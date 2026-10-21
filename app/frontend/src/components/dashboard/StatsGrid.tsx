@@ -89,14 +89,16 @@ export default function StatsGrid({ items, data, loading }: StatsGridProps) {
         {stats.map((stat, idx) => {
           const Icon = stat.icon;
 
-          // Dynamic wave logic
+          // Dynamic wave logic with guaranteed baseline visibility
           const numValue = parseFloat(String(stat.value).replace(/[^0-9.]/g, '')) || 0;
-          let percentage = Math.min(1, numValue / stat.max);
+          let rawRatio = stat.max > 0 ? numValue / stat.max : 0;
+          // Set comfortable wave water level: base at 35% height, scaling up to 85% based on data
+          let percentage = 0.35 + Math.min(1, Math.max(0, rawRatio)) * 0.45;
           if (loading || isNaN(percentage)) percentage = 0.5;
 
-          const startY = 100 - (percentage * 50);
-          const peakY = 100 - (percentage * 90);
-          const dipY = 100 - (percentage * 30);
+          const startY = 100 - (percentage * 60);
+          const peakY = 100 - (percentage * 85);
+          const dipY = 100 - (percentage * 40);
 
           const pathD = `M0,${startY} C65,${peakY} 135,${dipY} 200,${startY} C265,${peakY} 335,${dipY} 400,${startY} L400,100 L0,100 Z`;
 
@@ -224,8 +226,9 @@ export default function StatsGrid({ items, data, loading }: StatsGridProps) {
                 </span>
               )}
 
-              {/* Wave animation — lighter/white tinted on dark bg */}
+              {/* Wave animation — clean uniform monochrome waves (no rainbow colors) */}
               <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', zIndex: 0, pointerEvents: 'none' }}>
+                {/* Wave Layer 1 (Back wave) */}
                 <svg
                   viewBox="0 0 400 100"
                   style={{
@@ -233,19 +236,46 @@ export default function StatsGrid({ items, data, loading }: StatsGridProps) {
                     bottom: 0,
                     left: 0,
                     width: '200%',
-                    height: '100%',
-                    opacity: 0.14,
-                    animation: `waveAnimation ${5 + (idx % 3) * 1.5}s linear infinite`
+                    height: '85%',
+                    opacity: 0.15,
+                    animation: `waveAnimation ${7 + (idx % 3) * 2}s linear infinite reverse`
                   }}
                   preserveAspectRatio="none"
                 >
                   <defs>
-                    <linearGradient id={`grad-${stat.label.replace(/\s+/g, '')}-${idx}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
-                      <stop offset="100%" stopColor="#ffffff" stopOpacity="0.02" />
+                    <linearGradient id={`grad-back-${idx}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#ffffff" stopOpacity="0.8" />
+                      <stop offset="100%" stopColor="#ffffff" stopOpacity="0.03" />
                     </linearGradient>
                   </defs>
-                  <path d={pathD} fill={`url(#grad-${stat.label.replace(/\s+/g, '')}-${idx})`} />
+                  <path
+                    d={`M0,${startY + 6} C70,${dipY + 4} 130,${peakY + 6} 200,${startY + 6} C270,${dipY + 4} 330,${peakY + 6} 400,${startY + 6} L400,100 L0,100 Z`}
+                    fill={`url(#grad-back-${idx})`}
+                  />
+                </svg>
+
+                {/* Wave Layer 2 (Front wave) */}
+                <svg
+                  viewBox="0 0 400 100"
+                  style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    width: '200%',
+                    height: '95%',
+                    opacity: 0.22,
+                    animation: `waveAnimation ${4.5 + (idx % 3) * 1.5}s linear infinite`
+                  }}
+                  preserveAspectRatio="none"
+                >
+                  <defs>
+                    <linearGradient id={`grad-front-${idx}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#ffffff" stopOpacity="0.9" />
+                      <stop offset="40%" stopColor="#ffffff" stopOpacity="0.4" />
+                      <stop offset="100%" stopColor="#ffffff" stopOpacity="0.05" />
+                    </linearGradient>
+                  </defs>
+                  <path d={pathD} fill={`url(#grad-front-${idx})`} />
                 </svg>
               </div>
             </div>

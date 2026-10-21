@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { unitApi } from '@/lib/api';
 import {
   ArrowLeft, Calendar, Package, Wrench, CheckCircle2,
@@ -12,6 +12,9 @@ import srStyles from './service-request.module.css';
 
 export default function ServiceRequestPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialUnitId = searchParams.get('unit_id') || '';
+
   const [fleet, setFleet]     = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -19,7 +22,7 @@ export default function ServiceRequestPage() {
   const [error, setError]     = useState('');
 
   const [form, setForm] = useState({
-    unit_id: '',
+    unit_id: initialUnitId,
     city: '',
     contact_name: '',
     contact_phone: '',
@@ -30,10 +33,23 @@ export default function ServiceRequestPage() {
   // Ambil fleet untuk dropdown pilih unit
   useEffect(() => {
     unitApi.findMyFleet()
-      .then(({ data }) => setFleet(data || []))
+      .then(({ data }) => {
+        const units = data || [];
+        setFleet(units);
+        if (initialUnitId) {
+          const matched = units.find((u: any) => u.id === initialUnitId);
+          if (matched) {
+            setForm(f => ({
+              ...f,
+              unit_id: initialUnitId,
+              city: matched.current_client?.city || matched.specs?.city || f.city,
+            }));
+          }
+        }
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [initialUnitId]);
 
   // Auto-fill kota dari unit yang dipilih
   const handleUnitChange = (unitId: string) => {

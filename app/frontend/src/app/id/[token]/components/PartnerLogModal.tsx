@@ -99,7 +99,7 @@ export default function PartnerLogModal({
           </div>
 
           <div className={styles.formGroup}>
-            <label>Status Penyelesaian *</label>
+            <label>Kondisi Penyelesaian *</label>
             <CustomSelect value={logStatus} onChange={(val) => { setLogStatus(val); setShowConfirm(false); }} options={LOG_STATUS_OPTIONS} />
           </div>
 

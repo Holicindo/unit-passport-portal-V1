@@ -797,12 +797,15 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
     const W = 900, H = 520, PL = 70, PR = 70, PT = 55, PB = 65;
     const cW = W - PL - PR, cH = H - PT - PB;
 
-    const allTemps = exportRows.flatMap(d => [d.temp_cabinet, d.temp_evaporator, d.temp_condenser])
-      .filter(v => v !== null && v !== -127 && v !== 85) as number[];
+    const allTemps = exportRows.flatMap(d => [
+      d.temp_cabinet !== null && d.temp_cabinet !== undefined ? Number(d.temp_cabinet) : null,
+      d.temp_evaporator !== null && d.temp_evaporator !== undefined ? Number(d.temp_evaporator) : null,
+      d.temp_condenser !== null && d.temp_condenser !== undefined ? Number(d.temp_condenser) : null
+    ]).filter(v => v !== null && !isNaN(v) && v !== -127 && v !== 85) as number[];
     const rawMin = allTemps.length ? Math.floor(Math.min(...allTemps)) : 0;
     const rawMax = allTemps.length ? Math.ceil(Math.max(...allTemps)) : 40;
     const pad = Math.max(3, Math.ceil((rawMax - rawMin) * 0.15));
-    const dMin = rawMin - pad, dMax = rawMax + pad, dRange = dMax - dMin;
+    const dMin = rawMin - pad, dMax = rawMax + pad, dRange = Math.max(1, dMax - dMin);
 
     const xOf = (i: number) => exportRows.length <= 1 ? PL + cW / 2 : PL + (i / (exportRows.length - 1)) * cW;
     const yOf = (v: number) => PT + cH - ((v - dMin) / dRange) * cH;
@@ -810,8 +813,9 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
     const buildSvgPath = (key: keyof HistoryPoint) => {
       const pts: string[] = [];
       exportRows.forEach((d, i) => {
-        const v = d[key] as number | null;
-        if (v !== null && v !== -127 && v !== 85) pts.push(`${i === 0 || pts.length === 0 ? 'M' : 'L'} ${xOf(i).toFixed(1)} ${yOf(v).toFixed(1)}`);
+        const raw = d[key];
+        const v = raw !== null && raw !== undefined ? Number(raw) : null;
+        if (v !== null && !isNaN(v) && v !== -127 && v !== 85) pts.push(`${i === 0 || pts.length === 0 ? 'M' : 'L'} ${xOf(i).toFixed(1)} ${yOf(v).toFixed(1)}`);
       });
       return pts.join(' ');
     };
@@ -874,6 +878,12 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
       <path d="${buildSvgPath('temp_condenser')}" fill="none" stroke="#ef4444" stroke-width="3" stroke-linejoin="round"/>
     </svg>`;
 
+    const fmtVal = (val: any, decimals = 1) => {
+      if (val === null || val === undefined || val === '') return '—';
+      const num = Number(val);
+      return isNaN(num) ? '—' : num.toFixed(decimals);
+    };
+
     // ── Build table HTML (multi-column like Elitech, 4 cols of rows) ──
     const COLS = 4;
     const colSize = Math.ceil(exportRows.length / COLS);
@@ -889,9 +899,9 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
         if (idx < exportRows.length) {
           const d = exportRows[idx];
           tableHtml += `<td class="time">${formatTime(d.recorded_at)}</td>
-            <td class="cab">${d.temp_cabinet?.toFixed(1) ?? '—'}</td>
-            <td class="evap">${d.temp_evaporator?.toFixed(1) ?? '—'}</td>
-            <td class="cond">${d.temp_condenser?.toFixed(1) ?? '—'}</td>`;
+            <td class="cab">${fmtVal(d.temp_cabinet, 1)}</td>
+            <td class="evap">${fmtVal(d.temp_evaporator, 1)}</td>
+            <td class="cond">${fmtVal(d.temp_condenser, 1)}</td>`;
         } else {
           tableHtml += '<td colspan="4"></td>';
         }

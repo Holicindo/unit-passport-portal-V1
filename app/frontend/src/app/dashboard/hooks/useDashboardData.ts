@@ -84,11 +84,42 @@ export function useDashboardData() {
 
       setUpcomingPMs(computeUpcomingPMs(rawLogs));
 
-      // Mock real-time new service requests
-      setNewServiceRequests([
-        { id: '1', client: 'PT. Maju Bersama', issue: 'Suhu chiller kurang dingin, hanya mencapai 10 derajat celcius. Mesin berbunyi agak kasar.', timeAgo: '2 menit lalu', status: 'Baru' },
-        { id: '2', client: 'CV. Sentosa Jaya', issue: 'Siklus Pemeliharaan Berkala Terjadwal (Preventive Maintenance Schedule)', timeAgo: '15 menit lalu', status: 'Baru' }
-      ]);
+      // Real-time new service requests (Pending / In Progress yang terbaru)
+      const parseIssueSnippet = (rawDesc: string) => {
+        if (!rawDesc) return 'Permintaan servis masuk.';
+        const match = rawDesc.match(/(.*?)\s*\(Kontak:/i);
+        return match ? match[1].trim() : rawDesc.slice(0, 90);
+      };
+
+      const formatTimeAgo = (dateStr: string) => {
+        if (!dateStr) return 'Baru saja';
+        const ms = new Date().getTime() - new Date(dateStr).getTime();
+        const mins = Math.floor(ms / 60000);
+        if (mins < 1) return 'Baru saja';
+        if (mins < 60) return `${mins} menit lalu`;
+        const hours = Math.floor(mins / 60);
+        if (hours < 24) return `${hours} jam lalu`;
+        const days = Math.floor(hours / 24);
+        return `${days} hari lalu`;
+      };
+
+      const realNewRequests = rawLogs
+        .filter((l: any) => l.status === 'PENDING' || l.status === 'IN PROGRESS')
+        .sort((a: any, b: any) => new Date(b.created_at || b.service_date || 0).getTime() - new Date(a.created_at || a.service_date || 0).getTime())
+        .slice(0, 5)
+        .map((l: any) => ({
+          id: l.id,
+          call_id: l.call_id || l.id,
+          client: l.unit?.current_client?.company_name || l.client?.company_name || 'Customer / Klien',
+          model: l.unit?.model_name || 'Unit Holicindo',
+          sn: l.unit?.serial_number || '',
+          issue: parseIssueSnippet(l.issue_description),
+          timeAgo: formatTimeAgo(l.created_at || l.service_date),
+          status: l.status === 'PENDING' ? 'Baru' : l.status,
+          task_type: l.task_type || 'CORRECTIVE',
+        }));
+
+      setNewServiceRequests(realNewRequests);
     } catch (error) {
       console.warn('Dashboard real-time sync loaded fallbacks:', error);
       setChartData([]);

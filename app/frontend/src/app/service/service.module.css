@@ -1,4 +1,4 @@
-﻿.container {
+.container {
   padding: 0;
   display: flex;
   flex-direction: column;
@@ -217,29 +217,44 @@
 
 .table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   font-family: var(--font-body);
-  font-size: 0.9rem;
+  font-size: 0.88rem;
 }
 
 .table th {
-  background: linear-gradient(160deg, #1E3A5F 0%, #0D2B5E 100%);
-  color: rgba(255, 255, 255, 0.85);
+  background: #0D233A;
+  color: #FFFFFF;
   font-size: 0.72rem;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: 13px 16px;
+  letter-spacing: 0.08em;
+  padding: 12px 14px;
   font-weight: 700;
-  border-bottom: none;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 2px solid #081626;
   text-align: left;
   white-space: nowrap;
 }
 
+.table th:last-child {
+  border-right: none;
+}
+
 .table td {
-  padding: 14px 16px;
-  border-bottom: 1px solid rgba(79, 70, 229, 0.08);
+  padding: 12px 14px;
+  border-bottom: 1px solid #E2E8F0;
+  border-right: 1px solid #EDF2F7;
   vertical-align: middle;
   color: var(--color-deep-navy);
+}
+
+.table td:last-child {
+  border-right: none;
+}
+
+.table tr:hover td {
+  background-color: #F8FAFC;
 }
 
 .table tr:last-child td {
@@ -249,7 +264,7 @@
 .logId {
   font-family: var(--font-heading);
   font-weight: 700;
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   color: var(--color-deep-navy);
   transition: color 0.2s;
 }
@@ -603,50 +618,52 @@
 }
 
 .cancelBtn {
-  background: var(--color-card-bg);
+  background: #FF6B00;
   border: none;
-  color: var(--color-space-grey);
-  padding: 10px 20px;
+  color: #FFFFFF;
+  padding: 10px 22px;
   border-radius: 24px;
   font-family: var(--font-heading);
   font-weight: 700;
   font-size: 0.85rem;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: -4px -4px 10px rgba(255, 255, 255, 0.9), 4px 4px 10px rgba(0, 31, 63, 0.08);
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(255, 107, 0, 0.25);
 }
 
 .cancelBtn:hover {
-  color: var(--color-deep-navy);
-  box-shadow: -6px -6px 14px rgba(255, 255, 255, 0.95), 6px 6px 14px rgba(0, 31, 63, 0.1);
+  background: #e65f00;
+  color: #FFFFFF;
+  box-shadow: 0 6px 16px rgba(255, 107, 0, 0.35);
+  transform: translateY(-1px);
 }
 
 .cancelBtn:active {
-  box-shadow: inset -4px -4px 8px rgba(255, 255, 255, 0.9), inset 4px 4px 8px rgba(0, 31, 63, 0.08);
+  transform: translateY(0);
 }
 
 .saveBtn {
-  background: var(--color-card-bg);
-  color: var(--color-cobalt-blue);
+  background: #2E5BFF;
+  color: #FFFFFF;
   border: none;
   padding: 10px 24px;
   border-radius: 24px;
   font-family: var(--font-heading);
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: -4px -4px 10px rgba(255, 255, 255, 0.9), 4px 4px 10px rgba(0, 31, 63, 0.08);
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(46, 91, 255, 0.25);
 }
 
 .saveBtn:hover {
-  color: #2E5BFF;
-  box-shadow: -6px -6px 14px rgba(255, 255, 255, 0.95), 6px 6px 14px rgba(0, 31, 63, 0.1);
+  background: #1a44db;
+  color: #FFFFFF;
+  box-shadow: 0 6px 16px rgba(46, 91, 255, 0.35);
   transform: translateY(-1px);
 }
 
 .saveBtn:active {
-  box-shadow: inset -4px -4px 8px rgba(255, 255, 255, 0.9), inset 4px 4px 8px rgba(0, 31, 63, 0.08);
   transform: translateY(0);
 }
 
@@ -879,24 +896,25 @@
 
 /* Detail Modal specific styles */
 .detailSection {
-  background: var(--color-card-bg);
-  border: 1px solid #E2E8F0;
+  background: #FFFFFF;
+  border: 1.5px solid #CBD5E1;
   border-radius: 12px;
-  padding: 16px;
+  padding: 16px 18px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  box-shadow: 0 2px 8px rgba(13, 35, 58, 0.04);
 }
 
 .detailSectionTitle {
   font-family: var(--font-heading);
   font-size: 0.85rem;
   font-weight: 800;
-  color: var(--color-cobalt-blue);
+  color: #001F3F !important;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   border-bottom: 1px solid #E2E8F0;
-  padding-bottom: 6px;
+  padding-bottom: 8px;
   margin-bottom: 4px;
 }
 
@@ -974,3 +992,209 @@
 .waBtn:hover {
   opacity: 0.9;
 }
+
+.detailStructuredBox {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #FFFFFF;
+}
+
+.detailStructuredRow {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.detailStructuredRow:last-child {
+  border-bottom: none;
+}
+
+.detailStructuredLabel {
+  background: #F8FAFC;
+  padding: 10px 14px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  border-right: 1px solid #E2E8F0;
+  display: flex;
+  align-items: center;
+}
+
+.detailStructuredVal {
+  padding: 10px 14px;
+  font-size: 0.88rem;
+  color: #001F3F;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 640px) {
+  .detailStructuredRow {
+    grid-template-columns: 1fr;
+  }
+  .detailStructuredLabel {
+    border-right: none;
+    border-bottom: 1px solid #F1F5F9;
+    padding: 6px 12px;
+  }
+  .detailStructuredVal {
+    padding: 8px 12px;
+  }
+}
+
+/* Card Differentiation */
+.cardBlue {
+  border-left: 4px solid #2E5BFF !important;
+  background: linear-gradient(135deg, rgba(46, 91, 255, 0.02) 0%, rgba(255, 255, 255, 1) 100%);
+}
+.cardEmerald {
+  border-left: 4px solid #10b981 !important;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.02) 0%, rgba(255, 255, 255, 1) 100%);
+}
+.cardAmber {
+  border-left: 4px solid #f59e0b !important;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.02) 0%, rgba(255, 255, 255, 1) 100%);
+}
+.cardPurple {
+  border-left: 4px solid #8b5cf6 !important;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.02) 0%, rgba(255, 255, 255, 1) 100%);
+}
+.cardRose {
+  border-left: 4px solid #f43f5e !important;
+  background: linear-gradient(135deg, rgba(244, 63, 94, 0.02) 0%, rgba(255, 255, 255, 1) 100%);
+}
+
+/* Sub-row styling */
+.subRowTable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.84rem;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #FFFFFF;
+}
+
+.subRowTable th {
+  text-align: left;
+  padding: 10px 12px;
+  background: #F1F5F9;
+  color: #334155;
+  border-bottom: 2px solid #CBD5E1;
+  border-right: 1px solid #E2E8F0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.subRowTable th:last-child {
+  border-right: none;
+}
+
+.subRowTable td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #E2E8F0;
+  border-right: 1px solid #F1F5F9;
+  vertical-align: middle;
+}
+
+.subRowTable td:last-child {
+  border-right: none;
+}
+
+.subRowTable tr:last-child td {
+  border-bottom: none;
+}
+
+.subRowBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid #CBD5E1;
+  background: #FFFFFF;
+  color: #334155;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.subRowBtn:hover {
+  background: #f1f5f9;
+  color: var(--color-cobalt-blue);
+  border-color: #cbd5e1;
+}
+
+.subRowAddBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px dashed #2E5BFF;
+  background: rgba(46, 91, 255, 0.06);
+  color: #2E5BFF;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.subRowAddBtn:hover {
+  background: rgba(46, 91, 255, 0.12);
+}
+
+.callIdLink {
+  color: var(--color-cobalt-blue);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.callIdLink:hover {
+  background: rgba(46, 91, 255, 0.1);
+  color: #1a3fd4;
+}
+
+.clickableRow {
+  transition: background-color 0.15s ease;
+}
+
+.clickableRow:hover {
+  background-color: rgba(46, 91, 255, 0.04) !important;
+}
+
+.cardItemClickable {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
+}
+
+.cardItemClickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.actionSubText {
+  display: block;
+  font-size: 0.76rem;
+  color: #10b981;
+  font-weight: 500;
+  margin-top: 4px;
+}
+

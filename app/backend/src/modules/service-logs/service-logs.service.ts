@@ -78,6 +78,7 @@ export class ServiceLogsService {
     if (!log) throw new NotFoundException('Service Log tidak ditemukan');
 
     if (data.technician_name !== undefined) log.technician_name = data.technician_name;
+    if (data.issue_description !== undefined) log.issue_description = data.issue_description;
     if (data.action_taken !== undefined) log.action_taken = data.action_taken;
     if (data.status !== undefined) log.status = data.status;
     if (data.partnerId !== undefined) {
@@ -93,6 +94,7 @@ export class ServiceLogsService {
       log.delivery_date = data.delivery_date ? new Date(data.delivery_date) : null;
     }
     if (data.planning_notes !== undefined) log.planning_notes = data.planning_notes;
+    if (data.internal_notes !== undefined) log.internal_notes = data.internal_notes;
     if (data.replaced_sparepart !== undefined) log.replaced_sparepart = data.replaced_sparepart;
     if (data.is_allocated !== undefined) log.is_allocated = data.is_allocated;
     if (data.task_type !== undefined) log.task_type = data.task_type;

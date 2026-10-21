@@ -177,33 +177,7 @@ export default function RightColumn({ loading, activeClients, frequentCallIds, o
   return (
     <div>
 
-      {/* Klien Teraktif */}
-      <div className={styles.listCard} style={{ marginBottom: '24px' }}>
-        <div className={styles.cardHeaderContainer}>
-          <h3 className={`${styles.listTitle} ${styles.cardTitle}`}>
-            Klien Teraktif
-          </h3>
-        </div>
-        <p className={styles.description}>
-          Berdasarkan servis dalam 12 bulan terakhir.
-        </p>
-        <div className={styles.listItems}>
-          {loading ? (
-            [1, 2, 3].map(i => (
-              <div key={i} style={{ height: '30px', background: '#F1F5F9', borderRadius: '6px', animation: 'pulse 1.5s infinite' }}></div>
-            ))
-          ) : (
-            activeClients.map((client, idx) => (
-              <div key={idx} className={styles.listItem}>
-                <span className={`${styles.clientName} ${styles.serialNumber}`}>{client.name}</span>
-                <span className={`${styles.clientCount} ${styles.clientItemBadge}`}>{client.count} Servis</span>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-
-      {/* Permintaan Servis Baru Masuk (Real-time) */}
+      {/* Permintaan Servis Baru Masuk (Real-time) — SWAPPED TO TOP */}
       <div className={`${styles.listCard} ${styles.liveCard}`} style={{ marginBottom: '24px' }}>
         <div className={styles.cardHeaderContainer}>
           <h3 className={`${styles.listTitle} ${styles.cardTitle}`} style={{ display: 'flex', alignItems: 'center' }}>
@@ -228,9 +202,25 @@ export default function RightColumn({ loading, activeClients, frequentCallIds, o
               </div>
             ) : (
               newServiceRequests.map((req, idx) => (
-                <div key={idx} className={`${styles.listItem} ${styles.serviceRequestItem}`}>
+                <div 
+                  key={idx} 
+                  className={`${styles.listItem} ${styles.serviceRequestItem}`}
+                  onClick={() => window.location.href = `/service?call_id=${encodeURIComponent(req.call_id || req.id)}`}
+                  style={{ cursor: 'pointer', transition: 'all 0.2s', borderLeft: '3px solid #2E5BFF' }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.transform = 'translateX(4px)';
+                    e.currentTarget.style.background = 'rgba(46, 91, 255, 0.05)';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.transform = 'translateX(0)';
+                    e.currentTarget.style.background = '';
+                  }}
+                  title="Klik untuk membuka detail servis"
+                >
                   <div className={styles.serviceRequestHeader}>
-                    <span className={styles.clientNameBold}>{req.client}</span>
+                    <span className={styles.clientNameBold}>
+                      {req.client} {req.sn ? `(${req.sn})` : ''}
+                    </span>
                     <span className={styles.timeAgo}>
                       {req.timeAgo}
                     </span>
@@ -246,6 +236,32 @@ export default function RightColumn({ loading, activeClients, frequentCallIds, o
                 </div>
               ))
             )
+          )}
+        </div>
+      </div>
+
+      {/* Klien Teraktif — SWAPPED TO BELOW */}
+      <div className={styles.listCard} style={{ marginBottom: '24px' }}>
+        <div className={styles.cardHeaderContainer}>
+          <h3 className={`${styles.listTitle} ${styles.cardTitle}`}>
+            Klien Teraktif
+          </h3>
+        </div>
+        <p className={styles.description}>
+          Berdasarkan servis dalam 12 bulan terakhir.
+        </p>
+        <div className={styles.listItems}>
+          {loading ? (
+            [1, 2, 3].map(i => (
+              <div key={i} style={{ height: '30px', background: '#F1F5F9', borderRadius: '6px', animation: 'pulse 1.5s infinite' }}></div>
+            ))
+          ) : (
+            activeClients.map((client, idx) => (
+              <div key={idx} className={styles.listItem}>
+                <span className={`${styles.clientName} ${styles.serialNumber}`}>{client.name}</span>
+                <span className={`${styles.clientCount} ${styles.clientItemBadge}`}>{client.count} Servis</span>
+              </div>
+            ))
           )}
         </div>
       </div>
