@@ -20,23 +20,70 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Interceptor to handle global 401 Unauthorized responses
+// ── Smart 401 interceptor ─────────────────────────────────────────────────────
+// Prevents instant logout caused by non-critical API calls (notifications,
+// telemetry, etc.) returning 401 immediately after login.
+//
+// Rules:
+//  1. Grace period: ignore 401s within 8s of login (token just set)
+//  2. Debounce: only fire ONE logout redirect even if multiple 401s arrive
+//  3. Whitelist: non-critical endpoints never trigger logout — they fail silently
+// ─────────────────────────────────────────────────────────────────────────────
+const NON_CRITICAL_401_ENDPOINTS = [
+  '/notifications',
+  '/units/iot',
+  '/health-scores',
+  '/telemetry',
+  '/messages',
+];
+
+let _logoutScheduled = false;
+
+function scheduleLogout() {
+  if (_logoutScheduled) return;
+  _logoutScheduled = true;
+  // Small delay so concurrent 401s don't each trigger a redirect
+  setTimeout(() => {
+    if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+    _logoutScheduled = false;
+  }, 300);
+}
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      if (typeof window !== 'undefined') {
-        // Only redirect if not already on login page to avoid redirect loops
-        if (window.location.pathname !== '/login') {
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          window.location.href = '/login';
+      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+        const url: string = error.config?.url ?? '';
+
+        // 1. Skip non-critical endpoints — just reject silently
+        const isNonCritical = NON_CRITICAL_401_ENDPOINTS.some((p) => url.includes(p));
+        if (isNonCritical) {
+          return Promise.reject(error);
         }
+
+        // 2. Grace period: if token was set very recently (within 8s), skip logout.
+        //    This handles the race condition where the page loads API calls before
+        //    the token is fully propagated / validated in production.
+        const tokenSetAt = parseInt(localStorage.getItem('_tokenSetAt') ?? '0', 10);
+        const msSinceLogin = Date.now() - tokenSetAt;
+        if (tokenSetAt > 0 && msSinceLogin < 8000) {
+          console.warn('[api] 401 within grace period, ignoring:', url);
+          return Promise.reject(error);
+        }
+
+        // 3. Schedule debounced logout
+        scheduleLogout();
       }
     }
     return Promise.reject(error);
   }
 );
+
 
 
 export const authApi = {

@@ -63,6 +63,7 @@ export default function LoginPage() {
       const userRaw = params.get('user');
       if (token) {
         localStorage.setItem('token', token);
+        localStorage.setItem('_tokenSetAt', Date.now().toString());
         let userRole = 'CLIENT';
         if (userRaw) {
           try {
@@ -88,6 +89,7 @@ export default function LoginPage() {
     try {
       const { data } = await authApi.login({ email, password });
       localStorage.setItem('token', data.access_token);
+      localStorage.setItem('_tokenSetAt', Date.now().toString());
       localStorage.setItem('user', JSON.stringify(data.user));
       const role = data.user.role;
       if (redirectUrl) router.push(redirectUrl);
@@ -110,6 +112,7 @@ export default function LoginPage() {
     try {
       const { data } = await authApi.register({ email, password, name: signupName });
       localStorage.setItem('token', data.access_token);
+      localStorage.setItem('_tokenSetAt', Date.now().toString());
       localStorage.setItem('user', JSON.stringify(data.user));
       const role = data.user?.role || 'CLIENT';
       if (redirectUrl) router.push(redirectUrl);

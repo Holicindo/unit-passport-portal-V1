@@ -104,6 +104,7 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('_tokenSetAt');
     localStorage.removeItem('user');
     router.push('/login');
   };
