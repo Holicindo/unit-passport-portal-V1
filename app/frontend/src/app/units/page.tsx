@@ -67,12 +67,6 @@ function UnitsPageInner() {
       setTotalCount(countValue);
     } catch (err: any) {
       console.error('Failed to load units', err);
-      if (err?.response?.status === 403 || err?.response?.status === 401) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        router.push('/login');
-        return;
-      }
       setUnits([]);
     } finally {
       setLoading(false);

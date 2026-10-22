@@ -91,6 +91,9 @@ export default function LoginPage() {
       localStorage.setItem('token', data.access_token);
       localStorage.setItem('_tokenSetAt', Date.now().toString());
       localStorage.setItem('user', JSON.stringify(data.user));
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('client-portal-auth-checked');
+      }
       const role = data.user.role;
       if (redirectUrl) router.push(redirectUrl);
       else if (role === 'CLIENT') router.push('/client-portal/dashboard');
@@ -114,6 +117,9 @@ export default function LoginPage() {
       localStorage.setItem('token', data.access_token);
       localStorage.setItem('_tokenSetAt', Date.now().toString());
       localStorage.setItem('user', JSON.stringify(data.user));
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('client-portal-auth-checked');
+      }
       const role = data.user?.role || 'CLIENT';
       if (redirectUrl) router.push(redirectUrl);
       else if (role === 'CLIENT') router.push('/client-portal/dashboard');
