@@ -1,6 +1,6 @@
-﻿'use client';
+'use client';
 
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef, Fragment } from 'react';
 import {
   AlertTriangle,
   RefreshCw,
@@ -132,7 +132,25 @@ export default function AuditAnalyticsPage() {
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
   const [activityPage, setActivityPage] = useState(1);
   const [userSearch, setUserSearch] = useState('');
+  const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  function toggleUserExpand(userId: string) {
+    setExpandedUsers((prev) => {
+      const next = new Set(prev);
+      if (next.has(userId)) next.delete(userId);
+      else next.add(userId);
+      return next;
+    });
+  }
+
+  // Derive activity history for a specific user by matching technician name from service logs
+  function getUserActivities(user: AuditUser): ActivityItem[] {
+    const nameMatch = (user.name || '').toLowerCase();
+    return allActivities.filter(
+      (a) => a.technician.toLowerCase() === nameMatch
+    );
+  }
 
   const fetchData = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -417,6 +435,7 @@ export default function AuditAnalyticsPage() {
               <table className={styles.table}>
                 <thead>
                   <tr>
+                    <th style={{ width: 36 }}></th>
                     <th>Pengguna</th>
                     <th>Peran</th>
                     <th>Organisasi</th>
@@ -427,10 +446,10 @@ export default function AuditAnalyticsPage() {
                 </thead>
                 <tbody>
                   {loading ? (
-                    <tr><td colSpan={6} className={styles.loadingCell}>Memuat data pengguna...</td></tr>
+                    <tr><td colSpan={7} className={styles.loadingCell}>Memuat data pengguna...</td></tr>
                   ) : filteredUsers.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className={styles.emptyCell}>
+                      <td colSpan={7} className={styles.emptyCell}>
                         <div className={styles.emptyInner}><Users size={28} /><span>Tidak ada pengguna ditemukan</span></div>
                       </td>
                     </tr>
@@ -439,46 +458,161 @@ export default function AuditAnalyticsPage() {
                     const isOnline = user.last_login ? Date.now() - new Date(user.last_login).getTime() < 900000 : false;
                     const avatar = getAvatarColor(user.id);
                     const org = user.client?.company_name || user.partner?.partner_name || 'N/A';
+                    const isExpanded = expandedUsers.has(user.id);
+                    const userActivities = getUserActivities(user);
                     return (
-                      <tr key={user.id} className={styles.dataRow}>
-                        <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <div className={styles.userAvatar} style={{ background: avatar.bg, color: avatar.color }}>
-                              {getInitials(user.name || user.email || 'NA')}
+                      <Fragment key={user.id}>
+                        {/* ── Main user row ── */}
+                        <tr
+                          className={styles.dataRow}
+                          style={{ cursor: 'pointer' }}
+                          onClick={() => toggleUserExpand(user.id)}
+                        >
+                          {/* Expand toggle */}
+                          <td style={{ textAlign: 'center', paddingRight: 4 }}>
+                            <button
+                              className={styles.expandToggle}
+                              aria-label={isExpanded ? 'Tutup riwayat' : 'Lihat riwayat'}
+                              onClick={(e) => { e.stopPropagation(); toggleUserExpand(user.id); }}
+                            >
+                              {isExpanded ? '−' : '+'}
+                            </button>
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                              <div className={styles.userAvatar} style={{ background: avatar.bg, color: avatar.color }}>
+                                {getInitials(user.name || user.email || 'NA')}
+                              </div>
+                              <div>
+                                <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--color-deep-navy)' }}>{user.name || 'N/A'}</div>
+                                <div style={{ fontSize: '0.76rem', color: 'var(--color-space-grey)' }}>{user.email}</div>
+                              </div>
                             </div>
-                            <div>
-                              <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--color-deep-navy)' }}>{user.name || 'N/A'}</div>
-                              <div style={{ fontSize: '0.76rem', color: 'var(--color-space-grey)' }}>{user.email}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td><span className={styles.roleBadge} style={{ background: role.bg, color: role.color }}>{role.label}</span></td>
-                        <td style={{ fontSize: '0.85rem', color: 'var(--color-space-grey)' }}>{org}</td>
-                        <td>
-                          {user.last_login ? (
-                            <div>
-                              <div style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--color-deep-navy)' }}>{getTimeAgo(user.last_login)}</div>
-                              <div style={{ fontSize: '0.74rem', color: 'var(--color-space-grey)', marginTop: 2 }}>{formatDateTime(user.last_login)}</div>
-                            </div>
-                          ) : (
-                            <span style={{ color: 'var(--color-space-grey)', fontSize: '0.82rem' }}>Belum pernah login</span>
-                          )}
-                        </td>
-                        <td>
-                          {isOnline ? (
-                            <span className={styles.onlineIndicator}>
-                              <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#10B981', display: 'inline-block' }} />
-                              Online
-                            </span>
-                          ) : (
-                            <span className={styles.offlineIndicator}>
-                              <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#94a3b8', display: 'inline-block' }} />
-                              Offline
-                            </span>
-                          )}
-                        </td>
-                        <td style={{ fontSize: '0.82rem', color: 'var(--color-space-grey)' }}>{formatDateTime(user.created_at)}</td>
-                      </tr>
+                          </td>
+                          <td><span className={styles.roleBadge} style={{ background: role.bg, color: role.color }}>{role.label}</span></td>
+                          <td style={{ fontSize: '0.85rem', color: 'var(--color-space-grey)' }}>{org}</td>
+                          <td>
+                            {user.last_login ? (
+                              <div>
+                                <div style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--color-deep-navy)' }}>{getTimeAgo(user.last_login)}</div>
+                                <div style={{ fontSize: '0.74rem', color: 'var(--color-space-grey)', marginTop: 2 }}>{formatDateTime(user.last_login)}</div>
+                              </div>
+                            ) : (
+                              <span style={{ color: 'var(--color-space-grey)', fontSize: '0.82rem' }}>Belum pernah login</span>
+                            )}
+                          </td>
+                          <td onClick={(e) => e.stopPropagation()}>
+                            {isOnline ? (
+                              <span className={styles.onlineIndicator}>
+                                <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#10B981', display: 'inline-block', animation: 'livePulse 1.8s infinite' }} />
+                                Online
+                              </span>
+                            ) : (
+                              <span className={styles.offlineIndicator}>
+                                <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#94a3b8', display: 'inline-block' }} />
+                                Offline
+                              </span>
+                            )}
+                          </td>
+                          <td style={{ fontSize: '0.82rem', color: 'var(--color-space-grey)' }}>{formatDateTime(user.created_at)}</td>
+                        </tr>
+
+                        {/* ── Expanded: login timeline + activity history ── */}
+                        {isExpanded && (
+                          <tr className={styles.expandedRow}>
+                            <td colSpan={7} style={{ padding: 0 }}>
+                              <div className={styles.expandedPanel}>
+
+                                {/* Login history header */}
+                                <div className={styles.expandedSection}>
+                                  <div className={styles.expandedSectionTitle}>
+                                    <LogIn size={14} />
+                                    Riwayat Login
+                                  </div>
+                                  <div className={styles.loginTimeline}>
+                                    {/* Current / last login entry */}
+                                    {user.last_login ? (
+                                      <div className={styles.loginEntry}>
+                                        <div className={styles.loginDot} style={{ background: isOnline ? '#10B981' : '#94a3b8' }} />
+                                        <div className={styles.loginEntryContent}>
+                                          <span className={styles.loginEntryLabel}>
+                                            {isOnline ? 'Sesi Aktif Sekarang' : 'Login Terakhir Tercatat'}
+                                          </span>
+                                          <span className={styles.loginEntryTime}>{formatDateTime(user.last_login)}</span>
+                                          <span className={styles.loginEntryAgo}>{getTimeAgo(user.last_login)}</span>
+                                        </div>
+                                      </div>
+                                    ) : null}
+                                    {/* Account created */}
+                                    <div className={styles.loginEntry}>
+                                      <div className={styles.loginDot} style={{ background: '#2E5BFF' }} />
+                                      <div className={styles.loginEntryContent}>
+                                        <span className={styles.loginEntryLabel}>Akun Dibuat</span>
+                                        <span className={styles.loginEntryTime}>{formatDateTime(user.created_at)}</span>
+                                        <span className={styles.loginEntryAgo}>{getTimeAgo(user.created_at)}</span>
+                                      </div>
+                                    </div>
+                                    {!user.last_login && (
+                                      <div style={{ fontSize: '0.8rem', color: 'var(--color-space-grey)', fontStyle: 'italic', paddingLeft: 20 }}>
+                                        Pengguna belum pernah login ke sistem.
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Activity history */}
+                                <div className={styles.expandedSection}>
+                                  <div className={styles.expandedSectionTitle}>
+                                    <Activity size={14} />
+                                    Riwayat Aktivitas Servis
+                                    <span style={{ marginLeft: 8, fontSize: '0.72rem', fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: 'rgba(46,91,255,0.1)', color: '#2E5BFF' }}>
+                                      {userActivities.length} aktivitas
+                                    </span>
+                                  </div>
+
+                                  {userActivities.length === 0 ? (
+                                    <div className={styles.expandedEmpty}>
+                                      <Activity size={18} style={{ opacity: 0.3 }} />
+                                      <span>Tidak ada aktivitas servis tercatat untuk pengguna ini.</span>
+                                    </div>
+                                  ) : (
+                                    <div className={styles.activityTimeline}>
+                                      {userActivities.slice(0, 10).map((act) => {
+                                        const meta = ACTIVITY_TYPE_META[act.type] ?? ACTIVITY_TYPE_META.service_created;
+                                        return (
+                                          <div key={act.id} className={styles.activityTimelineItem}>
+                                            <div className={styles.activityTimelineDot} style={{ background: meta.color }} />
+                                            <div className={styles.activityTimelineContent}>
+                                              <div className={styles.activityTimelineTop}>
+                                                <span className={styles.logTypeBadge} style={{ background: meta.bg, color: meta.color, fontSize: '0.7rem', padding: '2px 8px' }}>
+                                                  {act.label}
+                                                </span>
+                                                <span className={styles.activityTimelineUnit}>
+                                                  {act.unit_model} · {act.unit_serial}
+                                                </span>
+                                              </div>
+                                              <div className={styles.activityTimelineDesc}>{act.description}</div>
+                                              <div className={styles.activityTimelineTime}>
+                                                {getTimeAgo(act.timestamp)} &nbsp;·&nbsp; {formatDateTime(act.timestamp)}
+                                              </div>
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                      {userActivities.length > 10 && (
+                                        <div style={{ textAlign: 'center', paddingTop: 8, fontSize: '0.8rem', color: 'var(--color-space-grey)' }}>
+                                          + {userActivities.length - 10} aktivitas lainnya
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
                     );
                   })}
                 </tbody>

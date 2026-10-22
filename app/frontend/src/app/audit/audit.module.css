@@ -717,9 +717,218 @@
   font-weight: 500;
 }
 
+/* ─── Expand toggle button ─────────────────────────────────────────────────── */
+.expandToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  border: none;
+  background: #ECEEF2;
+  box-shadow: -3px -3px 7px rgba(255, 255, 255, 0.95), 3px 3px 7px rgba(0, 31, 63, 0.1);
+  color: var(--color-deep-navy);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.expandToggle:hover {
+  box-shadow: -4px -4px 9px rgba(255, 255, 255, 0.98), 4px 4px 9px rgba(0, 31, 63, 0.12);
+  color: var(--color-cobalt-blue);
+}
+
+.expandToggle:active {
+  box-shadow: inset -2px -2px 5px rgba(255, 255, 255, 0.9), inset 2px 2px 5px rgba(0, 31, 63, 0.08);
+}
+
+/* ─── Expanded row ─────────────────────────────────────────────────────────── */
+.expandedRow td {
+  background: rgba(236, 238, 242, 0.5);
+  border-bottom: 1px solid rgba(0, 31, 63, 0.06);
+}
+
+.expandedPanel {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border-top: 2px solid rgba(46, 91, 255, 0.08);
+  animation: expandIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes expandIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.expandedSection {
+  padding: 20px 24px;
+  border-right: 1px solid rgba(0, 31, 63, 0.06);
+}
+
+.expandedSection:last-child {
+  border-right: none;
+}
+
+.expandedSectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-heading);
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--color-deep-navy);
+  letter-spacing: 0.01em;
+  margin-bottom: 14px;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.expandedEmpty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-space-grey);
+  font-size: 0.82rem;
+  font-style: italic;
+  opacity: 0.7;
+  padding: 8px 0;
+}
+
+/* ─── Login timeline ───────────────────────────────────────────────────────── */
+.loginTimeline {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-left: 4px;
+}
+
+.loginEntry {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.loginDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 3px;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(0, 31, 63, 0.06);
+}
+
+.loginEntryContent {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.loginEntryLabel {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--color-deep-navy);
+}
+
+.loginEntryTime {
+  font-size: 0.76rem;
+  color: var(--color-space-grey);
+  font-family: monospace;
+}
+
+.loginEntryAgo {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--color-cobalt-blue);
+  opacity: 0.8;
+}
+
+/* ─── Activity timeline (inside expanded panel) ────────────────────────────── */
+.activityTimeline {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 260px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.activityTimeline::-webkit-scrollbar {
+  width: 4px;
+}
+
+.activityTimeline::-webkit-scrollbar-track {
+  background: rgba(0, 31, 63, 0.04);
+  border-radius: 4px;
+}
+
+.activityTimeline::-webkit-scrollbar-thumb {
+  background: rgba(0, 31, 63, 0.15);
+  border-radius: 4px;
+}
+
+.activityTimelineItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.activityTimelineDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.activityTimelineContent {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.activityTimelineTop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.activityTimelineUnit {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--color-deep-navy);
+  opacity: 0.7;
+  font-family: monospace;
+}
+
+.activityTimelineDesc {
+  font-size: 0.78rem;
+  color: var(--color-space-grey);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.activityTimelineTime {
+  font-size: 0.72rem;
+  color: var(--color-space-grey);
+  opacity: 0.7;
+}
+
 @media (max-width: 900px) {
   .statsRow {
     grid-template-columns: repeat(3, 1fr) !important;
+  }
+
+  .expandedPanel {
+    grid-template-columns: 1fr;
   }
 }
 
