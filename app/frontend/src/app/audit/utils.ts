@@ -21,12 +21,45 @@ export interface Unit {
   service_logs?: ServiceLog[];
 }
 
+export interface AuditUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+  last_login: string | null;
+  created_at: string;
+  client_id?: string;
+  partner_id?: string;
+  client?: { company_name?: string };
+  partner?: { partner_name?: string };
+}
+
 export type WarrantyCategory = 'Kaca / Glass' | 'Kelistrikan' | 'Refrigerasi' | 'Lainnya';
 
 export interface WarrantyIssue {
   unit: Unit;
   log: ServiceLog;
   category: WarrantyCategory;
+}
+
+export function formatDateTime(dateStr: string | null | undefined): string {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  return `${d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })} • ${d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`;
+}
+
+export function getTimeAgo(dateStr: string | null | undefined): string {
+  if (!dateStr) return 'Belum pernah';
+  const diffMs = Date.now() - new Date(dateStr).getTime();
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  if (diffMins < 1) return 'Baru saja';
+  if (diffMins < 60) return `${diffMins}m lalu`;
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours}j lalu`;
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 30) return `${diffDays}h lalu`;
+  return formatDate(dateStr);
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

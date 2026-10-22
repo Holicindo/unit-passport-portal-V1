@@ -1,4 +1,4 @@
-﻿.container {
+.container {
   padding: 0;
   display: flex;
   flex-direction: column;
@@ -492,4 +492,240 @@
   }
 }
 
+/* ─── Real-time Activity Log & User Login Additions ─── */
+.headerTopRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  width: 100%;
+}
+
+.realtimeControls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.liveBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 30px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.15);
+}
+
+.pulseDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10B981;
+  animation: livePulse 1.8s infinite;
+}
+
+@keyframes livePulse {
+  0% { transform: scale(0.9); opacity: 0.8; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1.15); opacity: 1; box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.9); opacity: 0.8; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.refreshButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 14px;
+  border: none;
+  background: #ECEEF2;
+  box-shadow: -4px -4px 10px rgba(255, 255, 255, 0.9), 4px 4px 10px rgba(0, 31, 63, 0.08);
+  color: var(--color-deep-navy);
+  font-family: var(--font-heading);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.refreshButton:hover {
+  transform: translateY(-1px);
+  box-shadow: -5px -5px 12px rgba(255, 255, 255, 0.95), 5px 5px 12px rgba(0, 31, 63, 0.12);
+  color: var(--color-cobalt-blue);
+}
+
+.refreshButton:active {
+  transform: translateY(1px);
+  box-shadow: inset -2px -2px 6px rgba(255, 255, 255, 0.9), inset 2px 2px 6px rgba(0, 31, 63, 0.1);
+}
+
+.spinning {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  100% { transform: rotate(360deg); }
+}
+
+.tabNavigation {
+  display: flex;
+  gap: 8px;
+  background: #E3E7ED;
+  padding: 5px;
+  border-radius: 18px;
+  margin-bottom: 24px;
+  box-shadow: inset 2px 2px 6px rgba(0, 31, 63, 0.08), inset -2px -2px 6px rgba(255, 255, 255, 0.8);
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.tabBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 14px;
+  border: none;
+  background: transparent;
+  font-family: var(--font-heading);
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--color-space-grey);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.tabBtn:hover {
+  color: var(--color-deep-navy);
+}
+
+.tabBtnActive {
+  background: #ECEEF2;
+  color: var(--color-cobalt-blue);
+  box-shadow: -4px -4px 10px rgba(255, 255, 255, 0.95), 4px 4px 10px rgba(0, 31, 63, 0.1);
+}
+
+.tabBadge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: rgba(46, 91, 255, 0.1);
+  color: var(--color-cobalt-blue);
+}
+
+/* User avatar in tables */
+.userAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.85rem;
+  font-family: var(--font-heading);
+  flex-shrink: 0;
+  box-shadow: -2px -2px 6px rgba(255, 255, 255, 0.9), 2px 2px 6px rgba(0, 31, 63, 0.08);
+}
+
+.roleBadge {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.onlineIndicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #059669;
+}
+
+.offlineIndicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.logTypeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* ─── Activity pagination ──────────────────────────────────────────────────── */
+.activityPagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 16px 24px;
+  border-top: 1px solid rgba(0, 31, 63, 0.06);
+}
+
+.pageBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: none;
+  background: #ECEEF2;
+  box-shadow: -3px -3px 8px rgba(255, 255, 255, 0.9), 3px 3px 8px rgba(0, 31, 63, 0.08);
+  color: var(--color-deep-navy);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pageBtn:hover:not(:disabled) {
+  box-shadow: -4px -4px 10px rgba(255, 255, 255, 0.95), 4px 4px 10px rgba(0, 31, 63, 0.12);
+  color: var(--color-cobalt-blue);
+}
+
+.pageBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.pageInfo {
+  font-size: 0.85rem;
+  color: var(--color-space-grey);
+  font-weight: 500;
+}
+
+@media (max-width: 900px) {
+  .statsRow {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .statsRow {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
 
