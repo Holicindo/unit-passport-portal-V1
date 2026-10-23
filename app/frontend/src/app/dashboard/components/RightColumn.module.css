@@ -403,3 +403,50 @@
     transform: translateY(0) scale(1);
   }
 }
+
+/* MOBILE VIEW OPTIMIZATIONS */
+@media (max-width: 768px) {
+  .listCard {
+    padding: 14px !important;
+    border: 2px solid rgba(79, 70, 229, 0.25) !important;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.08) !important;
+    margin-bottom: 4px;
+  }
+  
+  .listTitle {
+    font-size: 0.9rem !important;
+    padding-bottom: 10px !important;
+  }
+  
+  .description {
+    font-size: 0.68rem !important;
+    margin-bottom: 12px !important;
+  }
+  
+  .listItem {
+    padding: 10px 12px !important;
+    font-size: 0.78rem !important;
+  }
+  
+  .modalOverlay {
+    padding: 12px !important;
+  }
+  
+  .modalContent {
+    padding: 18px !important;
+    max-width: 100% !important;
+    border: 2px solid rgba(79, 70, 229, 0.25) !important;
+  }
+  
+  .casesList {
+    max-height: 300px !important;
+  }
+  
+  .warrantyRow {
+    padding: 9px 10px !important;
+  }
+  
+  .serviceRequestItem {
+    padding: 9px 11px !important;
+  }
+}

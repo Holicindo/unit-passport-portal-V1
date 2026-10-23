@@ -36,7 +36,11 @@ import { HealthScoreModule } from './modules/health-score/health-score.module';
   imports: [
     ConfigModule.forRoot({ 
       isGlobal: true, 
-      envFilePath: __dirname.includes('dist') ? require('path').join(__dirname, '../../.env') : require('path').join(__dirname, '../.env')
+      envFilePath: [
+        require('path').join(process.cwd(), '.env'),
+        require('path').join(__dirname, '../.env'),
+        require('path').join(__dirname, '../../.env'),
+      ]
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],

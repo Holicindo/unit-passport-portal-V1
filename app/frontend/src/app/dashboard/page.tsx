@@ -83,7 +83,7 @@ export default function DashboardPage() {
           <RecentActivity activities={recentActivities} loading={loading} />
           <UpcomingPM pms={upcomingPMs} loading={loading} />
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+          <div className="frequent-warranty-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
             <FrequentComplaintsCard loading={loading} frequentCallIds={frequentCallIds} />
             <WarrantyDistributionCard loading={loading} warrantyCategories={warrantyCategories} />
           </div>

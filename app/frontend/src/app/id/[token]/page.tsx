@@ -522,7 +522,10 @@ export default function QrPassportPage() {
               </section>
               )}
 
-              {/* Layanan & Dukungan (Tengah) */}
+              {/* QR Card — di tengah (sebelah Manuals) */}
+              {isAdmin && <QrCard token={Array.isArray(token) ? token[0] : (token ?? '')} serialNumber={unit.serial_number} modelName={unit.model_name} />}
+
+              {/* Layanan & Dukungan (Kanan) */}
               <section className={`${styles.panel} ${styles.actionPanel}`} style={{ borderRadius: '18px', margin: 0, display: 'flex', flexDirection: 'column' }}>
                 <div className={styles.panelHeader}><div className={styles.panelHeaderLeft}><Phone size={16} color="#60a5fa" /><h2>Layanan &amp; Dukungan</h2></div></div>
                 <div className={styles.panelContent} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', justifyContent: 'center', flex: 1, padding: '16px' }}>
@@ -615,9 +618,6 @@ export default function QrPassportPage() {
               )}
             </div>
           </section>
-
-          {/* QR Card — di sebelah kanan Layanan & Dukungan */}
-          {isAdmin && <QrCard token={Array.isArray(token) ? token[0] : (token ?? '')} serialNumber={unit.serial_number} modelName={unit.model_name} />}
         </div>{/* end topRowGrid */}
 
 

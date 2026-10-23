@@ -7,6 +7,14 @@
   margin-bottom: 20px;
 }
 
+/* MOBILE VIEW: Stack vertically, full width */
+@media (max-width: 768px) {
+  .gridContainer {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+}
+
 .card {
   background: var(--color-card-bg);
   border-radius: 16px;
@@ -16,6 +24,16 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+}
+
+/* MOBILE VIEW: Compact padding dan text yang rapi + border jelas */
+@media (max-width: 768px) {
+  .card {
+    padding: 16px !important;
+    border: 2px solid rgba(79, 70, 229, 0.25) !important;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.08) !important;
+    margin-bottom: 4px;
+  }
 }
 
 .cardHeader {
@@ -102,6 +120,25 @@
   justify-content: space-between;
   align-items: center;
   gap: 12px;
+}
+
+/* MOBILE VIEW: Stack vertical agar badge dan tombol tidak terpotong */
+@media (max-width: 640px) {
+  .alertItem {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 10px !important;
+  }
+  
+  .alertContent {
+    width: 100%;
+  }
+  
+  .detailButton {
+    width: 100% !important;
+    justify-content: center !important;
+    margin-top: 4px;
+  }
 }
 
 .alertItemCritical {
@@ -264,6 +301,25 @@
   grid-template-columns: 1fr 1fr;
   gap: 10px;
   margin-bottom: 14px;
+}
+
+/* MOBILE VIEW: Tetap 2 kolom tapi lebih compact */
+@media (max-width: 640px) {
+  .metricsGrid {
+    gap: 8px !important;
+  }
+  
+  .metricBox {
+    padding: 8px 10px !important;
+  }
+  
+  .metricValue {
+    font-size: 1.1rem !important;
+  }
+  
+  .metricLabel {
+    font-size: 0.68rem !important;
+  }
 }
 
 .metricBox {

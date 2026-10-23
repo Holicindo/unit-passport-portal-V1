@@ -404,38 +404,46 @@ table tbody tr:hover {
   .dtToolbar {
     flex-direction: column;
     align-items: stretch;
-    gap: 12px;
-    padding: 16px 20px;
+    gap: 10px;
+    padding: 14px 16px;
   }
 
   .dtToolbarLeft {
-    flex-direction: column;
-    align-items: stretch;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 8px;
+    align-items: stretch;
   }
-
+  
+  /* HIDE "Show X entries" text di mobile */
   .dtToolbarText {
-    justify-content: center;
-    font-size: 0.8rem;
+    display: none !important;
   }
 
   .dtToolbarRight {
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 8px;
   }
 
   .dtToolbarSearch {
+    grid-column: span 2;
     order: -1;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
   }
 
   .dtToolbarSearchInput {
     width: 100%;
+    padding: 9px 36px 9px 14px;
+    font-size: 0.82rem;
   }
 
   .dtToolbarCreateBtn {
     width: 100%;
     justify-content: center;
+    padding: 9px 14px;
+    font-size: 0.78rem;
+    min-height: 38px;
   }
 }
 
@@ -443,10 +451,9 @@ table tbody tr:hover {
   .dtToolbarLeft {
     gap: 6px;
   }
-
-  .dtToolbarText {
-    flex-direction: column;
-    gap: 4px;
+  
+  .dtToolbarRight {
+    gap: 6px;
   }
 }
 
@@ -473,9 +480,9 @@ body::after {
   content: none !important;
 }
 
-/* Force remove any side borders or box-shadows */
-* {
-  box-shadow: none;
+/* Force remove any side borders or box-shadows from root-level layout only */
+html, body, #__next {
+  box-shadow: none !important;
 }
 
 /* Custom scrollbar - transparent background, no borders */

@@ -57,6 +57,13 @@
   border: 1.5px solid var(--color-border);
 }
 
+@media (max-width: 768px) {
+  .chartCard {
+    border: 2px solid rgba(79, 70, 229, 0.25) !important;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.08) !important;
+  }
+}
+
 .chartCeruk {
   background: var(--color-bg-row);
   border-radius: 12px;
@@ -107,6 +114,13 @@
   padding: 24px;
   box-shadow: var(--shadow-card);
   border: 1.5px solid var(--color-border);
+}
+
+@media (max-width: 768px) {
+  .listCard {
+    border: 2px solid rgba(79, 70, 229, 0.25) !important;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.08) !important;
+  }
 }
 
 .listTitle {
@@ -220,7 +234,7 @@
 
 @media (max-width: 768px) {
   .container {
-    padding: 16px 0 !important;
+    padding: 16px 0 95px 0 !important; /* Tambahkan padding-bottom untuk BottomNav */
   }
 
   .header {
@@ -247,12 +261,17 @@
 
   .chartCard {
     padding: 16px;
-    min-height: 320px;
+    min-height: unset; /* Hilangkan min-height paksa */
+  }
+
+  .chartCeruk {
+    height: 180px !important; /* Ketinggian grafik yang proporsional */
+    padding: 14px 12px !important;
   }
 
   .chartTitle {
     font-size: 0.95rem;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
   }
 
   .chartArea {
@@ -270,5 +289,30 @@
 
   .listTitle {
     font-size: 0.9rem;
+  }
+  
+  .syncBtn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  /* Stack 2-kolom menjadi 1 kolom di mobile */
+  .frequent-warranty-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+}
+
+/* ActivityAndPM Mobile Responsive Styles */
+@media (max-width: 768px) {
+  /* Stack timeline columns vertically in mobile */
+  .listCard > div > div[style*="gridTemplateColumns"] {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+  }
+  
+  /* Stack PM cards vertically */
+  .listCard div[style*="gridTemplateColumns: '1fr 1fr'"] {
+    grid-template-columns: 1fr !important;
   }
 }

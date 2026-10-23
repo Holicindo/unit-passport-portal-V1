@@ -25,6 +25,30 @@
   white-space: nowrap;
 }
 
+/* Mobile Compact Styling */
+@media (max-width: 768px) {
+  .selectContainer {
+    width: 100%;
+  }
+  
+  .selectTrigger {
+    padding: 7px 12px;
+    font-size: 0.75rem;
+    gap: 6px;
+    min-height: 34px;
+  }
+  
+  .icon {
+    width: 13px;
+    height: 13px;
+  }
+  
+  .placeholder,
+  .value {
+    font-size: 0.75rem;
+  }
+}
+
 .selectTrigger:hover {
   box-shadow: inset -2px -2px 6px rgba(255,255,255,0.05), inset 3px 3px 9px rgba(0,0,0,0.65);
 }

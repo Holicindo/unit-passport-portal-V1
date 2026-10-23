@@ -97,67 +97,117 @@ export default function ServiceEvaluationPage() {
       ) : error ? (
         <div className={styles.errorAlert}>{error}</div>
       ) : (
-        <div className={styles.dtContainer}>
-          <table className={styles.dtTable}>
-            <thead>
-              <tr>
-                <th style={{ width: '15%' }}>Call ID / Tgl Selesai</th>
-                <th style={{ width: '15%' }}>Unit & Teknisi</th>
-                <th style={{ width: '25%' }}>Tindakan Servis (Teknisi)</th>
-                <th style={{ width: '35%' }}>Evaluasi / Follow-up Internal</th>
-                <th style={{ width: '10%' }}>Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredLogs.length === 0 ? (
+        <>
+          <div className={`${styles.dtContainer} ${styles.desktopView}`}>
+            <table className={styles.dtTable}>
+              <thead>
                 <tr>
-                  <td colSpan={5} style={{ textAlign: 'center', padding: '30px', color: 'var(--color-space-grey)' }}>
-                    Tidak ada tiket servis yang berstatus selesai.
-                  </td>
+                  <th style={{ width: '15%' }}>Call ID / Tgl Selesai</th>
+                  <th style={{ width: '15%' }}>Unit & Teknisi</th>
+                  <th style={{ width: '25%' }}>Tindakan Servis (Teknisi)</th>
+                  <th style={{ width: '35%' }}>Evaluasi / Follow-up Internal</th>
+                  <th style={{ width: '10%' }}>Aksi</th>
                 </tr>
-              ) : filteredLogs.map((log) => {
-                const cid = log.call_id || log.id;
-                return (
-                  <tr key={log.id} onClick={() => setSelectedDetailLog(log)} style={{ cursor: 'pointer' }}>
-                    <td>
-                      <div style={{ fontWeight: 800, color: 'var(--color-deep-navy)' }}>{cid}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--color-space-grey)', marginTop: '4px' }}>
-                        {formatDate(log.service_date)}
-                      </div>
-                    </td>
-                    <td>
-                      <div className={styles.unitLink} onClick={(e) => { e.stopPropagation(); router.push(`/id/${log.unit?.qr_token}`); }}>
-                        <span className={styles.unitModel}>{log.unit?.model_name || '-'}</span>
-                      </div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--color-space-grey)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <span style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px' }}>{log.technician_name || '-'}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--color-deep-navy)', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                        {log.action_taken || '-'}
-                      </div>
-                    </td>
-                    <td>
-                      {log.planning_notes ? (
-                        <div style={{ fontSize: '0.85rem', color: 'var(--color-space-grey)', backgroundColor: '#F8FAFC', padding: '8px 12px', borderRadius: '8px', borderLeft: '3px solid var(--color-cobalt-blue)', fontStyle: 'italic' }}>
-                          {log.planning_notes}
-                        </div>
-                      ) : (
-                        <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontStyle: 'italic' }}>Belum ada evaluasi / follow-up.</span>
-                      )}
-                    </td>
-                    <td>
-                      <button className={styles.expandBtn} style={{ background: 'var(--color-cobalt-blue)', color: 'white', padding: '6px 12px', width: 'auto', borderRadius: '6px', fontSize: '0.75rem' }}>
-                        <Edit3 size={14} style={{ marginRight: '4px' }} /> Catatan
-                      </button>
+              </thead>
+              <tbody>
+                {filteredLogs.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} style={{ textAlign: 'center', padding: '30px', color: 'var(--color-space-grey)' }}>
+                      Tidak ada tiket servis yang berstatus selesai.
                     </td>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                ) : filteredLogs.map((log) => {
+                  const cid = log.call_id || log.id;
+                  return (
+                    <tr key={log.id} onClick={() => setSelectedDetailLog(log)} style={{ cursor: 'pointer' }}>
+                      <td>
+                        <div style={{ fontWeight: 800, color: 'var(--color-deep-navy)' }}>{cid}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--color-space-grey)', marginTop: '4px' }}>
+                          {formatDate(log.service_date)}
+                        </div>
+                      </td>
+                      <td>
+                        <div className={styles.unitLink} onClick={(e) => { e.stopPropagation(); router.push(`/id/${log.unit?.qr_token}`); }}>
+                          <span className={styles.unitModel}>{log.unit?.model_name || '-'}</span>
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--color-space-grey)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px' }}>{log.technician_name || '-'}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--color-deep-navy)', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                          {log.action_taken || '-'}
+                        </div>
+                      </td>
+                      <td>
+                        {log.planning_notes ? (
+                          <div style={{ fontSize: '0.85rem', color: 'var(--color-space-grey)', backgroundColor: '#F8FAFC', padding: '8px 12px', borderRadius: '8px', borderLeft: '3px solid var(--color-cobalt-blue)', fontStyle: 'italic' }}>
+                            {log.planning_notes}
+                          </div>
+                        ) : (
+                          <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontStyle: 'italic' }}>Belum ada evaluasi / follow-up.</span>
+                        )}
+                      </td>
+                      <td>
+                        <button className={styles.expandBtn} style={{ background: 'var(--color-cobalt-blue)', color: 'white', padding: '6px 12px', width: 'auto', borderRadius: '6px', fontSize: '0.75rem' }}>
+                          <Edit3 size={14} style={{ marginRight: '4px' }} /> Catatan
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile View Cards */}
+          <div className={styles.mobileView}>
+            {filteredLogs.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '30px', color: 'var(--color-space-grey)', background: 'var(--color-card-bg)', borderRadius: '14px', border: '1.5px solid rgba(0,31,63,0.12)' }}>
+                Tidak ada tiket servis yang berstatus selesai.
+              </div>
+            ) : filteredLogs.map((log) => {
+              const cid = log.call_id || log.id;
+              return (
+                <div key={log.id} className={`${styles.mobileCard} ${styles.cardEmerald} ${styles.clickableCard}`} onClick={() => setSelectedDetailLog(log)}>
+                  <div className={styles.mobileCardHeader}>
+                    <span className={styles.mobileLogId}>{cid}</span>
+                    <span style={{ fontSize: '0.72rem', color: '#059669', background: '#d1fae5', padding: '2px 8px', borderRadius: '6px', fontWeight: 700 }}>
+                      COMPLETED
+                    </span>
+                  </div>
+                  <div className={styles.mobileCardBody}>
+                    <div className={styles.mobileCardRow}>
+                      <span className={styles.mobileLabel}>Unit</span>
+                      <span className={styles.mobileValue} style={{ fontWeight: 700 }}>{log.unit?.model_name || '-'}</span>
+                    </div>
+                    <div className={styles.mobileCardRow}>
+                      <span className={styles.mobileLabel}>Teknisi</span>
+                      <span className={styles.mobileValue}>{log.technician_name || '-'}</span>
+                    </div>
+                    <div className={styles.mobileCardRow}>
+                      <span className={styles.mobileLabel}>Tindakan</span>
+                      <span className={styles.mobileValue} style={{ fontSize: '0.78rem' }}>{log.action_taken || '-'}</span>
+                    </div>
+                    {log.planning_notes && (
+                      <div className={styles.mobileCardRow}>
+                        <span className={styles.mobileLabel}>Evaluasi</span>
+                        <span className={styles.mobileValue} style={{ fontStyle: 'italic', color: '#0284c7' }}>{log.planning_notes}</span>
+                      </div>
+                    )}
+                    <div className={styles.mobileCardRow}>
+                      <span className={styles.mobileLabel}>Selesai</span>
+                      <span className={styles.mobileValueDate}>{formatDate(log.service_date)}</span>
+                    </div>
+                  </div>
+                  <div className={styles.mobileCardFooter}>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--color-cobalt-blue)', fontWeight: 700 }}>Beri Catatan / Detail →</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
 
       {selectedDetailLog && (

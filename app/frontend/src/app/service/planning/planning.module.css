@@ -686,29 +686,153 @@
 /* Responsive */
 @media (max-width: 768px) {
   .container {
-    padding: 12px;
-    gap: 16px;
+    padding: 0 0 95px 0 !important;
+    gap: 14px !important;
   }
 
   .title {
-    font-size: 1.4rem;
+    font-size: 1.35rem;
   }
 
+  .subtitle {
+    font-size: 0.8rem;
+  }
+
+  .pageHeader {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 0 4px;
+  }
+
+  .viewTabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 4px;
+    border-radius: 10px;
+  }
+
+  .viewTabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .viewTab {
+    white-space: nowrap;
+    padding: 8px 14px;
+    font-size: 0.78rem;
+  }
+
+  /* Kanban → single column stack with bordered cards */
   .kanbanContainer {
     grid-template-columns: 1fr;
+    gap: 14px;
   }
 
-  .calendarDay {
-    min-height: 50px;
+  .kanbanColumn {
+    border: 1.5px solid rgba(0, 31, 63, 0.13) !important;
+    box-shadow: 0 2px 8px rgba(0, 31, 63, 0.06) !important;
+    border-radius: 14px !important;
   }
 
-  .calendarDayNum {
+  .kanbanHeader {
+    padding: 12px 14px;
+  }
+
+  .kanbanTitle {
+    font-size: 0.85rem;
+  }
+
+  .kanbanBody {
+    padding: 10px;
+    gap: 8px;
+    max-height: 320px;
+  }
+
+  .kanbanCard {
+    padding: 11px 12px;
+    border: 1.5px solid rgba(0, 31, 63, 0.12) !important;
+    border-radius: 10px;
+    gap: 6px;
+  }
+
+  .kanbanCard:hover {
+    transform: none;
+  }
+
+  .kanbanCallId {
+    font-size: 0.75rem;
+  }
+
+  .kanbanUnit {
+    font-size: 0.78rem;
+  }
+
+  .kanbanSn {
+    font-size: 0.65rem;
+  }
+
+  .kanbanMeta {
     font-size: 0.7rem;
   }
 
+  /* Calendar compact */
+  .calendarContainer {
+    padding: 14px 12px;
+    border: 1.5px solid rgba(0, 31, 63, 0.13) !important;
+    box-shadow: 0 2px 8px rgba(0, 31, 63, 0.06) !important;
+    border-radius: 14px !important;
+  }
+
+  .calendarHeader {
+    margin-bottom: 12px;
+  }
+
+  .calendarTitle {
+    font-size: 0.95rem;
+  }
+
+  .calendarDay {
+    min-height: 44px;
+    padding: 4px;
+  }
+
+  .calendarDayNum {
+    font-size: 0.68rem;
+  }
+
+  .calendarDayHeader {
+    font-size: 0.65rem;
+    padding: 6px 2px;
+  }
+
+  .calendarLegend {
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 0.72rem;
+  }
+
+  /* Bulk bar */
   .bulkBar {
     flex-direction: column;
     gap: 10px;
     text-align: center;
+    padding: 12px 16px;
+  }
+
+  /* Modal compact */
+  .modalCard {
+    max-height: 95vh;
+  }
+
+  .modalHeader,
+  .modalFooter {
+    padding: 14px 16px;
+  }
+
+  .modalBody {
+    padding: 14px 16px;
+    gap: 12px;
   }
 }

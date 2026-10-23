@@ -256,10 +256,10 @@
   gap: 12px;
 }
 
-/* Baris pertama kolom kanan: Manuals (kiri) + Layanan & Dukungan (tengah, kompak) + QR Passport (kanan) */
+/* Baris pertama kolom kanan: Manuals (kiri) + QR Passport (tengah) + Layanan & Dukungan (kanan, kompak) */
 .topRowGrid {
   display: grid;
-  grid-template-columns: minmax(280px, 1.3fr) minmax(240px, 0.9fr) 190px;
+  grid-template-columns: minmax(280px, 1.3fr) 190px minmax(240px, 0.9fr);
   gap: 16px;
   align-items: stretch;
   min-width: 0;
@@ -267,7 +267,7 @@
 
 @media (max-width: 1200px) {
   .topRowGrid {
-    grid-template-columns: minmax(260px, 1.2fr) minmax(240px, 1fr);
+    grid-template-columns: minmax(260px, 1.2fr) 190px minmax(240px, 1fr);
   }
 }
 
@@ -589,7 +589,7 @@
 
 /* Nav buttons hidden on desktop */
 .carouselNavBtn {
-  display: none;
+  display: none !important;
 }
 
 .dotIndicators {
@@ -617,7 +617,7 @@
   color: var(--color-deep-navy);
   font-size: 1.4rem;
   line-height: 1;
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   cursor: pointer;
@@ -1558,7 +1558,7 @@
 
   /* Tombol navigasi < > — fixed, agak masuk ke dalam (sejajar batas card), semi-transparan */
   .carouselNavBtn {
-    display: flex;
+    display: flex !important;
     position: fixed;
     top: 50vh;
     transform: translateY(-50%);

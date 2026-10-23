@@ -160,7 +160,7 @@ export default function PartnersPage() {
           </div>
         </div>
 
-        <div className={styles.tableWrapper}>
+        <div className={`${styles.tableWrapper} ${styles.desktopView}`}>
           <table className={styles.table}>
             <thead>
               <tr>
@@ -251,6 +251,79 @@ export default function PartnersPage() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile View Cards */}
+        <div className={styles.mobileView}>
+          {loading ? (
+            <div className={styles.loadingCell}>Memuat data mitra...</div>
+          ) : error ? (
+            <div className={styles.loadingCell} style={{ color: '#E11D48' }}>{error}</div>
+          ) : filtered.length === 0 ? (
+            <div className={styles.loadingCell}>Tidak ada mitra ditemukan.</div>
+          ) : (
+            filtered.map((partner: any) => {
+              const score = partner.sla_metrics?.sla_score ?? 95;
+              const avgHours = partner.sla_metrics?.avg_resolution_hours ?? 18;
+
+              return (
+                <div key={partner.id} className={styles.mobileCard}>
+                  <div className={styles.mobileCardHeader}>
+                    <div>
+                      <div className={styles.partnerName} style={{ fontSize: '0.9rem' }}>{partner.partner_name}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--color-space-grey)' }}>{partner.city || '-'}</div>
+                    </div>
+                    <span className={`${styles.statusBadge} ${partner.is_active ? styles.badgeSuccess : styles.badgeWarning}`}>
+                      {partner.is_active ? 'Aktif' : 'Nonaktif'}
+                    </span>
+                  </div>
+
+                  <div className={styles.mobileCardBody}>
+                    {partner.contact_wa && (
+                      <div className={styles.mobileCardRow}>
+                        <span className={styles.mobileLabel}>WhatsApp</span>
+                        <a href={`https://wa.me/${partner.contact_wa.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#10b981', textDecoration: 'none', fontWeight: 600, fontSize: '0.78rem' }}>
+                          {WA_ICON}{partner.contact_wa}
+                        </a>
+                      </div>
+                    )}
+                    <div className={styles.mobileCardRow}>
+                      <span className={styles.mobileLabel}>SLA Tepat Waktu</span>
+                      <span style={{
+                        padding: '1px 8px', borderRadius: '8px', fontSize: '0.72rem', fontWeight: 800,
+                        background: score >= 90 ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)',
+                        color: score >= 90 ? '#10B981' : '#D97706',
+                      }}>
+                        {score}% SLA
+                      </span>
+                    </div>
+                    <div className={styles.mobileCardRow}>
+                      <span className={styles.mobileLabel}>Rata-rata Res</span>
+                      <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--color-deep-navy)' }}>~{avgHours} Jam</span>
+                    </div>
+                  </div>
+
+                  <div className={styles.mobileCardFooter}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <button type="button" onClick={() => handleToggleActive(partner)}
+                        style={toggleBtnStyle(partner.is_active)}
+                        aria-label={partner.is_active ? 'Nonaktifkan routing' : 'Aktifkan routing'}>
+                        <span style={toggleKnobStyle(partner.is_active)} />
+                      </button>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--color-space-grey)' }}>
+                        {partner.is_active ? 'Routing Aktif' : 'Nonaktif'}
+                      </span>
+                    </div>
+                    <div className={styles.actions}>
+                      <button className={styles.actionIconBtn} title="Edit Mitra" onClick={() => openEditModal(partner)}><Edit3 size={15} /></button>
+                      <button className={`${styles.actionIconBtn} ${styles.actionIconBtnDanger}`} title="Hapus Mitra" onClick={() => setDeleteTarget(partner)}><Trash2 size={15} /></button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 

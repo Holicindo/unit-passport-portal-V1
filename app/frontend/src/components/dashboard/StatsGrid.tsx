@@ -78,8 +78,37 @@ export default function StatsGrid({ items, data, loading }: StatsGridProps) {
           0% { transform: translateX(0); }
           100% { transform: translateX(-50%); }
         }
+        
+        @media (max-width: 768px) {
+          .stats-grid-mobile {
+            display: grid !important;
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 12px !important;
+            margin-bottom: 20px !important;
+          }
+          .stats-grid-mobile > div {
+            padding: 12px 14px !important;
+            border: 2px solid rgba(255, 255, 255, 0.25) !important;
+            box-shadow: -4px -4px 12px rgba(255, 255, 255, 0.08), 4px 4px 16px rgba(0, 0, 0, 0.45) !important;
+          }
+          .stats-grid-mobile .stat-icon {
+            width: 32px !important;
+            height: 32px !important;
+          }
+          .stats-grid-mobile .stat-icon svg {
+            width: 18px !important;
+            height: 18px !important;
+          }
+          .stats-grid-mobile .stat-value {
+            font-size: 1.25rem !important;
+            margin-bottom: 2px !important;
+          }
+          .stats-grid-mobile .stat-label {
+            font-size: 0.65rem !important;
+          }
+        }
       `}</style>
-      <div style={{
+      <div className="stats-grid-mobile" style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
         gap: '20px',
@@ -131,7 +160,7 @@ export default function StatsGrid({ items, data, loading }: StatsGridProps) {
                 (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255, 255, 255, 0.12)';
               }}
             >
-              <div style={{
+              <div className="stat-icon" style={{
                 width: '46px',
                 height: '46px',
                 borderRadius: '12px',
@@ -146,7 +175,7 @@ export default function StatsGrid({ items, data, loading }: StatsGridProps) {
                 <Icon size={22} strokeWidth={1.8} />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <h3 style={{
+                <h3 className="stat-value" style={{
                   fontSize: '1.5rem',
                   margin: 0,
                   marginBottom: '3px',
@@ -160,7 +189,7 @@ export default function StatsGrid({ items, data, loading }: StatsGridProps) {
                 }}>
                   {stat.value}
                 </h3>
-                <p style={{
+                <p className="stat-label" style={{
                   fontSize: '0.72rem',
                   fontWeight: 700,
                   color: 'rgba(255, 255, 255, 0.65)',

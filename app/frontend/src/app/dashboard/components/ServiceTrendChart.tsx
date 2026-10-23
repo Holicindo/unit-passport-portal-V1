@@ -24,7 +24,15 @@ export default function ServiceTrendChart({ chartData, loading, liveTime }: Prop
   ];
 
   return (
-    <div className={styles.chartCard}>
+    <>
+      <style>{`
+        @media (max-width: 768px) {
+          .chart-responsive-container {
+            padding-left: 24px !important;
+          }
+        }
+      `}</style>
+      <div className={styles.chartCard}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
           <h3 className={styles.chartTitle} style={{ margin: 0 }}>
@@ -56,7 +64,7 @@ export default function ServiceTrendChart({ chartData, loading, liveTime }: Prop
             <span style={{ fontSize: '0.8rem', color: 'var(--color-space-grey)', fontWeight: 600 }}>Memuat Grafik Aktivitas...</span>
           </div>
         ) : (
-          <div style={{ position: 'relative', width: '100%', height: '100%', paddingLeft: '32px' }}>
+          <div className="chart-responsive-container" style={{ position: 'relative', width: '100%', height: '100%', paddingLeft: '32px' }}>
             {/* Y-axis labels */}
             <div style={{ position: 'absolute', left: 0, top: 0, bottom: '24px', width: '28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', pointerEvents: 'none' }}>
               {yLabels.map((label, i) => (
@@ -157,5 +165,6 @@ export default function ServiceTrendChart({ chartData, loading, liveTime }: Prop
         )}
       </div>
     </div>
+    </>
   );
 }
