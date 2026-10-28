@@ -3,9 +3,6 @@
    UI/UX Final Design - Pixel Perfect Match
    ============================================================ */
 
-/* ── Force full viewport coverage ── */
-.container {
-
 /* ── Full-screen wrapper ── */
 .container {
   position: fixed;
