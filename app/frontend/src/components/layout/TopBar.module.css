@@ -303,55 +303,158 @@
   box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
 }
 
-@media (max-width: 768px) {
-  .topBar {
-    padding: 0 12px;
-    height: 60px;
-  }
+.topBarSyncBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--color-card-bg);
+  border: 1.5px solid var(--color-border);
+  color: var(--color-cobalt-blue);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-family: var(--font-heading);
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: -3px -3px 8px rgba(255, 255, 255, 0.8), 3px 3px 8px rgba(79, 70, 229, 0.08);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
 
-  .toggleBtn {
-    display: none !important;
-  }
+.topBarSyncBtn:hover {
+  border-color: var(--color-cobalt-blue);
+  color: #ffffff;
+  background: var(--color-cobalt-blue);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+}
 
-  .searchBox {
-    display: none !important;
-  }
+.topBarSyncBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
-  .topBarScanBtn span {
-    display: none;
-  }
+.spin {
+  animation: spin 1s linear infinite;
+}
 
-  .topBarScanBtn {
-    padding: 8px;
-    border-radius: 50%;
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
   }
+  to {
+    transform: rotate(360deg);
+  }
+}
 
-  .profileContainer {
-    display: none !important;
-  }
+.mobileBrand {
+  display: none;
 }
 
 @media (max-width: 768px) {
   .topBar {
-    padding: 0 12px;
-    height: 60px;
+    padding: 0 14px;
+    height: 56px;
+    background: rgba(232, 234, 238, 0.88);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border-bottom: 1px solid rgba(0, 31, 63, 0.08);
+    box-shadow: 0 2px 10px rgba(0, 31, 63, 0.04);
+  }
+
+  .leftSection {
+    margin-left: 0;
+    display: flex;
+    align-items: center;
   }
 
   .toggleBtn {
     display: none !important;
   }
 
+  .mobileBrand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .mobileLogoMark {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #001F3F 0%, #003870 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    padding: 4px;
+    box-shadow: 0 2px 6px rgba(0, 31, 63, 0.25);
+    flex-shrink: 0;
+  }
+
+  .mobileLogoMark svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .mobileBrandText {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+  }
+
+  .mobileBrandName {
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    color: var(--color-deep-navy);
+  }
+
+  .mobileBrandTag {
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: var(--color-space-grey);
+    letter-spacing: 0.02em;
+  }
+
+  .actions {
+    gap: 8px;
+  }
+
+  /* Keduanya tanpa teks di mobile — murni icon button rounded */
+  .btnLabel {
+    display: none !important;
+  }
+
+  .topBarSyncBtn,
+  .topBarScanBtn {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid rgba(46, 91, 255, 0.35);
+    color: var(--color-cobalt-blue);
+    background: var(--color-card-bg);
+    box-shadow: 0 2px 8px rgba(46, 91, 255, 0.12);
+  }
+
+  .topBarSyncBtn:active,
+  .topBarScanBtn:active {
+    transform: scale(0.92);
+  }
+
   .searchBox {
     display: none !important;
   }
 
-  .topBarScanBtn span {
-    display: none;
-  }
-
-  .topBarScanBtn {
-    padding: 8px;
-    border-radius: 50%;
+  .desktopOnlyBell {
+    display: none !important;
   }
 
   .profileContainer {

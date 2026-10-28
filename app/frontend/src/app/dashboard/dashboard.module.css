@@ -1,4 +1,4 @@
-﻿.container {
+.container {
   padding: 20px 0 0 0;
   animation: fadeIn 0.5s ease;
   min-height: 0;
@@ -47,6 +47,19 @@
 .bottomSection>div:last-child {
   flex: 1;
   min-width: 300px;
+}
+
+/* Mobile top cards are hidden on desktop */
+.mobileTopCards {
+  display: none;
+}
+
+.desktopUpcomingPm {
+  display: block;
+}
+
+.desktopRightColumn {
+  display: block;
 }
 
 .chartCard {
@@ -234,29 +247,54 @@
 
 @media (max-width: 768px) {
   .container {
-    padding: 16px 0 95px 0 !important; /* Tambahkan padding-bottom untuk BottomNav */
+    padding: 8px 0 95px 0 !important; /* Rapatkan padding atas agar langsung padat */
   }
 
   .header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 8px;
-    margin-bottom: 20px;
-    padding-bottom: 16px;
+    gap: 2px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: none;
   }
 
   .title {
-    font-size: 1.5rem;
+    font-size: 1.35rem;
+    font-weight: 900;
   }
 
   .updateTime {
-    font-size: 0.78rem;
+    font-size: 0.72rem;
+    opacity: 0.8;
+  }
+
+  .mobileTopCards {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 14px;
+    margin-bottom: 6px;
+  }
+
+  .mobilePairRow {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .desktopUpcomingPm {
+    display: none !important;
+  }
+
+  .desktopRightColumn {
+    display: none !important;
   }
 
   .bottomSection {
     flex-direction: column;
-    gap: 16px;
-    margin-top: 16px;
+    gap: 14px;
+    margin-top: 10px;
   }
 
   .chartCard {
@@ -265,8 +303,11 @@
   }
 
   .chartCeruk {
-    height: 180px !important; /* Ketinggian grafik yang proporsional */
-    padding: 14px 12px !important;
+    /* Biarkan tinggi otomatis sesuai konten — chart SVG sudah 160px + label = ~200px total */
+    height: auto !important;
+    min-height: 200px !important;
+    padding: 10px 8px 0 8px !important;
+    overflow: visible !important;
   }
 
   .chartTitle {
@@ -296,23 +337,24 @@
     justify-content: center;
   }
   
-  /* Stack 2-kolom menjadi 1 kolom di mobile */
+  /* 1 card penuh di mobile agar tidak sempit dan angka/grafik terbaca jelas */
   .frequent-warranty-grid {
     grid-template-columns: 1fr !important;
-    gap: 16px !important;
+    gap: 14px !important;
   }
 }
 
 /* ActivityAndPM Mobile Responsive Styles */
 @media (max-width: 768px) {
-  /* Stack timeline columns vertically in mobile */
+  /* Timeline Hari Ini & Besok 2 kolom kompak */
   .listCard > div > div[style*="gridTemplateColumns"] {
-    grid-template-columns: 1fr !important;
-    gap: 24px !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
   }
   
-  /* Stack PM cards vertically */
+  /* PM cards tetap 2-kolom kompak */
   .listCard div[style*="gridTemplateColumns: '1fr 1fr'"] {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
   }
 }

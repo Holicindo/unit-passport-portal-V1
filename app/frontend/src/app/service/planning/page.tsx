@@ -3,8 +3,9 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { serviceLogApi, unitApi, partnerApi } from '@/lib/api';
-import { Calendar, Search, Loader2, ArrowLeft, Clock, AlertCircle, ChevronLeft, ChevronRight, X, GripVertical, CheckCircle2, XCircle } from 'lucide-react';
+import { Calendar, Search, Loader2, ArrowLeft, Clock, AlertCircle, ChevronLeft, ChevronRight, X, GripVertical, CheckCircle2, XCircle, Wrench, Truck, Wrench as Tool, Receipt, Plus, CalendarDays, Table, ExternalLink } from 'lucide-react';
 import { CustomSelect } from '@/components/ui/CustomSelect';
+import DatePicker from '@/components/ui/DatePicker';
 import styles from './planning.module.css';
 import StatsGrid from '@/components/dashboard/StatsGrid';
 
@@ -12,6 +13,8 @@ const TASK_LABELS: Record<string, string> = { CORRECTIVE: 'Perbaikan', PREVENTIV
 const TASK_STYLE: Record<string, string> = { CORRECTIVE: styles.taskCorrective, PREVENTIVE: styles.taskPreventive, INSTALLATION: styles.taskInstallation };
 
 type KanbanCol = 'unallocated' | 'allocated' | 'completed';
+type OperationalView = 'service' | 'delivery' | 'installation' | 'invoice';
+type ViewMode = 'kanban' | 'calendar' | 'table';
 
 function fmtDate(d: string | Date | null) {
   if (!d) return '-';
@@ -25,13 +28,17 @@ export default function ScheduleManagementPage() {
   const [partners, setPartners] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'calendar' | 'kanban'>('kanban');
+  const [viewMode, setViewMode] = useState<ViewMode>('kanban');
+  const [operationalView, setOperationalView] = useState<OperationalView>('service');
   const [searchQuery, setSearchQuery] = useState('');
   const [taskFilter, setTaskFilter] = useState('ALL');
 
   // Calendar state
   const [calMonth, setCalMonth] = useState(new Date().getMonth());
   const [calYear, setCalYear] = useState(new Date().getFullYear());
+  const [calendarScope, setCalendarScope] = useState<'month' | 'week'>('month');
+  const [weekOffset, setWeekOffset] = useState(0);
+  const [hoveredDay, setHoveredDay] = useState<number | null>(null);
 
   // Bulk reschedule
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -66,15 +73,43 @@ export default function ScheduleManagementPage() {
 
   useEffect(() => { fetchData(); }, []);
 
+  // Operational Category counts
+  const opCounts = useMemo(() => {
+    return {
+      service: logs.filter(l => l.task_type === 'CORRECTIVE' || l.task_type === 'PREVENTIVE' || !l.task_type).length,
+      delivery: logs.filter(l => l.delivery_date || l.task_type === 'INSTALLATION').length,
+      installation: logs.filter(l => l.task_type === 'INSTALLATION').length,
+      invoice: logs.filter(l => l.status === 'COMPLETED' || l.replaced_sparepart).length,
+    };
+  }, [logs]);
+
   const activeLogs = useMemo(() => {
     return logs.filter(l => {
+      // 1. Filter by operational view
+      if (operationalView === 'service') {
+        const isService = l.task_type === 'CORRECTIVE' || l.task_type === 'PREVENTIVE' || !l.task_type;
+        if (!isService && l.task_type === 'INSTALLATION') return false;
+      } else if (operationalView === 'delivery') {
+        const isDelivery = !!l.delivery_date || l.task_type === 'INSTALLATION';
+        if (!isDelivery) return false;
+      } else if (operationalView === 'installation') {
+        if (l.task_type !== 'INSTALLATION') return false;
+      } else if (operationalView === 'invoice') {
+        const isInvoice = l.status === 'COMPLETED' || !!l.replaced_sparepart;
+        if (!isInvoice) return false;
+      }
+
+      // 2. Filter by dropdown jenis
       const matchTask = taskFilter === 'ALL' || l.task_type === taskFilter;
+
+      // 3. Search query (SN, model, technician, call_id)
       const q = searchQuery.toLowerCase();
       const matchSearch = [l.unit?.serial_number, l.unit?.model_name, l.technician_name, l.call_id, l.id]
         .some(v => v?.toLowerCase().includes(q));
+
       return matchTask && matchSearch;
     });
-  }, [logs, taskFilter, searchQuery]);
+  }, [logs, operationalView, taskFilter, searchQuery]);
 
   const unallocated = activeLogs.filter(l => !l.is_allocated && l.status !== 'COMPLETED' && l.status !== 'CANCELED' && l.status !== 'CANCELLED');
   const allocated = activeLogs.filter(l => l.is_allocated && l.status !== 'COMPLETED' && l.status !== 'CANCELED' && l.status !== 'CANCELLED');
@@ -91,16 +126,45 @@ export default function ScheduleManagementPage() {
     return days;
   }, [calMonth, calYear]);
 
+  // Current weekly schedule dates (Minggu - Sabtu)
+  const weekDays = useMemo(() => {
+    const curr = new Date();
+    // adjust for weekOffset
+    const startOfWeek = new Date(curr);
+    startOfWeek.setDate(curr.getDate() - curr.getDay() + (weekOffset * 7));
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(startOfWeek);
+      d.setDate(startOfWeek.getDate() + i);
+      days.push(d);
+    }
+    return days;
+  }, [weekOffset]);
+
   const getLogsForDay = (day: number) => activeLogs.filter(l => {
     const sd = l.scheduled_date || l.service_date;
     if (!sd) return false;
     const d = new Date(sd);
     return d.getDate() === day && d.getMonth() === calMonth && d.getFullYear() === calYear;
   });
+
   const getDeliveriesForDay = (day: number) => activeLogs.filter(l => {
     if (!l.delivery_date) return false;
     const d = new Date(l.delivery_date);
     return d.getDate() === day && d.getMonth() === calMonth && d.getFullYear() === calYear;
+  });
+
+  const getLogsForExactDate = (dateObj: Date) => activeLogs.filter(l => {
+    const sd = l.scheduled_date || l.service_date;
+    const dd = l.delivery_date;
+    const checkDate = (dStr?: string) => {
+      if (!dStr) return false;
+      const d = new Date(dStr);
+      return d.getDate() === dateObj.getDate() && d.getMonth() === dateObj.getMonth() && d.getFullYear() === dateObj.getFullYear();
+    };
+    return checkDate(sd) || checkDate(dd);
   });
 
   const toggleSelect = (id: string) => {
@@ -350,6 +414,7 @@ export default function ScheduleManagementPage() {
         </div>
         <div className={styles.viewTabs}>
           <button className={`${styles.viewTab} ${viewMode === 'kanban' ? styles.viewTabActive : ''}`} onClick={() => setViewMode('kanban')}>Kanban</button>
+          <button className={`${styles.viewTab} ${viewMode === 'table' ? styles.viewTabActive : ''}`} onClick={() => setViewMode('table')}>Tabel</button>
           <button className={`${styles.viewTab} ${viewMode === 'calendar' ? styles.viewTabActive : ''}`} onClick={() => setViewMode('calendar')}>Kalender</button>
         </div>
       </header>
@@ -365,6 +430,57 @@ export default function ScheduleManagementPage() {
         { label: 'Sudah Terjadwal', value: loading ? '...' : allocated.length, max: 100, icon: Clock, accent: '#3b82f6' },
         { label: 'Selesai / Batal', value: loading ? '...' : completed.length, max: 100, icon: Calendar, accent: '#10b981' },
       ]} />
+
+      {/* Operational Category Segmented Control (Servis, Pengiriman, Instalasi, Tukar Faktur) */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+        <div className={styles.operationalTabs}>
+          <button
+            type="button"
+            className={`${styles.opTab} ${operationalView === 'service' ? styles.opTabActive : ''}`}
+            onClick={() => setOperationalView('service')}
+          >
+            <Tool size={15} />
+            <span>Servis</span>
+            <span className={styles.opBadge}>{opCounts.service}</span>
+          </button>
+
+          <button
+            type="button"
+            className={`${styles.opTab} ${operationalView === 'delivery' ? styles.opTabActive : ''}`}
+            onClick={() => setOperationalView('delivery')}
+          >
+            <Truck size={15} />
+            <span>Pengiriman</span>
+            <span className={styles.opBadge}>{opCounts.delivery}</span>
+          </button>
+
+          <button
+            type="button"
+            className={`${styles.opTab} ${operationalView === 'installation' ? styles.opTabActive : ''}`}
+            onClick={() => setOperationalView('installation')}
+          >
+            <Wrench size={15} />
+            <span>Instalasi</span>
+            <span className={styles.opBadge}>{opCounts.installation}</span>
+          </button>
+
+          <button
+            type="button"
+            className={`${styles.opTab} ${operationalView === 'invoice' ? styles.opTabActive : ''}`}
+            onClick={() => setOperationalView('invoice')}
+          >
+            <Receipt size={15} />
+            <span>Tukar Faktur</span>
+            <span className={styles.opBadge}>{opCounts.invoice}</span>
+          </button>
+        </div>
+
+        {operationalView === 'delivery' && (
+          <div style={{ fontSize: '0.8rem', color: '#475569', background: '#eff6ff', padding: '6px 12px', borderRadius: '8px', border: '1px solid rgba(37,99,235,0.2)' }}>
+            🚚 <strong style={{ color: '#1d4ed8' }}>Mode Pengiriman:</strong> Centang checkbox unit untuk multi-select jadwal kirim massal.
+          </div>
+        )}
+      </div>
 
       <div className="dtToolbar">
         <div className="dtToolbarLeft">
@@ -413,40 +529,350 @@ export default function ScheduleManagementPage() {
         /* ============ CALENDAR VIEW ============ */
         <div className={styles.calendarContainer}>
           <div className={styles.calendarHeader}>
-            <div className={styles.calendarNav}>
-              <button className={styles.calendarNavBtn} onClick={() => { if (calMonth === 0) { setCalMonth(11); setCalYear(y => y - 1); } else setCalMonth(m => m - 1); }}><ChevronLeft size={16} /></button>
-            </div>
-            <h3 className={styles.calendarTitle}>{monthNames[calMonth]} {calYear}</h3>
-            <div className={styles.calendarNav}>
-              <button className={styles.calendarNavBtn} onClick={() => { if (calMonth === 11) { setCalMonth(0); setCalYear(y => y + 1); } else setCalMonth(m => m + 1); }}><ChevronRight size={16} /></button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div className={styles.calendarNav}>
+                <button
+                  className={styles.calendarNavBtn}
+                  onClick={() => {
+                    if (calMonth === 0) { setCalMonth(11); setCalYear(y => y - 1); }
+                    else setCalMonth(m => m - 1);
+                  }}
+                  title="Bulan Sebelumnya"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+              </div>
+
+              <h3 className={styles.calendarTitle} style={{ margin: 0 }}>
+                <span>{monthNames[calMonth]} {calYear}</span>
+              </h3>
+
+              <div className={styles.calendarNav}>
+                <button
+                  className={styles.calendarNavBtn}
+                  onClick={() => {
+                    if (calMonth === 11) { setCalMonth(0); setCalYear(y => y + 1); }
+                    else setCalMonth(m => m + 1);
+                  }}
+                  title="Bulan Berikutnya"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+
+              {(calMonth !== today.getMonth() || calYear !== today.getFullYear()) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCalMonth(today.getMonth());
+                    setCalYear(today.getFullYear());
+                  }}
+                  style={{
+                    padding: '5px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid #CBD5E1',
+                    background: '#ffffff',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    color: '#2E5BFF',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Bulan Ini
+                </button>
+              )}
             </div>
           </div>
-          <div className={styles.calendarGrid}>
-            {dayNames.map(d => <div key={d} className={styles.calendarDayHeader}>{d}</div>)}
-            {calDays.map((day, i) => {
-              if (day === null) return <div key={`e${i}`} className={`${styles.calendarDay} ${styles.calendarDayEmpty}`} />;
-              const sLogs = getLogsForDay(day);
-              const dLogs = getDeliveriesForDay(day);
-              const isToday = day === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear();
-              const serviceCount = sLogs.filter(l => l.task_type !== 'INSTALLATION').length;
-              const installCount = sLogs.filter(l => l.task_type === 'INSTALLATION').length;
-              return (
-                <div key={day} className={`${styles.calendarDay} ${isToday ? styles.calendarDayToday : ''}`}>
-                  <div className={styles.calendarDayNum}>{day}</div>
-                  <div>
-                    {serviceCount > 0 && <><span className={`${styles.calendarDot} ${styles.calendarDotService}`} /><span className={styles.calendarDayCount}>{serviceCount}</span> </>}
-                    {dLogs.length > 0 && <><span className={`${styles.calendarDot} ${styles.calendarDotDelivery}`} /><span className={styles.calendarDayCount}>{dLogs.length}</span> </>}
-                    {installCount > 0 && <><span className={`${styles.calendarDot} ${styles.calendarDotInstall}`} /><span className={styles.calendarDayCount}>{installCount}</span></>}
+
+          {/* ============ MONTH VIEW ============ */}
+            <div className={styles.calendarGrid}>
+              {dayNames.map(d => <div key={d} className={styles.calendarDayHeader}>{d}</div>)}
+              {calDays.map((day, i) => {
+                if (day === null) return <div key={`e${i}`} className={`${styles.calendarDay} ${styles.calendarDayEmpty}`} />;
+                const sLogs = getLogsForDay(day);
+                const dLogs = getDeliveriesForDay(day);
+                const isToday = day === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear();
+                
+                // Merge unique logs scheduled for this day
+                const dayLogs = Array.from(new Map([...sLogs, ...dLogs].map(l => [l.id, l])).values());
+                const totalActivity = dayLogs.length;
+                const isHovered = hoveredDay === day;
+
+                return (
+                  <div
+                    key={day}
+                    className={`${styles.calendarDay} ${isToday ? styles.calendarDayToday : ''}`}
+                    onMouseEnter={() => totalActivity > 0 && setHoveredDay(day)}
+                    onMouseLeave={() => setHoveredDay(null)}
+                  >
+                    <div className={styles.calendarDayHeaderRow}>
+                      <span className={styles.calendarDayNum}>{day}</span>
+                      {isToday && <span className={styles.calendarDayTodayBadge}>Hari Ini</span>}
+                    </div>
+
+                    {/* Compact Item Pills preview on date card: Tindakan + Nama Customer */}
+                    <div className={styles.calendarPillsWrapper}>
+                      {dayLogs.slice(0, 2).map((l: any) => {
+                        const isInstall = l.task_type === 'INSTALLATION';
+                        const isDelivery = !!l.delivery_date && !isInstall;
+                        const pillClass = isInstall ? styles.pillInstall : isDelivery ? styles.pillDelivery : styles.pillService;
+                        const tag = isInstall ? 'INST' : isDelivery ? 'DELIV' : 'SRV';
+                        const customerName = l.unit?.current_client?.company_name || l.client?.company_name || l.client_name || l.unit?.client?.company_name || 'Customer Umum';
+
+                        return (
+                          <div
+                            key={l.id}
+                            className={`${styles.calendarItemPill} ${pillClass}`}
+                            title={`[${tag}] ${customerName} — ${l.unit?.model_name || 'Unit'} (${l.call_id ? `#${l.call_id}` : l.id})`}
+                          >
+                            <span style={{ fontSize: '0.62rem', fontWeight: 800 }}>[{tag}]</span>
+                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{customerName}</span>
+                          </div>
+                        );
+                      })}
+                      {dayLogs.length > 2 && (
+                        <div className={styles.calendarMoreBadge}>
+                          +{dayLogs.length - 2} kegiatan lagi...
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Rich Hover Popover: Menampilkan rincian tiket kegiatan servis/pengiriman/instalasi */}
+                    {isHovered && totalActivity > 0 && (
+                      <div className={styles.calendarTooltip}>
+                        <div className={styles.tooltipHeader}>
+                          <span className={styles.tooltipDate}>
+                            {day} {monthNames[calMonth]} {calYear}
+                          </span>
+                          <span className={styles.tooltipCount}>{totalActivity} Jadwal</span>
+                        </div>
+                        <div className={styles.tooltipList}>
+                          {dayLogs.map((l: any) => {
+                            const isInstall = l.task_type === 'INSTALLATION';
+                            const isDelivery = !!l.delivery_date && !isInstall;
+                            const badgeColor = isInstall ? '#10b981' : isDelivery ? '#2E5BFF' : '#FF5722';
+                            const badgeBg = isInstall ? 'rgba(16,185,129,0.1)' : isDelivery ? 'rgba(46,91,255,0.1)' : 'rgba(255,87,34,0.1)';
+                            const taskName = isInstall ? 'Instalasi' : isDelivery ? 'Pengiriman' : (TASK_LABELS[l.task_type] || 'Servis');
+                            const customerName = l.unit?.current_client?.company_name || l.client?.company_name || l.client_name || l.unit?.client?.company_name || 'Customer Umum';
+
+                            return (
+                              <div key={l.id} className={styles.tooltipItem} style={{ borderLeftColor: badgeColor }}>
+                                <div className={styles.tooltipItemHeader}>
+                                  <span className={styles.tooltipCallId} style={{ fontWeight: 800, color: '#1e3a8a' }}>
+                                    {customerName}
+                                  </span>
+                                  <span className={styles.tooltipTaskBadge} style={{ background: badgeBg, color: badgeColor }}>
+                                    {taskName}
+                                  </span>
+                                </div>
+                                <div className={styles.tooltipUnit}>
+                                  {l.unit?.model_name || 'Unit Mesin'}
+                                  {l.unit?.serial_number && <span style={{ color: '#64748b', fontWeight: 400 }}> (SN: {l.unit.serial_number})</span>}
+                                  <span style={{ marginLeft: '6px', color: '#94a3b8', fontSize: '0.72rem' }}>#{l.call_id || l.id}</span>
+                                </div>
+                                <div className={styles.tooltipMeta}>
+                                  <span>Teknisi: <strong style={{ color: '#1e293b' }}>{l.technician_name || 'Belum ditugaskan'}</strong></span>
+                                  <span style={{ fontWeight: 700, color: l.status === 'COMPLETED' ? '#059669' : '#d97706' }}>{l.status}</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+
           <div className={styles.calendarLegend}>
-            <div className={styles.legendItem}><span className={`${styles.calendarDot} ${styles.calendarDotService}`} /> Servis</div>
-            <div className={styles.legendItem}><span className={`${styles.calendarDot} ${styles.calendarDotDelivery}`} /> Delivery</div>
+            <div className={styles.legendItem}><span className={`${styles.calendarDot} ${styles.calendarDotService}`} /> Servis (Perbaikan / Perawatan)</div>
+            <div className={styles.legendItem}><span className={`${styles.calendarDot} ${styles.calendarDotDelivery}`} /> Pengiriman (Delivery)</div>
             <div className={styles.legendItem}><span className={`${styles.calendarDot} ${styles.calendarDotInstall}`} /> Instalasi</div>
           </div>
+        </div>
+      ) : viewMode === 'table' ? (
+        /* ============ TABLE VIEW (PM ADDITION) ============ */
+        <div className={styles.tableContainer}>
+          <table className={styles.planningTable}>
+            <thead>
+              <tr>
+                <th style={{ width: '40px', textAlign: 'center' }}>
+                  {operationalView === 'delivery' ? (
+                    <input
+                      type="checkbox"
+                      checked={activeLogs.length > 0 && selectedIds.length === activeLogs.length}
+                      onChange={(e) => {
+                        if (e.target.checked) setSelectedIds(activeLogs.map(l => l.id));
+                        else setSelectedIds([]);
+                      }}
+                      title="Pilih semua untuk bulk reschedule"
+                      style={{ cursor: 'pointer', width: '15px', height: '15px', accentColor: '#2E5BFF' }}
+                    />
+                  ) : '#'}
+                </th>
+                <th style={{ width: '12%' }}>CALL ID</th>
+                <th style={{ width: '14%' }}>JENIS & STATUS</th>
+                <th style={{ width: '18%' }}>PELANGGAN / CUSTOMER</th>
+                <th style={{ width: '16%' }}>UNIT (MESIN)</th>
+                <th style={{ width: '13%' }}>TANGGAL JADWAL</th>
+                <th style={{ width: '14%' }}>TEKNISI BERTUGAS</th>
+                <th style={{ width: '13%', textAlign: 'center' }}>AKSI</th>
+              </tr>
+            </thead>
+            <tbody>
+              {activeLogs.length === 0 ? (
+                <tr>
+                  <td colSpan={8} style={{ padding: '48px 16px', textAlign: 'center', color: '#64748b' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                      <AlertCircle size={32} style={{ opacity: 0.4 }} />
+                      <span style={{ fontWeight: 600, color: '#1e293b' }}>Tidak ada jadwal ditemukan</span>
+                      <span style={{ fontSize: '0.8rem' }}>Coba ubah kata kunci pencarian atau ganti filter kategori.</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                activeLogs.map((log: any, idx: number) => {
+                  const cid = log.call_id || log.id;
+                  const isInstall = log.task_type === 'INSTALLATION';
+                  const customerName = log.unit?.current_client?.company_name || log.client?.company_name || log.client_name || log.unit?.client?.company_name || 'Customer Umum';
+                  const branch = log.unit?.current_client?.branch || log.unit?.current_client?.city || log.unit?.city || 'Pusat';
+                  const isChecked = selectedIds.includes(log.id);
+
+                  return (
+                    <tr key={log.id} className={styles.tableRow}>
+                      <td style={{ textAlign: 'center', color: '#94a3b8', fontSize: '0.8rem' }}>
+                        {operationalView === 'delivery' ? (
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => toggleSelect(log.id)}
+                            style={{ cursor: 'pointer', width: '15px', height: '15px', accentColor: '#2E5BFF' }}
+                          />
+                        ) : (
+                          idx + 1
+                        )}
+                      </td>
+                      <td>
+                        <span
+                          style={{
+                            fontWeight: 800,
+                            color: '#1d4ed8',
+                            fontSize: '0.84rem',
+                            letterSpacing: '0.02em',
+                            cursor: 'pointer',
+                          }}
+                          onClick={() => router.push(`/service?call_id=${cid}`)}
+                          title="Buka rincian di Log Servis"
+                        >
+                          #{cid}
+                        </span>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <span className={`${styles.kanbanTaskBadge} ${TASK_STYLE[log.task_type] || styles.taskCorrective}`} style={{ width: 'fit-content' }}>
+                            {TASK_LABELS[log.task_type] || 'Perbaikan'}
+                          </span>
+                          <div>
+                            {log.status === 'COMPLETED' ? (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', background: 'rgba(16,185,129,0.12)', color: '#059669', borderRadius: '4px', padding: '1px 6px', fontSize: '0.68rem', fontWeight: 800 }}>
+                                <CheckCircle2 size={10} /> SELESAI
+                              </span>
+                            ) : log.status === 'CANCELLED' || log.status === 'CANCELED' ? (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', background: 'rgba(239,68,68,0.1)', color: '#dc2626', borderRadius: '4px', padding: '1px 6px', fontSize: '0.68rem', fontWeight: 800 }}>
+                                <XCircle size={10} /> BATAL
+                              </span>
+                            ) : (
+                              <span className={`${styles.badge} ${log.status === 'PENDING' ? styles.badgePending : log.status === 'IN PROGRESS' ? styles.badgeInProgress : styles.badgeCancelled}`} style={{ fontSize: '0.68rem', padding: '1px 6px' }}>
+                                {log.status}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontWeight: 700, color: 'var(--color-deep-navy)', fontSize: '0.84rem' }}>
+                            {customerName}
+                          </span>
+                          <span style={{ fontSize: '0.74rem', color: '#64748b' }}>
+                            {branch}
+                          </span>
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontWeight: 600, color: 'var(--color-deep-navy)', fontSize: '0.82rem' }}>
+                            {log.unit?.model_name || 'Unit Mesin'}
+                          </span>
+                          <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                            SN: {log.unit?.serial_number || '-'}
+                          </span>
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                          <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--color-deep-navy)' }}>
+                            {fmtDate(log.scheduled_date || log.service_date)}
+                          </span>
+                          {log.delivery_date && (
+                            <span style={{ fontSize: '0.7rem', color: '#2563eb', fontWeight: 500 }}>
+                              Kirim: {fmtDate(log.delivery_date)}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px' }}>
+                          {log.technician_name ? (
+                            log.technician_name.split(',').map((tName: string, tIdx: number) => (
+                              <span
+                                key={tIdx}
+                                style={{
+                                  fontSize: '0.72rem',
+                                  fontWeight: 600,
+                                  background: '#EEF2FF',
+                                  color: '#2E5BFF',
+                                  padding: '1px 6px',
+                                  borderRadius: '4px',
+                                }}
+                              >
+                                {tName.trim()}
+                              </span>
+                            ))
+                          ) : (
+                            <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontStyle: 'italic' }}>
+                              Belum alokasi
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td style={{ textAlign: 'center' }}>
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: '6px' }}>
+                          <button
+                            type="button"
+                            className={styles.tableActionBtn}
+                            onClick={() => { setNotesModal(log); setEditNotes(log.internal_notes || ''); }}
+                            title="Catatan Internal"
+                          >
+                            Catatan
+                          </button>
+                          <button
+                            type="button"
+                            className={styles.tableActionBtn}
+                            onClick={() => router.push(`/service?call_id=${cid}`)}
+                            title="Buka Tiket Servis Lengkap"
+                          >
+                            <ExternalLink size={12} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
         </div>
       ) : (
         /* ============ KANBAN VIEW ============ */
@@ -485,11 +911,59 @@ export default function ScheduleManagementPage() {
             <div className={styles.modalBody}>
               <div className={styles.formGroup}>
                 <label>Tanggal Servis Baru *</label>
-                <input type="date" value={rescheduleDate} onChange={e => setRescheduleDate(e.target.value)} />
+                <DatePicker
+                  value={rescheduleDate}
+                  onChange={val => setRescheduleDate(val)}
+                  customTrigger={(formatted) => (
+                    <button
+                      type="button"
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        borderRadius: '8px',
+                        border: '1px solid #CBD5E1',
+                        background: '#ffffff',
+                        fontSize: '0.88rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        cursor: 'pointer',
+                        color: rescheduleDate ? '#001F3F' : '#94a3b8',
+                      }}
+                    >
+                      <span>{rescheduleDate || 'Pilih tanggal servis...'}</span>
+                      <CalendarDays size={15} style={{ color: '#2E5BFF' }} />
+                    </button>
+                  )}
+                />
               </div>
               <div className={styles.formGroup}>
                 <label>Tanggal Delivery Baru (opsional)</label>
-                <input type="date" value={rescheduleDelivery} onChange={e => setRescheduleDelivery(e.target.value)} />
+                <DatePicker
+                  value={rescheduleDelivery}
+                  onChange={val => setRescheduleDelivery(val)}
+                  customTrigger={(formatted) => (
+                    <button
+                      type="button"
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        borderRadius: '8px',
+                        border: '1px solid #CBD5E1',
+                        background: '#ffffff',
+                        fontSize: '0.88rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        cursor: 'pointer',
+                        color: rescheduleDelivery ? '#001F3F' : '#94a3b8',
+                      }}
+                    >
+                      <span>{rescheduleDelivery || 'Pilih tanggal delivery...'}</span>
+                      <CalendarDays size={15} style={{ color: '#2E5BFF' }} />
+                    </button>
+                  )}
+                />
               </div>
             </div>
             <div className={styles.modalFooter}>

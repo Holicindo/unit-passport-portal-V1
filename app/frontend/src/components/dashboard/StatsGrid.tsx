@@ -83,28 +83,31 @@ export default function StatsGrid({ items, data, loading }: StatsGridProps) {
           .stats-grid-mobile {
             display: grid !important;
             grid-template-columns: repeat(2, 1fr) !important;
-            gap: 12px !important;
-            margin-bottom: 20px !important;
+            gap: 10px !important;
+            margin-bottom: 14px !important;
           }
           .stats-grid-mobile > div {
-            padding: 12px 14px !important;
-            border: 2px solid rgba(255, 255, 255, 0.25) !important;
-            box-shadow: -4px -4px 12px rgba(255, 255, 255, 0.08), 4px 4px 16px rgba(0, 0, 0, 0.45) !important;
+            padding: 10px 12px !important;
+            border-radius: 14px !important;
+            gap: 12px !important;
+            border: 1.5px solid rgba(255, 255, 255, 0.22) !important;
+            box-shadow: 0 4px 14px rgba(0, 31, 63, 0.25) !important;
           }
           .stats-grid-mobile .stat-icon {
-            width: 32px !important;
-            height: 32px !important;
+            width: 28px !important;
+            height: 28px !important;
           }
           .stats-grid-mobile .stat-icon svg {
-            width: 18px !important;
-            height: 18px !important;
+            width: 16px !important;
+            height: 16px !important;
           }
           .stats-grid-mobile .stat-value {
-            font-size: 1.25rem !important;
-            margin-bottom: 2px !important;
+            font-size: 1.2rem !important;
+            margin-bottom: 1px !important;
           }
           .stats-grid-mobile .stat-label {
-            font-size: 0.65rem !important;
+            font-size: 0.62rem !important;
+            line-height: 1.2 !important;
           }
         }
       `}</style>

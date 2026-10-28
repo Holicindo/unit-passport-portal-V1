@@ -2,11 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { serviceLogApi, unitApi, partnerApi } from '@/lib/api';
+import { serviceLogApi, unitApi, partnerApi, userApi } from '@/lib/api';
 import {
-  Wrench, Search, Plus, Loader2, FileText, CheckCircle2, AlertTriangle, Edit2, Check, X, RefreshCw,
+  Wrench, Search, Plus, Loader2, FileText, CheckCircle2, AlertTriangle, Edit2, Check, X, RefreshCw, ChevronDown, CalendarDays, Users
 } from 'lucide-react';
 import { CustomSelect } from '@/components/ui/CustomSelect';
+import { MultiSelect } from '@/components/ui/MultiSelect';
+import DatePicker from '@/components/ui/DatePicker';
 import StatsGrid from '@/components/dashboard/StatsGrid';
 import { parseIssueDescription, formatDate } from './utils';
 import ServiceFormModal, { ConfirmSubmitModal } from './components/ServiceFormModal';
@@ -23,9 +25,32 @@ export default function ServicePage() {
   const [logs, setLogs] = useState<any[]>([]);
   const [units, setUnits] = useState<any[]>([]);
   const [partners, setPartners] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Available technicians from User Management with role MECHANIC / TEKNISI
+  const technicianOptions = React.useMemo(() => {
+    const techs = users.filter(u => {
+      const r = (u.role || '').toUpperCase();
+      return r === 'MECHANIC' || r === 'TEKNISI';
+    });
+    if (techs.length > 0) {
+      return techs.map(t => ({
+        value: t.name,
+        label: t.name,
+        badge: t.partner_id ? 'Mitra' : 'HQ',
+      }));
+    }
+    // Fallback if users haven't loaded yet or default
+    return [
+      { value: 'Budi Santoso', label: 'Budi Santoso', badge: 'HQ' },
+      { value: 'Andi Wijaya', label: 'Andi Wijaya', badge: 'HQ' },
+      { value: 'Mutiara', label: 'Mutiara', badge: 'Teknisi' },
+      { value: 'Dedi Kurniawan', label: 'Dedi Kurniawan', badge: 'Mitra' },
+    ];
+  }, [users]);
 
   // Filters
   const [searchQuery, setSearchQuery] = useState(initialCallId);
@@ -48,12 +73,14 @@ export default function ServicePage() {
 
   // Sub-row inline edit & add row states
   const [editingRowId, setEditingRowId] = useState<string | null>(null);
+  const [editRowDate, setEditRowDate] = useState<string>('');
   const [editRowTech, setEditRowTech] = useState<string>('');
   const [editRowAction, setEditRowAction] = useState<string>('');
   const [editRowResult, setEditRowResult] = useState<string>('');
   const [editRowStatus, setEditRowStatus] = useState<string>('');
 
   const [addingToCallId, setAddingToCallId] = useState<string | null>(null);
+  const [newRowDate, setNewRowDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [newRowTech, setNewRowTech] = useState<string>('');
   const [newRowAction, setNewRowAction] = useState<string>('');
   const [newRowResult, setNewRowResult] = useState<string>('');
@@ -76,10 +103,11 @@ export default function ServicePage() {
     setLoading(true);
     setError(null);
     try {
-      const [logsSettled, unitsSettled, partnersSettled] = await Promise.allSettled([
+      const [logsSettled, unitsSettled, partnersSettled, usersSettled] = await Promise.allSettled([
         serviceLogApi.findAll(1, 200),
         unitApi.findAll(1, 1000),
         partnerApi.findAll(),
+        userApi.findAll(),
       ]);
 
       if (logsSettled.status === 'fulfilled') {
@@ -104,6 +132,12 @@ export default function ServicePage() {
         setPartners(items);
       } else {
         console.error('Gagal load partners:', partnersSettled.reason);
+      }
+
+      if (usersSettled.status === 'fulfilled') {
+        const res = usersSettled.value;
+        const items = res.data?.data ?? (Array.isArray(res.data) ? res.data : []);
+        setUsers(items);
       }
 
       if (logsSettled.status === 'rejected' && unitsSettled.status === 'rejected') {
@@ -257,39 +291,33 @@ export default function ServicePage() {
   const handleStartRowEdit = (e: React.MouseEvent, hlog: any) => {
     e.stopPropagation();
     setEditingRowId(hlog.id);
+    const dateVal = hlog.scheduled_date || hlog.service_date || hlog.created_at;
+    setEditRowDate(dateVal ? new Date(dateVal).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
     setEditRowTech(hlog.technician_name || '');
     setEditRowAction(hlog.action_taken || '');
-    setEditRowResult(hlog.status === 'COMPLETED' ? (hlog.planning_notes || hlog.action_taken || '') : (hlog.planning_notes || ''));
-    setEditRowStatus(hlog.status || 'IN PROGRESS');
+    setEditRowResult(hlog.planning_notes || '');
+    // Mapping internal status ke Progress display
+    const currentProg = hlog.status === 'COMPLETED' ? 'Done' : hlog.status === 'PENDING' ? 'Waiting' : 'Scheduled';
+    setEditRowStatus(currentProg);
   };
 
-  // Handler save in-row editing
+  // Handler save in-row editing (Sub row hanya update progress tanpa popup sparepart)
   const handleSaveRowEdit = async (e: React.MouseEvent, hlog: any) => {
     e.stopPropagation();
 
-    // Trigger popup sparepart jika diubah menjadi COMPLETED
-    if (editRowStatus === 'COMPLETED' && hlog.status !== 'COMPLETED') {
-      setSparepartModalTicket({
-        id: hlog.id,
-        call_id: hlog.call_id || hlog.id,
-        model_name: hlog.unit?.model_name,
-        technician_name: editRowTech.trim(),
-        action_taken: editRowAction.trim(),
-        planning_notes: editRowResult.trim(),
-        status: 'COMPLETED',
-      });
-      setEditingRowId(null);
-      return;
-    }
+    // Map Progress (Done / Scheduled / Waiting) ke status database
+    const mappedDbStatus = editRowStatus === 'Done' ? 'COMPLETED' : editRowStatus === 'Waiting' ? 'PENDING' : 'IN PROGRESS';
 
     try {
       setSubmitting(true);
       const { serviceLogApi } = await import('@/lib/api');
       await serviceLogApi.update(hlog.id, {
+        service_date: editRowDate ? new Date(editRowDate) : undefined,
+        scheduled_date: editRowDate || undefined,
         technician_name: editRowTech.trim() || undefined,
         action_taken: editRowAction.trim() || undefined,
         planning_notes: editRowResult.trim() || undefined,
-        status: editRowStatus,
+        status: mappedDbStatus,
       });
       setEditingRowId(null);
       await fetchData();
@@ -308,27 +336,8 @@ export default function ServicePage() {
       return;
     }
 
-    // Trigger popup sparepart jika baris baru langsung berstatus COMPLETED
-    if (newRowStatus === 'COMPLETED') {
-      setSparepartModalTicket({
-        isNewSubRow: true,
-        unitId: mainLog.unit?.id,
-        call_id: mainLog.call_id || mainLog.id,
-        issue_description: mainLog.issue_description,
-        action_taken: newRowAction.trim(),
-        planning_notes: newRowResult.trim(),
-        technician_name: newRowTech.trim(),
-        status: 'COMPLETED',
-        task_type: mainLog.task_type || 'CORRECTIVE',
-        model_name: mainLog.unit?.model_name,
-      });
-      setAddingToCallId(null);
-      setNewRowAction('');
-      setNewRowResult('');
-      setNewRowTech('');
-      setNewRowStatus('IN PROGRESS');
-      return;
-    }
+    // Map Progress (Done / Scheduled / Waiting) ke status database
+    const mappedDbStatus = newRowStatus === 'Done' ? 'COMPLETED' : newRowStatus === 'Waiting' ? 'PENDING' : 'IN PROGRESS';
 
     try {
       setSubmitting(true);
@@ -340,14 +349,17 @@ export default function ServicePage() {
         action_taken: newRowAction.trim(),
         planning_notes: newRowResult.trim() || undefined,
         technician_name: newRowTech.trim() || undefined,
-        status: newRowStatus as any,
+        service_date: newRowDate ? new Date(newRowDate) : undefined,
+        scheduled_date: newRowDate || undefined,
+        status: mappedDbStatus as any,
         task_type: mainLog.task_type || 'CORRECTIVE',
       });
       setAddingToCallId(null);
       setNewRowAction('');
       setNewRowResult('');
       setNewRowTech('');
-      setNewRowStatus('IN PROGRESS');
+      setNewRowStatus('Scheduled');
+      setNewRowDate(new Date().toISOString().split('T')[0]);
       await fetchData();
     } catch {
       alert('Gagal menambahkan baris baru ke log ini.');
@@ -427,14 +439,14 @@ export default function ServicePage() {
             <thead>
               <tr>
                 <th style={{ width: '11%' }}>CALL ID</th>
-                <th style={{ width: '9%' }}>DATE COMPLAIN</th>
-                <th style={{ width: '15%' }}>CUSTOMER & CABANG</th>
+                <th style={{ width: '10%' }}>COMPLAINT DATE</th>
+                <th style={{ width: '15%' }}>CUSTOMER &amp; BRANCH</th>
                 <th style={{ width: '14%' }}>PRODUCT (UNIT)</th>
-                <th style={{ width: '15%' }}>ISSUE</th>
+                <th style={{ width: '15%' }}>ISSUE </th>
                 <th style={{ width: '14%' }}>HANDLING</th>
                 <th style={{ width: '14%' }}>RESULT</th>
-                <th style={{ width: '10%' }}>REPLACED SPAREPART</th>
-                <th style={{ width: '7%', textAlign: 'center' }}>STATUS</th>
+                <th style={{ width: '10%' }}>SPAREPART</th>
+                <th style={{ width: '8%', textAlign: 'center' }}>STATUS</th>
               </tr>
             </thead>
             <tbody>
@@ -520,10 +532,73 @@ export default function ServicePage() {
                           </div>
                         ) : <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontStyle: 'italic' }}>—</span>}
                       </td>
-                      <td onClick={(e) => e.stopPropagation()}>
-                        <span
-                          className={`${styles.badge} ${mainLog.status === 'PENDING' ? styles.badgePending : mainLog.status === 'IN PROGRESS' ? styles.badgeInProgress : mainLog.status === 'COMPLETED' ? styles.badgeCompleted : styles.badgeCancelled}`}
-                        >{mainLog.status}</span>
+                      <td onClick={(e) => e.stopPropagation()} style={{ textAlign: 'center' }}>
+                        <CustomSelect
+                          value={mainLog.status}
+                          options={[
+                            { value: 'PENDING', label: 'PENDING' },
+                            { value: 'IN PROGRESS', label: 'IN PROGRESS' },
+                            { value: 'COMPLETED', label: 'COMPLETED' },
+                            { value: 'CANCELED', label: 'CANCELED' },
+                          ]}
+                          showSearch={false}
+                          onChange={(newStatus) => {
+                            if (newStatus === 'COMPLETED') {
+                              // Trigger popup sparepart saat status di main row diubah ke COMPLETED
+                              setSparepartModalTicket({
+                                id: mainLog.id,
+                                call_id: mainLog.call_id || mainLog.id,
+                                model_name: mainLog.unit?.model_name,
+                                technician_name: mainLog.technician_name || '',
+                                action_taken: mainLog.action_taken || '',
+                                planning_notes: mainLog.planning_notes || '',
+                                status: 'COMPLETED',
+                              });
+                            } else {
+                              // Update status biasa (PENDING / IN PROGRESS / CANCELED)
+                              (async () => {
+                                try {
+                                  setSubmitting(true);
+                                  const { serviceLogApi } = await import('@/lib/api');
+                                  await serviceLogApi.update(mainLog.id, { status: newStatus });
+                                  await fetchData();
+                                } catch {
+                                  alert('Gagal mengubah status.');
+                                } finally {
+                                  setSubmitting(false);
+                                }
+                              })();
+                            }
+                          }}
+                          customTrigger={(opt, isOpen) => {
+                            const currentVal = opt ? opt.value : mainLog.status;
+                            const statusClass =
+                              currentVal === 'COMPLETED'
+                                ? styles.statusCompleted
+                                : currentVal === 'IN PROGRESS'
+                                  ? styles.statusInProgress
+                                  : currentVal === 'PENDING'
+                                    ? styles.statusPending
+                                    : styles.statusCancelled;
+
+                            return (
+                              <button
+                                type="button"
+                                className={`${styles.neuStatusPillTrigger} ${statusClass}`}
+                              >
+                                <span>{opt ? opt.label : currentVal}</span>
+                                <ChevronDown
+                                  size={13}
+                                  style={{
+                                    transform: isOpen ? 'rotate(180deg)' : 'none',
+                                    transition: 'transform 0.2s ease',
+                                    opacity: 0.85,
+                                  }}
+                                />
+                              </button>
+                            );
+                          }}
+                        />
                       </td>
                     </tr>
                     {isExpanded && (
@@ -555,31 +630,82 @@ export default function ServicePage() {
                             <table className={styles.subRowTable}>
                               <thead>
                                 <tr>
-                                  <th style={{ width: '15%' }}>Date Execution</th>
-                                  <th style={{ width: '16%' }}>Teknisi</th>
-                                  <th style={{ width: '30%' }}>Handling</th>
+                                  <th style={{ width: '16%' }}>Execution Date</th>
+                                  <th style={{ width: '16%' }}>Technician</th>
+                                  <th style={{ width: '30%' }}>Action Taken</th>
                                   <th style={{ width: '22%' }}>Result</th>
-                                  <th style={{ width: '10%' }}>Status</th>
-                                  <th style={{ width: '7%', textAlign: 'center' }}>Aksi</th>
+                                  <th style={{ width: '11%' }}>Progress</th>
+                                  <th style={{ width: '7%', textAlign: 'center' }}>Action</th>
                                 </tr>
                               </thead>
                               <tbody>
                                 {history.map((hlog: any) => {
                                   const isRowEditing = editingRowId === hlog.id;
+                                  const progressLabel = hlog.status === 'COMPLETED' ? 'Done' : hlog.status === 'PENDING' ? 'Waiting' : 'Scheduled';
                                   return (
                                     <tr key={hlog.id}>
-                                      <td style={{ color: 'var(--color-deep-navy)', fontWeight: 600 }}>{formatDate(hlog.scheduled_date || hlog.service_date || hlog.created_at)}</td>
-                                      <td>
+                                      <td style={{ color: 'var(--color-deep-navy)', fontWeight: 600 }}>
                                         {isRowEditing ? (
-                                          <input
-                                            type="text"
-                                            value={editRowTech}
-                                            onChange={(e) => setEditRowTech(e.target.value)}
-                                            onClick={(e) => e.stopPropagation()}
-                                            style={{ width: '100%', padding: '6px 8px', borderRadius: '4px', border: '1px solid #2E5BFF', fontSize: '0.82rem' }}
+                                          <DatePicker
+                                            value={editRowDate}
+                                            onChange={(val) => setEditRowDate(val)}
+                                            customTrigger={(formatted) => (
+                                              <button
+                                                type="button"
+                                                className={styles.neuDateInput}
+                                                style={{
+                                                  display: 'flex',
+                                                  alignItems: 'center',
+                                                  justifyContent: 'space-between',
+                                                  cursor: 'pointer',
+                                                  textAlign: 'left',
+                                                  fontSize: '0.8rem',
+                                                  background: '#ffffff',
+                                                }}
+                                              >
+                                                <span>{editRowDate || 'Pilih tanggal...'}</span>
+                                                <CalendarDays size={14} style={{ color: '#2E5BFF', opacity: 0.8 }} />
+                                              </button>
+                                            )}
                                           />
                                         ) : (
-                                          <span style={{ color: 'var(--color-deep-navy)', fontWeight: 600 }}>{hlog.technician_name || 'Menunggu Teknisi'}</span>
+                                          formatDate(hlog.scheduled_date || hlog.service_date || hlog.created_at)
+                                        )}
+                                      </td>
+                                      <td>
+                                        {isRowEditing ? (
+                                          <div onClick={(e) => e.stopPropagation()}>
+                                            <MultiSelect
+                                              value={editRowTech ? editRowTech.split(',').map((s: string) => s.trim()).filter(Boolean) : []}
+                                              onChange={(arr) => setEditRowTech(arr.join(', '))}
+                                              options={technicianOptions}
+                                              placeholder="Pilih teknisi..."
+                                              fullWidth
+                                            />
+                                          </div>
+                                        ) : (
+                                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', alignItems: 'center' }}>
+                                            {hlog.technician_name ? (
+                                              hlog.technician_name.split(',').map((tName: string, tIdx: number) => (
+                                                <span
+                                                  key={tIdx}
+                                                  style={{
+                                                    fontSize: '0.74rem',
+                                                    fontWeight: 600,
+                                                    background: 'rgba(46,91,255,0.08)',
+                                                    color: '#1E40AF',
+                                                    padding: '2px 7px',
+                                                    borderRadius: '4px',
+                                                    display: 'inline-block',
+                                                  }}
+                                                >
+                                                  {tName.trim()}
+                                                </span>
+                                              ))
+                                            ) : (
+                                              <span style={{ color: '#94a3b8', fontStyle: 'italic', fontSize: '0.78rem' }}>Menunggu Teknisi</span>
+                                            )}
+                                          </div>
                                         )}
                                       </td>
                                       <td>
@@ -612,19 +738,57 @@ export default function ServicePage() {
                                       </td>
                                       <td>
                                         {isRowEditing ? (
-                                          <select
+                                          <CustomSelect
                                             value={editRowStatus}
-                                            onChange={(e) => setEditRowStatus(e.target.value)}
-                                            onClick={(e) => e.stopPropagation()}
-                                            style={{ width: '100%', padding: '4px 6px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.78rem' }}
-                                          >
-                                            <option value="PENDING">PENDING</option>
-                                            <option value="IN PROGRESS">IN PROGRESS</option>
-                                            <option value="COMPLETED">COMPLETED</option>
-                                            <option value="CANCELED">CANCELED</option>
-                                          </select>
+                                            options={[
+                                              { value: 'Done', label: 'Done' },
+                                              { value: 'Scheduled', label: 'Scheduled' },
+                                              { value: 'Waiting', label: 'Waiting' },
+                                            ]}
+                                            showSearch={false}
+                                            onChange={(val) => setEditRowStatus(val)}
+                                            customTrigger={(opt, isOpen) => {
+                                              const cur = opt ? opt.value : editRowStatus;
+                                              const pClass =
+                                                cur === 'Done'
+                                                  ? styles.progressDone
+                                                  : cur === 'Scheduled'
+                                                    ? styles.progressScheduled
+                                                    : styles.progressWaiting;
+                                              return (
+                                                <button
+                                                  type="button"
+                                                  className={`${styles.neuStatusPillTrigger} ${pClass}`}
+                                                  style={{ padding: '4px 10px', fontSize: '0.68rem' }}
+                                                >
+                                                  <span>{opt ? opt.label : cur}</span>
+                                                  <ChevronDown
+                                                    size={12}
+                                                    style={{
+                                                      transform: isOpen ? 'rotate(180deg)' : 'none',
+                                                      transition: 'transform 0.2s ease',
+                                                    }}
+                                                  />
+                                                </button>
+                                              );
+                                            }}
+                                          />
                                         ) : (
-                                          <span className={`${styles.badge} ${hlog.status === 'PENDING' ? styles.badgePending : hlog.status === 'IN PROGRESS' ? styles.badgeInProgress : hlog.status === 'COMPLETED' ? styles.badgeCompleted : styles.badgeCancelled}`}>{hlog.status}</span>
+                                          <span
+                                            style={{
+                                              fontSize: '0.68rem',
+                                              fontWeight: 800,
+                                              padding: '3px 8px',
+                                              borderRadius: '12px',
+                                              textTransform: 'uppercase',
+                                              display: 'inline-block',
+                                              background: progressLabel === 'Done' ? 'rgba(16, 185, 129, 0.12)' : progressLabel === 'Scheduled' ? 'rgba(0, 71, 171, 0.1)' : 'rgba(245, 158, 11, 0.12)',
+                                              color: progressLabel === 'Done' ? '#059669' : progressLabel === 'Scheduled' ? '#0047AB' : '#d97706',
+                                              border: `1px solid ${progressLabel === 'Done' ? 'rgba(16, 185, 129, 0.3)' : progressLabel === 'Scheduled' ? 'rgba(0, 71, 171, 0.25)' : 'rgba(245, 158, 11, 0.3)'}`,
+                                            }}
+                                          >
+                                            {progressLabel}
+                                          </span>
                                         )}
                                       </td>
                                       <td style={{ textAlign: 'center' }}>
@@ -666,16 +830,40 @@ export default function ServicePage() {
                                 {/* Inline Add Row Form */}
                                 {addingToCallId === cid && (
                                   <tr style={{ background: 'rgba(46,91,255,0.03)' }}>
-                                    <td style={{ fontSize: '0.78rem', color: '#64748b', fontStyle: 'italic' }}>Sekarang (Baru)</td>
                                     <td>
-                                      <input
-                                        type="text"
-                                        placeholder="Nama Teknisi..."
-                                        value={newRowTech}
-                                        onChange={(e) => setNewRowTech(e.target.value)}
-                                        onClick={(e) => e.stopPropagation()}
-                                        style={{ width: '100%', padding: '6px 8px', borderRadius: '4px', border: '1px solid #2E5BFF', fontSize: '0.8rem' }}
+                                      <DatePicker
+                                        value={newRowDate}
+                                        onChange={(val) => setNewRowDate(val)}
+                                        customTrigger={(formatted) => (
+                                          <button
+                                            type="button"
+                                            className={styles.neuDateInput}
+                                            style={{
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              justifyContent: 'space-between',
+                                              cursor: 'pointer',
+                                              textAlign: 'left',
+                                              fontSize: '0.8rem',
+                                              background: '#ffffff',
+                                            }}
+                                          >
+                                            <span>{newRowDate || 'Pilih tanggal...'}</span>
+                                            <CalendarDays size={14} style={{ color: '#2E5BFF', opacity: 0.8 }} />
+                                          </button>
+                                        )}
                                       />
+                                    </td>
+                                    <td>
+                                      <div onClick={(e) => e.stopPropagation()}>
+                                        <MultiSelect
+                                          value={newRowTech ? newRowTech.split(',').map((s: string) => s.trim()).filter(Boolean) : []}
+                                          onChange={(arr) => setNewRowTech(arr.join(', '))}
+                                          options={technicianOptions}
+                                          placeholder="Pilih teknisi..."
+                                          fullWidth
+                                        />
+                                      </div>
                                     </td>
                                     <td>
                                       <textarea
@@ -696,17 +884,41 @@ export default function ServicePage() {
                                       />
                                     </td>
                                     <td>
-                                      <select
+                                      <CustomSelect
                                         value={newRowStatus}
-                                        onChange={(e) => setNewRowStatus(e.target.value)}
-                                        onClick={(e) => e.stopPropagation()}
-                                        style={{ width: '100%', padding: '6px 6px', borderRadius: '4px', border: '1px solid #2E5BFF', fontSize: '0.78rem' }}
-                                      >
-                                        <option value="IN PROGRESS">IN PROGRESS</option>
-                                        <option value="COMPLETED">COMPLETED</option>
-                                        <option value="PENDING">PENDING</option>
-                                        <option value="CANCELED">CANCELED</option>
-                                      </select>
+                                        options={[
+                                          { value: 'Done', label: 'Done' },
+                                          { value: 'Scheduled', label: 'Scheduled' },
+                                          { value: 'Waiting', label: 'Waiting' },
+                                        ]}
+                                        showSearch={false}
+                                        onChange={(val) => setNewRowStatus(val)}
+                                        customTrigger={(opt, isOpen) => {
+                                          const cur = opt ? opt.value : newRowStatus;
+                                          const pClass =
+                                            cur === 'Done'
+                                              ? styles.progressDone
+                                              : cur === 'Scheduled'
+                                                ? styles.progressScheduled
+                                                : styles.progressWaiting;
+                                          return (
+                                            <button
+                                              type="button"
+                                              className={`${styles.neuStatusPillTrigger} ${pClass}`}
+                                              style={{ padding: '4px 10px', fontSize: '0.68rem' }}
+                                            >
+                                              <span>{opt ? opt.label : cur}</span>
+                                              <ChevronDown
+                                                size={12}
+                                                style={{
+                                                  transform: isOpen ? 'rotate(180deg)' : 'none',
+                                                  transition: 'transform 0.2s ease',
+                                                }}
+                                              />
+                                            </button>
+                                          );
+                                        }}
+                                      />
                                     </td>
                                     <td style={{ textAlign: 'center' }}>
                                       <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
@@ -801,6 +1013,7 @@ export default function ServicePage() {
         issueDescription={issueDescription} setIssueDescription={setIssueDescription}
         actionTaken={actionTaken} setActionTaken={setActionTaken}
         technicianName={technicianName} setTechnicianName={setTechnicianName}
+        technicianOptions={technicianOptions}
         status={status} setStatus={setStatus}
         taskType={taskType} setTaskType={setTaskType}
         scheduledDate={scheduledDate} setScheduledDate={setScheduledDate}
@@ -814,6 +1027,7 @@ export default function ServicePage() {
       {selectedDetailLog && (
         <ServiceDetailModal
           log={selectedDetailLog} partners={partners}
+          technicianOptions={technicianOptions}
           onClose={() => setSelectedDetailLog(null)}
           onUpdate={async (updated) => { await fetchData(); setSelectedDetailLog(updated); }}
           submitting={submitting} setSubmitting={setSubmitting}
@@ -829,10 +1043,15 @@ export default function ServicePage() {
             {quickStatusLog.__standalone ? (
               <div>
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>Pilih Tiket (Call ID)</label>
-                <select
-                  defaultValue=""
-                  onChange={(e) => {
-                    const selected = logs.find(l => (l.call_id || l.id) === e.target.value);
+                <CustomSelect
+                  value=""
+                  placeholder="— Cari & Pilih Call ID —"
+                  options={Array.from(new Map(logs.map(l => [l.call_id || l.id, l])).values()).map(l => ({
+                    value: l.call_id || l.id,
+                    label: `${l.call_id || l.id} — ${l.unit?.model_name || 'Unit'} (${l.status})`,
+                  }))}
+                  onChange={(val) => {
+                    const selected = logs.find(l => (l.call_id || l.id) === val);
                     if (selected) {
                       setQuickStatusLog(selected);
                       setQuickStatusValue(selected.status);
@@ -840,15 +1059,7 @@ export default function ServicePage() {
                       setQuickScheduledDate(selected.scheduled_date ? selected.scheduled_date.split('T')[0] : '');
                     }
                   }}
-                  style={{ padding: '9px 12px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.875rem', color: 'var(--color-deep-navy)', outline: 'none', width: '100%', background: '#fff' }}
-                >
-                  <option value="">— Cari & Pilih Call ID —</option>
-                  {Array.from(new Map(logs.map(l => [l.call_id || l.id, l])).values()).map(l => (
-                    <option key={l.call_id || l.id} value={l.call_id || l.id}>
-                      {l.call_id || l.id} — {l.unit?.model_name || 'Unit'} ({l.status})
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
             ) : (
               <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', fontSize: '0.85rem', color: 'var(--color-space-grey)', border: '1px solid #e2e8f0' }}>
@@ -860,36 +1071,54 @@ export default function ServicePage() {
             {!quickStatusLog.__standalone && (<>
               <div>
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>Kondisi Servis</label>
-                <select
+                <CustomSelect
                   value={quickStatusValue}
-                  onChange={(e) => setQuickStatusValue(e.target.value)}
-                  style={{ padding: '9px 12px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.875rem', color: 'var(--color-deep-navy)', outline: 'none', width: '100%', background: '#fff' }}
-                >
-                  <option value="PENDING">PENDING</option>
-                  <option value="IN PROGRESS">IN PROGRESS</option>
-                  <option value="COMPLETED">COMPLETED</option>
-                  <option value="CANCELED">CANCELED</option>
-                </select>
+                  options={[
+                    { value: 'PENDING', label: 'PENDING' },
+                    { value: 'IN PROGRESS', label: 'IN PROGRESS' },
+                    { value: 'COMPLETED', label: 'COMPLETED' },
+                    { value: 'CANCELED', label: 'CANCELED' },
+                  ]}
+                  showSearch={false}
+                  onChange={(val) => setQuickStatusValue(val)}
+                />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>Nama Teknisi yang Ditugaskan</label>
-                <input
-                  type="text"
-                  placeholder="Contoh: Budi Santoso / Tim Teknisi Holicindo"
-                  value={quickTechnician}
-                  onChange={(e) => setQuickTechnician(e.target.value)}
-                  style={{ padding: '9px 12px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.875rem', color: 'var(--color-deep-navy)', outline: 'none', width: '100%', background: '#fff' }}
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>Teknisi yang Ditugaskan (Bisa pilih lebih dari 1)</label>
+                <MultiSelect
+                  value={quickTechnician ? quickTechnician.split(',').map((s: string) => s.trim()).filter(Boolean) : []}
+                  onChange={(arr) => setQuickTechnician(arr.join(', '))}
+                  options={technicianOptions}
+                  placeholder="Pilih teknisi yang berangkat..."
+                  fullWidth
                 />
               </div>
 
               <div>
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>Rencana Kunjungan / Servis</label>
-                <input
-                  type="date"
+                <DatePicker
                   value={quickScheduledDate}
-                  onChange={(e) => setQuickScheduledDate(e.target.value)}
-                  style={{ padding: '9px 12px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.875rem', color: 'var(--color-deep-navy)', outline: 'none', width: '100%', background: '#fff' }}
+                  onChange={(val) => setQuickScheduledDate(val)}
+                  customTrigger={(formatted) => (
+                    <button
+                      type="button"
+                      className={styles.neuDateInput}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        fontSize: '0.85rem',
+                        background: '#ffffff',
+                        padding: '9px 12px',
+                      }}
+                    >
+                      <span>{quickScheduledDate || 'Pilih tanggal kunjungan...'}</span>
+                      <CalendarDays size={15} style={{ color: '#2E5BFF', opacity: 0.8 }} />
+                    </button>
+                  )}
                 />
               </div>
             </>)}

@@ -10,6 +10,8 @@ interface DatePickerProps {
   label?: string;
   placeholder?: string;
   theme?: 'light' | 'dark';
+  className?: string;
+  customTrigger?: (formattedValue: string, isOpen: boolean) => React.ReactNode;
 }
 
 const MONTHS_ID = [
@@ -59,6 +61,8 @@ export default function DatePicker({
   label,
   placeholder = 'Pilih tanggal...',
   theme = 'light',
+  className = '',
+  customTrigger,
 }: DatePickerProps) {
   const today = new Date();
   const selectedDate = value ? new Date(value + 'T00:00:00') : null;
@@ -70,7 +74,7 @@ export default function DatePicker({
   const [yearRangeStart, setYearRangeStart] = useState(
     Math.floor((selectedDate?.getFullYear() ?? today.getFullYear()) / 12) * 12
   );
-  // popup position: always above the button
+  // popup position
   const [popupStyle, setPopupStyle] = useState<React.CSSProperties>({});
 
   // ── Detect dark mode from document ─────────────────────────────────────────
@@ -82,21 +86,27 @@ export default function DatePicker({
   const c = isDark || theme === 'dark' ? darkColors : lightColors;
 
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const triggerWrapRef = useRef<HTMLDivElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
 
   const recalcPosition = useCallback(() => {
-    if (!buttonRef.current) return;
-    const rect = buttonRef.current.getBoundingClientRect();
+    const el = buttonRef.current || triggerWrapRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
     const popupH = 340;
     const popupW = 290;
-    // prefer above; fall back to below only if no room
-    const topAbove = rect.top - popupH - 6 + window.scrollY;
-    const topBelow = rect.bottom + 6 + window.scrollY;
-    const useAbove = rect.top > popupH + 12;
+    
+    // Check available space below vs above viewport
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const useBelow = spaceBelow >= popupH || spaceBelow >= rect.top;
+    
+    const top = useBelow ? rect.bottom + 6 : Math.max(10, rect.top - popupH - 6);
+    const left = Math.max(10, Math.min(rect.left, window.innerWidth - popupW - 12));
+
     setPopupStyle({
-      position: 'absolute',
-      top: useAbove ? topAbove : topBelow,
-      left: Math.min(rect.left + window.scrollX, window.innerWidth - popupW - 8),
+      position: 'fixed',
+      top,
+      left,
       width: popupW,
       zIndex: 99999,
     });
@@ -355,7 +365,11 @@ export default function DatePicker({
   ) : null;
 
   return (
-    <div style={{ position:'relative', width:'100%' }}>
+    <div
+      className={className}
+      style={{ position: 'relative', width: '100%' }}
+      onClick={(e) => e.stopPropagation()}
+    >
       {label && (
         <label style={{
           display: 'block',
@@ -369,33 +383,40 @@ export default function DatePicker({
           {label}
         </label>
       )}
-      <button
-        ref={buttonRef}
-        type="button"
-        onClick={handleOpen}
-        style={{
-          width: '100%',
-          background: triggerBg,
-          border: triggerBorder,
-          borderRadius: '10px',
-          padding: '10px 14px',
-          color: displayValue ? triggerColor : '#94a3b8',
-          fontSize: '0.88rem',
-          fontFamily: 'inherit',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '8px',
-          cursor: 'pointer',
-          textAlign: 'left',
-          boxSizing: 'border-box',
-          boxShadow: triggerShadow,
-          transition: 'box-shadow 0.2s ease',
-        }}
-      >
-        <span>{displayValue || placeholder}</span>
-        <CalendarDays size={16} color="#94a3b8" />
-      </button>
+
+      {customTrigger ? (
+        <div ref={triggerWrapRef} onClick={handleOpen}>
+          {customTrigger(displayValue, isOpen)}
+        </div>
+      ) : (
+        <button
+          ref={buttonRef}
+          type="button"
+          onClick={handleOpen}
+          style={{
+            width: '100%',
+            background: triggerBg,
+            border: triggerBorder,
+            borderRadius: '10px',
+            padding: '10px 14px',
+            color: displayValue ? triggerColor : '#94a3b8',
+            fontSize: '0.88rem',
+            fontFamily: 'inherit',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '8px',
+            cursor: 'pointer',
+            textAlign: 'left',
+            boxSizing: 'border-box',
+            boxShadow: triggerShadow,
+            transition: 'box-shadow 0.2s ease',
+          }}
+        >
+          <span>{displayValue || placeholder}</span>
+          <CalendarDays size={16} color="#94a3b8" />
+        </button>
+      )}
 
       {typeof document !== 'undefined' && popup && createPortal(popup, document.body)}
     </div>

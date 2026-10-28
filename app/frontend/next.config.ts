@@ -27,10 +27,46 @@ const nextConfig: NextConfig = {
     ],
   },
 
-  // Increase proxy timeout for bulk operations & optimize lucide-react compile time
+  // Memory optimization and performance improvements
   experimental: {
     proxyTimeout: 300000, // 5 minutes
     optimizePackageImports: ['lucide-react'],
+  },
+
+  // Webpack optimizations to reduce memory usage
+  webpack: (config, { isServer }) => {
+    // Reduce memory usage by limiting parallel processing
+    config.parallelism = 1;
+    
+    // Optimize memory for production builds
+    if (!isServer) {
+      config.optimization = {
+        ...config.optimization,
+        minimize: process.env.NODE_ENV === 'production',
+        runtimeChunk: false,
+        splitChunks: {
+          chunks: 'async',
+          cacheGroups: {
+            default: false,
+            vendors: false,
+          },
+        },
+      };
+    }
+
+    // Reduce file watching overhead
+    config.watchOptions = {
+      ignored: /node_modules/,
+      aggregateTimeout: 600, // Increase debounce time
+      poll: false, // Disable polling to save resources
+    };
+
+    // Disable source maps in development to save memory
+    if (process.env.NODE_ENV === 'development') {
+      config.devtool = false;
+    }
+
+    return config;
   },
   
   // Proxy /api requests to the backend to bypass HTTPS -> HTTP Mixed Content Block

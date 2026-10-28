@@ -185,6 +185,9 @@ export const iotApi = {
   getLatest: (unitId: string) => api.get(`/units/${unitId}/telemetry/latest`),
   getHistory: (unitId: string, hours: number = 24) => api.get(`/units/${unitId}/telemetry/history?hours=${hours}`),
   getActiveAlerts: () => api.get('/units/iot/alerts'),
+  getCalibration: (unitId: string) => api.get(`/units/${unitId}/calibration`),
+  createCalibration: (unitId: string, data: any) => api.post(`/units/${unitId}/calibration`, data),
+  updateCalibration: (unitId: string, data: any) => api.put(`/units/${unitId}/calibration`, data),
 };
 
 export const healthScoreApi = {
@@ -192,4 +195,43 @@ export const healthScoreApi = {
   getByUnitId: (unitId: string) => api.get(`/health-scores/unit/${unitId}`),
   trigger: () => api.post('/health-scores/trigger'),
   triggerByUnitId: (unitId: string) => api.post(`/health-scores/trigger/${unitId}`),
+};
+
+export const deliveryApi = {
+  findAll: (page = 1, limit = 100) => api.get(`/deliveries?page=${page}&limit=${limit}`),
+  findByUnit: (unitId: string) => api.get(`/deliveries/unit/${unitId}`),
+  create: (data: any) => api.post('/deliveries', data),
+  update: (id: string, data: any) => api.put(`/deliveries/${id}`, data),
+  delete: (id: string) => api.delete(`/deliveries/${id}`),
+};
+
+export const installationApi = {
+  findAll: (page = 1, limit = 100) => api.get(`/installations?page=${page}&limit=${limit}`),
+  findByUnit: (unitId: string) => api.get(`/installations/unit/${unitId}`),
+  create: (data: any) => api.post('/installations', data),
+  update: (id: string, data: any) => api.put(`/installations/${id}`, data),
+  delete: (id: string) => api.delete(`/installations/${id}`),
+};
+
+export const invoiceApi = {
+  findAll: (page = 1, limit = 100) => api.get(`/invoices?page=${page}&limit=${limit}`),
+  create: (data: any) => api.post('/invoices', data),
+  update: (id: string, data: any) => api.put(`/invoices/${id}`, data),
+  delete: (id: string) => api.delete(`/invoices/${id}`),
+};
+
+export const sparepartApi = {
+  getAll: (category?: string, search?: string) => {
+    const params = new URLSearchParams();
+    if (category && category !== 'ALL') params.append('category', category);
+    if (search) params.append('search', search);
+    return api.get(`/spareparts?${params.toString()}`);
+  },
+  getCategories: () => api.get('/spareparts/categories'),
+  getById: (id: string) => api.get(`/spareparts/${id}`),
+  create: (data: any) => api.post('/spareparts', data),
+  update: (id: string, data: any) => api.put(`/spareparts/${id}`, data),
+  delete: (id: string) => api.delete(`/spareparts/${id}`),
+  bulkUpload: (items: any[]) => api.post('/spareparts/bulk', items),
+  getUsageDetail: (id: string) => api.get(`/spareparts/${id}/usage-detail`),
 };

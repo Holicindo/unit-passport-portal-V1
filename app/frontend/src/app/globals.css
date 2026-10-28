@@ -457,6 +457,62 @@ table tbody tr:hover {
   }
 }
 
+/* ===== Mobile Toolbar (Units Page) ===== */
+/* dtToolbarDesktop: hidden on mobile */
+@media (max-width: 768px) {
+  .dtToolbarDesktop {
+    display: none !important;
+  }
+
+  .dtToolbarMobile {
+    display: flex !important;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 14px 6px 14px;
+  }
+
+  /* Search bar row: full width */
+  .dtMobileSearchRow {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .dtMobileSearchRow .dtToolbarSearch {
+    flex: 1;
+    margin-bottom: 0 !important;
+    order: unset !important;
+  }
+
+  /* Filter pills row: horizontal scroll compact */
+  .dtMobileFiltersRow {
+    display: flex;
+    flex-direction: row;
+    gap: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+
+  .dtMobileFiltersRow::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Each CustomSelect in filter row: compact pill */
+  .dtMobileFiltersRow > * {
+    flex-shrink: 0;
+    min-width: 90px;
+    max-width: 120px;
+  }
+}
+
+/* dtToolbarMobile: hidden on desktop by default */
+.dtToolbarMobile {
+  display: none;
+}
+
+
 /* ================================================
    FIX: Remove navy border lines on left/right
    ================================================ */

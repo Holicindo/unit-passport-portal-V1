@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "cross-env TURBOPACK=0 next dev",
-    "build": "next build",
+    "build": "cross-env NODE_OPTIONS=\"--max-old-space-size=2048\" next build",
     "start": "next start",
     "lint": "eslint",
     "test": "jest",

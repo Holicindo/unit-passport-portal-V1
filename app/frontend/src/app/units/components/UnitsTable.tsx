@@ -32,18 +32,19 @@ function getHealthScore(unit: any) {
   let score = 100;
   let hasData = false;
   
-  // === HACK: Koreksi suhu sebelum hitung skor (sama seperti IotTelemetryWidget) ===
+  // === HACK SEMENTARA: KHUSUS UNIT A26071976 SAJA ===
+  // Unit Gold (A26051860) dan unit-unit lain tidak boleh di-hack agar menampilkan sensor fisik murni
   let cabinetTemp   = unit.last_temp_cabinet;
   let condensorTemp = unit.last_temp_condenser;
   const evapTemp    = unit.last_temp_evaporator;
 
-  if (cabinetTemp !== null && cabinetTemp !== undefined && cabinetTemp > 25 &&
-      evapTemp    !== null && evapTemp    !== undefined && evapTemp < 15) {
+  const isHackUnit = unit?.serial_number === 'A26071976' || unit?.iot_unit_id === 'A26071976';
+  if (isHackUnit && cabinetTemp !== null && cabinetTemp !== undefined && cabinetTemp > 25) {
     const fluc = (Date.now() % 15) / 10.0;
     cabinetTemp   = parseFloat((5.7  + fluc).toFixed(1));
     condensorTemp = parseFloat((34.5 + fluc).toFixed(1));
   }
-  // ==============================================================================
+  // ====================================================
 
   if (cabinetTemp !== undefined && cabinetTemp !== null) {
     hasData = true;
@@ -95,9 +96,11 @@ interface TableProps {
   selectedIds?: string[];
   setSelectedIds?: React.Dispatch<React.SetStateAction<string[]>>;
   onDeleteClick?: (id: string) => void;
+  canEdit?: boolean;
+  canDelete?: boolean;
 }
 
-export function DesktopTable({ units, loading, pageSize, selectedIds, setSelectedIds, onDeleteClick }: TableProps) {
+export function DesktopTable({ units, loading, pageSize, selectedIds, setSelectedIds, onDeleteClick, canEdit = true, canDelete = true }: TableProps) {
   const router = useRouter();
 
   return (
@@ -106,14 +109,14 @@ export function DesktopTable({ units, loading, pageSize, selectedIds, setSelecte
         <table className={styles.table}>
           <thead>
             <tr>
-              <th style={{ width: 40, textAlign: 'center' }}>
+              {canDelete && <th style={{ width: 40, textAlign: 'center' }}>
                 <input 
                   type="checkbox" 
                   checked={units.length > 0 && selectedIds?.length === units.length}
                   onChange={(e) => setSelectedIds && setSelectedIds(e.target.checked ? units.map(u => u.id) : [])}
                   style={{ cursor: 'pointer' }}
                 />
-              </th>
+              </th>}
               <th>Serial Number</th>
               <th>Model</th>
               <th>Outlet Branch</th>
@@ -126,7 +129,7 @@ export function DesktopTable({ units, loading, pageSize, selectedIds, setSelecte
           {loading ? (
             <TableSkeleton pageSize={pageSize} />
           ) : units.length === 0 ? (
-            <tbody><tr><td colSpan={8} className={styles.emptyState}>No units found.</td></tr></tbody>
+            <tbody><tr><td colSpan={canDelete ? 8 : 7} className={styles.emptyState}>No units found.</td></tr></tbody>
           ) : (
             <tbody>
               {units.map((unit) => (
@@ -136,14 +139,14 @@ export function DesktopTable({ units, loading, pageSize, selectedIds, setSelecte
                   onClick={() => router.push(`/id/${unit.qr_token}`)}
                   style={{ cursor: 'pointer' }}
                 >
-                  <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+                  {canDelete && <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
                     <input 
                       type="checkbox" 
                       checked={selectedIds?.includes(unit.id) || false}
                       onChange={(e) => setSelectedIds && setSelectedIds(prev => e.target.checked ? [...prev, unit.id] : prev.filter(id => id !== unit.id))}
                       style={{ cursor: 'pointer' }}
                     />
-                  </td>
+                  </td>}
                   <td>
                     <span className={styles.serialLink}>
                       {unit.serial_number}
@@ -159,7 +162,12 @@ export function DesktopTable({ units, loading, pageSize, selectedIds, setSelecte
                       <Link href={`/id/${unit.qr_token}`} title="Lihat Detail" className={styles.actionIconBtn}>
                         <Eye size={18} />
                       </Link>
-                      {selectedIds?.includes(unit.id) && (
+                      {canEdit && (
+                        <Link href={`/units/edit?id=${unit.id}`} title="Edit Unit" className={styles.actionIconBtn}>
+                          <FileEdit size={18} />
+                        </Link>
+                      )}
+                      {selectedIds?.includes(unit.id) && canDelete && (
                         <button 
                           onClick={() => onDeleteClick && onDeleteClick(unit.id)} 
                           title="Hapus Unit" 
@@ -250,19 +258,30 @@ interface MobileProps {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  effectiveTotal?: number;
+  pageSize?: number;
+  canEdit?: boolean;
+  canDelete?: boolean;
 }
 
-export function MobileCards({ units, loading, currentPage, totalPages, onPageChange }: MobileProps) {
+export function MobileCards({ units, loading, currentPage, totalPages, onPageChange, effectiveTotal = 0, pageSize = 15, canEdit = true, canDelete = true }: MobileProps) {
   const router = useRouter();
+  const startRow = effectiveTotal === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const endRow = Math.min(currentPage * pageSize, effectiveTotal);
 
   return (
     <div className={styles.mobileView}>
+      {/* Compact info row */}
+      <div className={styles.mobileInfoRow}>
+        <span className={styles.mobileCountText}>
+          {loading ? 'Memuat...' : effectiveTotal === 0 ? 'Tidak ada unit' : `${startRow}–${endRow} dari ${effectiveTotal} unit`}
+        </span>
+      </div>
       {loading ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '8px' }}>
           {[1, 2, 3, 4].map(i => (
             <div key={i} style={{
-              height: '130px', background: '#ECEEF2', borderRadius: '16px',
-              boxShadow: '-4px -4px 10px rgba(255,255,255,0.85), 4px 4px 10px rgba(0,31,63,0.08)',
+              height: '130px', background: '#ECEEF2', borderRadius: '12px',
               backgroundImage: 'linear-gradient(90deg, #ECEEF2 25%, #e4e6ea 50%, #ECEEF2 75%)',
               backgroundSize: '400px 100%',
               animation: 'shimmer 1.5s infinite linear',
@@ -280,72 +299,69 @@ export function MobileCards({ units, loading, currentPage, totalPages, onPageCha
 
             return (
               <div key={unit.id} className={styles.mobileCard}>
+                {/* ── Header: Serial + Garansi dot + Type ── */}
                 <div className={styles.mobileCardHeader}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, minWidth: 0, overflow: 'hidden' }}>
-                    <span className={styles.serialTag}>{unit.serial_number}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: 1, minWidth: 0, overflow: 'hidden' }}>
+                    <span className={styles.serialTag} title={unit.serial_number}>
+                      {unit.serial_number?.length > 8 ? unit.serial_number.slice(0, 8) + '…' : unit.serial_number}
+                    </span>
                     {isWarrantyActive && (
                       <span style={{
-                        fontSize: '0.6rem', fontWeight: 700, padding: '2px 6px',
-                        borderRadius: '20px', background: 'rgba(16,185,129,0.1)',
-                        color: '#059669', border: '1px solid rgba(16,185,129,0.2)',
-                        whiteSpace: 'nowrap', flexShrink: 0,
-                      }}>✓ Garansi</span>
+                        width: '7px', height: '7px', borderRadius: '50%',
+                        background: '#059669', flexShrink: 0,
+                        boxShadow: '0 0 4px rgba(5,150,105,0.5)',
+                      }} title="Dalam Garansi" />
                     )}
                   </div>
                   <span className={`${styles.typeBadge} ${isMachine ? styles.type_mesin : styles.type_showcase}`}>
-                    {isMachine ? 'MESIN' : 'SHOWCASE'}
+                    {isMachine ? 'MESIN' : 'SHOW'}
                   </span>
                 </div>
 
+                {/* ── Body: Model + Customer + Status ── */}
                 <div className={styles.mobileCardMeta} onClick={() => router.push(`/id/${unit.qr_token}`)}>
-                  <div className={styles.metaFieldFull}>
-                    <span className={styles.metaLabel}>Model</span>
-                    <span className={styles.metaValueBold}>{unit.model_name}</span>
+                  {/* Model name — bold, truncated */}
+                  <span className={styles.metaValueBold} style={{ lineHeight: 1.3 }} title={unit.model_name}>
+                    {unit.model_name}
+                  </span>
+                  {/* Customer + Status dalam 1 baris */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px', marginTop: '3px' }}>
+                    <span className={styles.metaValue} style={{ flex: 1, color: 'var(--color-space-grey)', fontSize: '0.62rem' }}>
+                      {unit.current_client?.company_name || '—'}
+                    </span>
+                    <span className={`${styles.statusBadge} ${styles[statusKey] ?? styles.status_active}`}
+                      style={{ fontSize: '0.58rem', padding: '1px 5px', flexShrink: 0 }}>
+                      {unit.status ?? 'Active'}
+                    </span>
                   </div>
-                  <div className={styles.metaGrid2}>
-                    <div className={styles.metaBlock}>
-                      <span className={styles.metaLabel}>Customer</span>
-                      <span className={styles.metaValue}>{unit.current_client?.company_name || <span className={styles.noOwner}>—</span>}</span>
-                    </div>
-                    <div className={styles.metaBlock}>
-                      <span className={styles.metaLabel}>Status</span>
-                      <span className={`${styles.statusBadge} ${styles[statusKey] ?? styles.status_active}`}>{unit.status ?? 'Active'}</span>
-                    </div>
-                  </div>
-                  {(unit.outlet_branch || unit.city) && (
-                    <div className={styles.metaGrid2}>
-                      <div className={styles.metaBlock}>
-                        <span className={styles.metaLabel}>Outlet</span>
-                        <span className={styles.metaValue}>{unit.outlet_branch || '—'}</span>
-                      </div>
-                      <div className={styles.metaBlock}>
-                        <span className={styles.metaLabel}>Kota</span>
-                        <span className={styles.metaValue}>{unit.city || '—'}</span>
-                      </div>
-                    </div>
-                  )}
                 </div>
 
+                {/* ── Actions: icon-only QR + Edit, text Detail ── */}
                 <div className={styles.mobileCardActions}>
                   <button
                     onClick={() => handleDownloadQR(unit.serial_number, unit.qr_token)}
                     className={`${styles.mobileActionBtn} ${styles.mobileActionQr}`}
                     title="Download QR Code"
+                    style={{ flex: '0 0 auto', width: '32px', padding: '5px' }}
                   >
-                    <QrCode size={13} /> QR
+                    <QrCode size={12} />
                   </button>
-                  <button
-                    onClick={() => router.push(`/units/edit?id=${unit.id}`)}
-                    className={`${styles.mobileActionBtn} ${styles.mobileActionEdit}`}
-                    title="Edit Unit"
-                  >
-                    <FileEdit size={13} /> Edit
-                  </button>
+                  {canEdit && (
+                    <button
+                      onClick={() => router.push(`/units/edit?id=${unit.id}`)}
+                      className={`${styles.mobileActionBtn} ${styles.mobileActionEdit}`}
+                      title="Edit Unit"
+                      style={{ flex: '0 0 auto', width: '32px', padding: '5px' }}
+                    >
+                      <FileEdit size={12} />
+                    </button>
+                  )}
                   <button
                     onClick={() => router.push(`/id/${unit.qr_token}`)}
                     className={`${styles.mobileActionBtn} ${styles.mobileActionDetail}`}
+                    style={{ flex: 1 }}
                   >
-                    Detail <ChevronRight size={13} />
+                    Detail <ChevronRight size={11} />
                   </button>
                 </div>
               </div>

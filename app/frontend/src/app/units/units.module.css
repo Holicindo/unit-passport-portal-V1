@@ -458,10 +458,10 @@
 
 /* Mobile Responsive Cards CSS */
 .mobileCardsContainer {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
   width: 100%;
   padding-bottom: 20px;
 }
@@ -469,15 +469,16 @@
 .mobileCard {
   background: var(--color-card-bg);
   border: 1.5px solid rgba(0, 31, 63, 0.14);
-  border-radius: 14px;
-  padding: 12px 14px;
-  box-shadow: 0 2px 8px rgba(0, 31, 63, 0.06);
+  border-radius: 12px;
+  padding: 10px 10px;
+  box-shadow: 0 2px 6px rgba(0, 31, 63, 0.06);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   position: relative;
   overflow: hidden;
+  min-width: 0;
 }
 
 .mobileCard:active {
@@ -489,19 +490,24 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
-  padding-bottom: 8px;
+  gap: 4px;
+  padding-bottom: 6px;
   border-bottom: 1px solid rgba(0, 31, 63, 0.08);
+  flex-wrap: wrap;
 }
 
 .serialTag {
   font-weight: 800;
   color: var(--color-cobalt-blue);
   background: rgba(79, 70, 229, 0.08);
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 0.78rem;
+  padding: 3px 7px;
+  border-radius: 5px;
+  font-size: 0.68rem;
   letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .mobileCardMeta {
@@ -545,7 +551,7 @@
 .metaValue {
   color: var(--color-deep-navy);
   font-weight: 600;
-  font-size: 0.76rem;
+  font-size: 0.68rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -554,7 +560,7 @@
 .metaValueBold {
   color: var(--color-deep-navy);
   font-weight: 700;
-  font-size: 0.84rem;
+  font-size: 0.74rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -563,10 +569,10 @@
 
 .mobileCardActions {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   border-top: 1px solid rgba(0, 31, 63, 0.08);
-  padding-top: 10px;
-  margin-top: 2px;
+  padding-top: 8px;
+  margin-top: 0;
 }
 
 .mobileActionBtn {
@@ -574,19 +580,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  font-size: 0.7rem;
+  gap: 3px;
+  font-size: 0.62rem;
   font-weight: 700;
-  padding: 7px 8px;
-  border-radius: 8px;
+  padding: 5px 4px;
+  border-radius: 7px;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   border: 1px solid rgba(0, 31, 63, 0.1);
   background: var(--color-card-bg);
   white-space: nowrap;
   font-family: var(--font-heading);
-  letter-spacing: 0.02em;
-  min-height: 34px;
+  letter-spacing: 0.01em;
+  min-height: 28px;
 }
 
 .mobileActionBtn:active {
@@ -613,9 +619,20 @@
   box-shadow: 0 2px 6px rgba(0, 31, 63, 0.2);
 }
 
+/* Mobile info row: compact count text */
+.mobileInfoRow {
+  display: none; /* shown only on mobile */
+}
+
+.mobileCountText {
+  font-size: 0.72rem;
+  color: var(--color-space-grey);
+  font-weight: 700;
+}
+
 @media (max-width: 768px) {
   .container {
-    padding: 0 0 95px 0 !important; /* Padding bottom untuk BottomNav */
+    padding: 0 0 95px 0 !important;
   }
 
   .pageHeader {
@@ -671,6 +688,18 @@
 
   .mobileView {
     display: block !important;
+  }
+
+  .mobileInfoRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 2px 6px 2px;
+  }
+
+  /* Pagination desktop: hide on mobile */
+  .pagination {
+    display: none !important;
   }
 }
 

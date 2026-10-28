@@ -1,10 +1,10 @@
-'use client';
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, MessageSquare, FilePlus, FileText, ExternalLink, Edit2, Check, Wrench } from 'lucide-react';
+import { X, MessageSquare, FilePlus, FileText, ExternalLink, Edit2, Check, Wrench, Plus, Trash2, Package, Search } from 'lucide-react';
 import { CustomSelect } from '@/components/ui/CustomSelect';
-import { reportApi } from '@/lib/api';
+import { MultiSelect } from '@/components/ui/MultiSelect';
+import { reportApi, sparepartApi } from '@/lib/api';
+import { HOLIC_SPAREPARTS_INVENTORY } from '@/lib/spareparts-inventory';
 import { parseDetailedIssue, formatDate } from '../utils';
 import { getUnitType, UNIT_TYPE_LABELS, UNIT_TYPE_COLORS } from '../../id/[token]/constants';
 import CompleteSparepartModal from './CompleteSparepartModal';
@@ -13,13 +13,14 @@ import styles from '../service.module.css';
 interface ServiceDetailModalProps {
   log: any;
   partners: any[];
+  technicianOptions?: { value: string; label: string; badge?: string }[];
   onClose: () => void;
   onUpdate: (updatedLog: any) => void;
   submitting: boolean;
   setSubmitting: (v: boolean) => void;
 }
 
-export default function ServiceDetailModal({ log, partners, onClose, onUpdate, submitting, setSubmitting }: ServiceDetailModalProps) {
+export default function ServiceDetailModal({ log, partners, technicianOptions = [], onClose, onUpdate, submitting, setSubmitting }: ServiceDetailModalProps) {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [editPartnerId, setEditPartnerId] = useState(log.partner?.id || '');
@@ -31,7 +32,12 @@ export default function ServiceDetailModal({ log, partners, onClose, onUpdate, s
   const [editScheduledDate, setEditScheduledDate] = useState(log.scheduled_date ? log.scheduled_date.split('T')[0] : '');
   const [editDeliveryDate, setEditDeliveryDate] = useState(log.delivery_date ? log.delivery_date.split('T')[0] : '');
   const [editInternalNotes, setEditInternalNotes] = useState(log.internal_notes || '');
-  const [editReplacedSparepart, setEditReplacedSparepart] = useState(log.replaced_sparepart || '');
+  // Sparepart list as array for tag editing
+  const parseSparepartStr = (str: string) => str ? str.split(';').map((s: string) => s.trim()).filter(Boolean) : [];
+  const [editSparepartItems, setEditSparepartItems] = useState<string[]>(parseSparepartStr(log.replaced_sparepart || ''));
+  const [sparepartSearch, setSparepartSearch] = useState('');
+  const [showSparepartDropdown, setShowSparepartDropdown] = useState(false);
+  const editReplacedSparepart = editSparepartItems.join('; ');
 
   // Laporan Kendala revision state
   const [isEditingIssue, setIsEditingIssue] = useState(false);
@@ -55,7 +61,9 @@ export default function ServiceDetailModal({ log, partners, onClose, onUpdate, s
       setEditScheduledDate(log.scheduled_date ? log.scheduled_date.split('T')[0] : '');
       setEditDeliveryDate(log.delivery_date ? log.delivery_date.split('T')[0] : '');
       setEditInternalNotes(log.internal_notes || '');
-      setEditReplacedSparepart(log.replaced_sparepart || '');
+      setEditSparepartItems(parseSparepartStr(log.replaced_sparepart || ''));
+      setSparepartSearch('');
+      setShowSparepartDropdown(false);
       setEditedIssueDesc(log.issue_description || '');
     }
   }, [log.id, log.internal_notes, log.planning_notes, log.action_taken, log.replaced_sparepart, log.status]);
@@ -81,7 +89,9 @@ export default function ServiceDetailModal({ log, partners, onClose, onUpdate, s
     setEditScheduledDate(log.scheduled_date ? log.scheduled_date.split('T')[0] : '');
     setEditDeliveryDate(log.delivery_date ? log.delivery_date.split('T')[0] : '');
     setEditInternalNotes(log.internal_notes || '');
-    setEditReplacedSparepart(log.replaced_sparepart || '');
+    setEditSparepartItems(parseSparepartStr(log.replaced_sparepart || ''));
+    setSparepartSearch('');
+    setShowSparepartDropdown(false);
     setIsEditing(true);
   };
 
@@ -123,7 +133,9 @@ export default function ServiceDetailModal({ log, partners, onClose, onUpdate, s
         planning_notes: editResult.trim() || null,
         internal_notes: editInternalNotes.trim() || null,
         is_allocated: !!(editTechnician || editPartnerId),
-        replaced_sparepart: overrideSpareparts !== undefined ? overrideSpareparts : (editReplacedSparepart || undefined),
+        replaced_sparepart: overrideSpareparts !== undefined
+          ? overrideSpareparts
+          : (editSparepartItems.length > 0 ? editSparepartItems.join('; ') : null),
       };
       const { data: updated } = await serviceLogApi.update(log.id, payload);
       onUpdate(updated);
@@ -268,9 +280,14 @@ export default function ServiceDetailModal({ log, partners, onClose, onUpdate, s
                   <CustomSelect value={editPartnerId} onChange={(val) => setEditPartnerId(val)}
                     options={[{ value: '', label: 'HQ (Manual Routing)' }, ...partners.map((p) => ({ value: p.id, label: `${p.partner_name} (${p.city})` }))]} />
                 </div>
-                <div className={styles.detailItem}><span className={styles.detailLabel}>Nama Teknisi</span>
-                  <input type="text" value={editTechnician} onChange={(e) => setEditTechnician(e.target.value)}
-                    style={{ width: '100%', marginTop: '4px', padding: '10px 14px', borderRadius: '10px', border: '1px solid #CBD5E1', fontSize: '0.9rem', color: 'var(--color-deep-navy)', outline: 'none' }} />
+                <div className={styles.detailItem}><span className={styles.detailLabel}>Teknisi Bertugas (Multi-Select)</span>
+                  <MultiSelect
+                    value={editTechnician ? editTechnician.split(',').map((s: string) => s.trim()).filter(Boolean) : []}
+                    onChange={(arr) => setEditTechnician(arr.join(', '))}
+                    options={technicianOptions}
+                    placeholder="Pilih teknisi..."
+                    fullWidth
+                  />
                 </div>
                 <div className={styles.detailItem}><span className={styles.detailLabel}>Scheduled Date</span>
                   <input type="date" value={editScheduledDate} onChange={(e) => setEditScheduledDate(e.target.value)}
@@ -290,10 +307,86 @@ export default function ServiceDetailModal({ log, partners, onClose, onUpdate, s
                     placeholder="Contoh: Unit normal, suhu mencapai -18°C"
                     style={{ width: '100%', marginTop: '4px', padding: '10px 14px', borderRadius: '10px', border: '1px solid #CBD5E1', fontSize: '0.9rem', color: 'var(--color-deep-navy)', outline: 'none' }} />
                 </div>
-                <div className={styles.detailItemFull}><span className={styles.detailLabel}>Sparepart Diganti (Input Manual / Terpisah Titik Koma ;)</span>
-                  <input type="text" value={editReplacedSparepart} onChange={(e) => setEditReplacedSparepart(e.target.value)}
-                    placeholder="Contoh: Freon R290; Motor Fan Kondensor EBM 10W"
-                    style={{ width: '100%', marginTop: '4px', padding: '10px 14px', borderRadius: '10px', border: '1px solid #CBD5E1', fontSize: '0.9rem', color: 'var(--color-deep-navy)', outline: 'none' }} />
+                <div className={styles.detailItemFull}>
+                  <span className={styles.detailLabel}>Sparepart Diganti</span>
+                  {/* Tag pills display */}
+                  {editSparepartItems.length > 0 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '6px', marginBottom: '8px' }}>
+                      {editSparepartItems.map((item, idx) => (
+                        <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(46,91,255,0.07)', border: '1px solid rgba(46,91,255,0.2)', borderRadius: '8px', padding: '5px 10px' }}>
+                          <Package size={13} style={{ color: '#2E5BFF', flexShrink: 0 }} />
+                          <span style={{ flex: 1, fontSize: '0.85rem', color: '#1E40AF', fontWeight: 600 }}>{item}</span>
+                          <button
+                            type="button"
+                            onClick={() => setEditSparepartItems(prev => prev.filter((_, i) => i !== idx))}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', color: '#94a3b8', display: 'flex', alignItems: 'center' }}
+                            title="Hapus sparepart ini"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {/* Searchable dropdown dari inventory */}
+                  <div style={{ position: 'relative', marginTop: '4px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', border: '2px solid #2E5BFF', borderRadius: '8px', padding: '8px 12px', background: '#fff' }}>
+                      <Package size={15} style={{ color: '#2E5BFF', flexShrink: 0 }} />
+                      <input
+                        type="text"
+                        value={sparepartSearch}
+                        onChange={(e) => { setSparepartSearch(e.target.value); setShowSparepartDropdown(true); }}
+                        onFocus={() => setShowSparepartDropdown(true)}
+                        placeholder="+ Tambah Sparepart..."
+                        style={{ flex: 1, border: 'none', outline: 'none', fontSize: '0.88rem', color: 'var(--color-deep-navy)', background: 'transparent', fontWeight: 500 }}
+                      />
+                      {sparepartSearch && (
+                        <button type="button" onClick={() => { setSparepartSearch(''); setShowSparepartDropdown(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex', padding: 0 }}><X size={14} /></button>
+                      )}
+                    </div>
+                    {showSparepartDropdown && (() => {
+                      const filtered = HOLIC_SPAREPARTS_INVENTORY.filter(sp =>
+                        !editSparepartItems.includes(sp.name) &&
+                        (sp.name.toLowerCase().includes(sparepartSearch.toLowerCase()) || sp.category.toLowerCase().includes(sparepartSearch.toLowerCase()))
+                      );
+                      if (filtered.length === 0) return null;
+                      // Group by category
+                      const grouped = filtered.reduce<Record<string, typeof filtered>>((acc, sp) => {
+                        if (!acc[sp.category]) acc[sp.category] = [];
+                        acc[sp.category].push(sp);
+                        return acc;
+                      }, {});
+                      return (
+                        <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: '#fff', border: '1px solid #e2e8f0', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 9999, maxHeight: '220px', overflowY: 'auto' }}>
+                          {Object.entries(grouped).map(([cat, items]) => (
+                            <div key={cat}>
+                              <div style={{ padding: '6px 12px 3px', fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', background: '#f8fafc', borderBottom: '1px solid #f1f5f9' }}>{cat}</div>
+                              {items.map(sp => (
+                                <button
+                                  key={sp.id}
+                                  type="button"
+                                  onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    setEditSparepartItems(prev => [...prev, sp.name]);
+                                    setSparepartSearch('');
+                                    setShowSparepartDropdown(false);
+                                  }}
+                                  style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '8px 14px', border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left', fontSize: '0.84rem', color: 'var(--color-deep-navy)', transition: 'background 0.15s' }}
+                                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(46,91,255,0.06)')}
+                                  onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                                >
+                                  <Package size={12} style={{ color: '#2E5BFF', flexShrink: 0 }} />
+                                  <span style={{ flex: 1 }}>{sp.name}</span>
+                                  <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>{sp.partNumber}</span>
+                                </button>
+                              ))}
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                    {showSparepartDropdown && <div style={{ position: 'fixed', inset: 0, zIndex: 9998 }} onClick={() => setShowSparepartDropdown(false)} />}
+                  </div>
                 </div>
                 <div className={styles.detailItemFull}><span className={styles.detailLabel}>Catatan Internal (Khusus Admin)</span>
                   <textarea value={editInternalNotes} onChange={(e) => setEditInternalNotes(e.target.value)}
@@ -357,6 +450,36 @@ export default function ServiceDetailModal({ log, partners, onClose, onUpdate, s
                       </div>
                     </div>
 
+                    {/* Row 2b: Teknisi Lapangan (Bisa Multi) */}
+                    <div className={styles.detailStructuredRow}>
+                      <div className={styles.detailStructuredLabel}>Teknisi Bertugas</div>
+                      <div className={styles.detailStructuredVal}>
+                        {log.technician_name ? (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+                            {log.technician_name.split(',').map((tName: string, tIdx: number) => (
+                              <span
+                                key={tIdx}
+                                style={{
+                                  fontSize: '0.78rem',
+                                  fontWeight: 600,
+                                  background: 'rgba(46,91,255,0.08)',
+                                  color: '#1E40AF',
+                                  padding: '3px 9px',
+                                  borderRadius: '6px',
+                                  border: '1px solid rgba(46,91,255,0.2)',
+                                  display: 'inline-block',
+                                }}
+                              >
+                                {tName.trim()}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span style={{ fontStyle: 'italic', color: '#94a3b8' }}>Menunggu alokasi teknisi</span>
+                        )}
+                      </div>
+                    </div>
+
                     {/* Row 3: Scheduled Date */}
                     <div className={styles.detailStructuredRow}>
                       <div className={styles.detailStructuredLabel}>Scheduled Date</div>
@@ -396,11 +519,12 @@ export default function ServiceDetailModal({ log, partners, onClose, onUpdate, s
                       <div className={styles.detailStructuredLabel}>Sparepart Diganti</div>
                       <div className={styles.detailStructuredVal}>
                         {log.replaced_sparepart ? (
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                            {String(log.replaced_sparepart).split(';').filter(Boolean).map((item: string, idx: number) => (
-                              <span key={idx} style={{ fontSize: '0.75rem', background: 'rgba(46,91,255,0.08)', color: '#2E5BFF', borderRadius: '4px', padding: '2px 8px', fontWeight: 600, border: '1px solid rgba(46,91,255,0.2)' }}>
-                                {item.trim()}
-                              </span>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                            {String(log.replaced_sparepart).split(';').map((s: string) => s.trim()).filter(Boolean).map((item: string, idx: number) => (
+                              <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(46,91,255,0.07)', border: '1px solid rgba(46,91,255,0.18)', borderRadius: '7px', padding: '4px 10px', width: 'fit-content', maxWidth: '100%' }}>
+                                <Package size={12} style={{ color: '#2E5BFF', flexShrink: 0 }} />
+                                <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#1E40AF' }}>{item}</span>
+                              </div>
                             ))}
                           </div>
                         ) : (
@@ -443,10 +567,10 @@ export default function ServiceDetailModal({ log, partners, onClose, onUpdate, s
         isOpen={showCompleteSparepartModal}
         ticketTitle={`Tiket #${log.call_id || log.id}`}
         unitModel={log.unit?.model_name}
-        initialSpareparts={editReplacedSparepart}
+        initialSpareparts={editSparepartItems.join('; ')}
         onCancel={() => setShowCompleteSparepartModal(false)}
         onConfirm={(spareparts) => {
-          setEditReplacedSparepart(spareparts);
+          setEditSparepartItems(parseSparepartStr(spareparts));
           handleSave(spareparts);
         }}
         loading={submitting}

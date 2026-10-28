@@ -89,6 +89,7 @@ export function usePassportData() {
   // Access control
   const isGuest = !user;
   const isClient = user?.role === 'CLIENT';
+  const isQC = user?.role === 'QC';
   const isPartner = user?.role === 'PARTNER' || user?.role === 'MECHANIC';
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
   const belongsToClient = isClient && unit?.current_client?.id === user?.client_id;
@@ -103,7 +104,7 @@ export function usePassportData() {
     token, unit, user, loading, error,
     carouselRef, unitReports,
     toast, showToast, clearToast, loadUnitData,
-    isGuest, isClient, isPartner, isAdmin,
+    isGuest, isClient, isPartner, isAdmin, isQC,
     belongsToClient, hasClientRestriction,
     isWarrantyActive, expiryDate,
   };

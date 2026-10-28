@@ -7,11 +7,13 @@ import { Search, ShieldCheck, Upload, Plus, Trash2 } from 'lucide-react';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import BulkUploadModal from './components/BulkUploadModal';
 import { DesktopTable, Pagination, MobileCards } from './components/UnitsTable';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import styles from './units.module.css';
 
 function UnitsPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { can, isQC } = usePermissions();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
@@ -29,6 +31,10 @@ function UnitsPageInner() {
 
   const filterParam = searchParams.get('filter');
   const isWarrantyFilter = filterParam === 'warranty';
+
+  // Permission checks
+  const canCreateUnit = can('units', 'create');
+  const canDeleteUnit = can('units', 'delete');
 
   const loadUnits = useCallback(async (page: number) => {
     setLoading(true);
@@ -192,12 +198,14 @@ function UnitsPageInner() {
 
       <div className="mobile-sub-tabs">
         <button className="mobile-sub-tab active" onClick={() => router.push('/units')}>Daftar Unit</button>
-        <button className="mobile-sub-tab" onClick={() => router.push('/units/new')}>Registrasi Unit</button>
+        {canCreateUnit && (
+          <button className="mobile-sub-tab" onClick={() => router.push('/units/new')}>Registrasi Unit</button>
+        )}
       </div>
 
       <div className={styles.tableCard}>
-        {/* Toolbar */}
-        <div className="dtToolbar">
+        {/* ===== DESKTOP TOOLBAR ===== */}
+        <div className="dtToolbar dtToolbarDesktop">
           <div className="dtToolbarLeft">
             <div className="dtToolbarText">
               Show
@@ -213,7 +221,7 @@ function UnitsPageInner() {
               <input type="text" placeholder="Search serial number..." value={searchTerm} onChange={handleSearch} className="dtToolbarSearchInput" />
               <Search size={16} className="dtToolbarSearchIcon" />
             </div>
-            {selectedIds.length > 0 && (
+            {selectedIds.length > 0 && canDeleteUnit && (
               <button
                 className="dtToolbarCreateBtn"
                 style={{ background: '#E11D48', marginRight: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}
@@ -222,12 +230,33 @@ function UnitsPageInner() {
                 <Trash2 size={15} strokeWidth={2.5} /> Hapus {selectedIds.length} Dipilih
               </button>
             )}
-            <button className="dtToolbarCreateBtn" onClick={() => setBulkModalOpen(true)} style={{ background: '#001F3F', marginRight: '8px' }}>
-              <Upload size={15} strokeWidth={2.5} /> Bulk Upload
-            </button>
-            <button className="dtToolbarCreateBtn" onClick={() => router.push('/units/new')}>
-              <Plus size={16} strokeWidth={2.5} /> Create New
-            </button>
+            {canCreateUnit && (
+              <>
+                <button className="dtToolbarCreateBtn" onClick={() => setBulkModalOpen(true)} style={{ background: '#001F3F', marginRight: '8px' }}>
+                  <Upload size={15} strokeWidth={2.5} /> Bulk Upload
+                </button>
+                <button className="dtToolbarCreateBtn" onClick={() => router.push('/units/new')}>
+                  <Plus size={16} strokeWidth={2.5} /> Create New
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* ===== MOBILE TOOLBAR ===== */}
+        <div className="dtToolbarMobile">
+          {/* Row 1: Search bar */}
+          <div className="dtMobileSearchRow">
+            <div className="dtToolbarSearch" style={{ flex: 1 }}>
+              <input type="text" placeholder="Cari serial number..." value={searchTerm} onChange={handleSearch} className="dtToolbarSearchInput" />
+              <Search size={15} className="dtToolbarSearchIcon" />
+            </div>
+          </div>
+          {/* Row 2: Filter pills compact */}
+          <div className="dtMobileFiltersRow">
+            <CustomSelect options={[{ value: '', label: 'Category' }, { value: 'showcase', label: 'Showcase' }, { value: 'mesin', label: 'Mesin' }]} value="" onChange={() => {}} placeholder="Category" />
+            <CustomSelect options={[{ value: '', label: 'Customer' }, ...availableClients.map(c => ({ value: c.id, label: c.name }))]} value={clientFilter} onChange={(val) => { setClientFilter(val); setCurrentPage(1); }} placeholder="Customer" />
+            <CustomSelect options={[{ value: '', label: 'City' }, ...availableCities.map(c => ({ value: c, label: c }))]} value={cityFilter} onChange={(val) => { setCityFilter(val); setCurrentPage(1); }} placeholder="City" />
           </div>
         </div>
 
@@ -238,9 +267,21 @@ function UnitsPageInner() {
           selectedIds={selectedIds}
           setSelectedIds={setSelectedIds}
           onDeleteClick={(id) => setShowDeleteConfirm(id)}
+          canEdit={can('units', 'edit')}
+          canDelete={canDeleteUnit}
         />
         <Pagination currentPage={currentPage} totalPages={totalPages} loading={loading} effectiveTotal={effectiveTotal} pageSize={pageSize} onPageChange={setCurrentPage} />
-        <MobileCards units={displayedUnits} loading={loading} currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+        <MobileCards 
+          units={displayedUnits} 
+          loading={loading} 
+          currentPage={currentPage} 
+          totalPages={totalPages} 
+          onPageChange={setCurrentPage} 
+          effectiveTotal={effectiveTotal} 
+          pageSize={pageSize}
+          canEdit={can('units', 'edit')}
+          canDelete={canDeleteUnit}
+        />
       </div>
 
       <BulkUploadModal open={bulkModalOpen} onClose={() => setBulkModalOpen(false)} onSuccess={() => loadUnits(1)} />

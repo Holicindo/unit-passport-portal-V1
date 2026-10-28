@@ -1,13 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Sidebar from '@/components/layout/Sidebar';
 import TopBar from '@/components/layout/TopBar';
 import BottomNav from '@/components/layout/BottomNav';
+import { PermissionsProvider } from '@/contexts/PermissionsContext';
 
 export default function ClientLayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [userRole, setUserRole] = useState<string | null>(null);
+
   const isLoginPage = pathname === '/login';
   const isHomePage = pathname === '/';
   const isPassportPage = pathname?.startsWith('/id/');
@@ -16,6 +20,28 @@ export default function ClientLayoutWrapper({ children }: { children: React.Reac
 
   // Pages that render completely standalone — no admin sidebar/topbar/bottomnav
   const hideLayout = isLoginPage || isHomePage || isPassportPage || isClientPortal || isPartnerPortal;
+
+  // Get user role from localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          setUserRole(user.role);
+        } catch (error) {
+          console.error('Failed to parse user data:', error);
+        }
+      }
+    }
+  }, [pathname]);
+
+  // Redirect QC from general dashboard to QC dashboard
+  useEffect(() => {
+    if (userRole === 'QC' && pathname === '/dashboard') {
+      router.replace('/dashboard/qc');
+    }
+  }, [userRole, pathname, router]);
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
@@ -72,7 +98,7 @@ export default function ClientLayoutWrapper({ children }: { children: React.Reac
   }, [pathname, hideLayout, isClientPortal, isPartnerPortal, isLoginPage, isPassportPage]);
 
   return (
-    <>
+    <PermissionsProvider userRole={userRole}>
       {!hideLayout && <Sidebar isOpen={sidebarOpen} onToggle={toggleSidebar} />}
       <div
         className={`${!hideLayout ? 'main-wrapper' : ''} ${!sidebarOpen && !hideLayout ? 'sidebar-collapsed' : ''}`}
@@ -114,6 +140,6 @@ export default function ClientLayoutWrapper({ children }: { children: React.Reac
 
         {!hideLayout && <BottomNav />}
       </div>
-    </>
+    </PermissionsProvider>
   );
 }

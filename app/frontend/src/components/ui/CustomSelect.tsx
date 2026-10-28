@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown, Search } from 'lucide-react';
 import styles from './CustomSelect.module.css';
@@ -16,44 +16,57 @@ interface CustomSelectProps {
   options: SelectOption[];
   placeholder?: string;
   className?: string;
+  /** Force container to 100% width */
+  fullWidth?: boolean;
   /** Show search box. Defaults to auto: only shown when options > 5 */
   showSearch?: boolean;
+  /** Custom trigger render function */
+  customTrigger?: (selectedOption: SelectOption | undefined, isOpen: boolean) => React.ReactNode;
 }
 
 const SEARCH_THRESHOLD = 5;
 
-export function CustomSelect({ value, onChange, options, placeholder = 'Select...', className = '', showSearch }: CustomSelectProps) {
+export function CustomSelect({ value, onChange, options, placeholder = 'Select...', className = '', showSearch, customTrigger, fullWidth }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
   const containerRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const uid = useId();
 
   const selectedOption = options.find(opt => opt.value === value);
   const searchVisible = showSearch !== undefined ? showSearch : options.length > SEARCH_THRESHOLD;
 
-  // Calculate dropdown position from trigger button
+  // Calculate dropdown position from trigger container
   const updateMenuPosition = useCallback(() => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const menuWidth = Math.max(rect.width, 180);
+    // Flip left if would overflow right edge
+    const leftPos = rect.right - menuWidth < 0
+      ? rect.left
+      : rect.right + menuWidth > viewportWidth
+      ? Math.max(0, rect.right - menuWidth)
+      : rect.left;
     setMenuStyle({
       position: 'fixed',
-      top: rect.bottom + 8,
-      left: rect.left,
-      minWidth: Math.max(rect.width, 160),
+      top: rect.bottom + 6,
+      left: leftPos,
+      minWidth: menuWidth,
       zIndex: 99999,
     });
   }, []);
 
-  // Close on outside click — checking both the container and the portal menu
+  // Close on outside click — check both the container wrapper and the floating portal menu
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
-      const portalMenu = document.getElementById('custom-select-portal');
       if (
         containerRef.current &&
         !containerRef.current.contains(target) &&
-        !(portalMenu && portalMenu.contains(target))
+        !(menuRef.current && menuRef.current.contains(target))
       ) {
         setIsOpen(false);
       }
@@ -76,10 +89,13 @@ export function CustomSelect({ value, onChange, options, placeholder = 'Select..
 
   useEffect(() => {
     if (isOpen) {
-      updateMenuPosition();
+      // Use rAF to defer until after portal mounts to DOM — fixes first-click offset glitch
+      requestAnimationFrame(() => {
+        updateMenuPosition();
+      });
       setSearch('');
       if (searchVisible) {
-        setTimeout(() => inputRef.current?.focus(), 10);
+        setTimeout(() => inputRef.current?.focus(), 50);
       }
     }
   }, [isOpen, searchVisible, updateMenuPosition]);
@@ -91,7 +107,13 @@ export function CustomSelect({ value, onChange, options, placeholder = 'Select..
   }, [options, search]);
 
   const dropdownContent = (
-    <div id="custom-select-portal" className={styles.dropdownMenu} style={menuStyle}>
+    <div
+      ref={menuRef}
+      id={`custom-select-portal-${uid}`}
+      className={styles.dropdownMenu}
+      style={menuStyle}
+      onMouseDown={(e) => e.stopPropagation()}
+    >
       {searchVisible && (
         <div className={styles.searchBox}>
           <Search size={14} className={styles.searchIcon} />
@@ -99,7 +121,7 @@ export function CustomSelect({ value, onChange, options, placeholder = 'Select..
             ref={inputRef}
             type="text"
             className={styles.searchInput}
-            placeholder="Search..."
+            placeholder="Cari..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             onClick={e => e.stopPropagation()}
@@ -112,7 +134,8 @@ export function CustomSelect({ value, onChange, options, placeholder = 'Select..
             <div
               key={option.value}
               className={`${styles.option} ${value === option.value ? styles.selected : ''}`}
-              onClick={() => {
+              onMouseDown={(e) => {
+                e.stopPropagation();
                 onChange(option.value);
                 setIsOpen(false);
               }}
@@ -128,17 +151,28 @@ export function CustomSelect({ value, onChange, options, placeholder = 'Select..
   );
 
   return (
-    <div className={`${styles.selectContainer} ${className}`} ref={containerRef}>
-      <button
-        type="button"
-        className={`${styles.selectTrigger} ${isOpen ? styles.open : ''}`}
-        onClick={() => setIsOpen(prev => !prev)}
-      >
-        <span className={value ? styles.value : styles.placeholder}>
-          {selectedOption ? selectedOption.label : placeholder}
-        </span>
-        <ChevronDown size={15} className={`${styles.icon} ${isOpen ? styles.iconOpen : ''}`} />
-      </button>
+    <div
+      className={`${styles.selectContainer} ${className}`}
+      ref={containerRef}
+      onClick={(e) => e.stopPropagation()}
+      style={fullWidth ? { width: '100%', display: 'block' } : undefined}
+    >
+      {customTrigger ? (
+        <div onClick={() => setIsOpen(prev => !prev)}>
+          {customTrigger(selectedOption, isOpen)}
+        </div>
+      ) : (
+        <button
+          type="button"
+          className={`${styles.selectTrigger} ${isOpen ? styles.open : ''}`}
+          onClick={() => setIsOpen(prev => !prev)}
+        >
+          <span className={value ? styles.value : styles.placeholder}>
+            {selectedOption ? selectedOption.label : placeholder}
+          </span>
+          <ChevronDown size={15} className={`${styles.icon} ${isOpen ? styles.iconOpen : ''}`} />
+        </button>
+      )}
 
       {/* Render dropdown into body via portal to avoid z-index/overflow clipping issues */}
       {isOpen && typeof document !== 'undefined' && createPortal(dropdownContent, document.body)}

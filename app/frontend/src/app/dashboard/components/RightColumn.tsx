@@ -112,11 +112,11 @@ export function WarrantyDistributionCard({ loading, warrantyCategories }: { load
               >
                 <span className={styles.warrantyLabel}>
                   <span className={styles.warrantyDot} style={{ background: cat.dot }}></span>
-                  {cat.key}
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat.key}</span>
                 </span>
-                <span className={styles.warrantyCount}>
-                  {cat.count} Kasus
-                  <ChevronRight size={14} style={{ color: cat.dot, opacity: 0.7 }} />
+                <span className={styles.warrantyCount} style={{ whiteSpace: 'nowrap', flexShrink: 0, marginLeft: '8px' }}>
+                  <span>{cat.count} Kasus</span>
+                  <ChevronRight size={13} style={{ color: cat.dot, opacity: 0.7, flexShrink: 0 }} />
                 </span>
               </div>
             ))
@@ -173,142 +173,153 @@ export function WarrantyDistributionCard({ loading, warrantyCategories }: { load
   );
 }
 
+export function NewServiceRequestsCard({ loading, newServiceRequests = [] }: { loading: boolean; newServiceRequests: Props['newServiceRequests'] }) {
+  return (
+    <div className={`${styles.listCard} ${styles.liveCard}`}>
+      <div className={styles.cardHeaderContainer}>
+        <h3 className={`${styles.listTitle} ${styles.cardTitle}`} style={{ display: 'flex', alignItems: 'center' }}>
+          <span className={styles.pulsingDot}></span>
+          Permintaan Servis Masuk
+        </h3>
+        <span className={styles.liveBadge}>Live</span>
+      </div>
+      <p className={styles.description}>
+        Tiket perbaikan atau komplain yang baru saja masuk.
+      </p>
+      <div className={styles.listItems}>
+        {loading ? (
+          [1, 2].map(i => (
+            <div key={i} style={{ height: '45px', background: '#F1F5F9', borderRadius: '6px', animation: 'pulse 1.5s infinite' }}></div>
+          ))
+        ) : (
+          newServiceRequests.length === 0 ? (
+            <div className={styles.emptyStateBox} style={{ padding: '16px 12px' }}>
+              <CheckCircle2 size={20} style={{ color: 'var(--color-cobalt-blue)' }} />
+              <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--color-deep-navy)' }}>Belum ada antrean baru</span>
+            </div>
+          ) : (
+            newServiceRequests.map((req, idx) => (
+              <div 
+                key={idx} 
+                className={`${styles.listItem} ${styles.serviceRequestItem}`}
+                onClick={() => window.location.href = `/service?call_id=${encodeURIComponent(req.call_id || req.id)}`}
+                style={{ cursor: 'pointer', transition: 'all 0.2s', borderLeft: '3px solid #2E5BFF' }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.transform = 'translateX(4px)';
+                  e.currentTarget.style.background = 'rgba(46, 91, 255, 0.05)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.transform = 'translateX(0)';
+                  e.currentTarget.style.background = '';
+                }}
+                title="Klik untuk membuka detail servis"
+              >
+                <div className={styles.serviceRequestHeader}>
+                  <span className={styles.clientNameBold}>
+                    {req.client} {req.sn ? `(${req.sn})` : ''}
+                  </span>
+                  <span className={styles.timeAgo}>
+                    {req.timeAgo}
+                  </span>
+                </div>
+                <div className={styles.serviceRequestFooter}>
+                  <span className={styles.serviceIssue}>{req.issue}</span>
+                  <span className={styles.statusBadge} style={{
+                    background: req.status === 'Baru' ? 'rgba(79,70,229,0.12)' : 'rgba(4,80,23,0.1)',
+                    color: req.status === 'Baru' ? '#4F46E5' : '#045017',
+                    border: req.status === 'Baru' ? '1px solid rgba(79,70,229,0.25)' : '1px solid rgba(4,80,23,0.2)',
+                  }}>{req.status}</span>
+                </div>
+              </div>
+            ))
+          )
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function ActiveClientsCard({ loading, activeClients }: { loading: boolean; activeClients: Props['activeClients'] }) {
+  return (
+    <div className={styles.listCard}>
+      <div className={styles.cardHeaderContainer}>
+        <h3 className={`${styles.listTitle} ${styles.cardTitle}`}>
+          Klien Teraktif
+        </h3>
+      </div>
+      <p className={styles.description}>
+        Berdasarkan servis dalam 12 bulan terakhir.
+      </p>
+      <div className={styles.listItems}>
+        {loading ? (
+          [1, 2, 3].map(i => (
+            <div key={i} style={{ height: '30px', background: '#F1F5F9', borderRadius: '6px', animation: 'pulse 1.5s infinite' }}></div>
+          ))
+        ) : (
+          activeClients.map((client, idx) => (
+            <div key={idx} className={styles.listItem}>
+              <span className={`${styles.clientName} ${styles.serialNumber}`}>{client.name}</span>
+              <span className={`${styles.clientCount} ${styles.clientItemBadge}`}>{client.count} Servis</span>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function OverdueTicketsCard({ loading, overdueCallIds }: { loading: boolean; overdueCallIds: Props['overdueCallIds'] }) {
+  return (
+    <div className={styles.listCard}>
+      <div className={styles.cardHeaderContainer}>
+        <h3 className={`${styles.listTitle} ${styles.cardTitle}`}>
+          Tiket Terbengkalai &gt; 2 Minggu
+        </h3>
+      </div>
+      <p className={styles.description}>
+        Komplain berstatus Pending lebih dari 14 hari.
+      </p>
+      <div className={styles.listItems}>
+        {loading ? (
+          [1, 2].map(i => (
+            <div key={i} style={{ height: '40px', background: '#F1F5F9', borderRadius: '6px', animation: 'pulse 1.5s infinite' }}></div>
+          ))
+        ) : (
+          overdueCallIds.length === 0 ? (
+            <div className={styles.emptyStateBox}>
+              <CheckCircle2 size={20} style={{ color: 'var(--color-cobalt-blue)' }} />
+              <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--color-deep-navy)' }}>Tidak ada tiket terbengkalai</span>
+              <span style={{ fontSize: '0.68rem', color: 'var(--color-space-grey)' }}>Semua tiket ditangani dalam waktu kurang dari 14 hari.</span>
+            </div>
+          ) : (
+            overdueCallIds.map((ticket, idx) => (
+              <div key={idx} className={`${styles.listItem} ${styles.overdueItem}`}>
+                <div className={styles.overdueHeader}>
+                  <span className={styles.serialNumber}>SN: {ticket.sn}</span>
+                  <span className={styles.daysOpen} style={{
+                    color: ticket.daysOpen > 30 ? '#CC5500' : ticket.daysOpen > 20 ? '#c78006' : '#4F46E5',
+                    background: ticket.daysOpen > 30 ? 'rgba(204,85,0,0.1)' : ticket.daysOpen > 20 ? 'rgba(199,128,6,0.1)' : 'rgba(79,70,229,0.1)',
+                    padding: '2px 7px', borderRadius: '4px', fontSize: '0.72rem',
+                  }}>
+                    {ticket.daysOpen} Hari
+                  </span>
+                </div>
+                <span className={styles.issueText}>{ticket.issue}</span>
+              </div>
+            ))
+          )
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function RightColumn({ loading, activeClients, frequentCallIds, overdueCallIds, warrantyCategories, newServiceRequests = [] }: Props) {
   return (
-    <div>
-
-      {/* Permintaan Servis Baru Masuk (Real-time) — SWAPPED TO TOP */}
-      <div className={`${styles.listCard} ${styles.liveCard}`} style={{ marginBottom: '24px' }}>
-        <div className={styles.cardHeaderContainer}>
-          <h3 className={`${styles.listTitle} ${styles.cardTitle}`} style={{ display: 'flex', alignItems: 'center' }}>
-            <span className={styles.pulsingDot}></span>
-            Permintaan Servis Masuk
-          </h3>
-          <span className={styles.liveBadge}>Live</span>
-        </div>
-        <p className={styles.description}>
-          Tiket perbaikan atau komplain yang baru saja masuk.
-        </p>
-        <div className={styles.listItems}>
-          {loading ? (
-            [1, 2].map(i => (
-              <div key={i} style={{ height: '45px', background: '#F1F5F9', borderRadius: '6px', animation: 'pulse 1.5s infinite' }}></div>
-            ))
-          ) : (
-            newServiceRequests.length === 0 ? (
-              <div className={styles.emptyStateBox} style={{ padding: '16px 12px' }}>
-                <CheckCircle2 size={20} style={{ color: 'var(--color-cobalt-blue)' }} />
-                <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--color-deep-navy)' }}>Belum ada antrean baru</span>
-              </div>
-            ) : (
-              newServiceRequests.map((req, idx) => (
-                <div 
-                  key={idx} 
-                  className={`${styles.listItem} ${styles.serviceRequestItem}`}
-                  onClick={() => window.location.href = `/service?call_id=${encodeURIComponent(req.call_id || req.id)}`}
-                  style={{ cursor: 'pointer', transition: 'all 0.2s', borderLeft: '3px solid #2E5BFF' }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.transform = 'translateX(4px)';
-                    e.currentTarget.style.background = 'rgba(46, 91, 255, 0.05)';
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.transform = 'translateX(0)';
-                    e.currentTarget.style.background = '';
-                  }}
-                  title="Klik untuk membuka detail servis"
-                >
-                  <div className={styles.serviceRequestHeader}>
-                    <span className={styles.clientNameBold}>
-                      {req.client} {req.sn ? `(${req.sn})` : ''}
-                    </span>
-                    <span className={styles.timeAgo}>
-                      {req.timeAgo}
-                    </span>
-                  </div>
-                  <div className={styles.serviceRequestFooter}>
-                    <span className={styles.serviceIssue}>{req.issue}</span>
-                    <span className={styles.statusBadge} style={{
-                      background: req.status === 'Baru' ? 'rgba(79,70,229,0.12)' : 'rgba(4,80,23,0.1)',
-                      color: req.status === 'Baru' ? '#4F46E5' : '#045017',
-                      border: req.status === 'Baru' ? '1px solid rgba(79,70,229,0.25)' : '1px solid rgba(4,80,23,0.2)',
-                    }}>{req.status}</span>
-                  </div>
-                </div>
-              ))
-            )
-          )}
-        </div>
-      </div>
-
-      {/* Klien Teraktif — SWAPPED TO BELOW */}
-      <div className={styles.listCard} style={{ marginBottom: '24px' }}>
-        <div className={styles.cardHeaderContainer}>
-          <h3 className={`${styles.listTitle} ${styles.cardTitle}`}>
-            Klien Teraktif
-          </h3>
-        </div>
-        <p className={styles.description}>
-          Berdasarkan servis dalam 12 bulan terakhir.
-        </p>
-        <div className={styles.listItems}>
-          {loading ? (
-            [1, 2, 3].map(i => (
-              <div key={i} style={{ height: '30px', background: '#F1F5F9', borderRadius: '6px', animation: 'pulse 1.5s infinite' }}></div>
-            ))
-          ) : (
-            activeClients.map((client, idx) => (
-              <div key={idx} className={styles.listItem}>
-                <span className={`${styles.clientName} ${styles.serialNumber}`}>{client.name}</span>
-                <span className={`${styles.clientCount} ${styles.clientItemBadge}`}>{client.count} Servis</span>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-
-      {/* Tiket Terbengkalai */}
-      <div className={styles.listCard} style={{ marginBottom: '24px' }}>
-        <div className={styles.cardHeaderContainer}>
-          <h3 className={`${styles.listTitle} ${styles.cardTitle}`}>
-            Tiket Terbengkalai &gt; 2 Minggu
-          </h3>
-        </div>
-        <p className={styles.description}>
-          Komplain berstatus Pending lebih dari 14 hari.
-        </p>
-        <div className={styles.listItems}>
-          {loading ? (
-            [1, 2].map(i => (
-              <div key={i} style={{ height: '40px', background: '#F1F5F9', borderRadius: '6px', animation: 'pulse 1.5s infinite' }}></div>
-            ))
-          ) : (
-            overdueCallIds.length === 0 ? (
-              <div className={styles.emptyStateBox}>
-                <CheckCircle2 size={20} style={{ color: 'var(--color-cobalt-blue)' }} />
-                <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--color-deep-navy)' }}>Tidak ada tiket terbengkalai</span>
-                <span style={{ fontSize: '0.68rem', color: 'var(--color-space-grey)' }}>Semua tiket ditangani dalam waktu kurang dari 14 hari.</span>
-              </div>
-            ) : (
-              overdueCallIds.map((ticket, idx) => (
-                <div key={idx} className={`${styles.listItem} ${styles.overdueItem}`}>
-                  <div className={styles.overdueHeader}>
-                    <span className={styles.serialNumber}>SN: {ticket.sn}</span>
-                    <span className={styles.daysOpen} style={{
-                      color: ticket.daysOpen > 30 ? '#CC5500' : ticket.daysOpen > 20 ? '#c78006' : '#4F46E5',
-                      background: ticket.daysOpen > 30 ? 'rgba(204,85,0,0.1)' : ticket.daysOpen > 20 ? 'rgba(199,128,6,0.1)' : 'rgba(79,70,229,0.1)',
-                      padding: '2px 7px', borderRadius: '4px', fontSize: '0.72rem',
-                    }}>
-                      {ticket.daysOpen} Hari
-                    </span>
-                  </div>
-                  <span className={styles.issueText}>{ticket.issue}</span>
-                </div>
-              ))
-            )
-          )}
-        </div>
-      </div>
-
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <NewServiceRequestsCard loading={loading} newServiceRequests={newServiceRequests} />
+      <ActiveClientsCard loading={loading} activeClients={activeClients} />
+      <OverdueTicketsCard loading={loading} overdueCallIds={overdueCallIds} />
     </div>
   );
 }

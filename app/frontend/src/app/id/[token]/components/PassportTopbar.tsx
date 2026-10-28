@@ -33,6 +33,7 @@ interface AccessState {
   isClient: boolean;
   isPartner: boolean;
   isAdmin: boolean;
+  isQC?: boolean;
   belongsToClient: boolean;
   hasClientRestriction: boolean;
 }
@@ -46,6 +47,7 @@ export interface PassportTopbarProps extends AccessState {
 export type BadgeConfig = { text: string; shortText: string };
 export function getBadgeConfig(access: AccessState): BadgeConfig {
   if (access.isAdmin) return { text: 'LEVEL 4: ADMINISTRATOR', shortText: 'LV 4' };
+  if (access.isQC) return { text: 'LEVEL 3: QUALITY CONTROL', shortText: 'LV 3' };
   if (access.isPartner) return { text: 'LEVEL 3: TECHNICAL PARTNER', shortText: 'LV 3' };
   if (access.hasClientRestriction) return { text: 'LEVEL 2: RESTRICTED', shortText: 'LV 2' };
   if (access.isClient && access.belongsToClient) return { text: 'LEVEL 2: FLEET OWNER', shortText: 'LV 2' };
@@ -75,6 +77,7 @@ export default function PassportTopbar({
   isClient,
   isPartner,
   isAdmin,
+  isQC,
   belongsToClient,
   hasClientRestriction,
   unit,
@@ -85,6 +88,7 @@ export default function PassportTopbar({
     isClient,
     isPartner,
     isAdmin,
+    isQC,
     belongsToClient,
     hasClientRestriction,
   });

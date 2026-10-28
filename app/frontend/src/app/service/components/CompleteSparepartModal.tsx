@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AlertCircle, Wrench, Plus, Trash2, CheckCircle2 } from 'lucide-react';
-import { HOLIC_SPAREPARTS_INVENTORY, SparepartItem } from '@/lib/spareparts-inventory';
+import { HOLIC_SPAREPARTS_INVENTORY } from '@/lib/spareparts-inventory';
+import { sparepartApi } from '@/lib/api';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 
 interface CompleteSparepartModalProps {
   isOpen: boolean;
@@ -26,6 +28,21 @@ export default function CompleteSparepartModal({
   // Step 1: 'ask' -> Step 2: 'input' (if yes)
   const [hasSpareparts, setHasSpareparts] = useState<boolean | null>(null);
   
+  // Dynamic Catalog from DB
+  const [catalogItems, setCatalogItems] = useState<any[]>(HOLIC_SPAREPARTS_INVENTORY);
+
+  useEffect(() => {
+    if (isOpen) {
+      sparepartApi.getAll().then(res => {
+        if (res.data && res.data.length > 0) {
+          setCatalogItems(res.data);
+        }
+      }).catch(err => {
+        console.error('Failed to fetch DB spareparts, using fallback', err);
+      });
+    }
+  }, [isOpen]);
+  
   // Selected spareparts list
   const [selectedItems, setSelectedItems] = useState<string[]>(() => {
     if (!initialSpareparts) return [];
@@ -40,13 +57,14 @@ export default function CompleteSparepartModal({
   if (!isOpen) return null;
 
   const handleSelectCatalog = (id: string) => {
-    setSelectedCatalogId(id);
     if (!id) return;
-    const item = HOLIC_SPAREPARTS_INVENTORY.find(s => s.id === id);
+    const item = catalogItems.find((s: any) => (s.id?.toString() ?? '') === id);
     if (item && !selectedItems.includes(item.name)) {
       setSelectedItems(prev => [...prev, item.name]);
       setError(null);
     }
+    // Reset so the same item can be re-selected next time
+    setSelectedCatalogId('');
   };
 
   const handleAddCustom = () => {
@@ -246,27 +264,20 @@ export default function CompleteSparepartModal({
                 <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
                   Pilih Dari Inventaris Resmi Holic *
                 </label>
-                <select
+                <CustomSelect
                   value={selectedCatalogId}
-                  onChange={(e) => handleSelectCatalog(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    borderRadius: '8px',
-                    border: '1px solid #cbd5e1',
-                    fontSize: '0.88rem',
-                    color: '#0f172a',
-                    background: '#ffffff',
-                    outline: 'none',
-                  }}
-                >
-                  <option value="">â€” Cari & Pilih Suku Cadang Holic â€”</option>
-                  {HOLIC_SPAREPARTS_INVENTORY.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      [{item.category}] {item.name} ({item.partNumber})
-                    </option>
-                  ))}
-                </select>
+                  placeholder="— Ketik untuk cari suku cadang —"
+                  showSearch={true}
+                  fullWidth={true}
+                  options={catalogItems.map((item: any) => ({
+                    value: item.id?.toString() ?? '',
+                    label: `[${item.category}] ${item.name} (${item.part_number || item.partNumber || '-'})`,
+                  }))}
+                  onChange={handleSelectCatalog}
+                />
+                <p style={{ margin: '5px 0 0', fontSize: '0.7rem', color: '#94a3b8' }}>
+                  💡 Ketik nama / kategori untuk menyaring · klik item untuk langsung menambahkan
+                </p>
               </div>
 
               {/* Atau Input Manual Suku Cadang Lainnya */}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from '../users.module.css';
 import { Shield, Save, CheckSquare, Square, LayoutDashboard, Package, Wrench, BarChart3, Users, Settings } from 'lucide-react';
 
@@ -90,12 +90,42 @@ const initialRoles: RoleConfig[] = [
       },
     })),
   },
+  {
+    id: 'QC',
+    label: 'Quality Control',
+    color: '#10b981',
+    description: 'Inspektur kualitas yang memeriksa unit dan laporan.',
+    menus: defaultMenus.map(m => ({
+      ...m,
+      permissions: {
+        view: ['units', 'reports'].includes(m.id),
+        create: false,
+        edit: false,
+        delete: false,
+      },
+    })),
+  },
 ];
 
 export default function RolesPage() {
-  const [roles, setRoles] = useState<RoleConfig[]>(initialRoles);
+  const [roles, setRoles] = useState<RoleConfig[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('app_role_matrix');
+        if (cached) return JSON.parse(cached);
+      } catch { /* ignore */ }
+    }
+    return initialRoles;
+  });
   const [activeRole, setActiveRole] = useState<string>('SUPER_ADMIN');
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    try {
+      const cached = localStorage.getItem('app_role_matrix');
+      if (cached) setRoles(JSON.parse(cached));
+    } catch { /* ignore */ }
+  }, []);
 
   const currentRole = roles.find(r => r.id === activeRole)!;
 
@@ -141,6 +171,21 @@ export default function RolesPage() {
   };
 
   const handleSave = () => {
+    try {
+      localStorage.setItem('app_role_matrix', JSON.stringify(roles));
+      // Also convert to ROLE_PERMISSIONS format for PermissionsContext
+      const matrix: Record<string, Record<string, Record<string, boolean>>> = {};
+      roles.forEach(r => {
+        matrix[r.id] = {};
+        r.menus.forEach(m => {
+          matrix[r.id][m.id] = { ...m.permissions };
+        });
+      });
+      localStorage.setItem('app_role_permissions', JSON.stringify(matrix));
+      window.dispatchEvent(new Event('role_permissions_updated'));
+    } catch (e) {
+      console.error('Failed to save roles:', e);
+    }
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   };

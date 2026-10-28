@@ -76,6 +76,7 @@ export default function LoginPage() {
         if (redir) router.push(redir);
         else if (userRole === 'CLIENT') router.push('/client-portal/dashboard');
         else if (userRole === 'PARTNER' || userRole === 'MECHANIC') router.push('/partner-portal');
+        else if (userRole === 'QC') router.push('/dashboard/qc');
         else router.push('/dashboard');
 
       }

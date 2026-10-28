@@ -31,6 +31,14 @@ import { IotModule } from './modules/iot/iot.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { UnitHealthScore } from './modules/health-score/entities/unit-health-score.entity';
 import { HealthScoreModule } from './modules/health-score/health-score.module';
+import { MasterSparepart } from './modules/spareparts/entities/sparepart.entity';
+import { SparepartsModule } from './modules/spareparts/spareparts.module';
+import { Delivery } from './modules/deliveries/entities/delivery.entity';
+import { DeliveriesModule } from './modules/deliveries/deliveries.module';
+import { Installation } from './modules/installations/entities/installation.entity';
+import { InstallationsModule } from './modules/installations/installations.module';
+import { Invoice } from './modules/invoices/entities/invoice.entity';
+import { InvoicesModule } from './modules/invoices/invoices.module';
 
 @Module({
   imports: [
@@ -59,7 +67,8 @@ import { HealthScoreModule } from './modules/health-score/health-score.module';
           Client, Unit, Warranty, Partner,
           ServiceLog, ServiceLogAttachment, OwnershipHistory,
           User, ServiceReport, Notification, Conversation, ChatMessage,
-          IotTelemetryLog, UnitHealthScore,
+          IotTelemetryLog, UnitHealthScore, MasterSparepart,
+          Delivery, Installation, Invoice,
         ],
         synchronize: config.get<string>('DB_SYNC') === 'true',
         logging: config.get<string>('DB_LOGGING') === 'true',
@@ -80,6 +89,10 @@ import { HealthScoreModule } from './modules/health-score/health-score.module';
     IotModule,
     ScheduleModule.forRoot(),
     HealthScoreModule,
+    SparepartsModule,
+    DeliveriesModule,
+    InstallationsModule,
+    InvoicesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

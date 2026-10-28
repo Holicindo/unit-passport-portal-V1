@@ -102,11 +102,12 @@
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
-  padding: 10px 12px;
+  padding: 8px 10px;
   border-radius: 8px;
   transition: all 0.2s ease;
   border: none;
   background: var(--color-bg-row);
+  gap: 6px;
 }
 
 .warrantyRow:hover {
@@ -115,26 +116,34 @@
 }
 
 .warrantyLabel {
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.72rem;
+  font-weight: 700;
   color: var(--color-deep-navy);
   display: flex;
   align-items: center;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .warrantyDot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
-  margin-right: 8px;
+  margin-right: 6px;
+  flex-shrink: 0;
 }
 
 .warrantyCount {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 800;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  color: var(--color-deep-navy);
 }
 
 .modalOverlay {
@@ -404,49 +413,136 @@
   }
 }
 
-/* MOBILE VIEW OPTIMIZATIONS */
+/* MOBILE VIEW OPTIMIZATIONS (GoPay-style compact) */
 @media (max-width: 768px) {
   .listCard {
-    padding: 14px !important;
-    border: 2px solid rgba(79, 70, 229, 0.25) !important;
-    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.08) !important;
-    margin-bottom: 4px;
+    padding: 12px 14px !important;
+    border: 1.5px solid var(--color-border) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 2px 8px rgba(0, 31, 63, 0.05) !important;
+    margin-bottom: 0px !important;
   }
   
   .listTitle {
-    font-size: 0.9rem !important;
-    padding-bottom: 10px !important;
+    font-size: 0.85rem !important;
+    padding-bottom: 8px !important;
+    margin-bottom: 8px !important;
   }
   
   .description {
-    font-size: 0.68rem !important;
-    margin-bottom: 12px !important;
+    font-size: 0.65rem !important;
+    margin-bottom: 8px !important;
   }
   
   .listItem {
-    padding: 10px 12px !important;
-    font-size: 0.78rem !important;
+    padding: 8px 10px !important;
+    font-size: 0.74rem !important;
+    border-radius: 8px !important;
   }
   
   .modalOverlay {
-    padding: 12px !important;
+    padding: 10px !important;
   }
   
   .modalContent {
-    padding: 18px !important;
-    max-width: 100% !important;
-    border: 2px solid rgba(79, 70, 229, 0.25) !important;
+    padding: 16px !important;
+    max-width: 95vw !important;
+    max-height: 85vh !important;
+    border-radius: 14px !important;
   }
   
   .casesList {
-    max-height: 300px !important;
+    max-height: 250px !important;
   }
   
   .warrantyRow {
-    padding: 9px 10px !important;
+    padding: 7px 8px !important;
   }
   
   .serviceRequestItem {
-    padding: 9px 11px !important;
+    padding: 7px 9px !important;
+  }
+
+  /* ===== COMPACT CARD DI mobilePairRow (2 kolom) ===== */
+  /* Card dalam grid 2-kolom: semua elemen compact */
+  .listCard {
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .listCard .listTitle {
+    font-size: 0.78rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    padding-bottom: 6px !important;
+    margin-bottom: 6px !important;
+  }
+
+  /* Sembunyikan deskripsi di card compact */
+  .listCard .description {
+    display: none !important;
+  }
+
+  /* List items dalam card 2-kolom: kompres ukuran */
+  .listCard .listItems {
+    flex: 1 1 auto !important;
+    overflow-y: auto !important;
+    max-height: 140px !important;
+  }
+
+  .listCard .listItem {
+    padding: 6px 8px !important;
+    font-size: 0.68rem !important;
+    border-radius: 6px !important;
+  }
+
+  /* Serial number & issue text kompak */
+  .serialNumber {
+    font-size: 0.65rem !important;
+  }
+
+  .issueText {
+    font-size: 0.62rem !important;
+  }
+
+  .visitCount {
+    font-size: 0.62rem !important;
+  }
+
+  .clientNameBold {
+    font-size: 0.68rem !important;
+  }
+
+  .timeAgo {
+    font-size: 0.6rem !important;
+  }
+
+  .serviceIssue {
+    font-size: 0.62rem !important;
+  }
+
+  .statusBadge {
+    font-size: 0.6rem !important;
+    padding: 1px 4px !important;
+  }
+
+  .daysOpen {
+    font-size: 0.65rem !important;
+    padding: 1px 5px !important;
+  }
+
+  .clientItemBadge {
+    font-size: 0.65rem !important;
+    padding: 1px 6px !important;
+  }
+
+  .emptyStateBox {
+    padding: 12px 8px !important;
+  }
+
+  .emptyStateBox span {
+    font-size: 0.65rem !important;
   }
 }

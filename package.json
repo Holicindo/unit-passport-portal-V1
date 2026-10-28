@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "scripts": {
     "install:all": "npm install --prefix app/backend && npm install --prefix app/frontend",
-    "dev": "npx concurrently \"npm run start:dev --prefix app/backend\" \"npm run dev --prefix app/frontend\"",
+    "dev": "npm run dev:backend & npm run dev:frontend",
+    "dev:backend": "npm run start:dev --prefix app/backend",
+    "dev:frontend": "npm run dev --prefix app/frontend",
     "seed": "npm run start:dev --prefix app/backend -- src/scripts/migrations/seed-users.ts",
     "migrate": "npm run start:dev --prefix app/backend -- src/scripts/migrations/migrate-master-data.ts"
   },
@@ -11,6 +13,6 @@
     "concurrently": "^8.2.2"
   },
   "dependencies": {
-    "next": "14.2.3"
+    "next": "^16.4.3"
   }
 }

@@ -36,7 +36,7 @@ export default function QrPassportPage() {
     token, unit, user, loading, error,
     carouselRef, unitReports,
     toast, showToast, clearToast, loadUnitData,
-    isGuest, isClient, isPartner, isAdmin,
+    isGuest, isClient, isPartner, isAdmin, isQC,
     belongsToClient, hasClientRestriction,
     isWarrantyActive, expiryDate,
   } = passport;
@@ -412,9 +412,46 @@ export default function QrPassportPage() {
           </section>
           )}
 
-          {/* Riwayat Servis */}
-          {(!isGuest && !hasClientRestriction) && (
-            <ServiceHistorySection serviceLogs={unit.service_logs || []} />
+          {/* Slide 3: Stats Card (Ringkasan Unit) — Dipindahkan ke Kolom Kiri agar seimbang & compact */}
+          {!isGuest && (
+          <section className={`${styles.panel} ${styles.iotPanel}`} style={{ borderRadius: "20px" }}>
+            <div className={styles.panelHeader}>
+              <div className={styles.panelHeaderLeft}>
+                <Settings size={16} color="#60a5fa" />
+                <h2>Status &amp; Garansi</h2>
+              </div>
+            </div>
+            <div className={styles.panelContent} style={{ padding: '14px' }}>
+              <div className={styles.statsGrid} style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
+                {[
+                  { tip: 'Kondisi operasional unit saat ini.', icon: <CheckCircle2 size={18} />, cls: styles.success, title: 'Status Unit', status: 'Normal', color: '#34d399', sub: 'Beroperasi baik' },
+                  { tip: 'Masa garansi resmi dari Holicindo.', icon: <ShieldAlert size={18} />, cls: isWarrantyActive ? styles.success : styles.warning, title: 'Garansi', status: isWarrantyActive ? 'Aktif' : 'Kedaluwarsa', color: isWarrantyActive ? '#34d399' : '#f59e0b', sub: isWarrantyActive ? `${expiryDate?.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) || ''}` : 'Hubungi support' },
+                  { tip: 'Tanggal terakhir unit diservis.', icon: <Wrench size={18} />, cls: styles.info, title: 'Last Service', status: 'Belum Ada', color: '#60a5fa', sub: 'Belum pernah' },
+                  { tip: 'Estimasi jadwal servis berikutnya.', icon: <Clock size={18} />, cls: styles.info, title: 'Next Service', status: 'Disarankan', color: '#60a5fa', sub: 'Dalam 180 hari' },
+                  { tip: 'Status keaslian unit.', icon: <CheckCircle2 size={18} />, cls: styles.success, title: 'Verifikasi', status: 'Asli', color: '#34d399', sub: 'Terverifikasi' },
+                ].map((s, idx) => (
+                  <div
+                    key={s.title}
+                    className={styles.statusItem}
+                    style={{
+                      padding: '10px 12px',
+                      gap: '10px',
+                      borderRadius: '12px',
+                      gridColumn: idx === 4 ? '1 / -1' : 'auto' // Item ke-5 membentang penuh 2 kolom agar rapi
+                    }}
+                  >
+                    <span className={styles.statTooltipAnchor}><HelpCircle size={11} className={styles.statTooltipIcon} /><span className={styles.statTooltip}>{s.tip}</span></span>
+                    <div className={`${styles.statusIcon} ${s.cls}`} style={{ width: '32px', height: '32px', minWidth: '32px' }}>{s.icon}</div>
+                    <div className={styles.statusText} style={{ gap: '2px' }}>
+                      <h3 style={{ fontSize: '0.62rem' }}>{s.title}</h3>
+                      <p style={{ color: s.color, fontSize: '0.82rem' }}>{s.status}</p>
+                      <span style={{ fontSize: '0.65rem' }}>{s.sub}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
           )}
 
           </div>{/* ── END passportLeft ── */}
@@ -429,7 +466,23 @@ export default function QrPassportPage() {
               <section className={`${styles.panel} ${styles.iotPanel}`} style={{ borderRadius: "18px", margin: 0, display: 'flex', flexDirection: 'column' }}>
                 <div className={styles.panelHeader}>
                   <div className={styles.panelHeaderLeft}><BookOpen size={16} color="#60a5fa" /><h2>Manuals</h2></div>
-                  {isAdmin && (<div style={{ display: 'flex', gap: '8px' }}>
+                  {isQC && (
+                  <div className={styles.partnerActions} style={{ width: '100%', textAlign: 'left' }}>
+                    <div style={{ marginBottom: '12px', display: 'flex', justifyContent: 'center' }}>
+                      <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(16,185,129,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(16,185,129,0.3)' }}>
+                        <CheckCircle2 size={20} color="#10b981" />
+                      </div>
+                    </div>
+                    <h3 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '4px', textAlign: 'center', color: '#ffffff' }}>Quality Control Mode</h3>
+                    <p className={styles.sectionInfo} style={{ textAlign: 'center', marginBottom: '16px', fontSize: '0.82rem', color: '#cbd5e1' }}>Inspeksi kualitas, sensor, dan laporan unit.</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <button className={styles.btnPrimary} onClick={() => setShowReportSelector(true)} style={{ background: 'linear-gradient(135deg, #10b981, #059669)', color: '#ffffff', border: 'none', fontWeight: 700, padding: '12px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                        <FileText size={16} /> Buka / Buat QC Report
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {isAdmin && (<div style={{ display: 'flex', gap: '8px' }}>
                     {editBlocks.manuals && <button className={styles.btnCancel} onClick={() => cancelEdit('manuals')}>Batal</button>}
                     <button className={editBlocks.manuals ? styles.btnSave : styles.btnRevise} onClick={() => toggleEdit('manuals')}>{editBlocks.manuals ? (isSaving ? 'Menyimpan…' : 'Simpan') : 'Revisi'}</button>
                   </div>)}
@@ -640,8 +693,13 @@ export default function QrPassportPage() {
               </section>
             )}
 
+            {/* Riwayat Servis — Di bawah Kesehatan Unit & Di atas Sensor Real-Time */}
+            {(!isGuest && !hasClientRestriction) && (
+              <ServiceHistorySection serviceLogs={unit.service_logs || []} />
+            )}
+
             {/* IoT — Admin/Partner: Slide Carousel (Sensor Real-Time <-> Riwayat Sensor) */}
-            {(isPartner || isAdmin) && unit.id && (
+            {(isPartner || isAdmin || isQC) && unit.id && (
               <section className={`${styles.panel} ${styles.iotPanel}`}>
                 <div className={styles.panelHeader}>
                   <div className={styles.iotSlideHeader}>
@@ -725,32 +783,6 @@ export default function QrPassportPage() {
                   )}
                 </div>
               </section>
-            )}
-
-            {/* Stats Card — full width di desktop, jadi item carousel di mobile */}
-            {!isGuest && (
-            <section className={`${styles.panel} ${styles.statsFullWidth}`} style={{ gridColumn: '1 / -1', margin: 0 }}>
-              <div className={styles.panelHeader}><div className={styles.panelHeaderLeft}><Settings size={16} color="var(--color-cobalt-blue)" /><h2>Stats Card</h2></div></div>
-              <div className={`${styles.statsGrid} ${styles.panelContent}`}>
-                {[
-                  { tip: 'Kondisi operasional unit saat ini.', icon: <CheckCircle2 size={24} />, cls: styles.success, title: 'Status Unit', status: 'Normal', color: 'var(--color-cobalt-blue)', sub: 'Unit beroperasi dengan baik' },
-                  { tip: 'Masa garansi resmi dari Holicindo.', icon: <ShieldAlert size={24} />, cls: isWarrantyActive ? styles.success : styles.warning, title: 'Garansi', status: isWarrantyActive ? 'Aktif' : 'Kedaluwarsa', color: isWarrantyActive ? 'var(--color-cobalt-blue)' : '#f59e0b', sub: isWarrantyActive ? `Hingga ${expiryDate?.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) || ''}` : 'Hubungi support' },
-                  { tip: 'Tanggal terakhir unit diservis.', icon: <Wrench size={24} />, cls: styles.info, title: 'Last Service', status: 'Belum Ada', color: '#336bd9ff', sub: 'Belum pernah diservis' },
-                  { tip: 'Estimasi jadwal servis berikutnya.', icon: <Clock size={24} />, cls: styles.info, title: 'Next Service', status: 'Disarankan', color: '#3b82f6', sub: 'Dalam 180 hari' },
-                  { tip: 'Status keaslian unit.', icon: <CheckCircle2 size={24} />, cls: styles.success, title: 'Verifikasi', status: 'Asli', color: 'var(--color-cobalt-blue)', sub: 'Unit terverifikasi Holicindo' },
-                ].map((s) => (
-                  <div key={s.title} className={styles.statusItem} style={{ position: 'relative' }}>
-                    <span className={styles.statTooltipAnchor}><HelpCircle size={12} className={styles.statTooltipIcon} /><span className={styles.statTooltip}>{s.tip}</span></span>
-                    <div className={`${styles.statusIcon} ${s.cls}`}>{s.icon}</div>
-                    <div className={styles.statusText}>
-                      <h3>{s.title}</h3>
-                      <p style={{ color: s.color }}>{s.status}</p>
-                      <span>{s.sub}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
             )}
 
           </div>{/* end passportRight */}

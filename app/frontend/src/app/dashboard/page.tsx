@@ -1,11 +1,17 @@
 'use client';
 
+import { useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { RefreshCw } from 'lucide-react';
 import { useDashboardData } from './hooks/useDashboardData';
 import ServiceTrendChart from './components/ServiceTrendChart';
 import { RecentActivity, UpcomingPM } from './components/ActivityAndPM';
-import RightColumn, { FrequentComplaintsCard, WarrantyDistributionCard } from './components/RightColumn';
+import RightColumn, {
+  FrequentComplaintsCard,
+  WarrantyDistributionCard,
+  NewServiceRequestsCard,
+  ActiveClientsCard,
+  OverdueTicketsCard,
+} from './components/RightColumn';
 import styles from './dashboard.module.css';
 
 const StatsGrid = dynamic(() => import('@/components/dashboard/StatsGrid'), {
@@ -30,7 +36,7 @@ const StatsGrid = dynamic(() => import('@/components/dashboard/StatsGrid'), {
   ssr: false
 });
 
-import IotAlertsAndAnalyticsWidget from './components/IotAlertsAndAnalyticsWidget';
+import IotAlertsAndAnalyticsWidget, { IotTelemetryCard, SlaMetricsCard } from './components/IotAlertsAndAnalyticsWidget';
 
 export default function DashboardPage() {
   const {
@@ -40,10 +46,24 @@ export default function DashboardPage() {
     fetchDashboardData,
   } = useDashboardData();
 
+  // Listen to TopBar sync trigger
+  useEffect(() => {
+    const handleSyncRequest = () => {
+      fetchDashboardData(true);
+    };
+    window.addEventListener('request-dashboard-sync', handleSyncRequest);
+    return () => window.removeEventListener('request-dashboard-sync', handleSyncRequest);
+  }, [fetchDashboardData]);
+
+  // Sync state notification to TopBar
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('dashboard-sync-state', { detail: syncing }));
+  }, [syncing]);
+
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
           <h1 className={styles.title}>
             Dashboard
           </h1>
@@ -51,29 +71,37 @@ export default function DashboardPage() {
             Sistem Pemantauan Unit & Diagnostik Pemeliharaan Terpadu
           </p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <button
-            className={styles.syncBtn}
-            onClick={() => fetchDashboardData(true)}
-            disabled={syncing || loading}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '8px',
-              background: 'var(--color-card-bg)', border: 'none',
-              padding: '10px 20px', borderRadius: '24px', fontSize: '0.85rem',
-              fontWeight: 700, color: 'var(--color-cobalt-blue)', cursor: 'pointer',
-              boxShadow: '-4px -4px 10px rgba(255, 255, 255, 0.8), 4px 4px 10px rgba(79, 70, 229, 0.1)', transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-            }}
-          >
-            <RefreshCw size={14} className={syncing ? styles.spin : ''} style={{ color: 'var(--color-cobalt-blue)' }} />
-            {syncing ? 'Menyingkronkan...' : 'Singkronkan Data'}
-          </button>
-        </div>
       </header>
 
       <StatsGrid data={statsData} loading={loading} />
 
-      <div style={{ marginTop: '16px' }}>
+      {/* DESKTOP VIEW: IotAlertsAndAnalyticsWidget lengkap berdampingan */}
+      <div className={styles.desktopUpcomingPm} style={{ marginTop: '16px' }}>
         <IotAlertsAndAnalyticsWidget activeClients={activeClients} />
+      </div>
+
+      {/* MOBILE VIEW: Telemetri IoT -> 4 Card Prioritas -> Kinerja SLA Jaringan Mitra */}
+      <div className={styles.mobileTopCards} style={{ marginTop: '14px' }}>
+        {/* Card 1: Telemetri IoT & Peringatan Otomatis */}
+        <IotTelemetryCard />
+
+        {/* 4 Card Prioritas (2 pasang) */}
+        {/* Row 1: Permintaan Servis Masuk & Tiket Terbengkalai > 2 Minggu */}
+        <div className={styles.mobilePairRow}>
+          <NewServiceRequestsCard loading={loading} newServiceRequests={newServiceRequests} />
+          <OverdueTicketsCard loading={loading} overdueCallIds={overdueCallIds} />
+        </div>
+
+        {/* Row 2: Klien Teraktif & Jadwal PM Terdekat */}
+        <div className={styles.mobilePairRow}>
+          <ActiveClientsCard loading={loading} activeClients={activeClients} />
+          <UpcomingPM pms={upcomingPMs} loading={loading} />
+        </div>
+
+        {/* Card 2: Kinerja SLA Jaringan Mitra (ditukar di bawah 4 card prioritas) */}
+        <div style={{ marginTop: '4px' }}>
+          <SlaMetricsCard activeClients={activeClients} />
+        </div>
       </div>
 
       <div className={styles.bottomSection}>
@@ -81,7 +109,9 @@ export default function DashboardPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <ServiceTrendChart chartData={chartData} loading={loading} liveTime={liveTime} />
           <RecentActivity activities={recentActivities} loading={loading} />
-          <UpcomingPM pms={upcomingPMs} loading={loading} />
+          <div className={styles.desktopUpcomingPm}>
+            <UpcomingPM pms={upcomingPMs} loading={loading} />
+          </div>
 
           <div className="frequent-warranty-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
             <FrequentComplaintsCard loading={loading} frequentCallIds={frequentCallIds} />
@@ -89,15 +119,17 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* RIGHT COLUMN */}
-        <RightColumn
-          loading={loading}
-          activeClients={activeClients}
-          frequentCallIds={frequentCallIds}
-          overdueCallIds={overdueCallIds}
-          warrantyCategories={warrantyCategories}
-          newServiceRequests={newServiceRequests}
-        />
+        {/* RIGHT COLUMN (Visible on Desktop) */}
+        <div className={styles.desktopRightColumn}>
+          <RightColumn
+            loading={loading}
+            activeClients={activeClients}
+            frequentCallIds={frequentCallIds}
+            overdueCallIds={overdueCallIds}
+            warrantyCategories={warrantyCategories}
+            newServiceRequests={newServiceRequests}
+          />
+        </div>
       </div>
     </div>
   );

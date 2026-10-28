@@ -6,6 +6,10 @@
 #include <DallasTemperature.h>
 #include <ArduinoJson.h>
 #include <WiFiManager.h>
+#include <esp_task_wdt.h>
+
+// WDT Timeout: jika CPU stuck/hang lebih dari 30 detik, reboot otomatis
+#define WDT_TIMEOUT_SECONDS 30
 
 // =============================================================================
 // KONFIGURASI MQTT
@@ -204,10 +208,22 @@ void setup_wifi() {
 }
 
 // =============================================================================
-// MQTT RECONNECT
+// MQTT RECONNECT (Non-blocking / Anti-Freeze)
 // =============================================================================
+int mqtt_retry_count = 0;
+unsigned long last_mqtt_retry = 0;
+
 void reconnect() {
-    while (!client.connected()) {
+    // Cek status WiFi terlebih dahulu
+    if (WiFi.status() != WL_CONNECTED) {
+        Serial.println("⚠️  WiFi terputus. Menunggu koneksi ulang...");
+        return;
+    }
+
+    unsigned long currentMillis = millis();
+    // Hanya coba reconnect tiap 5 detik (tidak membekukan loop)
+    if (currentMillis - last_mqtt_retry >= 5000) {
+        last_mqtt_retry = currentMillis;
         Serial.print("Menghubungkan MQTT (broker.hivemq.com)...");
         String clientId = "ESP32-";
         clientId += unit_id;
@@ -216,11 +232,21 @@ void reconnect() {
 
         if (client.connect(clientId.c_str())) {
             Serial.println(" OK!");
+            mqtt_retry_count = 0;
         } else {
+            mqtt_retry_count++;
             Serial.print(" Gagal, rc=");
             Serial.print(client.state());
-            Serial.println(". Coba lagi 5 detik...");
-            delay(5000);
+            Serial.print(" (Percobaan ");
+            Serial.print(mqtt_retry_count);
+            Serial.println("/10)");
+
+            // Jika gagal 10x berturut-turut (~50 detik), paksa restart ESP agar koneksi fresh
+            if (mqtt_retry_count >= 10) {
+                Serial.println("❌ Terlalu sering gagal MQTT, restart ESP...");
+                delay(1000);
+                ESP.restart();
+            }
         }
     }
 }
@@ -281,6 +307,15 @@ void setup() {
     client.setServer(mqtt_server, mqtt_port);
     client.setBufferSize(512); // PENTING: default PubSubClient hanya 128/256 bytes, JSON kita butuh 512 bytes
 
+    // =========================================================================
+    // INISIALISASI HARDWARE WATCHDOG TIMER (WDT)
+    // Jika ESP32 mengalami crash, freeze, atau tersendat > 30 detik,
+    // hardware watchdog akan memaksa reboot otomatis!
+    // =========================================================================
+    Serial.println("Mengaktifkan Hardware Watchdog Timer (30 detik)...");
+    esp_task_wdt_init(WDT_TIMEOUT_SECONDS, true); // true = panic & restart jika timeout
+    esp_task_wdt_add(NULL);                       // daftarkan task loop saat ini ke watchdog
+
     Serial.println("Setup selesai. Mulai kirim data tiap 2 detik (real-time mode)...\n");
 }
 
@@ -288,6 +323,9 @@ void setup() {
 // LOOP
 // =============================================================================
 void loop() {
+    // Beri makan watchdog (Reset timer) agar chip tahu sistem berjalan normal
+    esp_task_wdt_reset();
+
     if (!client.connected()) {
         reconnect();
     }

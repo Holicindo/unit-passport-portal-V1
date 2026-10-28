@@ -78,6 +78,62 @@
   box-shadow: 0 2px 8px rgba(0, 31, 63, 0.08);
 }
 
+/* Operational Category Tabs */
+.operationalTabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid #CBD5E1;
+  border-radius: 14px;
+  padding: 6px;
+  box-shadow: 0 2px 10px rgba(0, 31, 63, 0.05);
+  width: fit-content;
+  flex-wrap: wrap;
+}
+
+.opTab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.opTab:hover {
+  color: #001F3F;
+  background: rgba(0, 31, 63, 0.04);
+}
+
+.opTabActive {
+  background: #001F3F;
+  color: #ffffff !important;
+  box-shadow: 0 3px 10px rgba(0, 31, 63, 0.25);
+}
+
+.opBadge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: rgba(0, 31, 63, 0.08);
+  color: #001F3F;
+  transition: all 0.2s ease;
+}
+
+.opTabActive .opBadge {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
 /* Calendar */
 .calendarContainer {
   background: var(--color-optic-white);
@@ -139,19 +195,25 @@
 }
 
 .calendarDay {
-  min-height: 80px;
-  padding: 6px;
-  border: 1px solid #f0f0f4;
-  border-radius: 6px;
-  background: #fafbfc;
+  min-height: 96px;
+  padding: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.2s ease;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .calendarDay:hover {
-  background: #f0f4ff;
-  border-color: var(--color-cobalt-blue);
+  background: #f8faff;
+  border-color: #2E5BFF;
+  box-shadow: 0 4px 14px rgba(46, 91, 255, 0.12);
+  transform: translateY(-1px);
+  z-index: 20;
 }
 
 .calendarDayEmpty {
@@ -163,18 +225,195 @@
 .calendarDayEmpty:hover {
   background: transparent;
   border-color: transparent;
+  box-shadow: none;
+  transform: none;
 }
 
 .calendarDayToday {
-  background: rgba(0, 71, 171, 0.04);
-  border-color: var(--color-cobalt-blue);
+  background: rgba(46, 91, 255, 0.04);
+  border-color: #2E5BFF;
+}
+
+.calendarDayHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
 }
 
 .calendarDayNum {
-  font-size: 0.8rem;
-  font-weight: 700;
+  font-size: 0.82rem;
+  font-weight: 800;
   color: var(--color-deep-navy);
-  margin-bottom: 4px;
+}
+
+.calendarDayTodayBadge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #2E5BFF;
+  background: rgba(46, 91, 255, 0.12);
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+.calendarPillsWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+}
+
+.calendarItemPill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+.pillService {
+  background: rgba(255, 87, 34, 0.12);
+  color: #d94111;
+  border: 1px solid rgba(255, 87, 34, 0.25);
+}
+
+.pillDelivery {
+  background: rgba(0, 71, 171, 0.1);
+  color: #0047AB;
+  border: 1px solid rgba(0, 71, 171, 0.22);
+}
+
+.pillInstall {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.calendarMoreBadge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #475569;
+  padding: 1px 4px;
+}
+
+/* Hover Tooltip Card Popover */
+.calendarTooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 290px;
+  max-width: calc(100vw - 32px);
+  background: #ffffff;
+  border: 1.5px solid rgba(46, 91, 255, 0.2);
+  border-radius: 12px;
+  box-shadow: 0 14px 36px rgba(0, 31, 63, 0.18), 0 2px 8px rgba(0, 31, 63, 0.08);
+  padding: 12px;
+  z-index: 9999;
+  pointer-events: none;
+  animation: tooltipFade 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.calendarTooltip:after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: #ffffff transparent transparent transparent;
+}
+
+@keyframes tooltipFade {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 4px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.tooltipHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+}
+
+.tooltipDate {
+  font-weight: 800;
+  font-size: 0.8rem;
+  color: #001F3F;
+}
+
+.tooltipCount {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #2E5BFF;
+  background: rgba(46, 91, 255, 0.08);
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
+.tooltipList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.tooltipItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: #f8fafc;
+  border-left: 3px solid #2E5BFF;
+  font-size: 0.74rem;
+}
+
+.tooltipItemHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tooltipCallId {
+  font-weight: 800;
+  color: #001F3F;
+}
+
+.tooltipTaskBadge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.tooltipUnit {
+  color: #334155;
+  font-weight: 600;
+}
+
+.tooltipMeta {
+  color: #64748b;
+  font-size: 0.68rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .calendarDot {
@@ -225,22 +464,25 @@
 .kanbanContainer {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  gap: 22px;
 }
 
 .kanbanColumn {
   background: var(--color-optic-white);
-  border-radius: var(--radius-lg);
-  border: 1px solid rgba(0, 31, 63, 0.05);
-  box-shadow: var(--glass-shadow);
+  border-radius: 16px;
+  border: 2px solid #CBD5E1;
+  box-shadow: 0 4px 16px rgba(0, 31, 63, 0.07);
   display: flex;
   flex-direction: column;
-  min-height: 300px;
+  min-height: 320px;
+  overflow: hidden;
+  transition: all 0.2s ease;
 }
 
 .kanbanHeader {
   padding: 16px 20px;
-  border-bottom: 1px solid #f0f0f4;
+  background: #f8fafc;
+  border-bottom: 2px solid #E2E8F0;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -822,17 +1064,108 @@
   }
 
   /* Modal compact */
+  .modalOverlay {
+    padding: 10px;
+    align-items: center;
+  }
+
   .modalCard {
-    max-height: 95vh;
+    max-height: 85vh !important;
+    max-width: 95vw !important;
+    border-radius: 16px !important;
+    margin: 0 auto;
   }
 
   .modalHeader,
   .modalFooter {
-    padding: 14px 16px;
+    padding: 12px 14px;
+  }
+
+  .modalTitle {
+    font-size: 1rem;
   }
 
   .modalBody {
-    padding: 14px 16px;
-    gap: 12px;
+    padding: 12px 14px;
+    gap: 10px;
   }
 }
+
+/* =========================================================
+   TABLE VIEW STYLING (PM VIEW ADDITION)
+   ========================================================= */
+.tableContainer {
+  background: var(--color-optic-white);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(0, 31, 63, 0.08);
+  box-shadow: 0 4px 18px rgba(0, 31, 63, 0.04);
+  overflow-x: auto;
+  margin-top: 10px;
+}
+
+.planningTable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-family: var(--font-body);
+  font-size: 0.86rem;
+}
+
+.planningTable th {
+  background: #0D233A;
+  color: #FFFFFF;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 12px 14px;
+  font-weight: 700;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 2px solid #081626;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.planningTable th:last-child {
+  border-right: none;
+}
+
+.planningTable td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #E2E8F0;
+  border-right: 1px solid #EDF2F7;
+  vertical-align: middle;
+  color: var(--color-deep-navy);
+}
+
+.planningTable td:last-child {
+  border-right: none;
+}
+
+.tableRow {
+  transition: background 0.15s ease;
+}
+
+.tableRow:hover {
+  background: rgba(46, 91, 255, 0.03);
+}
+
+.tableActionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tableActionBtn:hover {
+  background: #2E5BFF;
+  border-color: #2E5BFF;
+  color: #ffffff;
+}

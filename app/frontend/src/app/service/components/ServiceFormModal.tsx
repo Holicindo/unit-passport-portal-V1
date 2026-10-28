@@ -2,6 +2,7 @@
 
 import { X, Loader2, HelpCircle, Hash, Cpu, Wrench, ClipboardList, UserCheck, Calendar } from 'lucide-react';
 import { CustomSelect } from '@/components/ui/CustomSelect';
+import { MultiSelect } from '@/components/ui/MultiSelect';
 import { getUnitType, UNIT_TYPE_LABELS, UNIT_TYPE_COLORS } from '../../id/[token]/constants';
 import styles from '../service.module.css';
 
@@ -11,6 +12,7 @@ interface ServiceFormModalProps {
   onSubmit: () => void;
   units: any[];
   partners: any[];
+  technicianOptions?: { value: string; label: string; badge?: string }[];
   formError: string | null;
   setFormError: (v: string | null) => void;
   selectedUnitId: string;
@@ -298,14 +300,17 @@ export default function ServiceFormModal(props: ServiceFormModalProps) {
                   options={[{ value: '', label: 'HQ (Manual Routing)' }, ...partners.map((p) => ({ value: p.id, label: `${p.partner_name} (${p.city})` }))]} />
               </div>
               <div>
-                <label style={labelStyle}>Nama Teknisi</label>
-                <input
-                  type="text"
-                  value={technicianName}
-                  onChange={(e) => setTechnicianName(e.target.value)}
-                  placeholder="Nama penanggungjawab"
-                  autoComplete="new-password"
-                  style={fieldStyle}
+                <label style={labelStyle}>Teknisi Bertugas (Multi-Select)</label>
+                <MultiSelect
+                  value={technicianName && technicianName !== 'Menunggu Alokasi' ? technicianName.split(',').map((s: string) => s.trim()).filter(Boolean) : []}
+                  onChange={(arr) => setTechnicianName(arr.length > 0 ? arr.join(', ') : 'Menunggu Alokasi')}
+                  options={props.technicianOptions || [
+                    { value: 'Budi Santoso', label: 'Budi Santoso' },
+                    { value: 'Andi Wijaya', label: 'Andi Wijaya' },
+                    { value: 'Mutiara', label: 'Mutiara' },
+                  ]}
+                  placeholder="Pilih teknisi..."
+                  fullWidth
                 />
               </div>
             </div>

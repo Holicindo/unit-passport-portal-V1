@@ -3,6 +3,7 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { BarChart2, TableProperties, RefreshCw, TrendingDown, TrendingUp, Minus, Download, ChevronDown, Settings2, X, Check, FileText } from 'lucide-react';
 import { iotApi, unitApi } from '@/lib/api';
+import CalibrationModal from './CalibrationModal';
 
 // ─── Component Current Calculation (from IotTelemetryWidget logic) ───────────
 // Kalibrasi teknisi (Ampere)
@@ -592,6 +593,7 @@ interface IotHistoryWidgetProps {
 export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHistoryWidgetProps) {
   const [activeTab, setActiveTab] = useState<'temperature' | 'electrical'>('temperature');
   const [view, setView] = useState<'chart' | 'table'>('chart');
+  const [showCalibrationModal, setShowCalibrationModal] = useState(false);
   const [rangeIdx, setRangeIdx] = useState(2); // default 24 Jam
   const [data, setData] = useState<HistoryPoint[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1286,36 +1288,70 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
 
           {/* Settings Button (Only for Temperature) */}
           {unit && activeTab === 'temperature' && (
-            <button onClick={() => setShowSettings(true)} style={{
-              padding: '8px 12px',
-              borderRadius: '10px',
-              border: '1px solid rgba(255,255,255,0.1)',
-              background: 'rgba(13, 35, 70, 0.85)',
-              boxShadow: '-2px -2px 6px rgba(255,255,255,0.04), 2px 2px 6px rgba(0,0,0,0.4)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              fontSize: '0.72rem',
-              fontWeight: 700,
-              color: '#94a3b8',
-              fontFamily: 'inherit',
-              transition: 'all 0.2s ease',
-            }}
-              onMouseDown={(e) => {
-                e.currentTarget.style.boxShadow = 'inset -2px -2px 4px rgba(255,255,255,0.04), inset 2px 2px 4px rgba(0,0,0,0.2)';
+            <>
+              <button onClick={() => setShowSettings(true)} style={{
+                padding: '8px 12px',
+                borderRadius: '10px',
+                border: '1px solid rgba(255,255,255,0.1)',
+                background: 'rgba(13, 35, 70, 0.85)',
+                boxShadow: '-2px -2px 6px rgba(255,255,255,0.04), 2px 2px 6px rgba(0,0,0,0.4)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                color: '#94a3b8',
+                fontFamily: 'inherit',
+                transition: 'all 0.2s ease',
               }}
-              onMouseUp={(e) => {
-                e.currentTarget.style.boxShadow = '-2px -2px 6px rgba(255,255,255,0.04), 2px 2px 6px rgba(0,0,0,0.4)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = '-2px -2px 6px rgba(255,255,255,0.04), 2px 2px 6px rgba(0,0,0,0.4)';
-              }}
-            >
-              <Settings2 size={12} />
-              Atur Suhu
-            </button>
+                onMouseDown={(e) => {
+                  e.currentTarget.style.boxShadow = 'inset -2px -2px 4px rgba(255,255,255,0.04), inset 2px 2px 4px rgba(0,0,0,0.2)';
+                }}
+                onMouseUp={(e) => {
+                  e.currentTarget.style.boxShadow = '-2px -2px 6px rgba(255,255,255,0.04), 2px 2px 6px rgba(0,0,0,0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow = '-2px -2px 6px rgba(255,255,255,0.04), 2px 2px 6px rgba(0,0,0,0.4)';
+                }}
+              >
+                <Settings2 size={12} />
+                Atur Suhu
+              </button>
+              
+              {/* Button: Atur Kalibrasi */}
+              <button
+                onClick={() => setShowCalibrationModal(true)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '6px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(139, 92, 246, 0.3)',
+                  background: 'rgba(139, 92, 246, 0.12)',
+                  color: '#a78bfa',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(139, 92, 246, 0.2)';
+                  e.currentTarget.style.borderColor = '#a78bfa';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(139, 92, 246, 0.12)';
+                  e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.3)';
+                }}
+              >
+                <Settings2 size={12} />
+                Atur Kalibrasi
+              </button>
+            </>
           )}
+
+          {/* Refresh & Export */}
 
           {/* Refresh & Export */}
           <button onClick={() => fetchHistory(true)} disabled={refreshing || loading} style={{
@@ -1786,6 +1822,18 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
           </div>
         </div>
       )}
+
+      {/* ── CALIBRATION MODAL ── */}
+      <CalibrationModal
+        unitId={unitId}
+        unitSerial={unit?.serial_number || 'N/A'}
+        isOpen={showCalibrationModal}
+        onClose={() => setShowCalibrationModal(false)}
+        onSave={() => {
+          // Refresh data setelah save
+          fetchHistory();
+        }}
+      />
     </div>
   );
 }

@@ -480,4 +480,197 @@ export class IotService {
 
     return rawResult;
   }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // CALIBRATION METHODS
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Get sensor calibration offsets for a unit
+   */
+  async getCalibration(unitId: string) {
+    const calibration = await this.unitRepo.query(
+      `SELECT * FROM iot_calibration WHERE unit_id = $1`,
+      [unitId]
+    );
+
+    if (!calibration || calibration.length === 0) {
+      // Return default offsets if no calibration exists
+      return {
+        success: true,
+        data: {
+          unit_id: unitId,
+          cabinet_offset: 0.0,
+          evaporator_offset: 0.0,
+          condenser_offset: 0.0,
+          calibrated_by: null,
+          calibrated_at: null,
+          notes: 'No calibration data available',
+        },
+      };
+    }
+
+    return {
+      success: true,
+      data: calibration[0],
+    };
+  }
+
+  /**
+   * Create or update sensor calibration for a unit
+   */
+  async createOrUpdateCalibration(unitId: string, dto: any) {
+    // Check if unit exists
+    const unit = await this.unitRepo.findOne({ where: { id: unitId } });
+    if (!unit) {
+      return {
+        success: false,
+        message: 'Unit not found',
+      };
+    }
+
+    // Check if calibration already exists
+    const existing = await this.unitRepo.query(
+      `SELECT id FROM iot_calibration WHERE unit_id = $1`,
+      [unitId]
+    );
+
+    if (existing && existing.length > 0) {
+      // Update existing
+      await this.unitRepo.query(
+        `UPDATE iot_calibration 
+         SET cabinet_offset = $1, 
+             evaporator_offset = $2, 
+             condenser_offset = $3,
+             calibrated_by = $4,
+             notes = $5,
+             reference_cabinet = $6,
+             reference_evaporator = $7,
+             reference_condenser = $8,
+             calibrated_at = NOW()
+         WHERE unit_id = $9`,
+        [
+          dto.cabinet_offset,
+          dto.evaporator_offset,
+          dto.condenser_offset,
+          dto.calibrated_by || null,
+          dto.notes || null,
+          dto.reference_cabinet || null,
+          dto.reference_evaporator || null,
+          dto.reference_condenser || null,
+          unitId,
+        ]
+      );
+
+      this.logger.log(`✅ Updated calibration for unit ${unitId}`);
+    } else {
+      // Insert new
+      await this.unitRepo.query(
+        `INSERT INTO iot_calibration 
+         (unit_id, cabinet_offset, evaporator_offset, condenser_offset, calibrated_by, notes, 
+          reference_cabinet, reference_evaporator, reference_condenser)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        [
+          unitId,
+          dto.cabinet_offset,
+          dto.evaporator_offset,
+          dto.condenser_offset,
+          dto.calibrated_by || null,
+          dto.notes || null,
+          dto.reference_cabinet || null,
+          dto.reference_evaporator || null,
+          dto.reference_condenser || null,
+        ]
+      );
+
+      this.logger.log(`✅ Created calibration for unit ${unitId}`);
+    }
+
+    return {
+      success: true,
+      message: 'Calibration saved successfully',
+      data: await this.getCalibration(unitId),
+    };
+  }
+
+  /**
+   * Update sensor calibration for a unit (partial update)
+   */
+  async updateCalibration(unitId: string, dto: any) {
+    // Check if calibration exists
+    const existing = await this.unitRepo.query(
+      `SELECT * FROM iot_calibration WHERE unit_id = $1`,
+      [unitId]
+    );
+
+    if (!existing || existing.length === 0) {
+      return {
+        success: false,
+        message: 'Calibration not found. Use POST to create first.',
+      };
+    }
+
+    const current = existing[0];
+
+    // Build update query dynamically
+    const updates: string[] = [];
+    const values: any[] = [];
+    let paramIndex = 1;
+
+    if (dto.cabinet_offset !== undefined) {
+      updates.push(`cabinet_offset = $${paramIndex++}`);
+      values.push(dto.cabinet_offset);
+    }
+    if (dto.evaporator_offset !== undefined) {
+      updates.push(`evaporator_offset = $${paramIndex++}`);
+      values.push(dto.evaporator_offset);
+    }
+    if (dto.condenser_offset !== undefined) {
+      updates.push(`condenser_offset = $${paramIndex++}`);
+      values.push(dto.condenser_offset);
+    }
+    if (dto.calibrated_by !== undefined) {
+      updates.push(`calibrated_by = $${paramIndex++}`);
+      values.push(dto.calibrated_by);
+    }
+    if (dto.notes !== undefined) {
+      updates.push(`notes = $${paramIndex++}`);
+      values.push(dto.notes);
+    }
+    if (dto.reference_cabinet !== undefined) {
+      updates.push(`reference_cabinet = $${paramIndex++}`);
+      values.push(dto.reference_cabinet);
+    }
+    if (dto.reference_evaporator !== undefined) {
+      updates.push(`reference_evaporator = $${paramIndex++}`);
+      values.push(dto.reference_evaporator);
+    }
+    if (dto.reference_condenser !== undefined) {
+      updates.push(`reference_condenser = $${paramIndex++}`);
+      values.push(dto.reference_condenser);
+    }
+
+    if (updates.length === 0) {
+      return {
+        success: false,
+        message: 'No fields to update',
+      };
+    }
+
+    updates.push(`calibrated_at = NOW()`);
+    values.push(unitId);
+
+    await this.unitRepo.query(
+      `UPDATE iot_calibration SET ${updates.join(', ')} WHERE unit_id = $${paramIndex}`,
+      values
+    );
+
+    this.logger.log(`✅ Updated calibration for unit ${unitId}`);
+
+    return {
+      success: true,
+      message: 'Calibration updated successfully',
+      data: await this.getCalibration(unitId),
+    };
+  }
 }

@@ -6,7 +6,7 @@ import { CustomSelect } from '@/components/ui/CustomSelect';
 import { clientApi, partnerApi } from '@/lib/api';
 import styles from '../users.module.css';
 
-type UserRole = 'SUPER_ADMIN' | 'MECHANIC' | 'CLIENT';
+type UserRole = 'SUPER_ADMIN' | 'MECHANIC' | 'CLIENT' | 'QC';
 type UserStatus = 'ACTIVE' | 'SUSPENDED';
 
 interface UserFormModalProps {
@@ -112,6 +112,7 @@ export function UserFormModal({ editingUser, onClose, onSave }: UserFormModalPro
                   { value: 'SUPER_ADMIN', label: 'Super Admin' },
                   { value: 'MECHANIC', label: 'Teknisi' },
                   { value: 'CLIENT', label: 'Klien' },
+                  { value: 'QC', label: 'Quality Control' },
                 ]} />
             </div>
             <div className={styles.formGroup}>

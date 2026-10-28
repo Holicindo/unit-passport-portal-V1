@@ -4,7 +4,7 @@ import styles from './Sidebar.module.css';
 import {
   LayoutDashboard, Package, Wrench, BarChart3, ChevronDown,
   List, PlusCircle, ClipboardCheck, History, Wrench as Tool, Calendar, FileText,
-  Users, Shield, Briefcase, Building2, Activity, Database
+  Users, Shield, Briefcase, Building2, Activity, Database, Truck, Receipt
 } from 'lucide-react';
 
 /* ── Holic Logo SVG — same as login page ── */
@@ -24,6 +24,16 @@ function HolicIcon({ className }: { className?: string }) {
 const menuItems = [
   { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} />, href: '/dashboard' },
   {
+    id: 'master-data',
+    label: 'Master Data',
+    icon: <Database size={20} />,
+    href: '/master-data/spareparts',
+    subItems: [
+      { label: 'Master Data Sparepart', icon: <Package size={18} />, href: '/master-data/spareparts' },
+      { label: 'Master Data Teknisi', icon: <Users size={18} />, href: '/master-data/technicians' }
+    ]
+  },
+  {
     id: 'units',
     label: 'Unit',
     icon: <Package size={20} />,
@@ -34,13 +44,15 @@ const menuItems = [
     ]
   },
   {
-    id: 'service',
-    label: 'Servis',
-    icon: <Wrench size={20} />,
-    href: '/service',
+    id: 'operational',
+    label: 'Operasional',
+    icon: <Calendar size={20} />,
+    href: '/service/planning',
     subItems: [
       { label: 'Log Servis', icon: <Tool size={18} />, href: '/service' },
-      { label: 'Rencana Servis', icon: <Calendar size={18} />, href: '/service/planning' }
+      { label: 'Log Pengiriman', icon: <Truck size={18} />, href: '/service/delivery' },
+      { label: 'Log Instalasi', icon: <Wrench size={18} />, href: '/service/installation' },
+      { label: 'Log Tukar Faktur', icon: <Receipt size={18} />, href: '/service/invoice' }
     ]
   },
   {
@@ -113,9 +125,22 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
 
   const filteredMenuItems = menuItems.filter((item) => {
     if (role === 'PARTNER') {
-      return item.id !== 'units' && item.id !== 'users'; // Partner cannot access users/roles
+      return item.id !== 'units' && item.id !== 'users';
+    }
+    if (role === 'QC') {
+      // QC only access Units and Reports
+      return item.id === 'units' || item.id === 'reports';
     }
     return true;
+  }).map((item) => {
+    // If user is QC, they cannot register units, so remove 'Registrasi Unit' subItem
+    if (role === 'QC' && item.id === 'units' && item.subItems) {
+      return {
+        ...item,
+        subItems: item.subItems.filter(sub => sub.href !== '/units/new'),
+      };
+    }
+    return item;
   });
 
   return (

@@ -94,19 +94,19 @@ export function RecentActivity({ activities, loading }: { activities: ScheduleIt
 /* ── Upcoming PM Section ── */
 export function UpcomingPM({ pms, loading }: { pms: PMItem[]; loading: boolean }) {
   return (
-    <div className={styles.listCard} style={{ margin: 0 }}>
-      <h3 className={styles.listTitle} style={{ borderBottom: '2px solid rgba(64,79,104,0.25)', paddingBottom: '12px', marginBottom: '16px' }}>
-        Jadwal Pemeliharaan Preventif (PM) Terdekat
+    <div className={styles.listCard} style={{ margin: 0, overflow: 'hidden' }}>
+      <h3 className={styles.listTitle} style={{ borderBottom: '2px solid rgba(64,79,104,0.25)', paddingBottom: '10px', marginBottom: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' }}>
+        PM Terdekat
       </h3>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto', maxHeight: '200px' }}>
         {loading ? (
           [1, 2].map(i => (
-            <div key={i} style={{ height: '65px', background: '#F1F5F9', borderRadius: '10px', animation: 'pulse 1.5s infinite' }}></div>
+            <div key={i} style={{ height: '52px', background: '#F1F5F9', borderRadius: '8px', animation: 'pulse 1.5s infinite' }}></div>
           ))
         ) : (
           pms.length === 0 ? (
-            <div style={{ gridColumn: 'span 2', textAlign: 'center', padding: '24px 16px', color: 'var(--color-deep-navy)', fontSize: '0.8rem', fontWeight: 600, background: 'var(--color-bg-row)', border: 'none', borderRadius: '12px' }}>
-              Tidak ada jadwal PM dalam 2 minggu ke depan
+            <div style={{ textAlign: 'center', padding: '16px 8px', color: 'var(--color-deep-navy)', fontSize: '0.72rem', fontWeight: 600, background: 'var(--color-bg-row)', borderRadius: '10px' }}>
+              Tidak ada jadwal PM
             </div>
           ) : (
             pms.map(pm => {
@@ -114,84 +114,53 @@ export function UpcomingPM({ pms, loading }: { pms: PMItem[]; loading: boolean }
               const isToday = pm.relative.toLowerCase().includes('hari ini');
               const isSoon = pm.relative.toLowerCase().includes('besok') || pm.relative.toLowerCase().includes('lusa');
 
-              const badgeBg = isLate
-                ? 'rgba(204, 85, 0, 0.12)'
-                : isToday
-                  ? 'rgba(79, 70, 229, 0.12)'
-                  : isSoon
-                    ? 'rgba(4, 80, 23, 0.1)'
-                    : 'rgba(100, 116, 139, 0.1)';
-              const badgeColor = isLate
-                ? '#CC5500'
-                : isToday
-                  ? '#4F46E5'
-                  : isSoon
-                    ? '#045017'
-                    : 'var(--color-space-grey)';
-              const badgeBorder = isLate
-                ? '1px solid rgba(204, 85, 0, 0.3)'
-                : isToday
-                  ? '1px solid rgba(79, 70, 229, 0.25)'
-                  : isSoon
-                    ? '1px solid rgba(4, 80, 23, 0.2)'
-                    : '1px solid rgba(100, 116, 139, 0.15)';
+              const badgeBg = isLate ? 'rgba(204, 85, 0, 0.12)' : isToday ? 'rgba(79, 70, 229, 0.12)' : isSoon ? 'rgba(4, 80, 23, 0.1)' : 'rgba(100, 116, 139, 0.1)';
+              const badgeColor = isLate ? '#CC5500' : isToday ? '#4F46E5' : isSoon ? '#045017' : 'var(--color-space-grey)';
+              const badgeBorder = isLate ? '1px solid rgba(204, 85, 0, 0.3)' : isToday ? '1px solid rgba(79, 70, 229, 0.25)' : isSoon ? '1px solid rgba(4, 80, 23, 0.2)' : '1px solid rgba(100, 116, 139, 0.15)';
 
               return (
                 <div key={pm.id} style={{
-                  background: 'var(--color-card-bg)',
-                  border: '1.5px solid var(--color-border)',
-                  boxShadow: '-3px -3px 8px rgba(255, 255, 255, 0.7), 3px 3px 8px rgba(79, 70, 229, 0.08)',
+                  background: 'var(--color-bg-row)',
+                  border: '1px solid var(--color-border)',
                   borderRadius: '8px',
-                  padding: '12px 14px',
+                  padding: '8px 10px',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '12px',
+                  gap: '8px',
                   transition: 'all 0.2s ease',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  minWidth: 0,
                 }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '-4px -4px 10px rgba(255,255,255,0.8), 4px 4px 14px rgba(79, 70, 229, 0.15)';
-                    e.currentTarget.style.borderColor = 'rgba(79, 70, 229, 0.4)';
-                    e.currentTarget.style.background = '#ECEEFF';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'none';
-                    e.currentTarget.style.boxShadow = '-3px -3px 8px rgba(255, 255, 255, 0.7), 3px 3px 8px rgba(79, 70, 229, 0.08)';
-                    e.currentTarget.style.borderColor = 'rgba(79, 70, 229, 0.15)';
-                    e.currentTarget.style.background = 'var(--color-card-bg)';
-                  }}
                 >
+                  {/* Date Badge */}
                   <div style={{
-                    width: '42px', height: '42px', borderRadius: '8px',
+                    width: '34px', height: '34px', borderRadius: '6px',
                     background: 'rgba(79, 70, 229, 0.08)',
                     color: 'var(--color-deep-navy)',
                     border: '1px solid rgba(79, 70, 229, 0.15)',
                     display: 'flex', flexDirection: 'column', alignItems: 'center',
                     justifyContent: 'center', lineHeight: 1, flexShrink: 0,
                   }}>
-                    <span style={{ fontSize: '1rem', fontWeight: 800 }}>{pm.day}</span>
-                    <span style={{ fontSize: '0.55rem', fontWeight: 800, textTransform: 'uppercase', marginTop: '2px', letterSpacing: '0.5px' }}>{pm.month}</span>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 800 }}>{pm.day}</span>
+                    <span style={{ fontSize: '0.48rem', fontWeight: 800, textTransform: 'uppercase', marginTop: '1px', letterSpacing: '0.4px' }}>{pm.month}</span>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', overflow: 'hidden', width: '100%' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--color-deep-navy)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {/* Content */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', overflow: 'hidden', minWidth: 0, flex: 1 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '4px' }}>
+                      <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--color-deep-navy)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {pm.sn}
                       </span>
                       <span style={{
-                        fontSize: '0.6rem', background: badgeBg, color: badgeColor,
-                        padding: '2px 6px', borderRadius: '4px', fontWeight: 800, flexShrink: 0,
-                        textTransform: 'uppercase', letterSpacing: '0.5px',
-                        border: badgeBorder,
+                        fontSize: '0.55rem', background: badgeBg, color: badgeColor,
+                        padding: '1px 4px', borderRadius: '3px', fontWeight: 800, flexShrink: 0,
+                        textTransform: 'uppercase', letterSpacing: '0.4px',
+                        border: badgeBorder, whiteSpace: 'nowrap',
                       }}>
                         {pm.relative}
                       </span>
                     </div>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--color-space-grey)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: '0.62rem', color: 'var(--color-space-grey)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {pm.model}
-                    </span>
-                    <span style={{ fontSize: '0.65rem', color: 'var(--color-deep-navy)', opacity: 0.65, display: 'flex', alignItems: 'center', gap: '4px', marginTop: '3px' }}>
-                      {pm.partner}
                     </span>
                   </div>
                 </div>

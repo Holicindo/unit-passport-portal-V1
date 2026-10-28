@@ -8,7 +8,7 @@ import StatsGrid from '@/components/dashboard/StatsGrid';
 import { userApi, authApi } from '@/lib/api';
 import { UserFormModal, DeleteConfirmModal } from './components/UserModals';
 
-type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'PARTNER' | 'MECHANIC' | 'CLIENT';
+type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'PARTNER' | 'MECHANIC' | 'CLIENT' | 'QC';
 type UserStatus = 'ACTIVE' | 'SUSPENDED';
 
 interface User {
@@ -30,6 +30,7 @@ const roleLabels: Record<string, string> = {
   PARTNER: 'Partner',
   MECHANIC: 'Teknisi',
   CLIENT: 'Klien',
+  QC: 'Quality Control',
 };
 
 export default function UsersPage() {
@@ -149,6 +150,7 @@ export default function UsersPage() {
             <CustomSelect options={[
               { value: '', label: 'Semua Role' }, { value: 'SUPER_ADMIN', label: 'Super Admin' },
               { value: 'MECHANIC', label: 'Teknisi' }, { value: 'CLIENT', label: 'Klien' },
+              { value: 'QC', label: 'Quality Control' },
             ]} value={filterRole} onChange={(val) => setFilterRole(val)} placeholder="Filter Role..." />
           </div>
           <div className="dtToolbarRight">

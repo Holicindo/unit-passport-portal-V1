@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './TopBar.module.css';
-import { Bell, ChevronDown, LogOut, QrCode, Menu, Wrench, Thermometer, AlertTriangle, CheckCircle2, Clock, ExternalLink } from 'lucide-react';
+import { Bell, ChevronDown, LogOut, QrCode, RefreshCw, Menu, Wrench, Thermometer, AlertTriangle, CheckCircle2, Clock, ExternalLink } from 'lucide-react';
 import QrScannerModal from './QrScannerModal';
 
 interface TopBarProps {
@@ -51,6 +51,7 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
   const [mailOpen, setMailOpen] = useState(false);
   const [bellOpen, setBellOpen] = useState(false);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const [alerts, setAlerts] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
@@ -58,6 +59,24 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
   // Refs for click-outside detection
   const profileRef = useRef<HTMLDivElement>(null);
   const bellRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleSyncState = (e: any) => {
+      if (typeof e.detail === 'boolean') {
+        setIsSyncing(e.detail);
+      }
+    };
+    window.addEventListener('dashboard-sync-state', handleSyncState);
+    return () => window.removeEventListener('dashboard-sync-state', handleSyncState);
+  }, []);
+
+  const handleGlobalSync = () => {
+    setIsSyncing(true);
+    window.dispatchEvent(new CustomEvent('request-dashboard-sync'));
+    // Fallback if not on dashboard: re-fetch notifications
+    fetchNotifications();
+    setTimeout(() => setIsSyncing(false), 2000);
+  };
 
   useEffect(() => {
     try {
@@ -112,7 +131,7 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
   const markAsReadAndNavigate = async (alert: any) => {
     try {
       const { notificationApi } = await import('@/lib/api');
-      await notificationApi.markAsRead(alert.id).catch(() => {});
+      await notificationApi.markAsRead(alert.id).catch(() => { });
       setAlerts(prev => prev.map(n => n.id === alert.id ? { ...n, is_read: true } : n));
     } catch (e) { /* ignore */ }
 
@@ -127,7 +146,7 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
     const unread = alerts.filter(a => !a.is_read);
     try {
       const { notificationApi } = await import('@/lib/api');
-      await Promise.all(unread.map(a => notificationApi.markAsRead(a.id).catch(() => {})));
+      await Promise.all(unread.map(a => notificationApi.markAsRead(a.id).catch(() => { })));
       setAlerts(prev => prev.map(n => ({ ...n, is_read: true })));
     } catch (e) { /* ignore */ }
   };
@@ -144,6 +163,7 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
     if (user.role === 'PARTNER') return 'TEKNISI MITRA';
     if (user.role === 'CLIENT') return 'KLIEN';
     if (user.role === 'MECHANIC') return 'MEKANIK';
+    if (user.role === 'QC') return 'QUALITY CONTROL';
     return user.role;
   };
 
@@ -155,16 +175,45 @@ export default function TopBar({ onToggleSidebar, isSidebarOpen }: TopBarProps) 
         <button className={styles.toggleBtn} onClick={onToggleSidebar}>
           <Menu size={24} />
         </button>
+
+        {/* Mobile Brand Title (visible only on mobile) */}
+        <div className={styles.mobileBrand}>
+          <div className={styles.mobileLogoMark}>
+            <svg viewBox="0 0 140 120" fill="none" stroke="currentColor" strokeWidth="6" strokeLinecap="square" strokeLinejoin="miter">
+              <polygon points="60,5 10,95 20,110 60,110" />
+              <line x1="70" y1="15" x2="70" y2="110" />
+              <polyline points="70,15 110,90 100,110 70,110" />
+              <polyline points="80,110 80,55 125,45" />
+              <polyline points="90,110 90,85 135,75" />
+            </svg>
+          </div>
+          <div className={styles.mobileBrandText}>
+            <span className={styles.mobileBrandName}>HOLIC</span>
+            <span className={styles.mobileBrandTag}>Admin Passport Portal</span>
+          </div>
+        </div>
       </div>
 
       <div className={styles.actions}>
-        <button className={styles.topBarScanBtn} onClick={() => setIsScannerOpen(true)} title="Pindai QR Code Mesin">
-          <QrCode size={16} />
-          <span>Pindai QR</span>
+        {/* Sync Data Icon Button */}
+        <button
+          className={`${styles.topBarSyncBtn} ${isSyncing ? styles.spin : ''}`}
+          onClick={handleGlobalSync}
+          title="Sinkronkan Data"
+          disabled={isSyncing}
+        >
+          <RefreshCw size={17} />
+          <span className={styles.btnLabel}>Sinkron</span>
         </button>
 
-        {/* Notification Bell */}
-        <div className={styles.iconContainer} ref={bellRef}>
+        {/* Scan QR Code Icon Button */}
+        <button className={styles.topBarScanBtn} onClick={() => setIsScannerOpen(true)} title="Pindai QR Code Mesin">
+          <QrCode size={17} />
+          <span className={styles.btnLabel}>Pindai QR</span>
+        </button>
+
+        {/* Notification Bell (Desktop Only - on mobile it is inside Profile page) */}
+        <div className={`${styles.iconContainer} ${styles.desktopOnlyBell}`} ref={bellRef}>
           <button
             className={styles.actionBtn}
             onClick={() => { setBellOpen(!bellOpen); setMailOpen(false); setDropdownOpen(false); }}

@@ -55,7 +55,7 @@ export class UnitsController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.CLIENT, UserRole.PARTNER, UserRole.ADMIN)
+  @Roles(UserRole.CLIENT, UserRole.PARTNER, UserRole.ADMIN, UserRole.QC)
   @ApiBearerAuth()
   @Get(':id')
   @ApiOperation({ summary: 'Get unit detail by ID (CLIENT: ownership-checked)' })
@@ -70,7 +70,7 @@ export class UnitsController {
 
   // --- LEVEL 3: PARTNER ---
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.PARTNER, UserRole.ADMIN)
+  @Roles(UserRole.PARTNER, UserRole.ADMIN, UserRole.QC)
   @ApiBearerAuth()
   @Get(':id/technical')
   @ApiOperation({ summary: 'Partner: Get deep technical data (diagrams, circuits)' })
@@ -81,10 +81,10 @@ export class UnitsController {
 
   // --- LEVEL 4: ADMIN ---
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.QC)
   @ApiBearerAuth()
   @Get()
-  @ApiOperation({ summary: 'Admin: Get all units (Master Data) with pagination' })
+  @ApiOperation({ summary: 'Admin/QC: Get all units (Master Data) with pagination' })
   findAll(
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10,

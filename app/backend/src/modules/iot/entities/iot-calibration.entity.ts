@@ -1,46 +1,23 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  ManyToOne,
-  JoinColumn,
-  Unique,
-} from 'typeorm';
-import { Unit } from '../../units/entities/unit.entity';
-
-@Entity('iot_calibration')
-@Unique(['unit_id', 'sensor_type'])
-export class IotCalibration {
-  @PrimaryGeneratedColumn('uuid')
+export interface IotCalibration {
   id: string;
-
-  @Column({ type: 'uuid' })
   unit_id: string;
-
-  @ManyToOne(() => Unit, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'unit_id' })
-  unit: Unit;
-
-  @Column({ type: 'varchar', length: 50 })
-  sensor_type: string; // 'CABINET', 'EVAPORATOR', 'CONDENSER'
-
-  @Column({ type: 'numeric', precision: 5, scale: 2, default: 0.0 })
-  offset_value: number;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  calibrated_by: string;
-
-  @Column({ type: 'timestamptz', nullable: true })
+  
+  // Sensor offsets (°C)
+  cabinet_offset: number;
+  evaporator_offset: number;
+  condenser_offset: number;
+  
+  // Metadata
   calibrated_at: Date;
-
-  @Column({ type: 'text', nullable: true })
-  notes: string;
-
-  @CreateDateColumn({ type: 'timestamptz' })
+  calibrated_by: string | null;
+  notes: string | null;
+  
+  // Reference temperatures
+  reference_cabinet: number | null;
+  reference_evaporator: number | null;
+  reference_condenser: number | null;
+  
+  // Timestamps
   created_at: Date;
-
-  @UpdateDateColumn({ type: 'timestamptz' })
   updated_at: Date;
 }

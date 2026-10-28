@@ -202,12 +202,39 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
     condenser: { min: 25.0, max: 65.0 },
   });
 
-  // Mocked Calibration Offsets (This would normally come from the DB)
-  const offsets = {
-    cabinet: -0.8,
-    evaporator: 0.5,
-    condenser: -1.2,
-  };
+  // Calibration Offsets - Fetch from API or use unit.specs fallback
+  const [offsets, setOffsets] = useState({
+    cabinet: 0,
+    evaporator: 0,
+    condenser: 0,
+  });
+
+  // Fetch calibration data on mount
+  useEffect(() => {
+    const fetchCalibration = async () => {
+      try {
+        const { data } = await iotApi.getCalibration(unitId);
+        if (data && data.data) {
+          setOffsets({
+            cabinet: data.data.cabinet_offset || 0,
+            evaporator: data.data.evaporator_offset || 0,
+            condenser: data.data.condenser_offset || 0,
+          });
+        }
+      } catch (err) {
+        console.warn('Failed to fetch calibration, using defaults:', err);
+        // Fallback to unit.specs if available
+        if (unit?.specs?.iot_calibration) {
+          setOffsets({
+            cabinet: unit.specs.iot_calibration.cabinet || 0,
+            evaporator: unit.specs.iot_calibration.evaporator || 0,
+            condenser: unit.specs.iot_calibration.condenser || 0,
+          });
+        }
+      }
+    };
+    fetchCalibration();
+  }, [unitId, unit]);
 
   const fetchData = useCallback(async (isManual = false) => {
     if (isManual) setRefreshing(true);

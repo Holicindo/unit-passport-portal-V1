@@ -33,7 +33,7 @@ export class ReportsController {
   }
 
   @Get()
-  @Roles(UserRole.ADMIN, UserRole.PARTNER, UserRole.CLIENT)
+  @Roles(UserRole.ADMIN, UserRole.PARTNER, UserRole.CLIENT, UserRole.QC)
   @ApiOperation({ summary: 'Get all reports with pagination, type, and status filtering' })
   findAll(
     @Query('page') page: number = 1,
@@ -67,7 +67,7 @@ export class ReportsController {
   }
 
   @Get(':id')
-  @Roles(UserRole.ADMIN, UserRole.PARTNER, UserRole.CLIENT)
+  @Roles(UserRole.ADMIN, UserRole.PARTNER, UserRole.CLIENT, UserRole.QC)
   @ApiOperation({ summary: 'Get specific report details' })
   findOne(@Param('id') id: string) {
     return this.reportsService.findOne(id);
@@ -81,7 +81,7 @@ export class ReportsController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.ADMIN, UserRole.PARTNER)
+  @Roles(UserRole.ADMIN, UserRole.PARTNER, UserRole.QC)
   @ApiOperation({ summary: 'Update specific report details' })
   update(@Param('id') id: string, @Body() updateData: any) {
     return this.reportsService.update(id, updateData);

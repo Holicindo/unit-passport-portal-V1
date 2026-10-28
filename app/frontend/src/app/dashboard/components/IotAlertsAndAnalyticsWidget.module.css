@@ -122,22 +122,48 @@
   gap: 12px;
 }
 
-/* MOBILE VIEW: Stack vertical agar badge dan tombol tidak terpotong */
+/* MOBILE VIEW: Compact horizontal row — no huge vertical orange blocks */
 @media (max-width: 640px) {
   .alertItem {
-    flex-direction: column;
-    align-items: stretch !important;
-    gap: 10px !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 8px 10px !important;
+    gap: 8px !important;
   }
   
   .alertContent {
-    width: 100%;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .alertInfo {
+    min-width: 0;
+  }
+
+  .alertTitle {
+    font-size: 11px !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .alertSubinfo {
+    display: block;
+    margin-left: 0 !important;
+    font-size: 10px !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   
   .detailButton {
-    width: 100% !important;
-    justify-content: center !important;
-    margin-top: 4px;
+    width: auto !important;
+    padding: 4px 8px !important;
+    font-size: 10px !important;
+    margin-top: 0 !important;
+    border-radius: 6px !important;
+    white-space: nowrap;
   }
 }
 
