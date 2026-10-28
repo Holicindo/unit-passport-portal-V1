@@ -32,13 +32,13 @@
 }
 
 @media print {
-  :global(*) {
+  .a4Sheet, .a4Sheet * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     /* color-adjust removed for cross‑browser compatibility */
   }
 
-  :global(html), :global(body) {
+  :global(body) .a4Sheet {
     display: block !important;
     background: #ffffff !important;
     color: #000000 !important;
@@ -52,7 +52,7 @@
   }
 
   /* Hide sidebar, topbar, bottomnav, and all chrome elements */
-  :global(.main-wrapper) {
+  .a4Wrapper {
     display: block !important;
     margin-left: 0 !important;
     padding: 0 !important;

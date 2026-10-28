@@ -5,7 +5,7 @@
    ============================================================ */
 
 /* ── Brand Tokens (scope: client portal) ── */
-:root {
+.clientPortalRoot {
   --brand-space-grey:    #717378;
   --brand-deep-navy:     #001F3F;
   --brand-light-grey:    #E4E6EF;
