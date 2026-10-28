@@ -4,19 +4,7 @@
    ============================================================ */
 
 /* ── Force full viewport coverage ── */
-:global(body):has(.container),
-:global(html):has(.container) {
-  margin: 0 !important;
-  padding: 0 !important;
-  overflow-x: hidden !important;
-  width: 100vw !important;
-  height: 100vh !important;
-}
-
-:global(body):has(.container) {
-  display: block !important;
-  background: #0b1120 !important;
-}
+.container {
 
 /* ── Full-screen wrapper ── */
 .container {

@@ -38,7 +38,7 @@
     /* color-adjust removed for cross‑browser compatibility */
   }
 
-  :global(body) .a4Sheet {
+  .a4Sheet {
     display: block !important;
     background: #ffffff !important;
     color: #000000 !important;
@@ -61,18 +61,8 @@
     overflow: visible !important;
   }
 
-  :global([class*="Sidebar_sidebar"]),
-  :global([class*="TopBar_"]),
-  :global([class*="BottomNav_"]),
-  :global(nav),
-  :global(aside) {
+  .hideOnPrint {
     display: none !important;
-  }
-
-  :global([class*="sheetContainer"]) {
-    margin: 0 !important;
-    padding: 0 !important;
-    max-width: 100% !important;
   }
 
   .a4Sheet {
