@@ -28,6 +28,8 @@ const nextConfig: NextConfig = {
   },
 
   // Memory optimization and performance improvements
+  turbopack: {},
+
   experimental: {
     proxyTimeout: 300000, // 5 minutes
     optimizePackageImports: ['lucide-react'],
