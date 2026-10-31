@@ -370,8 +370,8 @@ export default function CustomerHealthWidget({ unitId }: Props) {
       value: cabEvapDiff > 0 ? `${cabEvapDiff.toFixed(1)} °C` : `Normal`, penaltyPct: lp(cabEvapDiff, 15, 25), safe: cabEvapDiff <= 15,
     },
     {
-      label: defAnomaly <= 0.10 ? `Siklus pencairan es (defrost) berjalan sesuai jadwal standar` : `Siklus defrost tidak normal (${(defAnomaly*100).toFixed(0)}% bermasalah)`,
-      value: `${(defAnomaly * 100).toFixed(0)}%`, penaltyPct: lp(defAnomaly, 0.10, 0.60), safe: defAnomaly <= 0.10,
+      label: defCycles > 0 ? (defAnomaly <= 0.10 ? `Siklus pencairan es (defrost) terpantau ${defCycles}x - berjalan normal standar` : `Siklus defrost terpantau ${defCycles}x namun ${(defAnomaly*100).toFixed(0)}% ada anomali`) : `Belum ada siklus defrost dalam rentang pemantauan ini`,
+      value: defCycles > 0 ? `${defCycles}x (${(defAnomaly * 100).toFixed(0)}% anomali)` : `0x (Normal)`, penaltyPct: lp(defAnomaly, 0.10, 0.60), safe: defAnomaly <= 0.10,
     },
   ];
 

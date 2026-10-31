@@ -1,9 +1,10 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { BarChart2, TableProperties, RefreshCw, TrendingDown, TrendingUp, Minus, Download, ChevronDown, Settings2, X, Check, FileText } from 'lucide-react';
 import { iotApi, unitApi } from '@/lib/api';
 import CalibrationModal from './CalibrationModal';
+import OperatingSessionCard from './OperatingSessionCard';
 
 // ─── Component Current Calculation (from IotTelemetryWidget logic) ───────────
 // Kalibrasi teknisi (Ampere)
@@ -63,6 +64,7 @@ interface HistoryPoint {
   voltage?: number | null;
   current?: number | null;
   power?: number | null;
+  is_offline_gap?: boolean;
 }
 
 interface ComponentCurrents {
@@ -208,19 +210,35 @@ function SensorLineChart({ data }: { data: HistoryPoint[] }) {
   function yOf(val: number) {
     return PAD_TOP + chartH - ((val - domainMin) / domainRange) * chartH;
   }
-
   function buildPath(key: keyof HistoryPoint) {
-    const pts: [number, number][] = [];
+    const segments: string[] = [];
+    let currentSegment: [number, number][] = [];
+
     data.forEach((d, i) => {
       const v = d[key] as number | null;
-      if (v !== null && v !== -127 && v !== 85) pts.push([xOf(i), yOf(v)]);
+      if (v !== null && v !== -127 && v !== 85 && !d.is_offline_gap) {
+        currentSegment.push([xOf(i), yOf(v)]);
+      } else {
+        if (currentSegment.length > 0) {
+          if (currentSegment.length === 1) {
+            segments.push(`M ${currentSegment[0][0] - 6} ${currentSegment[0][1]} L ${currentSegment[0][0] + 6} ${currentSegment[0][1]}`);
+          } else {
+            segments.push(`M ${currentSegment[0][0]} ${currentSegment[0][1]} ` + currentSegment.slice(1).map(p => `L ${p[0]} ${p[1]}`).join(" "));
+          }
+          currentSegment = [];
+        }
+      }
     });
-    if (pts.length === 0) return '';
-    if (pts.length === 1) {
-      // Single point: draw a visible dash ±8px wide
-      return `M ${pts[0][0] - 8} ${pts[0][1]} L ${pts[0][0] + 8} ${pts[0][1]}`;
+
+    if (currentSegment.length > 0) {
+      if (currentSegment.length === 1) {
+        segments.push(`M ${currentSegment[0][0] - 6} ${currentSegment[0][1]} L ${currentSegment[0][0] + 6} ${currentSegment[0][1]}`);
+      } else {
+        segments.push(`M ${currentSegment[0][0]} ${currentSegment[0][1]} ` + currentSegment.slice(1).map(p => `L ${p[0]} ${p[1]}`).join(" "));
+      }
     }
-    return `M ${pts[0][0]} ${pts[0][1]} ` + pts.slice(1).map(p => `L ${p[0]} ${p[1]}`).join(' ');
+
+    return segments.join(" ");
   }
 
   function buildDots(key: keyof HistoryPoint, color: string) {
@@ -330,6 +348,23 @@ function SensorLineChart({ data }: { data: HistoryPoint[] }) {
           );
         })}
 
+        {/* Area Penanda Unit Offline / Terputus */}
+        {data.map((d, i) => {
+          if (d.is_offline_gap && i < data.length - 1 && data[i + 1].is_offline_gap) {
+            const xStart = xOf(i);
+            const xEnd = xOf(i + 1);
+            const width = Math.max(2, xEnd - xStart);
+            return (
+              <g key={`gap-${i}`}>
+                <rect x={xStart} y={PAD_TOP} width={width} height={chartH} fill="rgba(239, 68, 68, 0.08)" stroke="rgba(239, 68, 68, 0.25)" strokeDasharray="3 3" />
+                <text x={xStart + width / 2} y={PAD_TOP + chartH / 2} textAnchor="middle" fontSize="11" fill="#ef4444" fontWeight="800" fontFamily="sans-serif" letterSpacing="0.04em">
+                  Unit Offline (Toko Tutup / Terputus)
+                </text>
+              </g>
+            );
+          }
+          return null;
+        })}
         {/* Lines Data - Sharp straight lines */}
         <path d={buildPath('temp_cabinet')} fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinejoin="miter" />
         <path d={buildPath('temp_evaporator')} fill="none" stroke="#2E5BFF" strokeWidth="2.5" strokeLinejoin="miter" />
@@ -440,7 +475,7 @@ function ElectricalLineChart({ data }: { data: HistoryPoint[] }) {
   function buildPath(type: 'voltage' | 'current' | 'compressor' | 'fanEvap' | 'fanKond') {
     const pts: [number, number][] = [];
     data.forEach((d, i) => {
-      if (type === 'voltage' && d.voltage !== null && d.voltage !== undefined && d.voltage > 0) {
+      if (type === "voltage" && d.voltage !== null && d.voltage !== undefined && d.voltage >= 0) {
         pts.push([xOf(i), yOfV(d.voltage)]);
       } else if (type === 'current' && d.current !== null && d.current !== undefined) {
         pts.push([xOf(i), yOfA(d.current)]);
@@ -452,9 +487,7 @@ function ElectricalLineChart({ data }: { data: HistoryPoint[] }) {
         else if (type === 'fanEvap') val = components.evap;
         else if (type === 'fanKond') val = components.kond;
         
-        if (val > 0) {
-          pts.push([xOf(i), yOfA(val)]);
-        }
+        pts.push([xOf(i), yOfA(val)]);
       }
     });
     if (pts.length === 0) return '';
@@ -563,6 +596,23 @@ function ElectricalLineChart({ data }: { data: HistoryPoint[] }) {
         {/* Border */}
         <rect x={PAD_LEFT} y={PAD_TOP} width={chartW} height={chartH} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
 
+        {/* Area Penanda Unit Offline / Terputus */}
+        {data.map((d, i) => {
+          if (d.is_offline_gap && i < data.length - 1 && data[i + 1].is_offline_gap) {
+            const xStart = xOf(i);
+            const xEnd = xOf(i + 1);
+            const width = Math.max(2, xEnd - xStart);
+            return (
+              <g key={`gap-${i}`}>
+                <rect x={xStart} y={PAD_TOP} width={width} height={chartH} fill="rgba(239, 68, 68, 0.08)" stroke="rgba(239, 68, 68, 0.25)" strokeDasharray="3 3" />
+                <text x={xStart + width / 2} y={PAD_TOP + chartH / 2} textAnchor="middle" fontSize="11" fill="#ef4444" fontWeight="800" fontFamily="sans-serif" letterSpacing="0.04em">
+                  Unit Offline (Toko Tutup / Terputus)
+                </text>
+              </g>
+            );
+          }
+          return null;
+        })}
         {/* Lines - draw in order so voltage/current are on top */}
         <path d={buildPath('fanKond')} fill="none" stroke="#10b981" strokeWidth="2" strokeLinejoin="miter" strokeDasharray="4 2" />
         <path d={buildPath('fanEvap')} fill="none" stroke="#06b6d4" strokeWidth="2" strokeLinejoin="miter" strokeDasharray="4 2" />
@@ -647,6 +697,52 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
 
   // Terapkan hack koreksi suhu yang sama dengan backend (iot.service.ts)
   // Kabinet > 25°C tapi evap < 15°C = sensor kabel bermasalah, koreksi dari evap
+  // Deteksi jeda real data (> 15 menit). Jika unit dicabut/toko tutup:
+  // Arus, Tegangan, Daya dijatuhkan ke 0, Suhu dibiarkan null (garis putus)
+  const insertOfflineGaps = (points: HistoryPoint[]): HistoryPoint[] => {
+    if (points.length <= 1) return points;
+    const result: HistoryPoint[] = [];
+    const GAP_THRESHOLD_MS = 15 * 60 * 1000; // 15 menit jeda tanpa paket data
+
+    for (let i = 0; i < points.length; i++) {
+      const curr = points[i];
+      result.push(curr);
+
+      if (i < points.length - 1) {
+        const next = points[i + 1];
+        const tCurr = new Date(curr.recorded_at).getTime();
+        const tNext = new Date(next.recorded_at).getTime();
+        const diffMs = tNext - tCurr;
+
+        if (diffMs > GAP_THRESHOLD_MS) {
+          // Titik 1: Sesaat setelah data terakhir (Unit mulai offline/mati)
+          result.push({
+            recorded_at: new Date(tCurr + 60000).toISOString(),
+            temp_cabinet: null,
+            temp_evaporator: null,
+            temp_condenser: null,
+            voltage: 0,
+            current: 0,
+            power: 0,
+            is_offline_gap: true,
+          });
+
+          // Titik 2: Sesaat sebelum data online kembali (Unit sebelum nyala)
+          result.push({
+            recorded_at: new Date(tNext - 60000).toISOString(),
+            temp_cabinet: null,
+            temp_evaporator: null,
+            temp_condenser: null,
+            voltage: 0,
+            current: 0,
+            power: 0,
+            is_offline_gap: true,
+          });
+        }
+      }
+    }
+    return result;
+  };
   const applyHack = (point: HistoryPoint): HistoryPoint => {
     const cab = point.temp_cabinet;
     const evap = point.temp_evaporator;
@@ -675,7 +771,7 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
       const raw: HistoryPoint[] = res.data || [];
       
       // Apply hack untuk unit bermasalah (tetap dipertahankan)
-      const mapped = raw.map(applyHack);
+      const mapped = insertOfflineGaps(raw.map(applyHack));
 
       // Enhanced logging
       console.log(`📊 ${range.label} Data Summary:`, {
@@ -1464,6 +1560,9 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
           )}
         </div>
       </div>
+
+      {/* Card Ringkasan Sesi Operasi (Waktu Nyala & Waktu Mati) */}
+      {data.length > 0 && <OperatingSessionCard data={data} />}
 
       <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
         {data.length > 0 && (

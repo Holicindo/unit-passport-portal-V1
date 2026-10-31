@@ -27,12 +27,12 @@ interface IotTelemetryWidgetProps {
   unit?: any;
 }
 
-function TempCard({ label, rawValue, min, max, offset, icon: Icon, isWarning, warningLabel, isCalibrated }: { label: string; rawValue: number | null; min: number; max: number; offset: number; icon: React.ElementType; isWarning?: boolean; warningLabel?: string; isCalibrated?: boolean; }) {
-  const isError = rawValue === null || rawValue === -127 || rawValue === 85;
+function TempCard({ label, rawValue, min, max, offset, icon: Icon, isWarning, warningLabel, isCalibrated, isOffline }: { label: string; rawValue: number | null; min: number; max: number; offset: number; icon: React.ElementType; isWarning?: boolean; warningLabel?: string; isCalibrated?: boolean; isOffline?: boolean; }) {
+  const isError = isOffline || rawValue === null || rawValue === -127 || rawValue === 85;
   // Backend getLatestTelemetry sudah mengaplikasikan offset
   const liveValue = isError ? null : rawValue;
   const isAlert = !isError && liveValue !== null && (liveValue > max || liveValue < min);
-  const color    = isError ? '#94a3b8' : isAlert ? '#dc2626' : isWarning ? '#d97706' : '#059669';
+  const color    = isOffline ? "#64748b" : isError ? "#94a3b8" : isAlert ? "#dc2626" : isWarning ? "#d97706" : "#059669";
 
   return (
     <div style={{
@@ -67,7 +67,14 @@ function TempCard({ label, rawValue, min, max, offset, icon: Icon, isWarning, wa
             {label}
           </span>
         </div>
-        {isAlert ? (
+        {isOffline ? (
+          <div style={{
+            fontSize: "0.56rem", color: "#94a3b8", fontWeight: 800,
+            background: "rgba(148,163,184,0.1)", padding: "2px 6px",
+            borderRadius: "12px", letterSpacing: "0.03em",
+            border: "1px solid rgba(148,163,184,0.25)",
+          }}>TIDAK TERHUBUNG</div>
+        ) : isAlert ? (
           <div style={{
             fontSize: '0.58rem', color: '#dc2626', fontWeight: 800,
             background: 'rgba(220,38,38,0.1)', padding: '2px 6px',
@@ -405,7 +412,7 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
               <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Sensor Suhu</span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '10px' }}>
-              <TempCard label="Kabinet"    rawValue={data.temp_cabinet}    min={limits.cabinet.min} max={limits.cabinet.max} offset={offsets.cabinet} icon={ShelvingUnit} />
+              <TempCard label="Kabinet"    rawValue={data.temp_cabinet}    min={limits.cabinet.min} max={limits.cabinet.max} offset={offsets.cabinet} icon={ShelvingUnit} isOffline={isOffline} />
               <TempCard 
                 label="Evaporator" 
                 rawValue={data.temp_evaporator} 
@@ -413,10 +420,9 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
                 max={limits.evaporator.max} 
                 offset={offsets.evaporator} 
                 icon={ThermometerSnowflake} 
-                isWarning={data.temp_evaporator !== null && (data.temp_evaporator + offsets.evaporator) > 0 && (data.temp_evaporator + offsets.evaporator) <= limits.evaporator.max}
-                warningLabel="DEFROST"
+                isOffline={isOffline}
               />
-              <TempCard label="Kondensor"  rawValue={data.temp_condenser}  min={limits.condenser.min} max={limits.condenser.max} offset={offsets.condenser} icon={Thermometer} />
+              <TempCard label="Kondensor"  rawValue={data.temp_condenser}  min={limits.condenser.min} max={limits.condenser.max} offset={offsets.condenser} icon={Thermometer} isOffline={isOffline} />
             </div>
           </div>
 
@@ -436,10 +442,10 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', flex: 1 }}>
                 {[
-                  { label: 'Tegangan', value: data.voltage, unit: 'V',
-                    alert: data.voltage !== null && data.voltage > 0 && (data.voltage < 190 || data.voltage > 240) },
-                  { label: 'Arus',    value: data.current, unit: 'A', alert: false },
-                  { label: 'Daya',    value: data.power,   unit: 'W', alert: false },
+                  { label: 'Tegangan', value: isOffline ? 0 : data.voltage, unit: 'V',
+                    alert: !isOffline && data.voltage !== null && data.voltage > 0 && (data.voltage < 190 || data.voltage > 240) },
+                  { label: 'Arus',    value: isOffline ? 0 : data.current, unit: 'A', alert: false },
+                  { label: 'Daya',    value: isOffline ? 0 : data.power,   unit: 'W', alert: false },
                 ].map(({ label, value, unit, alert }) => (
                   <div key={label} style={{
                     background: 'rgba(8, 18, 50, 0.9)',
@@ -474,7 +480,7 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
             </div>
 
             {/* Kolom Kanan: Estimasi Beban Komponen */}
-            {data.current !== null && data.current > 0 && (() => {
+            {!isOffline && data.current !== null && data.current > 0 && (() => {
               const totalA = data.current;
 
               // ── Nilai kalibrasi (PZEM, diukur teknisi per komponen) ──
