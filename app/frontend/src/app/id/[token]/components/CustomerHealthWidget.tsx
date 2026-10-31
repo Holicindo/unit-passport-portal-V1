@@ -394,7 +394,7 @@ export default function CustomerHealthWidget({ unitId }: Props) {
       value: `${duty.toFixed(1)}%`, penaltyPct: lp(duty, 75, 92), safe: duty <= 75,
     },
     {
-      label: starts <= 8 ? `Frekuensi nyala-mati kompresor ${starts.toFixed(1)}x/jam - normal` : starts <= 20 ? `Frekuensi nyala-mati ${starts.toFixed(1)}x/jam - sedikit tinggi (mungkin fase pemanasan)` : `Frekuensi nyala-mati ${starts.toFixed(1)}x/jam - anomali, perlu cek thermostat`,
+      label: starts <= 8 ? `Frekuensi nyala-mati kompresor ${starts.toFixed(1)}x/jam - normal stabil` : starts <= 20 ? `Frekuensi nyala-mati ${starts.toFixed(1)}x/jam - sedikit tinggi (adaptasi suhu/beban)` : duty >= 70 ? `Siklus ${starts.toFixed(1)}x/jam terpantau tinggi saat unit baru menyala/pendinginan awal. Solusi: Aman, biarkan beroperasi normal 1-2 jam hingga suhu stabil.` : `Frekuensi ${starts.toFixed(1)}x/jam terlalu sering (short-cycle). Solusi: Cek pengaturan thermostat, relay kontak, atau tekanan freon.`, 
       value: `${starts.toFixed(1)}x/jam`, penaltyPct: lp(starts, 8, 20), safe: starts <= 8,
     },
     {
