@@ -165,3 +165,4 @@ export default function OperatingSessionCard({ data, isLiveOffline }: OperatingS
     </div>
   );
 }
+
