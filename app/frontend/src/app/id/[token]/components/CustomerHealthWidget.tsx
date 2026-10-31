@@ -358,16 +358,16 @@ export default function CustomerHealthWidget({ unitId }: Props) {
   // ── EVAPORATOR: Performa sirkulasi dingin dalam mesin ────────────────────
   const evapBreakdown: BreakdownItem[] = [
     {
-      label: duty >= 80 ? `Kompresor bekerja non-stop tanpa jeda istirahat (beban kerja evaporator tinggi)` : evapCoolRate >= 0.50 ? `Evaporator mendinginkan dengan baik` : `Laju pendinginan evaporator membutuhkan waktu lebih lama`,
-      value: duty >= 80 ? `Beban Tinggi` : evapCoolRate > 0 ? `${evapCoolRate.toFixed(2)} °C/mnt` : `Terpantau`, penaltyPct: duty >= 80 ? 70 : lp(evapCoolRate, 0.50, 0.10), safe: duty < 80,
+      label: duty >= 75 ? `Kompresor bekerja non-stop tanpa jeda istirahat (beban kerja evaporator tinggi)` : evapCoolRate >= 0.30 ? `Evaporator mendinginkan dengan baik` : evapCoolRate === 0 ? `Data siklus evaporator masih dikumpulkan` : `Laju pendinginan evaporator membutuhkan waktu lebih lama`,
+      value: duty >= 75 ? `Beban Tinggi` : evapCoolRate > 0 ? `${evapCoolRate.toFixed(2)} °C/mnt` : `Terpantau`, penaltyPct: duty >= 75 ? 70 : evapCoolRate === 0 ? 0 : lp(evapCoolRate, 0.30, 0.05), safe: duty < 75,
     },
     {
-      label: duty >= 80 ? `Suhu evaporator belum mencapai penurunan siklus ideal (potensi bunga es / freon berkurang)` : `Penurunan suhu evaporator dalam batas normal`,
-      value: evapDropAmp > 0 ? `${evapDropAmp.toFixed(1)} °C` : `Perlu Cek`, penaltyPct: 65, safe: false,
+      label: evapDropAmp >= 8 ? `Penurunan suhu evaporator per siklus normal - ${evapDropAmp.toFixed(1)}°C (target >= 8°C)` : evapDropAmp > 0 ? `Penurunan suhu evaporator kurang optimal (${evapDropAmp.toFixed(1)}°C)` : `Penurunan suhu evaporator dalam batas normal`,
+      value: evapDropAmp > 0 ? `${evapDropAmp.toFixed(1)} °C` : `Normal`, penaltyPct: lp(evapDropAmp, 8, 2), safe: evapDropAmp >= 8,
     },
     {
-      label: cabEvapDiff > 0 ? `Selisih suhu kabinet vs evaporator terpantau ${cabEvapDiff.toFixed(1)} °C` : `Sirkulasi udara evaporator belum merata optimal ke seluruh kabinet`,
-      value: cabEvapDiff > 0 ? `${cabEvapDiff.toFixed(1)} °C` : `Evaluasi`, penaltyPct: 40, safe: false,
+      label: cabEvapDiff <= 15 ? `Selisih suhu kabinet vs evaporator ${cabEvapDiff.toFixed(1)}°C - sirkulasi udara merata` : `Selisih suhu kabinet vs evaporator ${cabEvapDiff.toFixed(1)}°C - perlu cek sirkulasi`,
+      value: cabEvapDiff > 0 ? `${cabEvapDiff.toFixed(1)} °C` : `Normal`, penaltyPct: lp(cabEvapDiff, 15, 25), safe: cabEvapDiff <= 15,
     },
     {
       label: defAnomaly <= 0.10 ? `Siklus pencairan es (defrost) berjalan sesuai jadwal standar` : `Siklus defrost tidak normal (${(defAnomaly*100).toFixed(0)}% bermasalah)`,
@@ -378,28 +378,28 @@ export default function CustomerHealthWidget({ unitId }: Props) {
   // ── KONDENSOR: Pembuangan panas ke luar mesin ────────────────────────────
   const condBreakdown: BreakdownItem[] = [
     {
-      label: condPeak > 0 ? `Puncak suhu pelepasan panas kondensor terpantau ${condPeak.toFixed(0)}°C (aman)` : `Pembuangan panas kondensor lancar, tidak ada akumulasi panas berlebih`,
-      value: condPeak > 0 ? `${condPeak.toFixed(1)} °C` : `Normal`, penaltyPct: 0, safe: true,
+      label: condPeak > 0 ? (condPeak <= 45 ? `Puncak suhu kondensor ${condPeak.toFixed(0)}°C - dingin & efisien` : condPeak <= 60 ? `Puncak suhu kondensor ${condPeak.toFixed(0)}°C - normal untuk pabrik` : `Puncak suhu kondensor ${condPeak.toFixed(0)}°C - terlalu panas`) : `Pembuangan panas kondensor lancar`,
+      value: condPeak > 0 ? `${condPeak.toFixed(1)} °C` : `Normal`, penaltyPct: lp(condPeak, 45, 60), safe: condPeak <= 45,
     },
     {
-      label: condRise > 0 ? `Kenaikan suhu kondensor per siklus ${condRise.toFixed(0)}°C (aman)` : `Ventilasi & fan kondensor berputar stabil membuang panas`,
-      value: condRise > 0 ? `${condRise.toFixed(1)} °C` : `Lancar`, penaltyPct: 0, safe: true,
+      label: condRise > 0 ? (condRise <= 35 ? `Kenaikan suhu kondensor per siklus ${condRise.toFixed(0)}°C - normal untuk pabrik` : condRise <= 50 ? `Kenaikan suhu kondensor ${condRise.toFixed(0)}°C - sedikit tinggi, cek ventilasi` : `Kenaikan suhu kondensor ${condRise.toFixed(0)}°C - kondensor perlu dibersihkan`) : `Ventilasi & fan kondensor berputar stabil`,
+      value: condRise > 0 ? `${condRise.toFixed(1)} °C` : `Lancar`, penaltyPct: lp(condRise, 35, 50), safe: condRise <= 35,
     },
   ];
 
   // ── KELISTRIKAN: Kondisi kerja kompresor dan tegangan ───────────────────
   const elecBreakdown: BreakdownItem[] = [
     {
-      label: duty <= 60 ? `Kompresor bekerja proporsional (${duty.toFixed(0)}% menyala)` : `Kompresor menyala terus menerus (${duty.toFixed(0)}% waktu) tanpa cut-off`,
-      value: `${duty.toFixed(1)}%`, penaltyPct: lp(duty, 60, 80), safe: duty <= 60,
+      label: duty <= 75 ? `Kompresor bekerja proporsional (${duty.toFixed(0)}% aktif) - efisiensi baik` : duty <= 92 ? `Kompresor aktif ${duty.toFixed(0)}% waktu - normal untuk kondisi pabrik panas` : `Kompresor bekerja hampir non-stop (${duty.toFixed(0)}%) - perlu investigasi`,
+      value: `${duty.toFixed(1)}%`, penaltyPct: lp(duty, 75, 92), safe: duty <= 75,
     },
     {
-      label: starts > 0 ? `Frekuensi nyala-mati kompresor ${starts.toFixed(1)}x/jam (normal)` : `Kompresor belum melakukan siklus cut-off istirahat`,
-      value: starts > 0 ? `${starts.toFixed(1)}x/jam` : `Non-stop`, penaltyPct: duty >= 80 ? 50 : 0, safe: duty < 80,
+      label: starts <= 8 ? `Frekuensi nyala-mati kompresor ${starts.toFixed(1)}x/jam - normal` : starts <= 20 ? `Frekuensi nyala-mati ${starts.toFixed(1)}x/jam - sedikit tinggi (mungkin fase pemanasan)` : `Frekuensi nyala-mati ${starts.toFixed(1)}x/jam - anomali, perlu cek thermostat`,
+      value: `${starts.toFixed(1)}x/jam`, penaltyPct: lp(starts, 8, 20), safe: starts <= 8,
     },
     {
-      label: voltAnomaly <= 0.02 ? `Tegangan listrik stabil` : `Tegangan listrik tidak stabil (${(voltAnomaly*100).toFixed(1)}% waktu di luar batas aman) — beban berat bagi motor`,
-      value: `${(voltAnomaly * 100).toFixed(1)}%`, penaltyPct: lp(voltAnomaly, 0.02, 0.15), safe: voltAnomaly <= 0.02,
+      label: voltAnomaly <= 0.05 ? `Tegangan listrik stabil (${(voltAnomaly*100).toFixed(1)}% variasi - dalam batas normal PLN)` : voltAnomaly <= 0.20 ? `Tegangan sedikit berfluktuasi (${(voltAnomaly*100).toFixed(1)}%) - pantau jika terus berlanjut` : `Tegangan tidak stabil (${(voltAnomaly*100).toFixed(1)}%) - beban berat bagi motor kompresor`,
+      value: `${(voltAnomaly * 100).toFixed(1)}%`, penaltyPct: lp(voltAnomaly, 0.05, 0.20), safe: voltAnomaly <= 0.05,
     },
   ];
   return (
