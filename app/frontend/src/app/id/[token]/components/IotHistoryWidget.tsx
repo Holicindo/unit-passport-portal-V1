@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { BarChart2, TableProperties, RefreshCw, TrendingDown, TrendingUp, Minus, Download, ChevronDown, Settings2, X, Check, FileText } from 'lucide-react';
@@ -356,10 +356,32 @@ function SensorLineChart({ data }: { data: HistoryPoint[] }) {
             const width = Math.max(2, xEnd - xStart);
             return (
               <g key={`gap-${i}`}>
-                <rect x={xStart} y={PAD_TOP} width={width} height={chartH} fill="rgba(239, 68, 68, 0.08)" stroke="rgba(239, 68, 68, 0.25)" strokeDasharray="3 3" />
-                <text x={xStart + width / 2} y={PAD_TOP + chartH / 2} textAnchor="middle" fontSize="11" fill="#ef4444" fontWeight="800" fontFamily="sans-serif" letterSpacing="0.04em">
-                  Unit Offline (Toko Tutup / Terputus)
+                {/* Background merah semi-transparan */}
+                <rect x={xStart} y={PAD_TOP} width={width} height={chartH} fill="rgba(239, 68, 68, 0.07)" stroke="rgba(239, 68, 68, 0.35)" strokeDasharray="4 3" strokeWidth="1.5" />
+                {/* Garis vertikal tegas di awal dan akhir gap */}
+                <line x1={xStart} y1={PAD_TOP} x2={xStart} y2={PAD_TOP + chartH} stroke="#ef4444" strokeWidth="1.5" strokeDasharray="4 2" />
+                <line x1={xStart + width} y1={PAD_TOP} x2={xStart + width} y2={PAD_TOP + chartH} stroke="#ef4444" strokeWidth="1.5" strokeDasharray="4 2" />
+                {/* Badge label merah di atas chart */}
+                <rect x={xStart + width / 2 - 36} y={PAD_TOP - 18} width={72} height={16} rx="4" fill="#ef4444" />
+                <text x={xStart + width / 2} y={PAD_TOP - 7} textAnchor="middle" dominantBaseline="middle" fontSize="9" fill="white" fontWeight="700" fontFamily="sans-serif">
+                  UNIT OFFLINE
                 </text>
+                {/* Teks vertikal — hanya jika gap cukup lebar */}
+                {width >= 30 && (
+                  <text
+                    x={xStart + width / 2}
+                    y={PAD_TOP + chartH / 2}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fontSize={Math.min(10, width * 0.45)}
+                    fill="rgba(239, 68, 68, 0.5)"
+                    fontWeight="700"
+                    fontFamily="sans-serif"
+                    transform={`rotate(-90, ${xStart + width / 2}, ${PAD_TOP + chartH / 2})`}
+                  >
+                    {width >= 60 ? `Tidak Terhubung` : `Offline`}
+                  </text>
+                )}
               </g>
             );
           }
@@ -604,10 +626,32 @@ function ElectricalLineChart({ data }: { data: HistoryPoint[] }) {
             const width = Math.max(2, xEnd - xStart);
             return (
               <g key={`gap-${i}`}>
-                <rect x={xStart} y={PAD_TOP} width={width} height={chartH} fill="rgba(239, 68, 68, 0.08)" stroke="rgba(239, 68, 68, 0.25)" strokeDasharray="3 3" />
-                <text x={xStart + width / 2} y={PAD_TOP + chartH / 2} textAnchor="middle" fontSize="11" fill="#ef4444" fontWeight="800" fontFamily="sans-serif" letterSpacing="0.04em">
-                  Unit Offline (Toko Tutup / Terputus)
+                {/* Background merah semi-transparan */}
+                <rect x={xStart} y={PAD_TOP} width={width} height={chartH} fill="rgba(239, 68, 68, 0.07)" stroke="rgba(239, 68, 68, 0.35)" strokeDasharray="4 3" strokeWidth="1.5" />
+                {/* Garis vertikal tegas di awal dan akhir gap */}
+                <line x1={xStart} y1={PAD_TOP} x2={xStart} y2={PAD_TOP + chartH} stroke="#ef4444" strokeWidth="1.5" strokeDasharray="4 2" />
+                <line x1={xStart + width} y1={PAD_TOP} x2={xStart + width} y2={PAD_TOP + chartH} stroke="#ef4444" strokeWidth="1.5" strokeDasharray="4 2" />
+                {/* Badge label merah di atas chart */}
+                <rect x={xStart + width / 2 - 36} y={PAD_TOP - 18} width={72} height={16} rx="4" fill="#ef4444" />
+                <text x={xStart + width / 2} y={PAD_TOP - 7} textAnchor="middle" dominantBaseline="middle" fontSize="9" fill="white" fontWeight="700" fontFamily="sans-serif">
+                  UNIT OFFLINE
                 </text>
+                {/* Teks vertikal — hanya jika gap cukup lebar */}
+                {width >= 30 && (
+                  <text
+                    x={xStart + width / 2}
+                    y={PAD_TOP + chartH / 2}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fontSize={Math.min(10, width * 0.45)}
+                    fill="rgba(239, 68, 68, 0.5)"
+                    fontWeight="700"
+                    fontFamily="sans-serif"
+                    transform={`rotate(-90, ${xStart + width / 2}, ${PAD_TOP + chartH / 2})`}
+                  >
+                    {width >= 60 ? `Tidak Terhubung` : `Offline`}
+                  </text>
+                )}
               </g>
             );
           }
