@@ -183,6 +183,7 @@ export const userApi = {
 
 export const iotApi = {
   getLatest: (unitId: string) => api.get(`/units/${unitId}/telemetry/latest`),
+  getLatestRaw: (unitId: string) => api.get(`/units/${unitId}/telemetry/latest/raw`),
   getHistory: (unitId: string, hours: number = 24) => api.get(`/units/${unitId}/telemetry/history?hours=${hours}`),
   getActiveAlerts: () => api.get('/units/iot/alerts'),
   getCalibration: (unitId: string) => api.get(`/units/${unitId}/calibration`),

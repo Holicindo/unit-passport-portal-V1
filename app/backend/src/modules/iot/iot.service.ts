@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+﻿import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { IotTelemetryLog } from './entities/iot-telemetry-log.entity';
@@ -373,41 +373,76 @@ export class IotService {
    * Prioritas 2: Kolom live di tabel units
    * Prioritas 3: Row terakhir di tabel riwayat
    */
-  async getLatestTelemetry(unitId: string) {
-    if (IotService.liveTelemetryMap.has(unitId)) {
-      return IotService.liveTelemetryMap.get(unitId);
-    }
-
-    const unit = await this.unitRepo.findOne({ where: { id: unitId } });
-    if (unit && unit.last_seen_at) {
-      return {
-        unit_id: unit.id,
-        temp_cabinet: unit.last_temp_cabinet ?? null,
-        temp_evaporator: unit.last_temp_evaporator ?? null,
-        temp_condenser: unit.last_temp_condenser ?? null,
-        voltage: unit.last_voltage ?? null,
-        current: (unit as any).last_current ?? null,
-        power: unit.last_power ?? null,
-        is_door1_open: unit.is_door1_open ?? null,
-        is_door2_open: unit.is_door2_open ?? null,
-        is_door3_open: unit.is_door3_open ?? null,
-        is_door4_open: unit.is_door4_open ?? null,
-        recorded_at: unit.last_seen_at.toISOString(),
-      };
-    }
-
-    return this.telemetryLogRepo.findOne({
-      where: { unit_id: unitId },
-      order: { recorded_at: 'DESC' },
-    });
+  // -- CALIBRATION HELPER --------------------------------------------------
+  private async getCalibrationOffsets(unitId: string) {
+    const rows = await this.unitRepo.query(
+      `SELECT cabinet_offset, evaporator_offset, condenser_offset,
+              voltage_offset, current_offset, power_offset
+       FROM iot_calibration WHERE unit_id = $1 ORDER BY calibrated_at DESC LIMIT 1`,
+      [unitId],
+    );
+    const zero = { cabinet_offset: 0, evaporator_offset: 0, condenser_offset: 0, voltage_offset: 0, current_offset: 0, power_offset: 0, is_calibrated: false };
+    if (!rows || rows.length === 0) return zero;
+    const r = rows[0];
+    const hasAny = ['cabinet_offset','evaporator_offset','condenser_offset','voltage_offset','current_offset','power_offset'].some(k => r[k] !== null && Number(r[k]) !== 0);
+    return { cabinet_offset: Number(r.cabinet_offset ?? 0), evaporator_offset: Number(r.evaporator_offset ?? 0), condenser_offset: Number(r.condenser_offset ?? 0), voltage_offset: Number(r.voltage_offset ?? 0), current_offset: Number(r.current_offset ?? 0), power_offset: Number(r.power_offset ?? 0), is_calibrated: hasAny };
   }
 
-  /**
-   * Mengambil riwayat data sensor dalam N jam terakhir (untuk grafik tren).
-   * Data diagregasi langsung di PostgreSQL untuk performa optimal.
-   * Jika dalam N jam terakhir dari sekarang tidak ada data (unit offline),
-   * sistem otomatis fallback mengambil N jam terakhir dari data aktif terakhir unit.
-   */
+  private applyOffset(raw: number | string | null | undefined, offset: number): number | null {
+    if (raw === null || raw === undefined || raw === '' || Number(raw) === -127) return null;
+    const num = Number(raw);
+    if (isNaN(num)) return null;
+    return parseFloat((num + Number(offset || 0)).toFixed(2));
+  }
+  private applyCalibration(data: any, off: any): any {
+    if (!data) return data;
+    return {
+      ...data,
+      temp_cabinet:    this.applyOffset(data.temp_cabinet,    off.cabinet_offset),
+      temp_evaporator: this.applyOffset(data.temp_evaporator, off.evaporator_offset),
+      temp_condenser:  this.applyOffset(data.temp_condenser,  off.condenser_offset),
+      voltage:         this.applyOffset(data.voltage,         off.voltage_offset),
+      current:         this.applyOffset(data.current,         off.current_offset),
+      power:           this.applyOffset(data.power,           off.power_offset),
+      _calibration_applied: off.is_calibrated,
+      _offsets: off.is_calibrated ? { cabinet: off.cabinet_offset, evaporator: off.evaporator_offset, condenser: off.condenser_offset, voltage: off.voltage_offset, current: off.current_offset, power: off.power_offset } : undefined,
+    };
+  }
+  // ---------------------------------------------------------------------------
+  async getLatestTelemetry(unitId: string) {
+    const off = await this.getCalibrationOffsets(unitId);
+    let raw: any = null;
+
+    if (IotService.liveTelemetryMap.has(unitId)) {
+      raw = IotService.liveTelemetryMap.get(unitId);
+    } else {
+      const unit = await this.unitRepo.findOne({ where: { id: unitId } });
+      if (unit && unit.last_seen_at) {
+        raw = {
+          unit_id: unit.id,
+          temp_cabinet: unit.last_temp_cabinet ?? null,
+          temp_evaporator: unit.last_temp_evaporator ?? null,
+          temp_condenser: unit.last_temp_condenser ?? null,
+          voltage: unit.last_voltage ?? null,
+          current: (unit as any).last_current ?? null,
+          power: unit.last_power ?? null,
+          is_door1_open: unit.is_door1_open ?? null,
+          is_door2_open: unit.is_door2_open ?? null,
+          is_door3_open: unit.is_door3_open ?? null,
+          is_door4_open: unit.is_door4_open ?? null,
+          recorded_at: unit.last_seen_at.toISOString(),
+        };
+      } else {
+        raw = await this.telemetryLogRepo.findOne({
+          where: { unit_id: unitId },
+          order: { recorded_at: 'DESC' },
+        });
+      }
+    }
+
+    return this.applyCalibration(raw, off);
+  }
+
   async getTelemetryHistory(unitId: string, hours: number = 24) {
     // 1. Cek tanggal data terbaru yang ada di database untuk unit ini
     const latestLog = await this.telemetryLogRepo.findOne({
@@ -478,7 +513,33 @@ export class IotService {
 
     this.logger.log(`✅ Returned ${rawResult.length} aggregated data points`);
 
-    return rawResult;
+    // Terapkan differential kalibrasi ke semua titik data riwayat
+    const calibOff = await this.getCalibrationOffsets(unitId);
+    return rawResult.map((row: any) => this.applyCalibration(row, calibOff));
+  }
+
+
+  /**
+   * Mengambil data mentah TANPA koreksi kalibrasi � untuk keperluan input referensi form kalibrasi.
+   */
+  async getLatestTelemetryRaw(unitId: string) {
+    if (IotService.liveTelemetryMap.has(unitId)) {
+      return IotService.liveTelemetryMap.get(unitId);
+    }
+    const unit = await this.unitRepo.findOne({ where: { id: unitId } });
+    if (unit && unit.last_seen_at) {
+      return {
+        unit_id: unit.id,
+        temp_cabinet: unit.last_temp_cabinet ?? null,
+        temp_evaporator: unit.last_temp_evaporator ?? null,
+        temp_condenser: unit.last_temp_condenser ?? null,
+        voltage: unit.last_voltage ?? null,
+        current: (unit as any).last_current ?? null,
+        power: unit.last_power ?? null,
+        recorded_at: unit.last_seen_at.toISOString(),
+      };
+    }
+    return this.telemetryLogRepo.findOne({ where: { unit_id: unitId }, order: { recorded_at: 'DESC' } });
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -520,82 +581,42 @@ export class IotService {
    * Create or update sensor calibration for a unit
    */
   async createOrUpdateCalibration(unitId: string, dto: any) {
-    // Check if unit exists
     const unit = await this.unitRepo.findOne({ where: { id: unitId } });
-    if (!unit) {
-      return {
-        success: false,
-        message: 'Unit not found',
-      };
-    }
+    if (!unit) return { success: false, message: 'Unit not found' };
 
-    // Check if calibration already exists
-    const existing = await this.unitRepo.query(
-      `SELECT id FROM iot_calibration WHERE unit_id = $1`,
-      [unitId]
-    );
+    // Auto-add voltage/current/power columns if not exist
+    await this.unitRepo.query(`ALTER TABLE iot_calibration ADD COLUMN IF NOT EXISTS voltage_offset DECIMAL(8,3) DEFAULT 0, ADD COLUMN IF NOT EXISTS current_offset DECIMAL(8,3) DEFAULT 0, ADD COLUMN IF NOT EXISTS power_offset DECIMAL(8,3) DEFAULT 0, ADD COLUMN IF NOT EXISTS reference_voltage DECIMAL(8,2), ADD COLUMN IF NOT EXISTS reference_current DECIMAL(8,3), ADD COLUMN IF NOT EXISTS reference_power DECIMAL(8,2)`).catch(() => null);
+
+    const existing = await this.unitRepo.query(`SELECT id FROM iot_calibration WHERE unit_id = $1`, [unitId]);
+    const params = [
+      dto.cabinet_offset ?? 0, dto.evaporator_offset ?? 0, dto.condenser_offset ?? 0,
+      dto.voltage_offset ?? 0, dto.current_offset ?? 0, dto.power_offset ?? 0,
+      dto.calibrated_by || null, dto.notes || null,
+      dto.reference_cabinet ?? null, dto.reference_evaporator ?? null, dto.reference_condenser ?? null,
+      dto.reference_voltage ?? null, dto.reference_current ?? null, dto.reference_power ?? null,
+    ];
 
     if (existing && existing.length > 0) {
-      // Update existing
       await this.unitRepo.query(
-        `UPDATE iot_calibration 
-         SET cabinet_offset = $1, 
-             evaporator_offset = $2, 
-             condenser_offset = $3,
-             calibrated_by = $4,
-             notes = $5,
-             reference_cabinet = $6,
-             reference_evaporator = $7,
-             reference_condenser = $8,
-             calibrated_at = NOW()
-         WHERE unit_id = $9`,
-        [
-          dto.cabinet_offset,
-          dto.evaporator_offset,
-          dto.condenser_offset,
-          dto.calibrated_by || null,
-          dto.notes || null,
-          dto.reference_cabinet || null,
-          dto.reference_evaporator || null,
-          dto.reference_condenser || null,
-          unitId,
-        ]
+        `UPDATE iot_calibration SET cabinet_offset=$1,evaporator_offset=$2,condenser_offset=$3,voltage_offset=$4,current_offset=$5,power_offset=$6,calibrated_by=$7,notes=$8,reference_cabinet=$9,reference_evaporator=$10,reference_condenser=$11,reference_voltage=$12,reference_current=$13,reference_power=$14,calibrated_at=NOW() WHERE unit_id=$15`,
+        [...params, unitId]
       );
-
-      this.logger.log(`✅ Updated calibration for unit ${unitId}`);
+      this.logger.log(`Updated calibration for unit ${unitId}`);
     } else {
-      // Insert new
       await this.unitRepo.query(
-        `INSERT INTO iot_calibration 
-         (unit_id, cabinet_offset, evaporator_offset, condenser_offset, calibrated_by, notes, 
-          reference_cabinet, reference_evaporator, reference_condenser)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-        [
-          unitId,
-          dto.cabinet_offset,
-          dto.evaporator_offset,
-          dto.condenser_offset,
-          dto.calibrated_by || null,
-          dto.notes || null,
-          dto.reference_cabinet || null,
-          dto.reference_evaporator || null,
-          dto.reference_condenser || null,
-        ]
+        `INSERT INTO iot_calibration (unit_id,cabinet_offset,evaporator_offset,condenser_offset,voltage_offset,current_offset,power_offset,calibrated_by,notes,reference_cabinet,reference_evaporator,reference_condenser,reference_voltage,reference_current,reference_power) VALUES ($15,$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
+        [...params, unitId]
       );
-
-      this.logger.log(`✅ Created calibration for unit ${unitId}`);
+      this.logger.log(`Created calibration for unit ${unitId}`);
     }
 
-    return {
-      success: true,
-      message: 'Calibration saved successfully',
-      data: await this.getCalibration(unitId),
-    };
+    // Riwayat kalibrasi (audit trail)
+    await this.unitRepo.query(`CREATE TABLE IF NOT EXISTS iot_calibration_history (id UUID DEFAULT gen_random_uuid() PRIMARY KEY, unit_id VARCHAR NOT NULL, cabinet_offset DECIMAL(8,3) DEFAULT 0, evaporator_offset DECIMAL(8,3) DEFAULT 0, condenser_offset DECIMAL(8,3) DEFAULT 0, voltage_offset DECIMAL(8,3) DEFAULT 0, current_offset DECIMAL(8,3) DEFAULT 0, power_offset DECIMAL(8,3) DEFAULT 0, reference_cabinet DECIMAL(8,2), reference_evaporator DECIMAL(8,2), reference_condenser DECIMAL(8,2), reference_voltage DECIMAL(8,2), reference_current DECIMAL(8,3), reference_power DECIMAL(8,2), calibrated_by VARCHAR, notes TEXT, calibrated_at TIMESTAMPTZ DEFAULT NOW())`).catch(() => null);
+    await this.unitRepo.query(`INSERT INTO iot_calibration_history (unit_id,cabinet_offset,evaporator_offset,condenser_offset,voltage_offset,current_offset,power_offset,reference_cabinet,reference_evaporator,reference_condenser,reference_voltage,reference_current,reference_power,calibrated_by,notes) VALUES ($15,$1,$2,$3,$4,$5,$6,$9,$10,$11,$12,$13,$14,$7,$8)`, [...params, unitId]).catch(() => null);
+
+    return { success: true, message: 'Calibration saved successfully', data: (await this.getCalibration(unitId)).data };
   }
 
-  /**
-   * Update sensor calibration for a unit (partial update)
-   */
   async updateCalibration(unitId: string, dto: any) {
     // Check if calibration exists
     const existing = await this.unitRepo.query(

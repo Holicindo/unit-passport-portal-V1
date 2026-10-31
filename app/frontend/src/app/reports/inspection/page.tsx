@@ -7,6 +7,7 @@ import { Save, Camera, ArrowLeft, Loader2, Eye, EyeOff } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import InspectionReportForm from '@/components/reports/InspectionReportForm';
+import SensorCalibrationForm from '@/components/iot/SensorCalibrationForm';
 import InspectionReportTemplate from '@/components/reports/InspectionReportTemplate';
 import styles from './inspection.module.css';
 
@@ -238,7 +239,14 @@ export default function InspectionFormPage() {
         {showPreview ? (
           <InspectionReportTemplate mode="view" data={form} unit={unit} />
         ) : (
-          <InspectionReportForm data={form} onChange={setForm} />
+          <>
+            <InspectionReportForm data={form} onChange={setForm} />
+            {unit?.id && (
+              <div style={{ marginTop: '24px' }}>
+                <SensorCalibrationForm unitId={unit.id} calibratedBy='QC Inspector' />
+              </div>
+            )}
+          </>
         )}
       </div>
 

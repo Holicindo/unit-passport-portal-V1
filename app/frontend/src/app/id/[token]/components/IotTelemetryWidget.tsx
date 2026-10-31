@@ -27,9 +27,10 @@ interface IotTelemetryWidgetProps {
   unit?: any;
 }
 
-function TempCard({ label, rawValue, min, max, offset, icon: Icon, isWarning, warningLabel }: { label: string; rawValue: number | null; min: number; max: number; offset: number; icon: React.ElementType; isWarning?: boolean; warningLabel?: string; }) {
+function TempCard({ label, rawValue, min, max, offset, icon: Icon, isWarning, warningLabel, isCalibrated }: { label: string; rawValue: number | null; min: number; max: number; offset: number; icon: React.ElementType; isWarning?: boolean; warningLabel?: string; isCalibrated?: boolean; }) {
   const isError = rawValue === null || rawValue === -127 || rawValue === 85;
-  const liveValue = isError ? null : rawValue + offset;
+  // Backend getLatestTelemetry sudah mengaplikasikan offset
+  const liveValue = isError ? null : rawValue;
   const isAlert = !isError && liveValue !== null && (liveValue > max || liveValue < min);
   const color    = isError ? '#94a3b8' : isAlert ? '#dc2626' : isWarning ? '#d97706' : '#059669';
 

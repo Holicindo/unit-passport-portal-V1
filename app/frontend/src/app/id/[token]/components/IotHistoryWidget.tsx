@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { BarChart2, TableProperties, RefreshCw, TrendingDown, TrendingUp, Minus, Download, ChevronDown, Settings2, X, Check, FileText } from 'lucide-react';
@@ -716,17 +716,17 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
 
   const formatTime = (iso: string) => {
     const d = new Date(iso);
-    // Explicit WIB (UTC+7) conversion
-    const wib = new Date(d.getTime() + 7 * 60 * 60 * 1000);
-    const dd = String(wib.getUTCDate()).padStart(2, '0');
-    const mm = String(wib.getUTCMonth() + 1).padStart(2, '0');
-    const yyyy = wib.getUTCFullYear();
-    const H = String(wib.getUTCHours()).padStart(2, '0');
-    const M = String(wib.getUTCMinutes()).padStart(2, '0');
-    // Hapus detik, hanya jam:menit
-    return `${dd}/${mm}/${yyyy} ${H}:${M}`;
+    // Parse UTC ISO string directly with Asia/Jakarta timezone
+    return d.toLocaleString('id-ID', {
+      timeZone: 'Asia/Jakarta',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).replace(/\./g, ':').replace(',', '');
   };
-
   const exportCsv = () => {
     // Use downsampled data for export
     const exportRows = data;
@@ -1318,7 +1318,6 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
                 <Settings2 size={12} />
                 Atur Suhu
               </button>
-              
               {/* Button: Atur Kalibrasi */}
               <button
                 onClick={() => setShowCalibrationModal(true)}
@@ -1328,26 +1327,28 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
                   gap: '6px',
                   padding: '6px 14px',
                   borderRadius: '8px',
-                  border: '1px solid rgba(139, 92, 246, 0.3)',
-                  background: 'rgba(139, 92, 246, 0.12)',
-                  color: '#a78bfa',
+                  border: '1px solid rgba(96, 165, 250, 0.4)',
+                  background: 'rgba(37, 99, 235, 0.15)',
+                  color: '#60a5fa',
                   fontSize: '0.72rem',
                   fontWeight: 700,
                   cursor: 'pointer',
                   transition: 'all 0.2s',
+                  boxShadow: '-2px -2px 6px rgba(255,255,255,0.04), 2px 2px 6px rgba(0,0,0,0.4)',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(139, 92, 246, 0.2)';
-                  e.currentTarget.style.borderColor = '#a78bfa';
+                  e.currentTarget.style.background = 'rgba(37, 99, 235, 0.3)';
+                  e.currentTarget.style.borderColor = '#60a5fa';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(139, 92, 246, 0.12)';
-                  e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.3)';
+                  e.currentTarget.style.background = 'rgba(37, 99, 235, 0.15)';
+                  e.currentTarget.style.borderColor = 'rgba(96, 165, 250, 0.4)';
                 }}
               >
                 <Settings2 size={12} />
                 Atur Kalibrasi
               </button>
+              
             </>
           )}
 
@@ -1823,15 +1824,15 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
         </div>
       )}
 
-      {/* ── CALIBRATION MODAL ── */}
+      {/* -- CALIBRATION MODAL -- */}
       <CalibrationModal
         unitId={unitId}
         unitSerial={unit?.serial_number || 'N/A'}
         isOpen={showCalibrationModal}
         onClose={() => setShowCalibrationModal(false)}
         onSave={() => {
-          // Refresh data setelah save
-          fetchHistory();
+          fetchHistory(true);
+          if (onUnitUpdate) onUnitUpdate(unit);
         }}
       />
     </div>

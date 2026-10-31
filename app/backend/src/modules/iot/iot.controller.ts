@@ -22,16 +22,24 @@ export class IotController {
   }
 
   @Get(':id/telemetry/latest')
-  @Roles(UserRole.CLIENT, UserRole.PARTNER, UserRole.ADMIN, UserRole.QC)
-  @ApiOperation({ summary: 'Get latest real-time sensor data for a unit' })
+  @Roles(UserRole.CLIENT, UserRole.PARTNER, UserRole.ADMIN, UserRole.QC, UserRole.MECHANIC)
+  @ApiOperation({ summary: 'Get latest real-time sensor data (sudah dikoreksi differential)' })
   @ApiParam({ name: 'id', description: 'Internal Unit ID (UNT-xxxx)' })
   getLatestTelemetry(@Param('id') id: string) {
     return this.iotService.getLatestTelemetry(id);
   }
 
+  @Get(':id/telemetry/latest/raw')
+  @Roles(UserRole.ADMIN, UserRole.QC, UserRole.MECHANIC)
+  @ApiOperation({ summary: 'Get latest raw (uncalibrated) sensor data — untuk form input referensi kalibrasi' })
+  @ApiParam({ name: 'id', description: 'Internal Unit ID (UNT-xxxx)' })
+  getLatestTelemetryRaw(@Param('id') id: string) {
+    return this.iotService.getLatestTelemetryRaw(id);
+  }
+
   @Get(':id/telemetry/history')
-  @Roles(UserRole.CLIENT, UserRole.PARTNER, UserRole.ADMIN, UserRole.QC)
-  @ApiOperation({ summary: 'Get historical sensor data for trend chart' })
+  @Roles(UserRole.CLIENT, UserRole.PARTNER, UserRole.ADMIN, UserRole.QC, UserRole.MECHANIC)
+  @ApiOperation({ summary: 'Get historical sensor data for trend chart (sudah dikoreksi differential)' })
   @ApiParam({ name: 'id', description: 'Internal Unit ID (UNT-xxxx)' })
   @ApiQuery({ name: 'hours', description: 'How many hours back to fetch (default: 24)', required: false })
   getTelemetryHistory(
@@ -44,7 +52,7 @@ export class IotController {
   // ─── CALIBRATION ENDPOINTS ───────────────────────────────────────────────
 
   @Get(':id/calibration')
-  @Roles(UserRole.PARTNER, UserRole.ADMIN, UserRole.QC)
+  @Roles(UserRole.PARTNER, UserRole.ADMIN, UserRole.QC, UserRole.MECHANIC)
   @ApiOperation({ summary: 'Get sensor calibration offsets for a unit' })
   @ApiParam({ name: 'id', description: 'Internal Unit ID (UNT-xxxx)' })
   getCalibration(@Param('id') id: string) {
@@ -52,8 +60,8 @@ export class IotController {
   }
 
   @Post(':id/calibration')
-  @Roles(UserRole.PARTNER, UserRole.ADMIN)
-  @ApiOperation({ summary: 'Create or update sensor calibration for a unit' })
+  @Roles(UserRole.PARTNER, UserRole.ADMIN, UserRole.QC, UserRole.MECHANIC)
+  @ApiOperation({ summary: 'Create or update sensor calibration (POST = upsert)' })
   @ApiParam({ name: 'id', description: 'Internal Unit ID (UNT-xxxx)' })
   createCalibration(
     @Param('id') id: string,
@@ -63,8 +71,8 @@ export class IotController {
   }
 
   @Put(':id/calibration')
-  @Roles(UserRole.PARTNER, UserRole.ADMIN)
-  @ApiOperation({ summary: 'Update sensor calibration for a unit' })
+  @Roles(UserRole.PARTNER, UserRole.ADMIN, UserRole.QC, UserRole.MECHANIC)
+  @ApiOperation({ summary: 'Update sensor calibration (partial update)' })
   @ApiParam({ name: 'id', description: 'Internal Unit ID (UNT-xxxx)' })
   updateCalibration(
     @Param('id') id: string,

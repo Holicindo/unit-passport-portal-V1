@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+﻿import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -128,7 +128,7 @@ export class HealthScoreService {
     // ─── KONSTANTA STANDAR KELISTRIKAN REFRIGERASI ─────────────────────────
     // Fan Evaporator umumnya tetap menyala saat kompresor istirahat (0.03A – 0.30A).
     // Arus <= 0.35A dikategorikan sebagai STANDBY (Kompresor OFF, Fan Evap ON), BUKAN kompresor berjalan!
-    const STANDBY_FAN_MAX_CURRENT = 0.35;
+    const STANDBY_FAN_MAX_CURRENT = 2.0; // Arus <= 2.0A = Standby (Kompresor OFF / Fan Evap Standby / Defrost)
 
     // ─── BAGIAN A: METRIK DASAR ─────────────────────────────────────────────
     let validTIBCount = 0, totalValidCount = 0, hdmAcc = 0;
@@ -358,10 +358,10 @@ export class HealthScoreService {
 
       calLogs.forEach((log, i) => {
         const current = log.current ?? 0;
-        if (current <= 0.5 && offStart === null) {
+        if (current <= STANDBY_FAN_MAX_CURRENT && offStart === null) {
           offStart = log.recorded_at.getTime();
           offStartIdx = i;
-        } else if (current > 0.5 && offStart !== null && offStartIdx !== null) {
+        } else if (current > STANDBY_FAN_MAX_CURRENT && offStart !== null && offStartIdx !== null) {
           const durationMin = (log.recorded_at.getTime() - offStart) / 60000;
           if (durationMin >= 5) {
             const evapTemps = calLogs.slice(offStartIdx, i)
@@ -497,9 +497,9 @@ export class HealthScoreService {
 
     // -- Evaporator (bobot 20%) --
     // Evap Cooling Rate: ≥0.50 aman, ≤0.10 kritis
-    const pEvapCool    = linearPenalty(avgEvapCoolingRate, 0.50, 0.10);
+    const pEvapCool    = (avgEvapCoolingRate === 0) ? 0 : linearPenalty(avgEvapCoolingRate, 0.30, 0.05); // Skip penalty jika tidak ada data siklus evap valid
     // Evap Drop: ≥15°C aman, ≤5°C kritis
-    const pEvapDrop    = linearPenalty(avgEvapDrop, 15, 5);
+    const pEvapDrop    = linearPenalty(avgEvapDrop, 8, 2); // Chiller 2-4C, evap -10C: drop ~8C/siklus adalah NORMAL
     // Cab-Evap Diff: ≤15°C aman, ≥25°C kritis
     const pCabEvapDiff = linearPenalty(avgCabEvapDiff, 15, 25);
     // Defrost Anomaly: ≤10% aman, ≥60% kritis (sudah dihitung)
@@ -509,27 +509,27 @@ export class HealthScoreService {
 
     // -- Kondensor (bobot 17%) --
     // Peak: ≤45°C aman, ≥55°C kritis
-    const pCondPeak = linearPenalty(avgCondenserPeak, 45, 55);
+    const pCondPeak = linearPenalty(avgCondenserPeak, 45, 60); // Unit tanpa AC ruangan, peak 60C baru kritis
     // Rise per siklus: ≤15°C aman, ≥25°C kritis
-    const pCondRise = linearPenalty(avgCondRise, 15, 25);
+    const pCondRise = linearPenalty(avgCondRise, 35, 50); // Ambient pabrik 28-35C, rise 35C NORMAL
 
     const subCondenserScore = 100 * (1 - ((pCondPeak * 0.55) + (pCondRise * 0.45)));
 
     // -- Elektrikal & Kompresor (bobot 22%) --
     // Duty Cycle: ≤60% aman, ≥80% kritis
-    const pDuty   = linearPenalty(dutyCyclePercentage, 60, 80);
+    const pDuty   = linearPenalty(dutyCyclePercentage, 75, 92); // Pabrik ambient tinggi, duty 75% masih aman
     // Starts/Hour: ≤4x aman, ≥6x kritis
-    const pStarts = linearPenalty(startsPerHour, 4, 6);
+    const pStarts = linearPenalty(startsPerHour, 8, 20); // 33.8x/jam saat startup = anomali, steady state 4-8x/jam
     // Short Cycle: ≤10% aman, ≥30% kritis
     const pShort  = linearPenalty(shortCycleFraction, 0.10, 0.30);
     // Anomali Arus & Lonjakan Kompresor: ≤5% aman, ≥40% kritis
     const pAmp    = linearPenalty(compressorAnomalyRatio, 0.05, 0.40);
     // Voltage Anomali: ≤2% aman, ≥15% kritis (tegangan tidak stabil bikin kompresor narik arus besar)
-    const pVolt   = linearPenalty(voltageAnomalyRatio, 0.02, 0.15);
+    const pVolt   = linearPenalty(voltageAnomalyRatio, 0.05, 0.20); // PLN Indonesia toleransi 5%, 20% baru kritis
     // Durasi kompresor jalan > 2 jam non-stop (normalnya cut-off tiap 2 jam)
     const pLongCycle = linearPenalty(longCyclesCount, 0, 2);
 
-    const subElecPenalty = (pDuty * 0.20) + (pStarts * 0.15) + (pShort * 0.12) + (pAmp * 0.25) + (pVolt * 0.18) + (pLongCycle * 0.10);
+    const subElecPenalty = (pDuty * 0.20) + (pStarts * 0.08) + (pShort * 0.12) + (pAmp * 0.30) + (pVolt * 0.18) + (pLongCycle * 0.12); // pStarts diturunkan (anomali startup), pAmp lebih akurat
     const subElecScore   = 100 * (1 - subElecPenalty);
 
     // -- Baseline (bobot 13%) -- sudah dihitung di atas

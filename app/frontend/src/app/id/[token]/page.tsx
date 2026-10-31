@@ -23,6 +23,7 @@ import AllSpecsModal from './components/AllSpecsModal';
 import ServiceHistorySection from './components/ServiceHistorySection';
 import IotTelemetryWidget from './components/IotTelemetryWidget';
 import IotHistoryWidget from './components/IotHistoryWidget';
+import CalibrationModal from './components/CalibrationModal';
 import CustomerHealthWidget from './components/CustomerHealthWidget';
 import QrCard from './components/QrCard';
 import SelectReportTypeModal from './components/SelectReportTypeModal';
@@ -45,6 +46,7 @@ export default function QrPassportPage() {
   const [photoIdx, setPhotoIdx] = useState(0);
   const [showReportSelector, setShowReportSelector] = useState(false);
   const [iotSlideTab, setIotSlideTab] = useState<'realtime' | 'history'>('realtime');
+  const [showCalibrationModal, setShowCalibrationModal] = useState(false);
 
   useEffect(() => {
     if (!unit) return;
@@ -780,6 +782,19 @@ export default function QrPassportPage() {
                     <IotTelemetryWidget unitId={unit.id} unitModel={unit.model_name} unit={unit} />
                   ) : (
                     <IotHistoryWidget unitId={unit.id} unit={unit} onUnitUpdate={loadUnitData} />
+                  )}
+
+                  {/* Modal Kalibrasi Tunggal (Admin, QC, Teknisi) */}
+                  {(isAdmin || isQC || isPartner) && (
+                    <CalibrationModal
+                      unitId={unit.id}
+                      unitSerial={unit?.serial_number || 'N/A'}
+                      isOpen={showCalibrationModal}
+                      onClose={() => setShowCalibrationModal(false)}
+                      onSave={() => {
+                        loadUnitData();
+                      }}
+                    />
                   )}
                 </div>
               </section>

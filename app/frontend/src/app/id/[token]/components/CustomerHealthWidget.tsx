@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -65,45 +65,121 @@ function DonutChart({ score, color }: { score: number; color: string; glowColor?
   );
 }
 
-// ─── SUBSYSTEM CARD (SLIM & COMPACT) ──────────────────────────────────────────
-function SubCard({ icon: Icon, label, score, accent }: {
-  icon: React.ElementType; label: string; score: number; accent: string; desc?: string;
-}) {
-  const c = sc(score), lbl = sl(score), pct = Math.min(100, Math.max(0, score));
+// ─── SCORE BREAKDOWN TOOLTIP ───────────────────────────────────────────────────
+interface BreakdownItem {
+  label: string;
+  value: string;
+  penaltyPct: number;
+  safe: boolean;
+}
+
+function ScoreTooltip({ items, score, label }: { items: BreakdownItem[]; score: number; label: string }) {
+  const c = sc(score);
   return (
     <div style={{
-      background: 'rgba(0, 0, 0, 0.22)',
-      boxShadow: 'inset 1px 1px 3px rgba(0,0,0,0.4), inset -1px -1px 3px rgba(255,255,255,0.03)',
-      border: '1px solid rgba(255, 255, 255, 0.05)',
-      borderRadius: 12,
+      position: 'absolute',
+      bottom: 'calc(100% + 8px)',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      zIndex: 9999,
+      minWidth: 230,
+      maxWidth: 275,
+      background: 'rgba(6, 16, 40, 0.98)',
+      border: `1px solid ${c}45`,
+      borderRadius: 10,
       padding: '10px 12px',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 6,
-      minWidth: 0,
+      boxShadow: `0 8px 28px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.04)`,
+      pointerEvents: 'none',
     }}>
-      {/* Top: Icon + Title + Badge */}
+      <div style={{
+        position: 'absolute',
+        bottom: -7,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: 13,
+        height: 7,
+        overflow: 'hidden',
+      }}>
+        <div style={{
+          width: 13,
+          height: 13,
+          background: 'rgba(6, 16, 40, 0.98)',
+          border: `1px solid ${c}45`,
+          transform: 'rotate(45deg)',
+          marginTop: -7,
+        }} />
+      </div>
+      <div style={{ fontSize: '.6rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>
+        Rincian — {label}
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+        {items.map((item, i) => {
+          const barColor = item.safe ? '#10b981' : item.penaltyPct > 60 ? '#ef4444' : '#f59e0b';
+          return (
+            <div key={i}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 3 }}>
+                <span style={{ fontSize: '.66rem', fontWeight: 600, color: '#94a3b8', lineHeight: 1.35 }}>{item.label}</span>
+                <span style={{ fontSize: '.68rem', fontWeight: 800, color: barColor, flexShrink: 0, fontFamily: 'monospace' }}>{item.value}</span>
+              </div>
+              <div style={{ height: 3, borderRadius: 99, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${item.penaltyPct}%`, borderRadius: 99, background: barColor, transition: 'width 0.6s ease' }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div style={{ marginTop: 8, paddingTop: 7, borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: '.6rem', color: '#475569', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em' }}>Skor</span>
+        <span style={{ fontSize: '.82rem', fontWeight: 900, color: c, fontFamily: 'monospace' }}>{Math.round(score)}<span style={{ fontSize: '.6rem', color: '#64748b' }}>/100</span></span>
+      </div>
+    </div>
+  );
+}
+
+// ─── SUBSYSTEM CARD (SLIM & COMPACT, HOVER TOOLTIP) ──────────────────────────
+function SubCard({ label, score, accent, breakdown }: {
+  label: string; score: number; accent: string; breakdown: BreakdownItem[];
+}) {
+  const [hovered, setHovered] = useState(false);
+  const c = sc(score), lbl = sl(score), pct = Math.min(100, Math.max(0, score));
+  return (
+    <div
+      style={{
+        background: 'rgba(0, 0, 0, 0.22)',
+        boxShadow: hovered
+          ? `inset 1px 1px 3px rgba(0,0,0,0.4), inset -1px -1px 3px rgba(255,255,255,0.03), 0 0 0 1px ${accent}35`
+          : 'inset 1px 1px 3px rgba(0,0,0,0.4), inset -1px -1px 3px rgba(255,255,255,0.03)',
+        border: hovered ? `1px solid ${accent}50` : '1px solid rgba(255, 255, 255, 0.05)',
+        borderRadius: 12,
+        padding: '10px 12px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 6,
+        minWidth: 0,
+        position: 'relative',
+        cursor: 'default',
+        transition: 'border 0.15s ease, box-shadow 0.15s ease',
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {hovered && (breakdown ?? []).length > 0 && (
+        <ScoreTooltip items={breakdown} score={score} label={label} />
+      )}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-          <Icon size={14} color={accent} style={{ flexShrink: 0 }} />
-          <span style={{ fontSize: '.74rem', fontWeight: 700, color: '#e2e8f0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {label}
-          </span>
-        </div>
+        <span style={{ fontSize: '.74rem', fontWeight: 700, color: '#e2e8f0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {label}
+        </span>
         <span style={{ fontSize: '.58rem', fontWeight: 800, color: c, background: `${c}15`, border: `1px solid ${c}30`, borderRadius: 12, padding: '1px 6px', flexShrink: 0 }}>
           {lbl}
         </span>
       </div>
-
-      {/* Middle: Score number */}
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 3 }}>
         <span style={{ fontSize: '1.35rem', fontWeight: 900, color: c, fontFamily: 'monospace', lineHeight: 1 }}>
           {Math.round(score)}
         </span>
         <span style={{ fontSize: '.68rem', color: '#64748b', fontWeight: 600 }}>/100</span>
       </div>
-
-      {/* Bottom: Mini Progress Bar */}
       <div style={{ height: 4, borderRadius: 99, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
         <div style={{ height: '100%', width: `${pct}%`, borderRadius: 99, background: c, transition: 'width 1s ease' }} />
       </div>
@@ -236,6 +312,96 @@ export default function CustomerHealthWidget({ unitId }: Props) {
 
   const lcLabel = lc === 'ACTIVE' ? 'Aktif' : lc === 'PROVISIONAL' ? 'Awal Operasi' : 'Pembelajaran';
 
+  // ── Breakdown per sub-sistem (untuk tooltip) ──────────────────────────────
+  // ── Variabel tambahan dari data untuk tooltip ─────────────────────────────
+  const evapCoolRate  = Number(data.evap_cooling_rate   ?? 0);
+  const evapDropAmp   = Number(data.evap_drop_amplitude ?? 0);
+  const cabEvapDiff   = Number(data.cab_evap_diff       ?? 0);
+  const condPeak      = Number(data.condenser_peak      ?? 0);
+  const condRise      = Number(data.condenser_rise      ?? 0);
+  const cabCoolRate   = Number(data.cabinet_cooling_rate ?? 0);
+
+  // Helper: 0 = aman (hijau), 100 = kritis (merah)
+  function lp(val: number, safe: number, crit: number): number {
+    if (safe < crit) {
+      if (val <= safe) return 0;
+      if (val >= crit) return 100;
+      return Math.round(((val - safe) / (crit - safe)) * 100);
+    } else {
+      if (val >= safe) return 0;
+      if (val <= crit) return 100;
+      return Math.round(((safe - val) / (safe - crit)) * 100);
+    }
+  }
+
+  // ── KABINET: Seberapa baik suhu ruang dalam terjaga ─────────────────────
+  // ── KABINET: Seberapa baik suhu ruang dalam terjaga ─────────────────────
+  const cabBreakdown: BreakdownItem[] = [
+    {
+      label: tib >= 95 ? `Suhu kabinet selalu stabil (${tib.toFixed(0)}% waktu dalam batas aman)` : `Suhu kabinet sempat keluar batas aman`,
+      value: `${tib.toFixed(1)}%`, penaltyPct: lp(tib, 95, 70), safe: tib >= 95,
+    },
+    {
+      label: hdm <= 1.0 ? `Panas berlebih sangat rendah — suhu terjaga prima` : `Mesin sering kepanasan (${hdm.toFixed(1)} unit/jam)`,
+      value: `${hdm.toFixed(2)}`, penaltyPct: lp(hdm, 1.0, 5.0), safe: hdm <= 1.0,
+    },
+    {
+      label: cabCoolRate >= 0.20 ? `Kecepatan pendinginan kabinet cepat & stabil` : `Pendinginan awal kabinet bekerja normal`,
+      value: cabCoolRate > 0 ? `${cabCoolRate.toFixed(2)} °C/mnt` : `Optimal`, penaltyPct: 0, safe: true,
+    },
+    {
+      label: doorRec > 0 ? `Suhu cepat normal kembali setelah pintu dibuka-tutup` : `Pintu tertutup rapat sepanjang pemantauan`,
+      value: doorRec > 0 ? `${doorRec.toFixed(0)} mnt` : `Stabil`, penaltyPct: 0, safe: true,
+    },
+  ];
+
+  // ── EVAPORATOR: Performa sirkulasi dingin dalam mesin ────────────────────
+  const evapBreakdown: BreakdownItem[] = [
+    {
+      label: duty >= 80 ? `Kompresor bekerja non-stop tanpa jeda istirahat (beban kerja evaporator tinggi)` : evapCoolRate >= 0.50 ? `Evaporator mendinginkan dengan baik` : `Laju pendinginan evaporator membutuhkan waktu lebih lama`,
+      value: duty >= 80 ? `Beban Tinggi` : evapCoolRate > 0 ? `${evapCoolRate.toFixed(2)} °C/mnt` : `Terpantau`, penaltyPct: duty >= 80 ? 70 : lp(evapCoolRate, 0.50, 0.10), safe: duty < 80,
+    },
+    {
+      label: duty >= 80 ? `Suhu evaporator belum mencapai penurunan siklus ideal (potensi bunga es / freon berkurang)` : `Penurunan suhu evaporator dalam batas normal`,
+      value: evapDropAmp > 0 ? `${evapDropAmp.toFixed(1)} °C` : `Perlu Cek`, penaltyPct: 65, safe: false,
+    },
+    {
+      label: cabEvapDiff > 0 ? `Selisih suhu kabinet vs evaporator terpantau ${cabEvapDiff.toFixed(1)} °C` : `Sirkulasi udara evaporator belum merata optimal ke seluruh kabinet`,
+      value: cabEvapDiff > 0 ? `${cabEvapDiff.toFixed(1)} °C` : `Evaluasi`, penaltyPct: 40, safe: false,
+    },
+    {
+      label: defAnomaly <= 0.10 ? `Siklus pencairan es (defrost) berjalan sesuai jadwal standar` : `Siklus defrost tidak normal (${(defAnomaly*100).toFixed(0)}% bermasalah)`,
+      value: `${(defAnomaly * 100).toFixed(0)}%`, penaltyPct: lp(defAnomaly, 0.10, 0.60), safe: defAnomaly <= 0.10,
+    },
+  ];
+
+  // ── KONDENSOR: Pembuangan panas ke luar mesin ────────────────────────────
+  const condBreakdown: BreakdownItem[] = [
+    {
+      label: condPeak > 0 ? `Puncak suhu pelepasan panas kondensor terpantau ${condPeak.toFixed(0)}°C (aman)` : `Pembuangan panas kondensor lancar, tidak ada akumulasi panas berlebih`,
+      value: condPeak > 0 ? `${condPeak.toFixed(1)} °C` : `Normal`, penaltyPct: 0, safe: true,
+    },
+    {
+      label: condRise > 0 ? `Kenaikan suhu kondensor per siklus ${condRise.toFixed(0)}°C (aman)` : `Ventilasi & fan kondensor berputar stabil membuang panas`,
+      value: condRise > 0 ? `${condRise.toFixed(1)} °C` : `Lancar`, penaltyPct: 0, safe: true,
+    },
+  ];
+
+  // ── KELISTRIKAN: Kondisi kerja kompresor dan tegangan ───────────────────
+  const elecBreakdown: BreakdownItem[] = [
+    {
+      label: duty <= 60 ? `Kompresor bekerja proporsional (${duty.toFixed(0)}% menyala)` : `Kompresor menyala terus menerus (${duty.toFixed(0)}% waktu) tanpa cut-off`,
+      value: `${duty.toFixed(1)}%`, penaltyPct: lp(duty, 60, 80), safe: duty <= 60,
+    },
+    {
+      label: starts > 0 ? `Frekuensi nyala-mati kompresor ${starts.toFixed(1)}x/jam (normal)` : `Kompresor belum melakukan siklus cut-off istirahat`,
+      value: starts > 0 ? `${starts.toFixed(1)}x/jam` : `Non-stop`, penaltyPct: duty >= 80 ? 50 : 0, safe: duty < 80,
+    },
+    {
+      label: voltAnomaly <= 0.02 ? `Tegangan listrik stabil` : `Tegangan listrik tidak stabil (${(voltAnomaly*100).toFixed(1)}% waktu di luar batas aman) — beban berat bagi motor`,
+      value: `${(voltAnomaly * 100).toFixed(1)}%`, penaltyPct: lp(voltAnomaly, 0.02, 0.15), safe: voltAnomaly <= 0.02,
+    },
+  ];
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
@@ -290,17 +456,18 @@ export default function CustomerHealthWidget({ unitId }: Props) {
           </div>
 
           {/* Kolom Kanan: 4 Subsistem Grid (2x2 Compact) */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, overflow: 'visible' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ fontSize: '.65rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '.06em' }}>
                 Skor 4 Bagian Mesin
               </span>
+              <span style={{ fontSize: '.58rem', color: '#475569', fontWeight: 600 }}>Arahkan kursor untuk detail</span>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
-              <SubCard icon={Thermometer} label="Kabinet" score={cabScore} accent="#3b82f6" />
-              <SubCard icon={Snowflake} label="Evaporator" score={evapScore} accent="#06b6d4" />
-              <SubCard icon={Wind} label="Kondensor" score={condScore} accent="#f97316" />
-              <SubCard icon={Zap} label="Kelistrikan" score={elecScore} accent="#8b5cf6" />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, overflow: 'visible' }}>
+              <SubCard label="Kabinet"    score={cabScore}  accent="#3b82f6" breakdown={cabBreakdown} />
+              <SubCard label="Evaporator" score={evapScore} accent="#06b6d4" breakdown={evapBreakdown} />
+              <SubCard label="Kondensor"  score={condScore} accent="#f97316" breakdown={condBreakdown} />
+              <SubCard label="Kelistrikan" score={elecScore} accent="#8b5cf6" breakdown={elecBreakdown} />
             </div>
           </div>
         </div>
