@@ -358,8 +358,8 @@ export default function CustomerHealthWidget({ unitId }: Props) {
   // ── EVAPORATOR: Performa sirkulasi dingin dalam mesin ────────────────────
   const evapBreakdown: BreakdownItem[] = [
     {
-      label: duty >= 75 ? `Kompresor bekerja non-stop tanpa jeda istirahat (beban kerja evaporator tinggi)` : evapCoolRate >= 0.30 ? `Evaporator mendinginkan dengan baik` : evapCoolRate === 0 ? `Data siklus evaporator masih dikumpulkan` : `Laju pendinginan evaporator membutuhkan waktu lebih lama`,
-      value: duty >= 75 ? `Beban Tinggi` : evapCoolRate > 0 ? `${evapCoolRate.toFixed(2)} °C/mnt` : `Terpantau`, penaltyPct: duty >= 75 ? 70 : evapCoolRate === 0 ? 0 : lp(evapCoolRate, 0.30, 0.05), safe: duty < 75,
+      label: duty >= 92 ? `Kompresor bekerja hampir non-stop tanpa jeda istirahat (beban kerja sangat tinggi)` : evapCoolRate >= 0.30 ? `Evaporator mendinginkan dengan baik` : evapCoolRate === 0 ? `Data siklus evaporator masih dikumpulkan` : `Laju pendinginan evaporator membutuhkan waktu lebih lama`,
+      value: duty >= 92 ? `Beban Kritis` : evapCoolRate > 0 ? `${evapCoolRate.toFixed(2)} °C/mnt` : `Terpantau`, penaltyPct: duty >= 92 ? 70 : evapCoolRate === 0 ? 0 : lp(evapCoolRate, 0.30, 0.05), safe: duty < 92,
     },
     {
       label: evapDropAmp >= 8 ? `Penurunan suhu evaporator per siklus normal - ${evapDropAmp.toFixed(1)}°C (target >= 8°C)` : evapDropAmp > 0 ? `Penurunan suhu evaporator kurang optimal (${evapDropAmp.toFixed(1)}°C)` : `Penurunan suhu evaporator dalam batas normal`,
