@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "scripts": {
     "install:all": "npm install --prefix app/backend && npm install --prefix app/frontend",
-    "dev": "npm run dev:backend & npm run dev:frontend",
+    "dev": "concurrently -k -n \"backend,frontend\" -c \"blue,green\" \"npm run start:dev --prefix app/backend\" \"npm run dev --prefix app/frontend\"",
+    "start": "concurrently -k -n \"backend,frontend\" -c \"blue,green\" \"node app/backend/dist/main.js\" \"npm run start --prefix app/frontend\"",
     "dev:backend": "npm run start:dev --prefix app/backend",
     "dev:frontend": "npm run dev --prefix app/frontend",
     "seed": "npm run start:dev --prefix app/backend -- src/scripts/migrations/seed-users.ts",
