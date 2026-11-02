@@ -19,47 +19,48 @@ export default function OperatingSessionCard({ data, isLiveOffline }: OperatingS
     const realPoints = data.filter(d => !d.is_offline_gap && d.recorded_at);
     if (realPoints.length === 0) return null;
 
-    const GAP_MS = 15 * 60 * 1000; // 15 menit tanpa data = mati
+    const GAP_MS = 15 * 60 * 1000; // Jeda > 15 menit tanpa data = unit mati
     let lastOffTime: Date | null = null;
     let lastOnTime: Date | null = null;
 
-    // Cari gap terakhir di riwayat
-    for (let i = 0; i < data.length - 1; i++) {
-      const curr = data[i];
-      const next = data[i + 1];
-      if (!curr.recorded_at || !next.recorded_at) continue;
-
-      const tCurr = new Date(curr.recorded_at).getTime();
-      const tNext = new Date(next.recorded_at).getTime();
+    // Scan data urut kronologis untuk menemukan transisi mati dan nyala
+    for (let i = 0; i < realPoints.length - 1; i++) {
+      const tCurr = new Date(realPoints[i].recorded_at).getTime();
+      const tNext = new Date(realPoints[i + 1].recorded_at).getTime();
 
       if (tNext - tCurr > GAP_MS) {
-        lastOffTime = new Date(tCurr);
-        lastOnTime = new Date(tNext);
+        lastOffTime = new Date(tCurr); // Unit mati di titik ini
+        lastOnTime = new Date(tNext);  // Unit nyala kembali di titik ini
       }
     }
 
     const latestPoint = realPoints[realPoints.length - 1];
     const latestDate = new Date(latestPoint.recorded_at);
 
-    // Jika tidak ada gap terdeteksi dalam rentang, waktu nyala = titik pertama data
-    if (!lastOnTime) {
+    // Jika tidak ada jeda mati di riwayat, waktu nyala = titik pertama yang tercatat
+    if (!lastOnTime && realPoints.length > 0) {
       lastOnTime = new Date(realPoints[0].recorded_at);
     }
 
-    // Jika live saat ini sedang offline
-    const isCurrentlyDown = isLiveOffline || (Date.now() - latestDate.getTime() > 5 * 60 * 1000);
-    if (isCurrentlyDown && !lastOffTime) {
+    // Tentukan status saat ini:
+    // Jika data terakhir sudah lebih dari 15 menit yang lalu dari sekarang, berarti unit sedang mati/terputus
+    const timeSinceLastDataMs = Date.now() - latestDate.getTime();
+    const isCurrentlyDown = isLiveOffline || timeSinceLastDataMs > GAP_MS;
+
+    if (isCurrentlyDown) {
+      // Jika saat ini mati, waktu mati terakhir adalah titik data terakhir yang masuk
       lastOffTime = latestDate;
     }
 
-    // Hitung durasi sesi saat ini
+    // Hitung durasi:
+    // - Jika SEDANG MATI: durasi mati dihitung sejak data terakhir mati s.d. sekarang
+    // - Jika SEDANG MENYALA: durasi menyala dihitung sejak titik nyala terakhir s.d. data terakhir (atau sekarang)
     const activeDurationMs = isCurrentlyDown
-      ? (lastOffTime ? Date.now() - lastOffTime.getTime() : 0)
-      : (lastOnTime ? Date.now() - lastOnTime.getTime() : 0);
+      ? Math.max(0, Date.now() - latestDate.getTime())
+      : (lastOnTime ? Math.max(0, latestDate.getTime() - lastOnTime.getTime()) : 0);
 
     const durHours = Math.floor(activeDurationMs / (1000 * 60 * 60));
     const durMins = Math.floor((activeDurationMs % (1000 * 60 * 60)) / (1000 * 60));
-
     const formatWib = (d: Date | null) => {
       if (!d) return '—';
       return d.toLocaleTimeString('id-ID', {
