@@ -123,15 +123,24 @@ export default function ReworkReportTemplate({ mode = 'view', data = {}, unit = 
       {/* ── SECTION 1: TABEL REWORK ── */}
       <div className={rStyles.sectionLabel}>1. Informasi Pekerjaan Rework</div>
       <table className={rStyles.reworkTable}>
+        <colgroup>
+          <col style={{ width: '4%' }} />
+          <col style={{ width: '18%' }} />
+          <col style={{ width: '28%' }} />
+          <col style={{ width: '22%' }} />
+          <col style={{ width: '14%' }} />
+          <col style={{ width: '6%' }} />
+          <col style={{ width: '8%' }} />
+        </colgroup>
         <thead>
           <tr>
-            <th style={{ width: '28px' }}>NO</th>
+            <th>NO</th>
             <th>Komponen</th>
             <th>Deskripsi Kerusakan / Cacat</th>
             <th>Tindakan Rework</th>
             <th>Yang Memperbaiki</th>
-            <th style={{ width: '60px' }}>Status (OK/NG)</th>
-            <th style={{ width: '72px' }}>Tanggal Selesai</th>
+            <th>Status<br/><span style={{ fontSize: '6.5px', fontWeight: 'normal' }}>(OK/NG)</span></th>
+            <th>Tanggal<br/><span style={{ fontSize: '6.5px', fontWeight: 'normal' }}>Selesai</span></th>
           </tr>
         </thead>
         <tbody>
