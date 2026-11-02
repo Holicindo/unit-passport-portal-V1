@@ -247,10 +247,10 @@ div[style*="background:#F1F5F9"] {
    Applies to all tables across the app
    ══════════════════════════════════════════════════════════ */
 
-/* Scope table styles only to data tables, excluding report document sheets (.a4Sheet) */
+/* Scope table styles strictly to data tables, NEVER touch document/report sheets */
 .tableContainer table,
-div:not([class*="a4Sheet"]):not([class*="coolingReport"]) > table,
-main:not([class*="a4Sheet"]) table:not([class*="denseTable"]):not([class*="infoGridTable"]):not([class*="sheetHeaderTable"]):not([class*="signatureTable"]) {
+.dataTable,
+.reportTableContainer table {
   width: 100%;
   border-collapse: collapse;
   font-family: var(--font-body);
@@ -258,14 +258,14 @@ main:not([class*="a4Sheet"]) table:not([class*="denseTable"]):not([class*="infoG
 }
 
 .tableContainer table thead tr,
-div:not([class*="a4Sheet"]):not([class*="coolingReport"]) > table thead tr,
-main:not([class*="a4Sheet"]) table:not([class*="denseTable"]):not([class*="infoGridTable"]):not([class*="sheetHeaderTable"]):not([class*="signatureTable"]) thead tr {
+.dataTable thead tr,
+.reportTableContainer table thead tr {
   background: linear-gradient(160deg, #1E3A5F 0%, #0D2B5E 100%) !important;
 }
 
 .tableContainer table thead th,
-div:not([class*="a4Sheet"]):not([class*="coolingReport"]) > table thead th,
-main:not([class*="a4Sheet"]) table:not([class*="denseTable"]):not([class*="infoGridTable"]):not([class*="sheetHeaderTable"]):not([class*="signatureTable"]) thead th {
+.dataTable thead th,
+.reportTableContainer table thead th {
   background: transparent !important;
   color: rgba(255, 255, 255, 0.85) !important;
   font-size: 0.72rem !important;
@@ -279,8 +279,8 @@ main:not([class*="a4Sheet"]) table:not([class*="denseTable"]):not([class*="infoG
 }
 
 .tableContainer table tbody td,
-div:not([class*="a4Sheet"]):not([class*="coolingReport"]) > table tbody td,
-main:not([class*="a4Sheet"]) table:not([class*="denseTable"]):not([class*="infoGridTable"]):not([class*="sheetHeaderTable"]):not([class*="signatureTable"]) tbody td {
+.dataTable tbody td,
+.reportTableContainer table tbody td {
   padding: 13px 16px;
   border-bottom: 1px solid rgba(79, 70, 229, 0.08);
   vertical-align: middle;
@@ -288,20 +288,20 @@ main:not([class*="a4Sheet"]) table:not([class*="denseTable"]):not([class*="infoG
 }
 
 .tableContainer table tbody tr:last-child td,
-div:not([class*="a4Sheet"]):not([class*="coolingReport"]) > table tbody tr:last-child td,
-main:not([class*="a4Sheet"]) table:not([class*="denseTable"]):not([class*="infoGridTable"]):not([class*="sheetHeaderTable"]):not([class*="signatureTable"]) tbody tr:last-child td {
+.dataTable tbody tr:last-child td,
+.reportTableContainer table tbody tr:last-child td {
   border-bottom: none;
 }
 
 .tableContainer table tbody tr:nth-child(even),
-div:not([class*="a4Sheet"]):not([class*="coolingReport"]) > table tbody tr:nth-child(even),
-main:not([class*="a4Sheet"]) table:not([class*="denseTable"]):not([class*="infoGridTable"]):not([class*="sheetHeaderTable"]):not([class*="signatureTable"]) tbody tr:nth-child(even) {
+.dataTable tbody tr:nth-child(even),
+.reportTableContainer table tbody tr:nth-child(even) {
   background: rgba(79, 70, 229, 0.025);
 }
 
 .tableContainer table tbody tr:hover,
-div:not([class*="a4Sheet"]):not([class*="coolingReport"]) > table tbody tr:hover,
-main:not([class*="a4Sheet"]) table:not([class*="denseTable"]):not([class*="infoGridTable"]):not([class*="sheetHeaderTable"]):not([class*="signatureTable"]) tbody tr:hover {
+.dataTable tbody tr:hover,
+.reportTableContainer table tbody tr:hover {
   background: rgba(79, 70, 229, 0.06) !important;
   transition: background 0.15s ease;
 }
