@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { BarChart2, TableProperties, RefreshCw, TrendingDown, TrendingUp, Minus, Download, ChevronDown, Settings2, X, Check, FileText } from 'lucide-react';
@@ -203,9 +203,15 @@ function SensorLineChart({ data }: { data: HistoryPoint[] }) {
   const domainMax = rawMax + paddingY;
   const domainRange = domainMax - domainMin;
 
-  function xOf(i: number) {
+  // Time-based X Axis calculation to accurately reflect offline gaps
+  const tMin = new Date(data[0].recorded_at).getTime();
+  const tMax = new Date(data[data.length - 1].recorded_at).getTime();
+  const tRange = Math.max(1, tMax - tMin);
+
+  function xOf(d: HistoryPoint) {
     if (data.length <= 1) return PAD_LEFT + chartW / 2;
-    return PAD_LEFT + (i / (data.length - 1)) * chartW;
+    const t = new Date(d.recorded_at).getTime();
+    return PAD_LEFT + Math.max(0, Math.min(1, (t - tMin) / tRange)) * chartW;
   }
   function yOf(val: number) {
     return PAD_TOP + chartH - ((val - domainMin) / domainRange) * chartH;
@@ -214,10 +220,10 @@ function SensorLineChart({ data }: { data: HistoryPoint[] }) {
     const segments: string[] = [];
     let currentSegment: [number, number][] = [];
 
-    data.forEach((d, i) => {
+    data.forEach((d) => {
       const v = d[key] as number | null;
       if (v !== null && v !== -127 && v !== 85 && !d.is_offline_gap) {
-        currentSegment.push([xOf(i), yOf(v)]);
+        currentSegment.push([xOf(d), yOf(v)]);
       } else {
         if (currentSegment.length > 0) {
           if (currentSegment.length === 1) {
@@ -244,8 +250,8 @@ function SensorLineChart({ data }: { data: HistoryPoint[] }) {
   function buildDots(key: keyof HistoryPoint, color: string) {
     return data.map((d, i) => {
       const v = d[key] as number | null;
-      if (v === null || v === -127 || v === 85) return null;
-      return <circle key={i} cx={xOf(i)} cy={yOf(v)} r={3} fill={color} stroke="#fff" strokeWidth={1} />;
+      if (v === null || v === -127 || v === 85 || d.is_offline_gap) return null;
+      return <circle key={i} cx={xOf(d)} cy={yOf(v)} r={3} fill={color} stroke="#fff" strokeWidth={1} />;
     });
   }
 
@@ -256,32 +262,23 @@ function SensorLineChart({ data }: { data: HistoryPoint[] }) {
     yLabels.push(v);
   }
 
-  // X-axis: up to 10 evenly spaced ticks, guard against single-point division by zero
+  // X-axis: 8 evenly spaced wall-clock timeline ticks
   const xLabels = [];
-  const xTickCount = Math.min(10, data.length);
-  if (xTickCount === 1) {
-    const d = new Date(data[0].recorded_at);
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const xTickCount = 8;
+  for (let i = 0; i < xTickCount; i++) {
+    const t = tMin + (i / (xTickCount - 1)) * tRange;
+    const d = new Date(t);
     const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yyyy = d.getFullYear();
     const H = String(d.getHours()).padStart(2, '0');
     const M = String(d.getMinutes()).padStart(2, '0');
-    xLabels.push({ i: 0, dateLine: `${dd}/${mm}/${yyyy}`, timeLine: `${H}:${M}` });
-  } else {
-    for (let i = 0; i < xTickCount; i++) {
-      const idx = Math.floor(i * (data.length - 1) / (xTickCount - 1));
-      const d = new Date(data[idx].recorded_at);
-      const yyyy = d.getFullYear();
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const dd = String(d.getDate()).padStart(2, '0');
-      const H = String(d.getHours()).padStart(2, '0');
-      const M = String(d.getMinutes()).padStart(2, '0');
-      xLabels.push({
-        i: idx,
-        dateLine: `${dd}/${mm}/${yyyy}`,
-        timeLine: `${H}:${M}`
-      });
-    }
+    const x = PAD_LEFT + (i / (xTickCount - 1)) * chartW;
+    xLabels.push({
+      x,
+      dateLine: `${dd}/${mm}/${yyyy}`,
+      timeLine: `${H}:${M}`
+    });
   }
 
   return (
@@ -329,8 +326,7 @@ function SensorLineChart({ data }: { data: HistoryPoint[] }) {
         ))}
 
         {/* Vertical Grid Lines & X-axis Labels */}
-        {xLabels.map(({ i, dateLine, timeLine }, idx) => {
-          const x = xOf(i);
+        {xLabels.map(({ x, dateLine, timeLine }, idx) => {
           return (
             <g key={`x-${idx}`}>
               <line x1={x} y1={PAD_TOP} x2={x} y2={PAD_TOP + chartH} stroke="rgba(255,255,255,0.04)" strokeWidth="1" strokeDasharray="5 5" />
@@ -351,8 +347,8 @@ function SensorLineChart({ data }: { data: HistoryPoint[] }) {
         {/* Area Penanda Unit Offline / Terputus */}
         {data.map((d, i) => {
           if (d.is_offline_gap && i < data.length - 1 && data[i + 1].is_offline_gap) {
-            const xStart = xOf(i);
-            const xEnd = xOf(i + 1);
+            const xStart = xOf(d);
+            const xEnd = xOf(data[i + 1]);
             const width = Math.max(2, xEnd - xStart);
             return (
               <g key={`gap-${i}`}>
@@ -484,9 +480,15 @@ function ElectricalLineChart({ data }: { data: HistoryPoint[] }) {
   const aMax = Math.max(8, Math.ceil(Math.max(...currents) + 1));
   const aRange = Math.max(1, aMax - aMin);
 
-  function xOf(i: number) {
+  // Time-based X Axis calculation to accurately reflect offline gaps
+  const tMin = new Date(data[0].recorded_at).getTime();
+  const tMax = new Date(data[data.length - 1].recorded_at).getTime();
+  const tRange = Math.max(1, tMax - tMin);
+
+  function xOf(d: HistoryPoint) {
     if (data.length <= 1) return PAD_LEFT + chartW / 2;
-    return PAD_LEFT + (i / (data.length - 1)) * chartW;
+    const t = new Date(d.recorded_at).getTime();
+    return PAD_LEFT + Math.max(0, Math.min(1, (t - tMin) / tRange)) * chartW;
   }
   function yOfV(val: number) {
     return PAD_TOP + chartH - ((val - vMin) / vRange) * chartH;
@@ -496,26 +498,48 @@ function ElectricalLineChart({ data }: { data: HistoryPoint[] }) {
   }
 
   function buildPath(type: 'voltage' | 'current' | 'compressor' | 'fanEvap' | 'fanKond') {
-    const pts: [number, number][] = [];
-    data.forEach((d, i) => {
-      if (type === "voltage" && d.voltage !== null && d.voltage !== undefined && d.voltage >= 0) {
-        pts.push([xOf(i), yOfV(d.voltage)]);
-      } else if (type === 'current' && d.current !== null && d.current !== undefined) {
-        pts.push([xOf(i), yOfA(d.current)]);
-      } else if (type !== 'voltage' && type !== 'current' && d.current !== null && d.current !== undefined) {
-        // Component currents
+    const segments: string[] = [];
+    let currentSegment: [number, number][] = [];
+
+    data.forEach((d) => {
+      let val: number | null = null;
+      if (d.is_offline_gap) {
+        val = null;
+      } else if (type === "voltage") {
+        val = (d.voltage !== null && d.voltage !== undefined && d.voltage >= 0) ? d.voltage : null;
+      } else if (type === 'current') {
+        val = (d.current !== null && d.current !== undefined) ? d.current : null;
+      } else if (d.current !== null && d.current !== undefined) {
         const components = calculateComponentCurrents(d.current);
-        let val = 0;
         if (type === 'compressor') val = components.comp;
         else if (type === 'fanEvap') val = components.evap;
         else if (type === 'fanKond') val = components.kond;
-        
-        pts.push([xOf(i), yOfA(val)]);
+      }
+
+      if (val !== null) {
+        const y = type === 'voltage' ? yOfV(val) : yOfA(val);
+        currentSegment.push([xOf(d), y]);
+      } else {
+        if (currentSegment.length > 0) {
+          if (currentSegment.length === 1) {
+            segments.push(`M ${currentSegment[0][0] - 6} ${currentSegment[0][1]} L ${currentSegment[0][0] + 6} ${currentSegment[0][1]}`);
+          } else {
+            segments.push(`M ${currentSegment[0][0]} ${currentSegment[0][1]} ` + currentSegment.slice(1).map(p => `L ${p[0]} ${p[1]}`).join(" "));
+          }
+          currentSegment = [];
+        }
       }
     });
-    if (pts.length === 0) return '';
-    if (pts.length === 1) return `M ${pts[0][0] - 8} ${pts[0][1]} L ${pts[0][0] + 8} ${pts[0][1]}`;
-    return `M ${pts[0][0]} ${pts[0][1]} ` + pts.slice(1).map(p => `L ${p[0]} ${p[1]}`).join(' ');
+
+    if (currentSegment.length > 0) {
+      if (currentSegment.length === 1) {
+        segments.push(`M ${currentSegment[0][0] - 6} ${currentSegment[0][1]} L ${currentSegment[0][0] + 6} ${currentSegment[0][1]}`);
+      } else {
+        segments.push(`M ${currentSegment[0][0]} ${currentSegment[0][1]} ` + currentSegment.slice(1).map(p => `L ${p[0]} ${p[1]}`).join(" "));
+      }
+    }
+
+    return segments.join(" ");
   }
 
   // Left Y-axis ticks (Voltage V)
@@ -525,17 +549,18 @@ function ElectricalLineChart({ data }: { data: HistoryPoint[] }) {
     vTicks.push(v);
   }
 
-  // X ticks
+  // X ticks: 8 evenly spaced wall-clock timeline ticks
   const xLabels = [];
-  const xTickCount = Math.min(10, data.length);
+  const xTickCount = 8;
   for (let i = 0; i < xTickCount; i++) {
-    const idx = xTickCount === 1 ? 0 : Math.floor(i * (data.length - 1) / (xTickCount - 1));
-    const d = new Date(data[idx].recorded_at);
+    const t = tMin + (i / (xTickCount - 1)) * tRange;
+    const d = new Date(t);
     const dd = String(d.getDate()).padStart(2, '0');
     const mm = String(d.getMonth() + 1).padStart(2, '0');
     const hh = String(d.getHours()).padStart(2, '0');
     const mi = String(d.getMinutes()).padStart(2, '0');
-    xLabels.push({ i: idx, dateLine: `${dd}/${mm}`, timeLine: `${hh}:${mi}` });
+    const x = PAD_LEFT + (i / (xTickCount - 1)) * chartW;
+    xLabels.push({ x, dateLine: `${dd}/${mm}`, timeLine: `${hh}:${mi}` });
   }
 
   return (
@@ -604,10 +629,9 @@ function ElectricalLineChart({ data }: { data: HistoryPoint[] }) {
         })}
 
         {/* X Axis grid & labels */}
-        {xLabels.map(({ i, dateLine, timeLine }) => {
-          const x = xOf(i);
+        {xLabels.map(({ x, dateLine, timeLine }, idx) => {
           return (
-            <g key={`x-${i}`}>
+            <g key={`x-${idx}`}>
               <line x1={x} y1={PAD_TOP} x2={x} y2={PAD_TOP + chartH} stroke="rgba(255,255,255,0.04)" strokeWidth="1" strokeDasharray="5 5" />
               <line x1={x} y1={PAD_TOP + chartH} x2={x} y2={PAD_TOP + chartH + 5} stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
               <text x={x} y={PAD_TOP + chartH + 20} textAnchor="middle" fontSize="11" fill="#94a3b8" fontFamily="monospace">{dateLine}</text>
@@ -622,8 +646,8 @@ function ElectricalLineChart({ data }: { data: HistoryPoint[] }) {
         {/* Area Penanda Unit Offline / Terputus */}
         {data.map((d, i) => {
           if (d.is_offline_gap && i < data.length - 1 && data[i + 1].is_offline_gap) {
-            const xStart = xOf(i);
-            const xEnd = xOf(i + 1);
+            const xStart = xOf(d);
+            const xEnd = xOf(data[i + 1]);
             const width = Math.max(2, xEnd - xStart);
             return (
               <g key={`gap-${i}`}>
@@ -951,17 +975,36 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
     const pad = Math.max(3, Math.ceil((rawMax - rawMin) * 0.15));
     const dMin = rawMin - pad, dMax = rawMax + pad, dRange = Math.max(1, dMax - dMin);
 
-    const xOf = (i: number) => exportRows.length <= 1 ? PL + cW / 2 : PL + (i / (exportRows.length - 1)) * cW;
+    const tMinExp = exportRows.length ? new Date(exportRows[0].recorded_at).getTime() : 0;
+    const tMaxExp = exportRows.length ? new Date(exportRows[exportRows.length - 1].recorded_at).getTime() : 1;
+    const tRangeExp = Math.max(1, tMaxExp - tMinExp);
+
+    const xOf = (d: HistoryPoint) => {
+      if (exportRows.length <= 1) return PL + cW / 2;
+      const t = new Date(d.recorded_at).getTime();
+      return PL + Math.max(0, Math.min(1, (t - tMinExp) / tRangeExp)) * cW;
+    };
     const yOf = (v: number) => PT + cH - ((v - dMin) / dRange) * cH;
 
     const buildSvgPath = (key: keyof HistoryPoint) => {
-      const pts: string[] = [];
-      exportRows.forEach((d, i) => {
+      const segments: string[] = [];
+      let cur: [number, number][] = [];
+      exportRows.forEach((d) => {
         const raw = d[key];
         const v = raw !== null && raw !== undefined ? Number(raw) : null;
-        if (v !== null && !isNaN(v) && v !== -127 && v !== 85) pts.push(`${i === 0 || pts.length === 0 ? 'M' : 'L'} ${xOf(i).toFixed(1)} ${yOf(v).toFixed(1)}`);
+        if (v !== null && !isNaN(v) && v !== -127 && v !== 85 && !d.is_offline_gap) {
+          cur.push([xOf(d), yOf(v)]);
+        } else {
+          if (cur.length > 0) {
+            segments.push(`M ${cur[0][0].toFixed(1)} ${cur[0][1].toFixed(1)} ` + cur.slice(1).map(p => `L ${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(' '));
+            cur = [];
+          }
+        }
       });
-      return pts.join(' ');
+      if (cur.length > 0) {
+        segments.push(`M ${cur[0][0].toFixed(1)} ${cur[0][1].toFixed(1)} ` + cur.slice(1).map(p => `L ${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(' '));
+      }
+      return segments.join(' ');
     };
 
     // Y-axis grid lines
@@ -969,29 +1012,28 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
     const yLines: number[] = [];
     for (let v = dMin; v <= dMax; v += yStep) yLines.push(v);
 
-    // X-axis ticks (up to 10)
-    const xTickCount = Math.min(10, exportRows.length);
-    const xTicks = xTickCount <= 1 ? [0] : Array.from({ length: xTickCount }, (_, i) => Math.floor(i * (exportRows.length - 1) / (xTickCount - 1)));
+    // X-axis ticks (8 evenly spaced timeline ticks)
+    const xTickCount = 8;
+    const xTicks = Array.from({ length: xTickCount }, (_, i) => {
+      const t = tMinExp + (i / (xTickCount - 1)) * tRangeExp;
+      const d = new Date(t);
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mo = String(d.getMonth() + 1).padStart(2, '0');
+      const yy = d.getFullYear();
+      const hh = String(d.getHours()).padStart(2, '0');
+      const mi = String(d.getMinutes()).padStart(2, '0');
+      const x = (PL + (i / (xTickCount - 1)) * cW).toFixed(1);
+      return `<line x1="${x}" y1="${PT}" x2="${x}" y2="${PT + cH}" stroke="#ddd" stroke-width="0.8"/>
+              <line x1="${x}" y1="${PT + cH}" x2="${x}" y2="${PT + cH + 6}" stroke="#555" stroke-width="1.5"/>
+              <text x="${x}" y="${PT + cH + 20}" text-anchor="middle" font-size="11" fill="#000" font-weight="bold" font-family="monospace">${dd}/${mo}/${yy}</text>
+              <text x="${x}" y="${PT + cH + 35}" text-anchor="middle" font-size="11" fill="#000" font-weight="bold" font-family="monospace">${hh}:${mi}</text>`;
+    }).join('');
 
     const gridLines = yLines.map(v =>
       `<line x1="${PL}" y1="${yOf(v).toFixed(1)}" x2="${W - PR}" y2="${yOf(v).toFixed(1)}" stroke="#bbb" stroke-width="0.8" stroke-dasharray="4 4"/>
        <text x="${PL - 10}" y="${yOf(v).toFixed(1)}" text-anchor="end" dominant-baseline="middle" font-size="13" fill="#000" font-weight="bold" font-family="monospace">${v.toFixed(0)}</text>
        <text x="${W - PR + 10}" y="${yOf(v).toFixed(1)}" text-anchor="start" dominant-baseline="middle" font-size="13" fill="#000" font-weight="bold" font-family="monospace">${v.toFixed(0)}</text>`
     ).join('');
-
-    const xTickSvg = xTicks.map(idx => {
-      const d = new Date(exportRows[idx].recorded_at);
-      const dd = String(d.getDate()).padStart(2, '0');
-      const mo = String(d.getMonth() + 1).padStart(2, '0');
-      const yy = d.getFullYear();
-      const hh = String(d.getHours()).padStart(2, '0');
-      const mi = String(d.getMinutes()).padStart(2, '0');
-      const x = xOf(idx).toFixed(1);
-      return `<line x1="${x}" y1="${PT}" x2="${x}" y2="${PT + cH}" stroke="#ddd" stroke-width="0.8"/>
-              <line x1="${x}" y1="${PT + cH}" x2="${x}" y2="${PT + cH + 6}" stroke="#555" stroke-width="1.5"/>
-              <text x="${x}" y="${PT + cH + 20}" text-anchor="middle" font-size="11" fill="#000" font-weight="bold" font-family="monospace">${dd}/${mo}/${yy}</text>
-              <text x="${x}" y="${PT + cH + 35}" text-anchor="middle" font-size="11" fill="#000" font-weight="bold" font-family="monospace">${hh}:${mi}</text>`;
-    }).join('');
 
     const alarmLineH1 = tempLimits.cabinet.max;
     const alarmLineL1 = tempLimits.cabinet.min;
@@ -1015,7 +1057,7 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
       <!-- Chart border -->
       <rect x="${PL}" y="${PT}" width="${cW}" height="${cH}" fill="none" stroke="#ccc" stroke-width="1"/>
       <!-- X ticks -->
-      ${xTickSvg}
+      ${xTicks}
       <!-- Data lines -->
       <path d="${buildSvgPath('temp_cabinet')}" fill="none" stroke="#10b981" stroke-width="3" stroke-linejoin="round"/>
       <path d="${buildSvgPath('temp_evaporator')}" fill="none" stroke="#2E5BFF" stroke-width="3" stroke-linejoin="round"/>
