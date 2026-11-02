@@ -247,18 +247,25 @@ div[style*="background:#F1F5F9"] {
    Applies to all tables across the app
    ══════════════════════════════════════════════════════════ */
 
-table {
+/* Scope table styles only to data tables, excluding report document sheets (.a4Sheet) */
+.tableContainer table,
+div:not([class*="a4Sheet"]):not([class*="coolingReport"]) > table,
+main:not([class*="a4Sheet"]) table:not([class*="denseTable"]):not([class*="infoGridTable"]):not([class*="sheetHeaderTable"]):not([class*="signatureTable"]) {
   width: 100%;
   border-collapse: collapse;
   font-family: var(--font-body);
   font-size: 0.9rem;
 }
 
-table thead tr {
+.tableContainer table thead tr,
+div:not([class*="a4Sheet"]):not([class*="coolingReport"]) > table thead tr,
+main:not([class*="a4Sheet"]) table:not([class*="denseTable"]):not([class*="infoGridTable"]):not([class*="sheetHeaderTable"]):not([class*="signatureTable"]) thead tr {
   background: linear-gradient(160deg, #1E3A5F 0%, #0D2B5E 100%) !important;
 }
 
-table thead th {
+.tableContainer table thead th,
+div:not([class*="a4Sheet"]):not([class*="coolingReport"]) > table thead th,
+main:not([class*="a4Sheet"]) table:not([class*="denseTable"]):not([class*="infoGridTable"]):not([class*="sheetHeaderTable"]):not([class*="signatureTable"]) thead th {
   background: transparent !important;
   color: rgba(255, 255, 255, 0.85) !important;
   font-size: 0.72rem !important;
@@ -271,22 +278,30 @@ table thead th {
   white-space: nowrap !important;
 }
 
-table tbody td {
+.tableContainer table tbody td,
+div:not([class*="a4Sheet"]):not([class*="coolingReport"]) > table tbody td,
+main:not([class*="a4Sheet"]) table:not([class*="denseTable"]):not([class*="infoGridTable"]):not([class*="sheetHeaderTable"]):not([class*="signatureTable"]) tbody td {
   padding: 13px 16px;
   border-bottom: 1px solid rgba(79, 70, 229, 0.08);
   vertical-align: middle;
   color: var(--color-deep-navy);
 }
 
-table tbody tr:last-child td {
+.tableContainer table tbody tr:last-child td,
+div:not([class*="a4Sheet"]):not([class*="coolingReport"]) > table tbody tr:last-child td,
+main:not([class*="a4Sheet"]) table:not([class*="denseTable"]):not([class*="infoGridTable"]):not([class*="sheetHeaderTable"]):not([class*="signatureTable"]) tbody tr:last-child td {
   border-bottom: none;
 }
 
-table tbody tr:nth-child(even) {
+.tableContainer table tbody tr:nth-child(even),
+div:not([class*="a4Sheet"]):not([class*="coolingReport"]) > table tbody tr:nth-child(even),
+main:not([class*="a4Sheet"]) table:not([class*="denseTable"]):not([class*="infoGridTable"]):not([class*="sheetHeaderTable"]):not([class*="signatureTable"]) tbody tr:nth-child(even) {
   background: rgba(79, 70, 229, 0.025);
 }
 
-table tbody tr:hover {
+.tableContainer table tbody tr:hover,
+div:not([class*="a4Sheet"]):not([class*="coolingReport"]) > table tbody tr:hover,
+main:not([class*="a4Sheet"]) table:not([class*="denseTable"]):not([class*="infoGridTable"]):not([class*="sheetHeaderTable"]):not([class*="signatureTable"]) tbody tr:hover {
   background: rgba(79, 70, 229, 0.06) !important;
   transition: background 0.15s ease;
 }

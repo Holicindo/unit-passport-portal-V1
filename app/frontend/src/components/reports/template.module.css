@@ -615,3 +615,41 @@
   outline: none;
   border-bottom-color: #2e5bff;
 }
+
+/* ============================================================
+   STRONG ISOLATION FOR REPORT SHEET TABLES
+   Prevents global app CSS from overriding dense sheet tables
+   ============================================================ */
+.a4Sheet table {
+  border-collapse: collapse !important;
+  font-family: Arial, Helvetica, sans-serif !important;
+}
+
+.a4Sheet thead tr {
+  background: transparent !important;
+}
+
+.a4Sheet thead th {
+  padding: 2px 4px !important;
+  color: #000000 !important;
+  font-weight: bold !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  white-space: normal !important;
+  border: 1px solid #475569 !important;
+  text-align: center !important;
+}
+
+.a4Sheet tbody td {
+  padding: 2px 4px !important;
+  color: #000000 !important;
+  border: 1px solid #475569 !important;
+}
+
+.a4Sheet tbody tr:hover {
+  background: transparent !important;
+}
+
+.a4Sheet tbody tr:nth-child(even) {
+  background: transparent !important;
+}
