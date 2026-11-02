@@ -1,4 +1,4 @@
-﻿import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -163,7 +163,11 @@ export class HealthScoreService {
     });
 
     const tibPercentage = totalValidCount > 0 ? (validTIBCount / totalValidCount) * 100 : 0;
-    const validHours = totalValidCount * (10 / 3600);
+    // Span jam dihitung dari selisih waktu log riil (bukan asumsi interval 10 detik)
+    const timeSpanMs = calLogs.length > 1
+      ? calLogs[calLogs.length - 1].recorded_at.getTime() - calLogs[0].recorded_at.getTime()
+      : 0;
+    const validHours = timeSpanMs > 0 ? timeSpanMs / (1000 * 3600) : (totalValidCount * (10 / 3600));
     const hdmPerHour = validHours > 0 ? hdmAcc / validHours : 0;
     const dutyCyclePercentage = validTimeMs > 0 ? (onTimeMs / validTimeMs) * 100 : 0;
     const voltageAnomalyRatio = voltTotalCount > 0 ? voltAnomalyCount / voltTotalCount : 0;
