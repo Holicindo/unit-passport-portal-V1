@@ -499,42 +499,47 @@ export class HealthScoreService {
     const subCabinetPenalty = (pTIB * 0.30) + (pHDM * 0.30) + (pCool * 0.15) + (pDoorRecovery * 0.25);
     const subCabinetScore   = 100 * (1 - subCabinetPenalty);
 
+    // -- Deteksi Fase Startup / Pull-Down / Data Terbatas --
+    // Jika unit baru aktif (< 4 jam data atau belum ada siklus cut-off),
+    // kompresor wajar running 100% untuk mengejar target suhu. Jangan penalti kritis.
+    const isStartupPhase = validHours < 4 || validCyclesCount === 0;
+
     // -- Evaporator (bobot 20%) --
     // Evap Cooling Rate: ≥0.50 aman, ≤0.10 kritis
     const pEvapCool    = (avgEvapCoolingRate === 0) ? 0 : linearPenalty(avgEvapCoolingRate, 0.30, 0.05); // Skip penalty jika tidak ada data siklus evap valid
-    // Evap Drop: ≥15°C aman, ≤5°C kritis
-    const pEvapDrop    = linearPenalty(avgEvapDrop, 8, 2); // Chiller 2-4C, evap -10C: drop ~8C/siklus adalah NORMAL
+    // Evap Drop: Jika fase startup, lewati penalti drop
+    const pEvapDrop    = isStartupPhase ? 0 : linearPenalty(avgEvapDrop, 8, 2); // Chiller 2-4C, evap -10C: drop ~8C/siklus adalah NORMAL
     // Cab-Evap Diff: ≤15°C aman, ≥25°C kritis
-    const pCabEvapDiff = linearPenalty(avgCabEvapDiff, 15, 25);
+    const pCabEvapDiff = isStartupPhase ? 0 : linearPenalty(avgCabEvapDiff, 15, 25);
     // Defrost Anomaly: ≤10% aman, ≥60% kritis (sudah dihitung)
 
     const subEvapPenalty = (pEvapCool * 0.35) + (pEvapDrop * 0.25) + (pCabEvapDiff * 0.25) + (pDefrost * 0.15);
-    const subEvapScore   = 100 * (1 - subEvapPenalty);
+    const subEvapScore   = isStartupPhase ? 95 : 100 * (1 - subEvapPenalty);
 
     // -- Kondensor (bobot 17%) --
     // Peak: ≤45°C aman, ≥55°C kritis
-    const pCondPeak = linearPenalty(avgCondenserPeak, 45, 60); // Unit tanpa AC ruangan, peak 60C baru kritis
+    const pCondPeak = (validCyclesCount === 0 && avgCondenserPeak === 0) ? 0 : linearPenalty(avgCondenserPeak, 45, 60); // Unit tanpa AC ruangan, peak 60C baru kritis
     // Rise per siklus: ≤15°C aman, ≥25°C kritis
-    const pCondRise = linearPenalty(avgCondRise, 35, 50); // Ambient pabrik 28-35C, rise 35C NORMAL
+    const pCondRise = (validCyclesCount === 0 && avgCondRise === 0) ? 0 : linearPenalty(avgCondRise, 35, 50); // Ambient pabrik 28-35C, rise 35C NORMAL
 
     const subCondenserScore = 100 * (1 - ((pCondPeak * 0.55) + (pCondRise * 0.45)));
 
     // -- Elektrikal & Kompresor (bobot 22%) --
-    // Duty Cycle: ≤60% aman, ≥80% kritis
-    const pDuty   = linearPenalty(dutyCyclePercentage, 75, 92); // Pabrik ambient tinggi, duty 75% masih aman
-    // Starts/Hour: ≤4x aman, ≥6x kritis
-    const pStarts = linearPenalty(startsPerHour, 8, 20); // 33.8x/jam saat startup = anomali, steady state 4-8x/jam
+    // Duty Cycle: Pada startup (pull-down), jangan penalti duty cycle tinggi
+    const pDuty   = isStartupPhase ? 0 : linearPenalty(dutyCyclePercentage, 75, 92); // Pabrik ambient tinggi, duty 75% masih aman
+    // Starts/Hour: ≤8x aman, ≥20x kritis
+    const pStarts = isStartupPhase ? 0 : linearPenalty(startsPerHour, 8, 20); // 33.8x/jam saat startup = anomali, steady state 4-8x/jam
     // Short Cycle: ≤10% aman, ≥30% kritis
     const pShort  = linearPenalty(shortCycleFraction, 0.10, 0.30);
     // Anomali Arus & Lonjakan Kompresor: ≤5% aman, ≥40% kritis
     const pAmp    = linearPenalty(compressorAnomalyRatio, 0.05, 0.40);
     // Voltage Anomali: ≤2% aman, ≥15% kritis (tegangan tidak stabil bikin kompresor narik arus besar)
     const pVolt   = linearPenalty(voltageAnomalyRatio, 0.05, 0.20); // PLN Indonesia toleransi 5%, 20% baru kritis
-    // Durasi kompresor jalan > 2 jam non-stop (normalnya cut-off tiap 2 jam)
-    const pLongCycle = linearPenalty(longCyclesCount, 0, 2);
+    // Durasi kompresor jalan > 2 jam non-stop (kecuali fase pull-down awal)
+    const pLongCycle = isStartupPhase ? 0 : linearPenalty(longCyclesCount, 0, 2);
 
-    const subElecPenalty = (pDuty * 0.20) + (pStarts * 0.08) + (pShort * 0.12) + (pAmp * 0.30) + (pVolt * 0.18) + (pLongCycle * 0.12); // pStarts diturunkan (anomali startup), pAmp lebih akurat
-    const subElecScore   = 100 * (1 - subElecPenalty);
+    const subElecPenalty = (pDuty * 0.20) + (pStarts * 0.08) + (pShort * 0.12) + (pAmp * 0.30) + (pVolt * 0.18) + (pLongCycle * 0.12);
+    const subElecScore   = isStartupPhase ? 92 : 100 * (1 - subElecPenalty);
 
     // -- Baseline (bobot 13%) -- sudah dihitung di atas
 

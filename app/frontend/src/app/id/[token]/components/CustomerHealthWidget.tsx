@@ -10,7 +10,16 @@ import {
 import { healthScoreApi } from '@/lib/api';
 
 // ─── STATUS CONFIG ────────────────────────────────────────────────────────────
-function getStatusConfig(score: number) {
+function getStatusConfig(score: number, conf = 1) {
+  // Jika akurasi sangat rendah (< 15%), unit baru menyala / proses inisialisasi data
+  if (conf < 0.15) {
+    return {
+      label: 'Inisialisasi Pendinginan', sublabel: 'Mesin aktif & menstabilkan suhu kabinet',
+      color: '#38bdf8', bgColor: 'rgba(56,189,248,0.08)', borderColor: 'rgba(56,189,248,0.25)', glowColor: 'rgba(56,189,248,0.3)',
+      icon: Activity,
+      recommendation: 'Unit baru saja dinyalakan atau baru aktif setelah jeda. Kompresor sedang bekerja optimal menurunkan suhu ruangan ke batas ideal. Biarkan beroperasi stabil.',
+    };
+  }
   if (score >= 80) return {
     label: 'Mesin Berjalan Baik', sublabel: 'Unit beroperasi dalam kondisi optimal',
     color: '#10b981', bgColor: 'rgba(16,185,129,0.08)', borderColor: 'rgba(16,185,129,0.25)', glowColor: 'rgba(16,185,129,0.3)',
@@ -277,9 +286,9 @@ export default function CustomerHealthWidget({ unitId }: Props) {
   );
 
   const score    = Number(data.overall_score ?? 0);
-  const status   = getStatusConfig(score);
-  const Icon     = status.icon;
   const conf     = Number(data.confidence_score ?? 0);
+  const status   = getStatusConfig(score, conf);
+  const Icon     = status.icon;
   const lc       = data.lifecycle_state ?? 'LEARNING';
 
   // Subsystem scores
