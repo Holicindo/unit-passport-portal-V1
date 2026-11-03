@@ -61,6 +61,14 @@ export default function OperatingSessionCard({ data, isLiveOffline }: OperatingS
 
     const durHours = Math.floor(activeDurationMs / (1000 * 60 * 60));
     const durMins = Math.floor((activeDurationMs % (1000 * 60 * 60)) / (1000 * 60));
+
+    // Jika unit baru menyala (< 1 menit / titik pertama), tampilkan 0 Menit
+    let durationText = '';
+    if (!isCurrentlyDown && durHours === 0 && durMins === 0) {
+      durationText = '0 Menit (Baru Saja Aktif)';
+    } else {
+      durationText = `${durHours > 0 ? `${durHours} Jam ` : ''}${durMins} Menit`;
+    }
     const formatWib = (d: Date | null) => {
       if (!d) return '—';
       return d.toLocaleTimeString('id-ID', {
@@ -85,7 +93,7 @@ export default function OperatingSessionCard({ data, isLiveOffline }: OperatingS
       lastOnDateStr: formatDateWib(lastOnTime),
       lastOffTimeStr: formatWib(lastOffTime),
       lastOffDateStr: formatDateWib(lastOffTime),
-      durationText: `${durHours > 0 ? `${durHours} Jam ` : ''}${durMins} Menit`,
+      durationText,
     };
   }, [data, isLiveOffline]);
 
