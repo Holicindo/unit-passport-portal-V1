@@ -490,7 +490,7 @@ export class IotService {
     const rawResult = await this.telemetryLogRepo.query(
       `
       SELECT 
-        to_timestamp(floor(extract(epoch from recorded_at) / $1) * $1) AT TIME ZONE 'UTC' AS recorded_at,
+        to_char(to_timestamp(floor(extract(epoch from recorded_at) / $1) * $1) AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS recorded_at,
         ROUND(AVG(temp_cabinet)::numeric, 1) as temp_cabinet,
         ROUND(AVG(temp_evaporator)::numeric, 1) as temp_evaporator,
         ROUND(AVG(temp_condenser)::numeric, 1) as temp_condenser,
