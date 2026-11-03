@@ -182,6 +182,10 @@ HealthStatus calculateHealthStatus(
 void setup_wifi() {
     Serial.println("\nMemulai WiFiManager...");
 
+    // Aktifkan native auto-reconnect ESP32
+    WiFi.setAutoReconnect(true);
+    WiFi.persistent(true);
+
     WiFiManager wm;
 
     const char* custom_css =
@@ -202,6 +206,9 @@ void setup_wifi() {
         ESP.restart();
     }
 
+    // Pastikan auto-reconnect aktif setelah tersambung
+    WiFi.setAutoReconnect(true);
+
     Serial.println("WiFi berhasil terkoneksi!");
     Serial.print("IP: ");
     Serial.println(WiFi.localIP());
@@ -212,14 +219,33 @@ void setup_wifi() {
 // =============================================================================
 int mqtt_retry_count = 0;
 unsigned long last_mqtt_retry = 0;
+unsigned long wifi_lost_start = 0;
 
 void reconnect() {
-    // Cek status WiFi terlebih dahulu
+    // ── LAPIS 1: DETEKSI & AUTO-HEALING KONEKSI WIFI ──
     if (WiFi.status() != WL_CONNECTED) {
-        Serial.println("⚠️  WiFi terputus. Menunggu koneksi ulang...");
+        if (wifi_lost_start == 0) {
+            wifi_lost_start = millis();
+            Serial.println("⚠️  WiFi terputus. Menunggu auto-reconnect native ESP32...");
+            WiFi.reconnect(); // Trigger reconnect aktif
+        }
+
+        // Jika terputus lebih dari 60 detik, otomatis reboot ESP32 agar stack network fresh kembali
+        if (millis() - wifi_lost_start >= 60000) {
+            Serial.println("❌ WiFi terputus > 60 detik. Self-healing rebooting ESP32...");
+            delay(1000);
+            ESP.restart();
+        }
         return;
     }
 
+    // WiFi tersambung kembali dengan sukses -> reset timer
+    if (wifi_lost_start != 0) {
+        Serial.println("✅ WiFi tersambung kembali!");
+        wifi_lost_start = 0;
+    }
+
+    // ── LAPIS 2: REKONEKSI MQTT BROKER ──
     unsigned long currentMillis = millis();
     // Hanya coba reconnect tiap 5 detik (tidak membekukan loop)
     if (currentMillis - last_mqtt_retry >= 5000) {

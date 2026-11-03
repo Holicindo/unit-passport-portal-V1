@@ -27,12 +27,12 @@ interface IotTelemetryWidgetProps {
   unit?: any;
 }
 
-function TempCard({ label, rawValue, min, max, offset, icon: Icon, isWarning, warningLabel, isCalibrated, isOffline }: { label: string; rawValue: number | null; min: number; max: number; offset: number; icon: React.ElementType; isWarning?: boolean; warningLabel?: string; isCalibrated?: boolean; isOffline?: boolean; }) {
+function TempCard({ label, rawValue, min, max, offset, icon: Icon, isWarning, warningLabel, isCalibrated, isOffline, isWarmup }: { label: string; rawValue: number | null; min: number; max: number; offset: number; icon: React.ElementType; isWarning?: boolean; warningLabel?: string; isCalibrated?: boolean; isOffline?: boolean; isWarmup?: boolean; }) {
   const isError = isOffline || rawValue === null || rawValue === -127 || rawValue === 85;
   // Backend getLatestTelemetry sudah mengaplikasikan offset
   const liveValue = isError ? null : rawValue;
-  const isAlert = !isError && liveValue !== null && (liveValue > max || liveValue < min);
-  const color    = isOffline ? "#64748b" : isError ? "#94a3b8" : isAlert ? "#dc2626" : isWarning ? "#d97706" : "#059669";
+  const isAlert = !isError && !isWarmup && liveValue !== null && (liveValue > max || liveValue < min);
+  const color    = isOffline ? "#64748b" : isWarmup ? "#38bdf8" : isError ? "#94a3b8" : isAlert ? "#dc2626" : isWarning ? "#d97706" : "#059669";
 
   return (
     <div style={{
@@ -74,6 +74,13 @@ function TempCard({ label, rawValue, min, max, offset, icon: Icon, isWarning, wa
             borderRadius: "12px", letterSpacing: "0.03em",
             border: "1px solid rgba(148,163,184,0.25)",
           }}>TIDAK TERHUBUNG</div>
+        ) : isWarmup ? (
+          <div style={{
+            fontSize: "0.56rem", color: "#38bdf8", fontWeight: 800,
+            background: "rgba(56,189,248,0.1)", padding: "2px 6px",
+            borderRadius: "12px", letterSpacing: "0.03em",
+            border: "1px solid rgba(56,189,248,0.25)",
+          }}>INISIALISASI</div>
         ) : isAlert ? (
           <div style={{
             fontSize: '0.58rem', color: '#dc2626', fontWeight: 800,
@@ -104,7 +111,7 @@ function TempCard({ label, rawValue, min, max, offset, icon: Icon, isWarning, wa
           fontSize: '1.75rem', fontWeight: 900, color, lineHeight: 1,
           fontFamily: 'monospace', letterSpacing: '-0.02em',
         }}>
-          {isError ? '—' : `${liveValue!.toFixed(1)}°`}
+          {isOffline ? '0.0°' : isWarmup ? '0.0°' : isError ? '0.0°' : `${liveValue!.toFixed(1)}°`}
         </div>
       </div>
 
@@ -195,6 +202,7 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastFetched, setLastFetched] = useState<Date | null>(null);
+  const [firstOnlineAt, setFirstOnlineAt] = useState<number | null>(null);
   const [tick, setTick] = useState(0); // ticks every second to update the "X dtk lalu" counter
 
   // Configuration limits based on unit.specs or defaults
@@ -270,6 +278,8 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
 
       setData(res);
       setLastFetched(new Date());
+      // Jika baru pertama kali data online diterima setelah mount atau setelah offline
+      setFirstOnlineAt(prev => prev ?? Date.now());
     } catch (err: any) {
       if (err?.response?.status === 404 || !err?.response) {
         setData(null);
@@ -315,6 +325,19 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
   // Unit dianggap offline jika lebih dari 45 detik tidak ada data masuk dari ESP32
   const isOffline = secondsAge !== null && secondsAge > 45;
 
+  // Reset firstOnlineAt jika unit offline
+  useEffect(() => {
+    if (isOffline) {
+      setFirstOnlineAt(null);
+    }
+  }, [isOffline]);
+
+  // Jeda inisialisasi awal 2 menit (120 detik) seperti instrumen Elitech
+  const warmupRemainingSec = firstOnlineAt 
+    ? Math.max(0, 120 - Math.floor((Date.now() - firstOnlineAt) / 1000))
+    : 0;
+  const isWarmup = !isOffline && warmupRemainingSec > 0;
+
   if (loading && !data) {
     return (
       <div style={{ padding: '40px 24px', textAlign: 'center', color: '#64748b', fontSize: '0.9rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', background: 'transparent', flex: 1 }}>
@@ -347,15 +370,17 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
           <span style={{ 
             fontWeight: 800, 
             fontSize: '0.74rem',
-            color: isOffline ? '#ef4444' : data ? '#10b981' : '#cbd5e1',
+            color: isOffline ? '#ef4444' : isWarmup ? '#38bdf8' : data ? '#10b981' : '#cbd5e1',
             letterSpacing: '0.01em',
             lineHeight: 1
           }}>
             {isOffline 
               ? `OFFLINE (${dataAge} menit lalu)` 
-              : data 
-                ? 'IoT Aktif — Analisis Kesehatan Mesin' 
-                : 'Belum Ada Data IoT'
+              : isWarmup
+                ? `Inisialisasi Sensor (${warmupRemainingSec} dtk lagi...)`
+                : data 
+                  ? 'IoT Aktif — Analisis Kesehatan Mesin' 
+                  : 'Belum Ada Data IoT'
             }
           </span>
         </div>
@@ -412,7 +437,7 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
               <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Sensor Suhu</span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '10px' }}>
-              <TempCard label="Kabinet"    rawValue={data.temp_cabinet}    min={limits.cabinet.min} max={limits.cabinet.max} offset={offsets.cabinet} icon={ShelvingUnit} isOffline={isOffline} />
+              <TempCard label="Kabinet"    rawValue={data.temp_cabinet}    min={limits.cabinet.min} max={limits.cabinet.max} offset={offsets.cabinet} icon={ShelvingUnit} isOffline={isOffline} isWarmup={isWarmup} />
               <TempCard 
                 label="Evaporator" 
                 rawValue={data.temp_evaporator} 
@@ -421,8 +446,9 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
                 offset={offsets.evaporator} 
                 icon={ThermometerSnowflake} 
                 isOffline={isOffline}
+                isWarmup={isWarmup}
               />
-              <TempCard label="Kondensor"  rawValue={data.temp_condenser}  min={limits.condenser.min} max={limits.condenser.max} offset={offsets.condenser} icon={Thermometer} isOffline={isOffline} />
+              <TempCard label="Kondensor"  rawValue={data.temp_condenser}  min={limits.condenser.min} max={limits.condenser.max} offset={offsets.condenser} icon={Thermometer} isOffline={isOffline} isWarmup={isWarmup} />
             </div>
           </div>
 
@@ -442,10 +468,10 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', flex: 1 }}>
                 {[
-                  { label: 'Tegangan', value: isOffline ? 0 : data.voltage, unit: 'V',
-                    alert: !isOffline && data.voltage !== null && data.voltage > 0 && (data.voltage < 190 || data.voltage > 240) },
-                  { label: 'Arus',    value: isOffline ? 0 : data.current, unit: 'A', alert: false },
-                  { label: 'Daya',    value: isOffline ? 0 : data.power,   unit: 'W', alert: false },
+                  { label: 'Tegangan', value: (isOffline || isWarmup) ? 0 : data.voltage, unit: 'V',
+                    alert: !isOffline && !isWarmup && data.voltage !== null && data.voltage > 0 && (data.voltage < 190 || data.voltage > 240) },
+                  { label: 'Arus',    value: (isOffline || isWarmup) ? 0 : data.current, unit: 'A', alert: false },
+                  { label: 'Daya',    value: (isOffline || isWarmup) ? 0 : data.power,   unit: 'W', alert: false },
                 ].map(({ label, value, unit, alert }) => (
                   <div key={label} style={{
                     background: 'rgba(8, 18, 50, 0.9)',
@@ -461,7 +487,7 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
                     </div>
                     <div style={{
                       fontSize: '0.98rem', fontWeight: 900,
-                      color: alert ? '#dc2626' : (value && value !== 0) ? '#f1f5f9' : '#94a3b8',
+                      color: alert ? '#dc2626' : (value && value !== 0) ? '#f1f5f9' : isWarmup ? '#38bdf8' : '#94a3b8',
                       fontFamily: 'monospace', lineHeight: 1, margin: 'auto 0',
                     }}>
                       {value !== null && value !== 0 ? (
@@ -469,7 +495,12 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
                           {value.toFixed(1)}
                           <span style={{ fontSize: '0.58rem', fontWeight: 700, marginLeft: '2px', color: '#64748b' }}>{unit}</span>
                         </>
-                      ) : '—'}
+                      ) : (
+                        <>
+                          0.0
+                          <span style={{ fontSize: '0.58rem', fontWeight: 700, marginLeft: '2px', color: '#64748b' }}>{unit}</span>
+                        </>
+                      )}
                     </div>
                     <div style={{ fontSize: '0.54rem', color: '#94a3b8', fontWeight: 600, lineHeight: 1.2 }}>
                       {value !== null && value !== 0 ? (alert ? 'Periksa' : 'Normal') : 'Off'}
