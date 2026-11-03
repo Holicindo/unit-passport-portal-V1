@@ -770,7 +770,7 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
   // Deteksi jeda real data (> 15 menit). Jika unit dicabut/toko tutup:
   // Arus, Tegangan, Daya dijatuhkan ke 0, Suhu dibiarkan null (garis putus)
   const insertOfflineGaps = (points: HistoryPoint[]): HistoryPoint[] => {
-    if (points.length <= 1) return points;
+    if (points.length === 0) return points;
     const result: HistoryPoint[] = [];
     const GAP_THRESHOLD_MS = 15 * 60 * 1000; // 15 menit jeda tanpa paket data
 
@@ -811,6 +811,38 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
         }
       }
     }
+
+    // PENTING: Cek apakah unit saat ini SEDANG OFFLINE sampai detik ini (waktu sekarang)
+    // Jika data terakhir sudah lebih dari 15 menit yang lalu, rentangkan area offline sampai sekarang (Date.now())
+    const lastPoint = points[points.length - 1];
+    const tLast = new Date(lastPoint.recorded_at).getTime();
+    const nowMs = Date.now();
+    if (nowMs - tLast > GAP_THRESHOLD_MS) {
+      // Titik A: Sesaat setelah data terakhir mati
+      result.push({
+        recorded_at: new Date(tLast + 60000).toISOString(),
+        temp_cabinet: null,
+        temp_evaporator: null,
+        temp_condenser: null,
+        voltage: 0,
+        current: 0,
+        power: 0,
+        is_offline_gap: true,
+      });
+
+      // Titik B: Sampai detik sekarang
+      result.push({
+        recorded_at: new Date(nowMs).toISOString(),
+        temp_cabinet: null,
+        temp_evaporator: null,
+        temp_condenser: null,
+        voltage: 0,
+        current: 0,
+        power: 0,
+        is_offline_gap: true,
+      });
+    }
+
     return result;
   };
   const applyHack = (point: HistoryPoint): HistoryPoint => {
@@ -1653,11 +1685,16 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
       {data.length > 0 && <OperatingSessionCard data={data} />}
 
       <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
-        {data.length > 0 && (
-          <span style={{ fontSize: '0.68rem', color: '#60a5fa', fontWeight: 600 }}>
-            Periode: {formatTime(data[0].recorded_at)} s.d. {formatTime(data[data.length - 1].recorded_at)} WIB
-          </span>
-        )}
+        {data.length > 0 && (() => {
+          const realPoints = data.filter(d => !d.is_offline_gap);
+          const firstPoint = realPoints[0] || data[0];
+          const lastPoint = realPoints[realPoints.length - 1] || data[data.length - 1];
+          return (
+            <span style={{ fontSize: '0.68rem', color: '#60a5fa', fontWeight: 600 }}>
+              Periode: {formatTime(firstPoint.recorded_at)} s.d. {formatTime(lastPoint.recorded_at)} WIB
+            </span>
+          );
+        })()}
         <span style={{ fontSize: '0.68rem', color: '#94a3b8', marginLeft: 'auto' }}>
           {tableRows.length} titik data · interval 5 menit
         </span>
