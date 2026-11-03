@@ -43,21 +43,31 @@ export default function OperatingSessionCard({ data, isLiveOffline }: OperatingS
     }
 
     // Tentukan status saat ini:
-    // Jika data terakhir sudah lebih dari 15 menit yang lalu dari sekarang, berarti unit sedang mati/terputus
+    // PENTING: Gunakan latestDate (waktu data terbaru) vs sekarang,
+    // tapi jika isLiveOffline diberikan secara eksplisit, prioritaskan isLiveOffline.
     const timeSinceLastDataMs = Date.now() - latestDate.getTime();
-    const isCurrentlyDown = isLiveOffline || timeSinceLastDataMs > GAP_MS;
+    // Jika data terbaru < 10 menit yang lalu, unit PASTI sedang menyala (tidak down)
+    const isCurrentlyDown = isLiveOffline !== undefined 
+      ? isLiveOffline 
+      : (timeSinceLastDataMs > GAP_MS);
 
     if (isCurrentlyDown) {
       // Jika saat ini mati, waktu mati terakhir adalah titik data terakhir yang masuk
       lastOffTime = latestDate;
+    } else {
+      // Jika saat ini menyala kembali setelah sempat mati,
+      // pastikan lastOnTime adalah titik awal nyala setelah jeda mati terakhir
+      if (!lastOnTime || (lastOffTime && lastOnTime.getTime() < lastOffTime.getTime())) {
+        lastOnTime = latestDate;
+      }
     }
 
     // Hitung durasi:
     // - Jika SEDANG MATI: durasi mati dihitung sejak data terakhir mati s.d. sekarang
-    // - Jika SEDANG MENYALA: durasi menyala dihitung sejak titik nyala terakhir s.d. data terakhir (atau sekarang)
+    // - Jika SEDANG MENYALA: durasi menyala dihitung sejak titik nyala sesi ini s.d. sekarang (atau latestDate)
     const activeDurationMs = isCurrentlyDown
       ? Math.max(0, Date.now() - latestDate.getTime())
-      : (lastOnTime ? Math.max(0, latestDate.getTime() - lastOnTime.getTime()) : 0);
+      : (lastOnTime ? Math.max(0, Date.now() - lastOnTime.getTime()) : 0);
 
     const durHours = Math.floor(activeDurationMs / (1000 * 60 * 60));
     const durMins = Math.floor((activeDurationMs % (1000 * 60 * 60)) / (1000 * 60));
