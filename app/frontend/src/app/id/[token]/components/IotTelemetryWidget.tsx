@@ -278,8 +278,18 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
 
       setData(res);
       setLastFetched(new Date());
-      // Jika baru pertama kali data online diterima setelah mount atau setelah offline
-      setFirstOnlineAt(prev => prev ?? Date.now());
+
+      // Validasi: Cek usia data dari backend
+      const recDate = res?.recorded_at ? (res.recorded_at.endsWith('Z') || res.recorded_at.includes('+') ? new Date(res.recorded_at) : new Date(res.recorded_at + 'Z')) : null;
+      const ageSec = recDate ? Math.floor((Date.now() - recDate.getTime()) / 1000) : null;
+      const isFreshOnline = ageSec !== null && ageSec <= 45;
+
+      // Inisialisasi Elitech 2 menit HANYA aktif jika data benar-benar live fresh dari ESP32
+      if (isFreshOnline) {
+        setFirstOnlineAt(prev => prev ?? Date.now());
+      } else {
+        setFirstOnlineAt(null);
+      }
     } catch (err: any) {
       if (err?.response?.status === 404 || !err?.response) {
         setData(null);
