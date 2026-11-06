@@ -694,7 +694,7 @@ export default function ScheduleManagementPage() {
             <thead>
               <tr>
                 <th style={{ width: '40px', textAlign: 'center' }}>
-                  {operationalView === 'delivery' ? (
+                  {categoryFilter === 'delivery' ? (
                     <input
                       type="checkbox"
                       checked={activeLogs.length > 0 && selectedIds.length === activeLogs.length}
@@ -738,7 +738,7 @@ export default function ScheduleManagementPage() {
                   return (
                     <tr key={log.id} className={styles.tableRow}>
                       <td style={{ textAlign: 'center', color: '#94a3b8', fontSize: '0.8rem' }}>
-                        {operationalView === 'delivery' ? (
+                        {categoryFilter === 'delivery' ? (
                           <input
                             type="checkbox"
                             checked={isChecked}
