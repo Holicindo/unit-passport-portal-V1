@@ -9,6 +9,7 @@ import { NotificationType } from '../notifications/entities/notification.entity'
 
 // Struktur payload yang dikirim oleh ESP32
 export interface TelemetryPayload {
+  uptimeSec?: number;
   unitId: string; // Contoh: "HC-0001"
   tempCabinet: number;
   tempEvaporator: number;
@@ -173,6 +174,7 @@ export class IotService {
       is_door3_open: payload.isDoor3Open,
       is_door4_open: payload.isDoor4Open,
       recorded_at: new Date().toISOString(),
+      uptime_sec: payload.uptimeSec ?? null,
     });
 
     // Track door event (real-time, tidak throttled)

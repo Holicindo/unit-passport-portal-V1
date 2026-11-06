@@ -13,8 +13,30 @@ const TASK_LABELS: Record<string, string> = { CORRECTIVE: 'Perbaikan', PREVENTIV
 const TASK_STYLE: Record<string, string> = { CORRECTIVE: styles.taskCorrective, PREVENTIVE: styles.taskPreventive, INSTALLATION: styles.taskInstallation };
 
 type KanbanCol = 'unallocated' | 'allocated' | 'completed';
-type OperationalView = 'service' | 'delivery' | 'installation' | 'invoice';
+type CategoryFilter = 'ALL' | 'service' | 'delivery' | 'operational';
+type SubCategoryFilter = string;
 type ViewMode = 'kanban' | 'calendar' | 'table';
+
+// Mapping sub kategori per kategori besar
+const SUB_CATEGORY_MAP: Record<CategoryFilter, { value: string; label: string }[]> = {
+  ALL: [],
+  service: [
+    { value: 'ALL', label: 'Semua Servis' },
+    { value: 'CORRECTIVE', label: 'Perbaikan' },
+    { value: 'PREVENTIVE', label: 'Preventive' },
+    { value: 'INSTALLATION', label: 'Instalasi' },
+  ],
+  delivery: [
+    { value: 'ALL', label: 'Semua Pengiriman' },
+    { value: 'UNIT', label: 'Unit Jadi' },
+    { value: 'SPAREPART', label: 'Sparepart' },
+  ],
+  operational: [
+    { value: 'ALL', label: 'Semua Operasional' },
+    { value: 'INVOICE', label: 'Tukar Faktur' },
+    { value: 'MARKETING', label: 'Marketing' },
+  ],
+};
 
 function fmtDate(d: string | Date | null) {
   if (!d) return '-';
@@ -29,7 +51,8 @@ export default function ScheduleManagementPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
-  const [operationalView, setOperationalView] = useState<OperationalView>('service');
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('ALL');
+  const [subCategoryFilter, setSubCategoryFilter] = useState<SubCategoryFilter>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [taskFilter, setTaskFilter] = useState('ALL');
 
@@ -73,43 +96,50 @@ export default function ScheduleManagementPage() {
 
   useEffect(() => { fetchData(); }, []);
 
-  // Operational Category counts
+  // Category counts for display
   const opCounts = useMemo(() => {
     return {
-      service: logs.filter(l => l.task_type === 'CORRECTIVE' || l.task_type === 'PREVENTIVE' || !l.task_type).length,
-      delivery: logs.filter(l => l.delivery_date || l.task_type === 'INSTALLATION').length,
-      installation: logs.filter(l => l.task_type === 'INSTALLATION').length,
-      invoice: logs.filter(l => l.status === 'COMPLETED' || l.replaced_sparepart).length,
+      service: logs.filter(l => ['CORRECTIVE', 'PREVENTIVE', 'INSTALLATION'].includes(l.task_type) || !l.task_type).length,
+      delivery: logs.filter(l => !!l.delivery_date).length,
+      operational: logs.filter(l => l.status === 'COMPLETED' || !!l.replaced_sparepart).length,
     };
   }, [logs]);
 
   const activeLogs = useMemo(() => {
     return logs.filter(l => {
-      // 1. Filter by operational view
-      if (operationalView === 'service') {
-        const isService = l.task_type === 'CORRECTIVE' || l.task_type === 'PREVENTIVE' || !l.task_type;
-        if (!isService && l.task_type === 'INSTALLATION') return false;
-      } else if (operationalView === 'delivery') {
-        const isDelivery = !!l.delivery_date || l.task_type === 'INSTALLATION';
-        if (!isDelivery) return false;
-      } else if (operationalView === 'installation') {
-        if (l.task_type !== 'INSTALLATION') return false;
-      } else if (operationalView === 'invoice') {
-        const isInvoice = l.status === 'COMPLETED' || !!l.replaced_sparepart;
-        if (!isInvoice) return false;
+      // 1. Filter by kategori besar
+      if (categoryFilter === 'service') {
+        if (!['CORRECTIVE', 'PREVENTIVE', 'INSTALLATION'].includes(l.task_type) && l.task_type) return false;
+        // Sub kategori servis
+        if (subCategoryFilter !== 'ALL') {
+          if (l.task_type !== subCategoryFilter) return false;
+        }
+      } else if (categoryFilter === 'delivery') {
+        if (!l.delivery_date) return false;
+        // Sub kategori pengiriman (UNIT vs SPAREPART) — pakai field delivery_type jika ada, default UNIT
+        if (subCategoryFilter !== 'ALL') {
+          const delivType = l.delivery_type || 'UNIT';
+          if (delivType !== subCategoryFilter) return false;
+        }
+      } else if (categoryFilter === 'operational') {
+        const isOp = l.status === 'COMPLETED' || !!l.replaced_sparepart;
+        if (!isOp) return false;
+        // Sub kategori operasional
+        if (subCategoryFilter !== 'ALL') {
+          if (subCategoryFilter === 'INVOICE' && !l.replaced_sparepart) return false;
+          if (subCategoryFilter === 'MARKETING' && l.replaced_sparepart) return false;
+        }
       }
+      // ALL: tampilkan semua
 
-      // 2. Filter by dropdown jenis
-      const matchTask = taskFilter === 'ALL' || l.task_type === taskFilter;
-
-      // 3. Search query (SN, model, technician, call_id)
+      // 2. Search query (SN, model, technician, call_id)
       const q = searchQuery.toLowerCase();
-      const matchSearch = [l.unit?.serial_number, l.unit?.model_name, l.technician_name, l.call_id, l.id]
+      const matchSearch = !q || [l.unit?.serial_number, l.unit?.model_name, l.technician_name, l.call_id, l.id]
         .some(v => v?.toLowerCase().includes(q));
 
-      return matchTask && matchSearch;
+      return matchSearch;
     });
-  }, [logs, operationalView, taskFilter, searchQuery]);
+  }, [logs, categoryFilter, subCategoryFilter, searchQuery]);
 
   const unallocated = activeLogs.filter(l => !l.is_allocated && l.status !== 'COMPLETED' && l.status !== 'CANCELED' && l.status !== 'CANCELLED');
   const allocated = activeLogs.filter(l => l.is_allocated && l.status !== 'COMPLETED' && l.status !== 'CANCELED' && l.status !== 'CANCELLED');
@@ -431,65 +461,31 @@ export default function ScheduleManagementPage() {
         { label: 'Selesai / Batal', value: loading ? '...' : completed.length, max: 100, icon: Calendar, accent: '#10b981' },
       ]} />
 
-      {/* Operational Category Segmented Control (Servis, Pengiriman, Instalasi, Tukar Faktur) */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-        <div className={styles.operationalTabs}>
-          <button
-            type="button"
-            className={`${styles.opTab} ${operationalView === 'service' ? styles.opTabActive : ''}`}
-            onClick={() => setOperationalView('service')}
-          >
-            <Tool size={15} />
-            <span>Servis</span>
-            <span className={styles.opBadge}>{opCounts.service}</span>
-          </button>
-
-          <button
-            type="button"
-            className={`${styles.opTab} ${operationalView === 'delivery' ? styles.opTabActive : ''}`}
-            onClick={() => setOperationalView('delivery')}
-          >
-            <Truck size={15} />
-            <span>Pengiriman</span>
-            <span className={styles.opBadge}>{opCounts.delivery}</span>
-          </button>
-
-          <button
-            type="button"
-            className={`${styles.opTab} ${operationalView === 'installation' ? styles.opTabActive : ''}`}
-            onClick={() => setOperationalView('installation')}
-          >
-            <Wrench size={15} />
-            <span>Instalasi</span>
-            <span className={styles.opBadge}>{opCounts.installation}</span>
-          </button>
-
-          <button
-            type="button"
-            className={`${styles.opTab} ${operationalView === 'invoice' ? styles.opTabActive : ''}`}
-            onClick={() => setOperationalView('invoice')}
-          >
-            <Receipt size={15} />
-            <span>Tukar Faktur</span>
-            <span className={styles.opBadge}>{opCounts.invoice}</span>
-          </button>
-        </div>
-
-        {operationalView === 'delivery' && (
-          <div style={{ fontSize: '0.8rem', color: '#475569', background: '#eff6ff', padding: '6px 12px', borderRadius: '8px', border: '1px solid rgba(37,99,235,0.2)' }}>
-            🚚 <strong style={{ color: '#1d4ed8' }}>Mode Pengiriman:</strong> Centang checkbox unit untuk multi-select jadwal kirim massal.
-          </div>
-        )}
-      </div>
-
+      {/* ── Filter Bar: Dropdown Kategori Besar + Sub Kategori ── */}
       <div className="dtToolbar">
         <div className="dtToolbarLeft">
-          <div className="dtToolbarText">Jenis:</div>
-          <CustomSelect value={taskFilter} onChange={setTaskFilter}
+          {/* Dropdown 1: Kategori Besar */}
+          <CustomSelect
+            value={categoryFilter}
+            onChange={(val) => {
+              setCategoryFilter(val as CategoryFilter);
+              setSubCategoryFilter('ALL');
+            }}
             options={[
-              { value: 'ALL', label: 'Semua Jenis' }, { value: 'CORRECTIVE', label: 'Perbaikan' },
-              { value: 'PREVENTIVE', label: 'Perawatan' }, { value: 'INSTALLATION', label: 'Instalasi' },
-            ]} />
+              { value: 'ALL', label: 'Semua Kategori' },
+              { value: 'service', label: `Servis (${opCounts.service})` },
+              { value: 'delivery', label: `Pengiriman (${opCounts.delivery})` },
+              { value: 'operational', label: `Operasional (${opCounts.operational})` },
+            ]}
+          />
+          {/* Dropdown 2: Sub Kategori (dinamis) */}
+          {categoryFilter !== 'ALL' && (
+            <CustomSelect
+              value={subCategoryFilter}
+              onChange={(val) => setSubCategoryFilter(val)}
+              options={SUB_CATEGORY_MAP[categoryFilter]}
+            />
+          )}
         </div>
         <div className="dtToolbarRight">
           {isDragging && (

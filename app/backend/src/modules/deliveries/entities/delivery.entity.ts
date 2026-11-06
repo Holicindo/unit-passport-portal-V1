@@ -3,6 +3,11 @@ import { Unit } from '../../units/entities/unit.entity';
 import { Partner } from '../../partners/entities/partner.entity';
 import { generatePrefixedId } from '../../../common/utils/id-generator';
 
+export enum DeliveryCategory {
+  UNIT = 'UNIT',
+  SPAREPART = 'SPAREPART',
+}
+
 export enum DeliveryStatus {
   PENDING = 'PENDING',
   IN_TRANSIT = 'IN_TRANSIT',
@@ -39,6 +44,9 @@ export class Delivery {
 
   @Column({ type: 'enum', enum: DeliveryStatus, default: DeliveryStatus.PENDING })
   status!: DeliveryStatus;
+
+  @Column({ type: 'varchar', length: 50, default: 'UNIT' })
+  category!: string;
 
   @CreateDateColumn()
   created_at!: Date;

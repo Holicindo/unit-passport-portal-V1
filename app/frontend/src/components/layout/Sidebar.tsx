@@ -43,16 +43,15 @@ const menuItems = [
       { label: 'Registrasi Unit', icon: <PlusCircle size={18} />, href: '/units/new' }
     ]
   },
-  {
+    {
     id: 'operational',
-    label: 'Operasional',
+    label: 'Schedule',
     icon: <Calendar size={20} />,
     href: '/service/planning',
     subItems: [
-      { label: 'Log Servis', icon: <Tool size={18} />, href: '/service' },
-      { label: 'Log Pengiriman', icon: <Truck size={18} />, href: '/service/delivery' },
-      { label: 'Log Instalasi', icon: <Wrench size={18} />, href: '/service/installation' },
-      { label: 'Log Tukar Faktur', icon: <Receipt size={18} />, href: '/service/invoice' }
+      { label: 'Servis', icon: <Wrench size={18} />, href: '/service' },
+      { label: 'Pengiriman', icon: <Truck size={18} />, href: '/service/delivery' },
+      { label: 'Operasional', icon: <Receipt size={18} />, href: '/service/invoice' },
     ]
   },
   {

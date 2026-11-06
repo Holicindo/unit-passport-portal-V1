@@ -177,12 +177,19 @@ HealthStatus calculateHealthStatus(
 }
 
 // =============================================================================
-// WiFi SETUP (WiFiManager — captive portal jika belum ada config)
+// WiFi SETUP (WiFiManager)
+//
+// LOGIKA KONEKSI:
+//   - Pertama kali (belum ada config) → buka captive portal "Setup Unit Holicindo"
+//     untuk teknisi input SSID & password WiFi di lokasi klien.
+//   - Sudah ada config tersimpan → langsung connect TANPA buka portal.
+//   - WiFi mati/putus sementara → tunggu 3 menit (portal timeout), lalu reboot & coba lagi.
+//     TIDAK spam portal, TIDAK minta konfigurasi ulang.
 // =============================================================================
 void setup_wifi() {
-    Serial.println("\nMemulai WiFiManager...");
+    Serial.println("\nMemulai WiFi...");
 
-    // Aktifkan native auto-reconnect ESP32
+    // Aktifkan native auto-reconnect & simpan kredensial di flash NVS
     WiFi.setAutoReconnect(true);
     WiFi.persistent(true);
 
@@ -198,10 +205,25 @@ void setup_wifi() {
 
     wm.setCustomHeadElement(custom_css);
 
-    Serial.println("\n>>> MENGHUBUNGKAN KE WIFI... <<<");
+    // ── ANTI-SPAM PORTAL ────────────────────────────────────────────────────
+    // Coba connect ke WiFi tersimpan selama 30 detik sebelum menyerah
+    wm.setConnectTimeout(30);
+
+    // Portal konfigurasi dibuka MAKSIMAL 3 menit (hanya jika belum ada config,
+    // atau jika diminta manual). Setelah 3 menit tanpa ada yang konfigurasi,
+    // unit reboot dan coba connect lagi — TIDAK hang di portal selamanya.
+    wm.setConfigPortalTimeout(180);
+
+    // Auto-reconnect aktif di layer WiFiManager
+    wm.setWiFiAutoReconnect(true);
+
+    Serial.println("\n>>> MENGHUBUNGKAN KE WIFI TERSIMPAN... <<<");
     bool res = wm.autoConnect("Setup Unit Holicindo");
+
     if (!res) {
-        Serial.println("Gagal konek WiFi. Restart...");
+        // WiFi tidak tersedia saat booting (timeout) → reboot & coba lagi
+        // Ini BUKAN karena perlu konfigurasi ulang — hanya WiFi sedang tidak ada
+        Serial.println("WiFi tidak tersedia saat booting. Reboot & coba lagi dalam 3 detik...");
         delay(3000);
         ESP.restart();
     }
@@ -216,33 +238,33 @@ void setup_wifi() {
 
 // =============================================================================
 // MQTT RECONNECT (Non-blocking / Anti-Freeze)
+// Jika WiFi putus: tunggu sabar, reconnect otomatis tanpa restart agresif.
+// Jika MQTT gagal: retry terus setiap 5 detik tanpa restart.
 // =============================================================================
 int mqtt_retry_count = 0;
 unsigned long last_mqtt_retry = 0;
-unsigned long wifi_lost_start = 0;
+bool wifi_was_lost = false;
 
 void reconnect() {
     // ── LAPIS 1: DETEKSI & AUTO-HEALING KONEKSI WIFI ──
     if (WiFi.status() != WL_CONNECTED) {
-        if (wifi_lost_start == 0) {
-            wifi_lost_start = millis();
+        if (!wifi_was_lost) {
+            wifi_was_lost = true;
             Serial.println("⚠️  WiFi terputus. Menunggu auto-reconnect native ESP32...");
             WiFi.reconnect(); // Trigger reconnect aktif
         }
-
-        // Jika terputus lebih dari 60 detik, otomatis reboot ESP32 agar stack network fresh kembali
-        if (millis() - wifi_lost_start >= 60000) {
-            Serial.println("❌ WiFi terputus > 60 detik. Self-healing rebooting ESP32...");
-            delay(1000);
-            ESP.restart();
-        }
+        // Tidak ada restart paksa di sini.
+        // - Jika WiFi router maintenance lama (30 menit+), unit sabar menunggu.
+        // - Jika ESP32 beneran hang/freeze, WDT 30 detik yang akan reboot otomatis.
+        // - Native WiFi.setAutoReconnect(true) akan reconnect sendiri begitu WiFi kembali.
         return;
     }
 
-    // WiFi tersambung kembali dengan sukses -> reset timer
-    if (wifi_lost_start != 0) {
-        Serial.println("✅ WiFi tersambung kembali!");
-        wifi_lost_start = 0;
+    // WiFi tersambung kembali dengan sukses -> reset flag & mqtt retry
+    if (wifi_was_lost) {
+        Serial.println("✅ WiFi tersambung kembali! Reconnect MQTT...");
+        wifi_was_lost    = false;
+        mqtt_retry_count = 0; // Reset agar MQTT langsung connect fresh
     }
 
     // ── LAPIS 2: REKONEKSI MQTT BROKER ──
@@ -265,14 +287,8 @@ void reconnect() {
             Serial.print(client.state());
             Serial.print(" (Percobaan ");
             Serial.print(mqtt_retry_count);
-            Serial.println("/10)");
-
-            // Jika gagal 10x berturut-turut (~50 detik), paksa restart ESP agar koneksi fresh
-            if (mqtt_retry_count >= 10) {
-                Serial.println("❌ Terlalu sering gagal MQTT, restart ESP...");
-                delay(1000);
-                ESP.restart();
-            }
+            Serial.println(")");
+            // Terus retry tanpa restart — WDT yang jaga jika beneran hang.
         }
     }
 }
@@ -470,10 +486,13 @@ void loop() {
         Serial.print("Pesan  : "); Serial.println(health.alert_message);
         Serial.print("Teknisi: "); Serial.println(health.technician_dispatch ? "DIPERLUKAN" : "TIDAK");
 
-        // ── 5. BUAT PAYLOAD JSON (4 Pintu) ──────────────────────────────
+        // ── 5. BUAT PAYLOAD JSON (4 Pintu + Uptime) ──────────────────────
         StaticJsonDocument<512> doc;
 
+        unsigned long uptimeSec = millis() / 1000;
+
         doc["unitId"]         = unit_id;
+        doc["uptimeSec"]      = uptimeSec;
         doc["tempCabinet"]    = tempCabinet;
         doc["tempEvaporator"] = tempEvaporator;
         doc["tempCondenser"]  = tempCondenser;

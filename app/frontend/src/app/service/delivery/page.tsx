@@ -29,6 +29,7 @@ export default function DeliveryLogPage() {
 
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [pageSize, setPageSize] = useState(20);
 
@@ -103,6 +104,8 @@ export default function DeliveryLogPage() {
   useEffect(() => { fetchData(); }, []);
 
   const filteredDeliveries = deliveries.filter(del => {
+    const itemCat = del.category || 'UNIT';
+    const matchesCategory = categoryFilter === 'ALL' || itemCat === categoryFilter;
     const matchesStatus = statusFilter === 'ALL' || del.status === statusFilter;
     const q = searchQuery.toLowerCase();
     const matchesSearch = [
@@ -112,7 +115,7 @@ export default function DeliveryLogPage() {
       del.destination_address,
       del.notes
     ].some(v => v?.toLowerCase().includes(q));
-    return matchesStatus && matchesSearch;
+    return matchesCategory && matchesStatus && matchesSearch;
   }).slice(0, pageSize);
 
   const totalDeliveries = deliveries.length;
@@ -239,6 +242,17 @@ export default function DeliveryLogPage() {
             />
             entries
           </div>
+          {/* Filter Kategori: Unit Jadi vs Sparepart */}
+          <CustomSelect
+            options={[
+              { value: 'ALL', label: 'Semua Kategori' },
+              { value: 'UNIT', label: 'Unit Jadi' },
+              { value: 'SPAREPART', label: 'Sparepart' }
+            ]}
+            value={categoryFilter}
+            onChange={(val) => setCategoryFilter(val)}
+          />
+          {/* Filter Status (terhubung dengan kategori) */}
           <CustomSelect
             options={[
               { value: 'ALL', label: 'Semua Status' },
@@ -296,7 +310,8 @@ export default function DeliveryLogPage() {
             <thead>
               <tr>
                 <th style={{ width: '11%' }}>ID</th>
-                <th style={{ width: '10%' }}>TGL KIRIM</th>
+                <th style={{ width: '9%' }}>TGL KIRIM</th>
+                <th style={{ width: '10%' }}>KATEGORI</th>
                 <th style={{ width: '15%' }}>CUSTOMER &amp; BRANCH</th>
                 <th style={{ width: '14%' }}>PRODUCT (UNIT)</th>
                 <th style={{ width: '20%' }}>ALAMAT TUJUAN</th>
@@ -330,6 +345,19 @@ export default function DeliveryLogPage() {
                       <td>
                         <span style={{ fontWeight: 600, color: 'var(--color-deep-navy)', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
                           {formatDate(mainDelivery.delivery_date || mainDelivery.created_at)}
+                        </span>
+                      </td>
+                      <td>
+                        <span style={{
+                          fontSize: '0.72rem',
+                          fontWeight: 800,
+                          padding: '3px 8px',
+                          borderRadius: '6px',
+                          background: (mainDelivery.category === 'SPAREPART') ? 'rgba(245, 158, 11, 0.12)' : 'rgba(59, 130, 246, 0.12)',
+                          color: (mainDelivery.category === 'SPAREPART') ? '#d97706' : '#2563eb',
+                          border: (mainDelivery.category === 'SPAREPART') ? '1px solid rgba(245, 158, 11, 0.3)' : '1px solid rgba(59, 130, 246, 0.3)'
+                        }}>
+                          {mainDelivery.category === 'SPAREPART' ? 'Sparepart' : 'Unit Jadi'}
                         </span>
                       </td>
                       <td>
@@ -418,7 +446,7 @@ export default function DeliveryLogPage() {
                     {/* Sub-rows (History) */}
                     {isExpanded && (
                       <tr>
-                        <td colSpan={8} style={{ padding: 0, background: '#f8fafc', borderBottom: '2px solid #cbd5e1' }}>
+                        <td colSpan={9} style={{ padding: 0, background: '#f8fafc', borderBottom: '2px solid #cbd5e1' }}>
                           <div style={{ padding: '16px 24px 16px 36px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
                               <h4 style={{ fontSize: '0.8rem', color: '#1e293b', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 800 }}>

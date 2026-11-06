@@ -19,6 +19,7 @@ interface TelemetryData {
   is_door3_open?: boolean | null;
   is_door4_open?: boolean | null;
   recorded_at: string;
+  uptime_sec?: number | null;
 }
 
 interface IotTelemetryWidgetProps {
@@ -32,7 +33,7 @@ function TempCard({ label, rawValue, min, max, offset, icon: Icon, isWarning, wa
   // Backend getLatestTelemetry sudah mengaplikasikan offset
   const liveValue = isError ? null : rawValue;
   const isAlert = !isError && !isWarmup && liveValue !== null && (liveValue > max || liveValue < min);
-  const color    = isOffline ? "#64748b" : isWarmup ? "#38bdf8" : isError ? "#94a3b8" : isAlert ? "#dc2626" : isWarning ? "#d97706" : "#059669";
+  const color = isOffline ? "#64748b" : isWarmup ? "#38bdf8" : isError ? "#94a3b8" : isAlert ? "#dc2626" : isWarning ? "#d97706" : "#059669";
 
   return (
     <div style={{
@@ -258,7 +259,7 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
     setError(null);
     try {
       const { data: res } = await iotApi.getLatest(unitId);
-      
+
       // === HACK SEMENTARA (FRONTEND-SIDE): KHUSUS UNIT A26071976 SAJA ===
       // Unit Gold (A26051860) dan unit-unit lain tidak boleh di-hack agar menampilkan sensor fisik murni
       const isHackUnit = unit?.serial_number === 'A26071976' || unit?.iot_unit_id === 'A26071976';
@@ -282,14 +283,7 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
       // Validasi: Cek usia data dari backend
       const recDate = res?.recorded_at ? (res.recorded_at.endsWith('Z') || res.recorded_at.includes('+') ? new Date(res.recorded_at) : new Date(res.recorded_at + 'Z')) : null;
       const ageSec = recDate ? Math.floor((Date.now() - recDate.getTime()) / 1000) : null;
-      const isFreshOnline = ageSec !== null && ageSec <= 45;
-
-      // Inisialisasi Elitech 2 menit HANYA aktif jika data benar-benar live fresh dari ESP32
-      if (isFreshOnline) {
-        setFirstOnlineAt(prev => prev ?? Date.now());
-      } else {
-        setFirstOnlineAt(null);
-      }
+      const isFreshOnline = ageSec !== null && ageSec <= 120;
     } catch (err: any) {
       if (err?.response?.status === 404 || !err?.response) {
         setData(null);
@@ -332,20 +326,17 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
   const secondsAge = rawDate ? Math.floor((Date.now() - rawDate.getTime()) / 1000) : null;
   let dataAge = secondsAge !== null ? Math.floor(secondsAge / 60) : null;
 
-  // Unit dianggap offline jika lebih dari 45 detik tidak ada data masuk dari ESP32
-  const isOffline = secondsAge !== null && secondsAge > 45;
+  // Unit dianggap offline jika lebih dari 120 detik (2 menit) tidak ada data masuk dari ESP32.
+  // Toleransi ini diperlukan untuk:
+  // - Delay MQTT broker (hivemq.com bisa lambat sesekali)
+  // - Backend restart singkat (liveTelemetryMap kosong sementara)
+  // - Reconnect WiFi/MQTT di sisi ESP32
+  const isOffline = secondsAge !== null && secondsAge > 120;
 
-  // Reset firstOnlineAt jika unit offline
-  useEffect(() => {
-    if (isOffline) {
-      setFirstOnlineAt(null);
-    }
-  }, [isOffline]);
-
-  // Jeda inisialisasi awal 2 menit (120 detik) seperti instrumen Elitech
-  const warmupRemainingSec = firstOnlineAt 
-    ? Math.max(0, 120 - Math.floor((Date.now() - firstOnlineAt) / 1000))
-    : 0;
+  // Inisialisasi/warmup murni berbasis hardware uptime dari ESP32 (120 detik sejak boot/colok listrik)
+  // Tidak terpengaruh refresh browser sama sekali!
+  const uptimeSec = typeof data?.uptime_sec === 'number' ? data.uptime_sec : 999;
+  const warmupRemainingSec = Math.max(0, 120 - uptimeSec);
   const isWarmup = !isOffline && warmupRemainingSec > 0;
 
   if (loading && !data) {
@@ -377,20 +368,20 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
           ) : (
             <WifiOff size={14} color="#94a3b8" strokeWidth={2} style={{ flexShrink: 0 }} />
           )}
-          <span style={{ 
-            fontWeight: 800, 
+          <span style={{
+            fontWeight: 800,
             fontSize: '0.74rem',
             color: isOffline ? '#ef4444' : isWarmup ? '#38bdf8' : data ? '#10b981' : '#cbd5e1',
             letterSpacing: '0.01em',
             lineHeight: 1
           }}>
-            {isOffline 
-              ? `OFFLINE (${dataAge} menit lalu)` 
+            {isOffline
+              ? `OFFLINE (${dataAge} menit lalu)`
               : isWarmup
                 ? `Inisialisasi Sensor (${warmupRemainingSec} dtk lagi...)`
-                : data 
-                  ? 'IoT Aktif — Analisis Kesehatan Mesin' 
-                  : 'Belum Ada Data IoT'
+                : data
+                ? 'IoT Aktif — Analisis Kesehatan Mesin'
+                : 'Belum Ada Data IoT'
             }
           </span>
         </div>
@@ -447,18 +438,18 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
               <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Sensor Suhu</span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '10px' }}>
-              <TempCard label="Kabinet"    rawValue={data.temp_cabinet}    min={limits.cabinet.min} max={limits.cabinet.max} offset={offsets.cabinet} icon={ShelvingUnit} isOffline={isOffline} isWarmup={isWarmup} />
-              <TempCard 
-                label="Evaporator" 
-                rawValue={data.temp_evaporator} 
-                min={limits.evaporator.min} 
-                max={limits.evaporator.max} 
-                offset={offsets.evaporator} 
-                icon={ThermometerSnowflake} 
+              <TempCard label="Kabinet" rawValue={data.temp_cabinet} min={limits.cabinet.min} max={limits.cabinet.max} offset={offsets.cabinet} icon={ShelvingUnit} isOffline={isOffline} isWarmup={isWarmup} />
+              <TempCard
+                label="Evaporator"
+                rawValue={data.temp_evaporator}
+                min={limits.evaporator.min}
+                max={limits.evaporator.max}
+                offset={offsets.evaporator}
+                icon={ThermometerSnowflake}
                 isOffline={isOffline}
                 isWarmup={isWarmup}
               />
-              <TempCard label="Kondensor"  rawValue={data.temp_condenser}  min={limits.condenser.min} max={limits.condenser.max} offset={offsets.condenser} icon={Thermometer} isOffline={isOffline} isWarmup={isWarmup} />
+              <TempCard label="Kondensor" rawValue={data.temp_condenser} min={limits.condenser.min} max={limits.condenser.max} offset={offsets.condenser} icon={Thermometer} isOffline={isOffline} isWarmup={isWarmup} />
             </div>
           </div>
 
@@ -478,10 +469,12 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', flex: 1 }}>
                 {[
-                  { label: 'Tegangan', value: (isOffline || isWarmup) ? 0 : data.voltage, unit: 'V',
-                    alert: !isOffline && !isWarmup && data.voltage !== null && data.voltage > 0 && (data.voltage < 190 || data.voltage > 240) },
-                  { label: 'Arus',    value: (isOffline || isWarmup) ? 0 : data.current, unit: 'A', alert: false },
-                  { label: 'Daya',    value: (isOffline || isWarmup) ? 0 : data.power,   unit: 'W', alert: false },
+                  {
+                    label: 'Tegangan', value: (isOffline || isWarmup) ? 0 : data.voltage, unit: 'V',
+                    alert: !isOffline && !isWarmup && data.voltage !== null && data.voltage > 0 && (data.voltage < 190 || data.voltage > 240)
+                  },
+                  { label: 'Arus', value: (isOffline || isWarmup) ? 0 : data.current, unit: 'A', alert: false },
+                  { label: 'Daya', value: (isOffline || isWarmup) ? 0 : data.power, unit: 'W', alert: false },
                 ].map(({ label, value, unit, alert }) => (
                   <div key={label} style={{
                     background: 'rgba(8, 18, 50, 0.9)',
@@ -525,32 +518,32 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
               const totalA = data.current;
 
               // ── Nilai kalibrasi (PZEM, diukur teknisi per komponen) ──
-              const CAL_COMP  = 6.16; // Kompresor running
-              const CAL_KOND  = 0.42; // Fan Kondensor
-              const CAL_EVAP  = 1.31; // Fan Evaporator
+              const CAL_COMP = 6.16; // Kompresor running
+              const CAL_KOND = 0.42; // Fan Kondensor
+              const CAL_EVAP = 1.31; // Fan Evaporator
               const CAL_TOTAL = CAL_COMP + CAL_KOND + CAL_EVAP; // 7.89 A
 
               // ── Offset koreksi tang ampere ───────────────────────────
-              const OFF_COMP  = -0.02;
-              const OFF_KOND  = -0.04;
-              const OFF_EVAP  = -0.11;
+              const OFF_COMP = -0.02;
+              const OFF_KOND = -0.04;
+              const OFF_EVAP = -0.11;
 
               // ── Proporsi setiap komponen terhadap total ──────────────
-              const R_COMP  = CAL_COMP  / CAL_TOTAL; // 78.1%
-              const R_KOND  = CAL_KOND  / CAL_TOTAL; //  5.3%
-              const R_EVAP  = CAL_EVAP  / CAL_TOTAL; // 16.6%
+              const R_COMP = CAL_COMP / CAL_TOTAL; // 78.1%
+              const R_KOND = CAL_KOND / CAL_TOTAL; //  5.3%
+              const R_EVAP = CAL_EVAP / CAL_TOTAL; // 16.6%
 
               // ── Deteksi state unit ───────────────────────────────────
-              const isIdle    = totalA < 0.2;
+              const isIdle = totalA < 0.2;
               const isFanOnly = totalA >= 0.2 && totalA < 4.0;
-              const isAllOn   = totalA >= 4.0;
+              const isAllOn = totalA >= 4.0;
 
               // ── Estimasi arus per komponen ───────────────────────────
-              const estComp  = isAllOn   ? parseFloat((totalA * R_COMP + OFF_COMP).toFixed(2)) : null;
-              const estKond  = isAllOn   ? parseFloat((totalA * R_KOND + OFF_KOND).toFixed(2))
-                             : isFanOnly ? parseFloat((totalA * 0.24).toFixed(2)) : null;
-              const estEvap  = isAllOn   ? parseFloat((totalA * R_EVAP + OFF_EVAP).toFixed(2))
-                             : isFanOnly ? parseFloat((totalA * 0.76).toFixed(2)) : null;
+              const estComp = isAllOn ? parseFloat((totalA * R_COMP + OFF_COMP).toFixed(2)) : null;
+              const estKond = isAllOn ? parseFloat((totalA * R_KOND + OFF_KOND).toFixed(2))
+                : isFanOnly ? parseFloat((totalA * 0.24).toFixed(2)) : null;
+              const estEvap = isAllOn ? parseFloat((totalA * R_EVAP + OFF_EVAP).toFixed(2))
+                : isFanOnly ? parseFloat((totalA * 0.76).toFixed(2)) : null;
 
               // ── Alert checks (sesuai threshold teknisi) ──────────────
               const alertEvap = estEvap !== null && estEvap > 2.0;
@@ -558,18 +551,18 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
 
               // ── Status unit keseluruhan ──────────────────────────────
               const unitStatus =
-                isIdle    ? 'STANDBY' :
-                isFanOnly ? 'FAN ONLY' :
-                            'SEMUA ON';
+                isIdle ? 'STANDBY' :
+                  isFanOnly ? 'FAN ONLY' :
+                    'SEMUA ON';
               const statusColor =
-                isIdle    ? '#64748b' :
-                isFanOnly ? '#d97706' :
-                            '#059669';
+                isIdle ? '#64748b' :
+                  isFanOnly ? '#d97706' :
+                    '#059669';
 
               const components = [
-                { label: 'Kompresor',     est: estComp, baseline: CAL_COMP, active: isAllOn,             alert: alertComp },
-                { label: 'Fan Kond.',     est: estKond, baseline: CAL_KOND, active: isAllOn || isFanOnly, alert: false },
-                { label: 'Fan Evap.',     est: estEvap, baseline: CAL_EVAP, active: isAllOn || isFanOnly, alert: alertEvap },
+                { label: 'Kompresor', est: estComp, baseline: CAL_COMP, active: isAllOn, alert: alertComp },
+                { label: 'Fan Kond.', est: estKond, baseline: CAL_KOND, active: isAllOn || isFanOnly, alert: false },
+                { label: 'Fan Evap.', est: estEvap, baseline: CAL_EVAP, active: isAllOn || isFanOnly, alert: alertEvap },
               ];
 
               return (
@@ -585,7 +578,7 @@ export default function IotTelemetryWidget({ unitId, unitModel, unit }: IotTelem
 
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', flex: 1 }}>
                     {components.map(({ label, est, baseline, active, alert }) => {
-                      const c  = !active ? '#94a3b8' : alert ? '#dc2626' : '#059669';
+                      const c = !active ? '#94a3b8' : alert ? '#dc2626' : '#059669';
                       return (
                         <div key={label} style={{
                           background: 'rgba(8, 18, 50, 0.9)',

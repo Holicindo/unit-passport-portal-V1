@@ -32,4 +32,9 @@ export class CreateDeliveryDto {
   @IsEnum(DeliveryStatus)
   @IsOptional()
   status?: DeliveryStatus;
+
+  @ApiProperty({ example: 'UNIT', required: false })
+  @IsString()
+  @IsOptional()
+  category?: string;
 }
