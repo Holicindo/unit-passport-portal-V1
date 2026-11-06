@@ -220,9 +220,14 @@ export class HealthScoreService {
 
       validCyclesCount++;
       if (cycle.durationMin < 5) shortCycles++;
-      // Kompresor normalnya mati tiap 2 jam (120 menit).
-      // Jika jalan > 120 menit non-stop = anomali durasi kerja (kondensor kotor / freon kurang / ruang sempit)
-      if (cycle.durationMin > 120) longCyclesCount++;
+
+      // Toleransi siklus kompresor dari settingan digital controller (misal 1 jam, 2 jam, atau 3 jam)
+      // Default: 120 menit (2 jam). Toleransi max = cycleMaxMinutes + 30 menit buffer.
+      const targetCycleHours = Number(unit.specs?.compressor_cycle_hours || unit.specs?.defrost_interval_hours || 2);
+      const maxAllowedCycleMin = (targetCycleHours * 60) + 30;
+
+      // Anomali jika kompresor jalan melebihi batas siklus controller tanpa cut-off
+      if (cycle.durationMin > maxAllowedCycleMin) longCyclesCount++;
       if (maxCond > -999) sumCondenserPeak += maxCond;
 
       const startT = calLogs[cycle.startIdx].recorded_at.getTime();
@@ -525,8 +530,9 @@ export class HealthScoreService {
     const subCondenserScore = 100 * (1 - ((pCondPeak * 0.55) + (pCondRise * 0.45)));
 
     // -- Elektrikal & Kompresor (bobot 22%) --
-    // Duty Cycle: Pada startup (pull-down), jangan penalti duty cycle tinggi
-    const pDuty   = isStartupPhase ? 0 : linearPenalty(dutyCyclePercentage, 75, 92); // Pabrik ambient tinggi, duty 75% masih aman
+    // Duty Cycle: Pada startup (pull-down), jangan penalti duty cycle tinggi.
+    // Ambang batas toleransi pabrik dinaikkan ke 82% (kritis ≥ 94%), agar mesin di ruang hangat tidak false alert.
+    const pDuty   = isStartupPhase ? 0 : linearPenalty(dutyCyclePercentage, 82, 94);
     // Starts/Hour: ≤8x aman, ≥20x kritis
     const pStarts = isStartupPhase ? 0 : linearPenalty(startsPerHour, 8, 20); // 33.8x/jam saat startup = anomali, steady state 4-8x/jam
     // Short Cycle: ≤10% aman, ≥30% kritis
@@ -535,8 +541,9 @@ export class HealthScoreService {
     const pAmp    = linearPenalty(compressorAnomalyRatio, 0.05, 0.40);
     // Voltage Anomali: ≤2% aman, ≥15% kritis (tegangan tidak stabil bikin kompresor narik arus besar)
     const pVolt   = linearPenalty(voltageAnomalyRatio, 0.05, 0.20); // PLN Indonesia toleransi 5%, 20% baru kritis
-    // Durasi kompresor jalan > 2 jam non-stop (kecuali fase pull-down awal)
-    const pLongCycle = isStartupPhase ? 0 : linearPenalty(longCyclesCount, 0, 2);
+    // Durasi kompresor jalan non-stop tanpa cut-off / defrost:
+    // Sesuai arahan PM: Penalti alarm bertahap, hanya kritis jika terjadi 3x berturut-turut (longCyclesCount >= 3)
+    const pLongCycle = isStartupPhase ? 0 : linearPenalty(longCyclesCount, 1, 3);
 
     const subElecPenalty = (pDuty * 0.20) + (pStarts * 0.08) + (pShort * 0.12) + (pAmp * 0.30) + (pVolt * 0.18) + (pLongCycle * 0.12);
     const subElecScore   = isStartupPhase ? 92 : 100 * (1 - subElecPenalty);

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -80,6 +80,7 @@ interface BreakdownItem {
   value: string;
   penaltyPct: number;
   safe: boolean;
+  benchmark?: string; // Teks benchmark selalu tampil, misal: "Target ≤ 82% | Kritis > 92%"
 }
 
 function ScoreTooltip({ items, score, label }: { items: BreakdownItem[]; score: number; label: string }) {
@@ -126,10 +127,15 @@ function ScoreTooltip({ items, score, label }: { items: BreakdownItem[]; score: 
           const barColor = item.safe ? '#10b981' : item.penaltyPct > 60 ? '#ef4444' : '#f59e0b';
           return (
             <div key={i}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 3 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 2 }}>
                 <span style={{ fontSize: '.66rem', fontWeight: 600, color: '#94a3b8', lineHeight: 1.35 }}>{item.label}</span>
                 <span style={{ fontSize: '.68rem', fontWeight: 800, color: barColor, flexShrink: 0, fontFamily: 'monospace' }}>{item.value}</span>
               </div>
+              {item.benchmark && (
+                <div style={{ fontSize: '.58rem', fontWeight: 700, color: '#475569', marginBottom: 3, letterSpacing: '.02em' }}>
+                  {item.benchmark}
+                </div>
+              )}
               <div style={{ height: 3, borderRadius: 99, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
                 <div style={{ height: '100%', width: `${item.penaltyPct}%`, borderRadius: 99, background: barColor, transition: 'width 0.6s ease' }} />
               </div>
@@ -347,68 +353,100 @@ export default function CustomerHealthWidget({ unitId }: Props) {
   // ── KABINET: Seberapa baik suhu ruang dalam terjaga ─────────────────────
   const cabBreakdown: BreakdownItem[] = [
     {
-      label: tib >= 95 ? `Suhu kabinet selalu stabil (${tib.toFixed(0)}% waktu dalam batas aman)` : `Suhu kabinet sempat keluar batas aman`,
+      label: tib >= 95 ? `Suhu kabinet selalu stabil (${tib.toFixed(1)}% waktu dalam batas aman)` : `Suhu kabinet sempat keluar batas aman (${tib.toFixed(1)}% stabil)`,
       value: `${tib.toFixed(1)}%`, penaltyPct: lp(tib, 95, 70), safe: tib >= 95,
+      benchmark: `Target ≥ 95%  |  Kritis < 70%`,
     },
     {
-      label: hdm <= 1.0 ? `Panas berlebih sangat rendah — suhu terjaga prima` : `Mesin sering kepanasan (${hdm.toFixed(1)} unit/jam)`,
-      value: `${hdm.toFixed(2)}`, penaltyPct: lp(hdm, 1.0, 5.0), safe: hdm <= 1.0,
+      label: hdm <= 1.0 ? `Panas berlebih sangat rendah — suhu terjaga prima` : `Mesin sering kepanasan (${hdm.toFixed(1)} event/jam)`,
+      value: `${hdm.toFixed(2)} /jam`, penaltyPct: lp(hdm, 1.0, 5.0), safe: hdm <= 1.0,
+      benchmark: `Target ≤ 1.0/jam  |  Kritis > 5.0/jam`,
     },
     {
       label: cabCoolRate >= 0.20 ? `Kecepatan pendinginan kabinet cepat & stabil` : `Pendinginan awal kabinet bekerja normal`,
       value: cabCoolRate > 0 ? `${cabCoolRate.toFixed(2)} °C/mnt` : `Optimal`, penaltyPct: 0, safe: true,
+      benchmark: `Referensi: ≥ 0.20 °C/mnt`,
     },
     {
       label: doorRec > 0 ? `Suhu cepat normal kembali setelah pintu dibuka-tutup` : `Pintu tertutup rapat sepanjang pemantauan`,
       value: doorRec > 0 ? `${doorRec.toFixed(0)} mnt` : `Stabil`, penaltyPct: 0, safe: true,
+      benchmark: `Referensi: < 10 mnt recovery`,
     },
   ];
 
   // ── EVAPORATOR: Performa sirkulasi dingin dalam mesin ────────────────────
   const evapBreakdown: BreakdownItem[] = [
     {
-      label: duty >= 92 ? `Kompresor bekerja hampir non-stop tanpa jeda istirahat (beban kerja sangat tinggi)` : evapCoolRate >= 0.30 ? `Evaporator mendinginkan dengan baik` : evapCoolRate === 0 ? `Data siklus evaporator masih dikumpulkan` : `Laju pendinginan evaporator membutuhkan waktu lebih lama`,
+      label: duty >= 92 ? `Kompresor hampir non-stop — beban kerja sangat tinggi (${duty.toFixed(0)}%)` : evapCoolRate >= 0.30 ? `Evaporator mendinginkan dengan baik` : evapCoolRate === 0 ? `Data siklus evaporator masih dikumpulkan` : `Laju pendinginan evaporator membutuhkan lebih lama`,
       value: duty >= 92 ? `Beban Kritis` : evapCoolRate > 0 ? `${evapCoolRate.toFixed(2)} °C/mnt` : `Terpantau`, penaltyPct: duty >= 92 ? 70 : evapCoolRate === 0 ? 0 : lp(evapCoolRate, 0.30, 0.05), safe: duty < 92,
+      benchmark: duty >= 92 ? `Duty Cycle: ${duty.toFixed(0)}% — Kritis > 92%` : `Referensi: ≥ 0.30 °C/mnt`,
     },
     {
-      label: evapDropAmp >= 8 ? `Penurunan suhu evaporator per siklus normal - ${evapDropAmp.toFixed(1)}°C (target >= 8°C)` : evapDropAmp > 0 ? `Penurunan suhu evaporator kurang optimal (${evapDropAmp.toFixed(1)}°C)` : `Penurunan suhu evaporator dalam batas normal`,
+      label: evapDropAmp >= 8 ? `Penurunan suhu evaporator per siklus normal (${evapDropAmp.toFixed(1)}°C)` : evapDropAmp > 0 ? `Penurunan suhu evaporator kurang optimal (${evapDropAmp.toFixed(1)}°C)` : `Penurunan suhu evaporator dalam batas normal`,
       value: evapDropAmp > 0 ? `${evapDropAmp.toFixed(1)} °C` : `Normal`, penaltyPct: lp(evapDropAmp, 8, 2), safe: evapDropAmp >= 8,
+      benchmark: `Target ≥ 8°C/siklus  |  Kritis < 2°C`,
     },
     {
-      label: cabEvapDiff <= 15 ? `Selisih suhu kabinet vs evaporator ${cabEvapDiff.toFixed(1)}°C - sirkulasi udara merata` : `Selisih suhu kabinet vs evaporator ${cabEvapDiff.toFixed(1)}°C - perlu cek sirkulasi`,
+      label: cabEvapDiff <= 15 ? `Sirkulasi udara merata — selisih suhu kabinet vs evap ${cabEvapDiff.toFixed(1)}°C` : `Sirkulasi perlu dicek — selisih suhu kabinet vs evap ${cabEvapDiff.toFixed(1)}°C`,
       value: cabEvapDiff > 0 ? `${cabEvapDiff.toFixed(1)} °C` : `Normal`, penaltyPct: lp(cabEvapDiff, 15, 25), safe: cabEvapDiff <= 15,
+      benchmark: `Target ≤ 15°C  |  Kritis > 25°C`,
     },
     {
-      label: defCycles > 0 ? (defAnomaly <= 0.10 ? `Siklus pencairan es (defrost) terpantau ${defCycles}x - berjalan normal standar` : `Siklus defrost terpantau ${defCycles}x namun ${(defAnomaly*100).toFixed(0)}% ada anomali`) : `Belum ada siklus defrost dalam rentang pemantauan ini`,
-      value: defCycles > 0 ? `${defCycles}x (${(defAnomaly * 100).toFixed(0)}% anomali)` : `0x (Normal)`, penaltyPct: lp(defAnomaly, 0.10, 0.60), safe: defAnomaly <= 0.10,
+      label: defCycles > 0 ? (defAnomaly <= 0.10 ? `Siklus Istirahat (Kompresor Cut-off): ${defCycles}x — normal` : `Siklus cut-off ${defCycles}x, ${(defAnomaly*100).toFixed(0)}% ada anomali`) : `Belum ada siklus cut-off dalam rentang pemantauan`,
+      value: defCycles > 0 ? `${defCycles}x (${(defAnomaly * 100).toFixed(0)}% anomali)` : `0x`, penaltyPct: lp(defAnomaly, 0.10, 0.60), safe: defAnomaly <= 0.10,
+      benchmark: `Anomali: Target ≤ 10%  |  Kritis > 60%`,
     },
   ];
 
   // ── KONDENSOR: Pembuangan panas ke luar mesin ────────────────────────────
   const condBreakdown: BreakdownItem[] = [
     {
-      label: condPeak > 0 ? (condPeak <= 45 ? `Puncak suhu kondensor ${condPeak.toFixed(0)}°C - dingin & efisien` : condPeak <= 60 ? `Puncak suhu kondensor ${condPeak.toFixed(0)}°C - normal untuk pabrik` : `Puncak suhu kondensor ${condPeak.toFixed(0)}°C - terlalu panas`) : `Pembuangan panas kondensor lancar`,
+      label: condPeak > 0 ? (condPeak <= 45 ? `Puncak suhu kondensor ${condPeak.toFixed(0)}°C — efisien & dingin` : condPeak <= 60 ? `Puncak suhu kondensor ${condPeak.toFixed(0)}°C — normal untuk pabrik hangat` : `Puncak suhu kondensor ${condPeak.toFixed(0)}°C — terlalu panas, cek kipas`) : `Pembuangan panas kondensor lancar`,
       value: condPeak > 0 ? `${condPeak.toFixed(1)} °C` : `Normal`, penaltyPct: lp(condPeak, 45, 60), safe: condPeak <= 45,
+      benchmark: `Target ≤ 45°C  |  Kritis > 60°C`,
     },
     {
-      label: condRise > 0 ? (condRise <= 35 ? `Kenaikan suhu kondensor per siklus ${condRise.toFixed(0)}°C - normal untuk pabrik` : condRise <= 50 ? `Kenaikan suhu kondensor ${condRise.toFixed(0)}°C - sedikit tinggi, cek ventilasi` : `Kenaikan suhu kondensor ${condRise.toFixed(0)}°C - kondensor perlu dibersihkan`) : `Ventilasi & fan kondensor berputar stabil`,
+      label: condRise > 0 ? (condRise <= 35 ? `Kenaikan suhu per siklus ${condRise.toFixed(0)}°C — normal` : condRise <= 50 ? `Kenaikan suhu per siklus ${condRise.toFixed(0)}°C — cek ventilasi` : `Kenaikan suhu ${condRise.toFixed(0)}°C — kondensor perlu dibersihkan`) : `Ventilasi & fan kondensor berputar stabil`,
       value: condRise > 0 ? `${condRise.toFixed(1)} °C` : `Lancar`, penaltyPct: lp(condRise, 35, 50), safe: condRise <= 35,
+      benchmark: `Target ≤ 35°C/siklus  |  Kritis > 50°C`,
     },
   ];
 
   // ── KELISTRIKAN: Kondisi kerja kompresor dan tegangan ───────────────────
+  const idlePct = Math.max(0, 100 - duty);
   const elecBreakdown: BreakdownItem[] = [
     {
-      label: duty <= 75 ? `Kompresor bekerja proporsional (${duty.toFixed(0)}% aktif) - efisiensi baik` : duty <= 92 ? `Kompresor aktif ${duty.toFixed(0)}% waktu - normal untuk kondisi pabrik panas` : `Kompresor bekerja hampir non-stop (${duty.toFixed(0)}%) - perlu investigasi`,
-      value: `${duty.toFixed(1)}%`, penaltyPct: lp(duty, 75, 92), safe: duty <= 75,
+      label: duty <= 82
+        ? `Kompresor Aktif ${duty.toFixed(0)}%, Istirahat (Fan Only) ${idlePct.toFixed(0)}% — Efisien & Awet`
+        : duty <= 92
+        ? `Kompresor Aktif ${duty.toFixed(0)}%, Istirahat ${idlePct.toFixed(0)}% — Beban tinggi di pabrik hangat`
+        : `Kompresor Aktif ${duty.toFixed(0)}%, Istirahat ${idlePct.toFixed(0)}% — Hampir non-stop, cek freon & kondensor`,
+      value: `${duty.toFixed(1)}%`,
+      penaltyPct: lp(duty, 82, 94),
+      safe: duty <= 82,
+      benchmark: `Target Pabrik ≤ 82%  |  Waspada 83–92%  |  Kritis > 92%`,
     },
     {
-      label: starts <= 8 ? `Frekuensi nyala-mati kompresor ${starts.toFixed(1)}x/jam - normal stabil` : starts <= 20 ? `Frekuensi nyala-mati ${starts.toFixed(1)}x/jam - sedikit tinggi (adaptasi suhu/beban)` : duty >= 70 ? `Siklus ${starts.toFixed(1)}x/jam terpantau tinggi saat unit baru menyala/pendinginan awal. Solusi: Aman, biarkan beroperasi normal 1-2 jam hingga suhu stabil.` : `Frekuensi ${starts.toFixed(1)}x/jam terlalu sering (short-cycle). Solusi: Cek pengaturan thermostat, relay kontak, atau tekanan freon.`, 
-      value: `${starts.toFixed(1)}x/jam`, penaltyPct: lp(starts, 8, 20), safe: starts <= 8,
+      label: starts <= 8
+        ? `Frekuensi Siklus On/Off: ${starts.toFixed(1)}x/jam — Siklus jeda kompresor normal`
+        : starts <= 20
+        ? `Frekuensi Siklus On/Off: ${starts.toFixed(1)}x/jam — Sedikit sering, adaptasi beban`
+        : `Frekuensi Siklus On/Off: ${starts.toFixed(1)}x/jam — Siklus terlalu rapat (short-cycling)`,
+      value: `${starts.toFixed(1)}x/jam`,
+      penaltyPct: lp(starts, 8, 20),
+      safe: starts <= 8,
+      benchmark: `Target Normal 1–8x/jam  |  Kritis > 20x/jam`,
     },
     {
-      label: voltAnomaly <= 0.05 ? `Tegangan listrik stabil (${(voltAnomaly*100).toFixed(1)}% variasi - dalam batas normal PLN)` : voltAnomaly <= 0.20 ? `Tegangan sedikit berfluktuasi (${(voltAnomaly*100).toFixed(1)}%) - pantau jika terus berlanjut` : `Tegangan tidak stabil (${(voltAnomaly*100).toFixed(1)}%) - beban berat bagi motor kompresor`,
-      value: `${(voltAnomaly * 100).toFixed(1)}%`, penaltyPct: lp(voltAnomaly, 0.05, 0.20), safe: voltAnomaly <= 0.05,
+      label: voltAnomaly <= 0.05
+        ? `Kualitas PLN Stabil ${(100 - voltAnomaly * 100).toFixed(0)}% — Tegangan normal 198V–242V`
+        : voltAnomaly <= 0.20
+        ? `PLN berfluktuasi ${(voltAnomaly * 100).toFixed(1)}% waktu — Disarankan pasang stabilizer`
+        : `PLN tidak stabil (${(voltAnomaly * 100).toFixed(1)}% fluktuasi) — Beban berat bagi motor`,
+      value: `${(voltAnomaly * 100).toFixed(1)}% drop`,
+      penaltyPct: lp(voltAnomaly, 0.05, 0.20),
+      safe: voltAnomaly <= 0.05,
+      benchmark: `Target ≤ 5% drop  |  Kritis > 20% drop  |  Standar PLN 198V–242V`,
     },
   ];
   return (
