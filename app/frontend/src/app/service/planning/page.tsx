@@ -295,8 +295,8 @@ export default function ScheduleManagementPage() {
     }
   };
 
-  const monthNames = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-  const dayNames = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+  const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+  const dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
   const today = new Date();
 
   // Render kanban card
@@ -581,105 +581,105 @@ export default function ScheduleManagementPage() {
           </div>
 
           {/* ============ MONTH VIEW ============ */}
-            <div className={styles.calendarGrid}>
-              {dayNames.map(d => <div key={d} className={styles.calendarDayHeader}>{d}</div>)}
-              {calDays.map((day, i) => {
-                if (day === null) return <div key={`e${i}`} className={`${styles.calendarDay} ${styles.calendarDayEmpty}`} />;
-                const sLogs = getLogsForDay(day);
-                const dLogs = getDeliveriesForDay(day);
-                const isToday = day === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear();
-                
-                // Merge unique logs scheduled for this day
-                const dayLogs = Array.from(new Map([...sLogs, ...dLogs].map(l => [l.id, l])).values());
-                const totalActivity = dayLogs.length;
-                const isHovered = hoveredDay === day;
+          <div className={styles.calendarGrid}>
+            {dayNames.map(d => <div key={d} className={styles.calendarDayHeader}>{d}</div>)}
+            {calDays.map((day, i) => {
+              if (day === null) return <div key={`e${i}`} className={`${styles.calendarDay} ${styles.calendarDayEmpty}`} />;
+              const sLogs = getLogsForDay(day);
+              const dLogs = getDeliveriesForDay(day);
+              const isToday = day === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear();
 
-                return (
-                  <div
-                    key={day}
-                    className={`${styles.calendarDay} ${isToday ? styles.calendarDayToday : ''}`}
-                    onMouseEnter={() => totalActivity > 0 && setHoveredDay(day)}
-                    onMouseLeave={() => setHoveredDay(null)}
-                  >
-                    <div className={styles.calendarDayHeaderRow}>
-                      <span className={styles.calendarDayNum}>{day}</span>
-                      {isToday && <span className={styles.calendarDayTodayBadge}>Hari Ini</span>}
-                    </div>
+              // Merge unique logs scheduled for this day
+              const dayLogs = Array.from(new Map([...sLogs, ...dLogs].map(l => [l.id, l])).values());
+              const totalActivity = dayLogs.length;
+              const isHovered = hoveredDay === day;
 
-                    {/* Compact Item Pills preview on date card: Tindakan + Nama Customer */}
-                    <div className={styles.calendarPillsWrapper}>
-                      {dayLogs.slice(0, 2).map((l: any) => {
-                        const isInstall = l.task_type === 'INSTALLATION';
-                        const isDelivery = !!l.delivery_date && !isInstall;
-                        const pillClass = isInstall ? styles.pillInstall : isDelivery ? styles.pillDelivery : styles.pillService;
-                        const tag = isInstall ? 'INST' : isDelivery ? 'DELIV' : 'SRV';
-                        const customerName = l.unit?.current_client?.company_name || l.client?.company_name || l.client_name || l.unit?.client?.company_name || 'Customer Umum';
+              return (
+                <div
+                  key={day}
+                  className={`${styles.calendarDay} ${isToday ? styles.calendarDayToday : ''}`}
+                  onMouseEnter={() => totalActivity > 0 && setHoveredDay(day)}
+                  onMouseLeave={() => setHoveredDay(null)}
+                >
+                  <div className={styles.calendarDayHeaderRow}>
+                    <span className={styles.calendarDayNum}>{day}</span>
+                    {isToday && <span className={styles.calendarDayTodayBadge}>Hari Ini</span>}
+                  </div>
 
-                        return (
-                          <div
-                            key={l.id}
-                            className={`${styles.calendarItemPill} ${pillClass}`}
-                            title={`[${tag}] ${customerName} — ${l.unit?.model_name || 'Unit'} (${l.call_id ? `#${l.call_id}` : l.id})`}
-                          >
-                            <span style={{ fontSize: '0.62rem', fontWeight: 800 }}>[{tag}]</span>
-                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{customerName}</span>
-                          </div>
-                        );
-                      })}
-                      {dayLogs.length > 2 && (
-                        <div className={styles.calendarMoreBadge}>
-                          +{dayLogs.length - 2} kegiatan lagi...
+                  {/* Compact Item Pills preview on date card: Tindakan + Nama Customer */}
+                  <div className={styles.calendarPillsWrapper}>
+                    {dayLogs.slice(0, 2).map((l: any) => {
+                      const isInstall = l.task_type === 'INSTALLATION';
+                      const isDelivery = !!l.delivery_date && !isInstall;
+                      const pillClass = isInstall ? styles.pillInstall : isDelivery ? styles.pillDelivery : styles.pillService;
+                      const tag = isInstall ? 'INST' : isDelivery ? 'DELIV' : 'SRV';
+                      const customerName = l.unit?.current_client?.company_name || l.client?.company_name || l.client_name || l.unit?.client?.company_name || 'Customer Umum';
+
+                      return (
+                        <div
+                          key={l.id}
+                          className={`${styles.calendarItemPill} ${pillClass}`}
+                          title={`[${tag}] ${customerName} — ${l.unit?.model_name || 'Unit'} (${l.call_id ? `#${l.call_id}` : l.id})`}
+                        >
+                          <span style={{ fontSize: '0.62rem', fontWeight: 800 }}>[{tag}]</span>
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{customerName}</span>
                         </div>
-                      )}
-                    </div>
-
-                    {/* Rich Hover Popover: Menampilkan rincian tiket kegiatan servis/pengiriman/instalasi */}
-                    {isHovered && totalActivity > 0 && (
-                      <div className={styles.calendarTooltip}>
-                        <div className={styles.tooltipHeader}>
-                          <span className={styles.tooltipDate}>
-                            {day} {monthNames[calMonth]} {calYear}
-                          </span>
-                          <span className={styles.tooltipCount}>{totalActivity} Jadwal</span>
-                        </div>
-                        <div className={styles.tooltipList}>
-                          {dayLogs.map((l: any) => {
-                            const isInstall = l.task_type === 'INSTALLATION';
-                            const isDelivery = !!l.delivery_date && !isInstall;
-                            const badgeColor = isInstall ? '#10b981' : isDelivery ? '#2E5BFF' : '#FF5722';
-                            const badgeBg = isInstall ? 'rgba(16,185,129,0.1)' : isDelivery ? 'rgba(46,91,255,0.1)' : 'rgba(255,87,34,0.1)';
-                            const taskName = isInstall ? 'Instalasi' : isDelivery ? 'Pengiriman' : (TASK_LABELS[l.task_type] || 'Servis');
-                            const customerName = l.unit?.current_client?.company_name || l.client?.company_name || l.client_name || l.unit?.client?.company_name || 'Customer Umum';
-
-                            return (
-                              <div key={l.id} className={styles.tooltipItem} style={{ borderLeftColor: badgeColor }}>
-                                <div className={styles.tooltipItemHeader}>
-                                  <span className={styles.tooltipCallId} style={{ fontWeight: 800, color: '#1e3a8a' }}>
-                                    {customerName}
-                                  </span>
-                                  <span className={styles.tooltipTaskBadge} style={{ background: badgeBg, color: badgeColor }}>
-                                    {taskName}
-                                  </span>
-                                </div>
-                                <div className={styles.tooltipUnit}>
-                                  {l.unit?.model_name || 'Unit Mesin'}
-                                  {l.unit?.serial_number && <span style={{ color: '#64748b', fontWeight: 400 }}> (SN: {l.unit.serial_number})</span>}
-                                  <span style={{ marginLeft: '6px', color: '#94a3b8', fontSize: '0.72rem' }}>#{l.call_id || l.id}</span>
-                                </div>
-                                <div className={styles.tooltipMeta}>
-                                  <span>Teknisi: <strong style={{ color: '#1e293b' }}>{l.technician_name || 'Belum ditugaskan'}</strong></span>
-                                  <span style={{ fontWeight: 700, color: l.status === 'COMPLETED' ? '#059669' : '#d97706' }}>{l.status}</span>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
+                      );
+                    })}
+                    {dayLogs.length > 2 && (
+                      <div className={styles.calendarMoreBadge}>
+                        +{dayLogs.length - 2} kegiatan lagi...
                       </div>
                     )}
                   </div>
-                );
-              })}
-            </div>
+
+                  {/* Rich Hover Popover: Menampilkan rincian tiket kegiatan servis/pengiriman/instalasi */}
+                  {isHovered && totalActivity > 0 && (
+                    <div className={styles.calendarTooltip}>
+                      <div className={styles.tooltipHeader}>
+                        <span className={styles.tooltipDate}>
+                          {day} {monthNames[calMonth]} {calYear}
+                        </span>
+                        <span className={styles.tooltipCount}>{totalActivity} Jadwal</span>
+                      </div>
+                      <div className={styles.tooltipList}>
+                        {dayLogs.map((l: any) => {
+                          const isInstall = l.task_type === 'INSTALLATION';
+                          const isDelivery = !!l.delivery_date && !isInstall;
+                          const badgeColor = isInstall ? '#10b981' : isDelivery ? '#2E5BFF' : '#FF5722';
+                          const badgeBg = isInstall ? 'rgba(16,185,129,0.1)' : isDelivery ? 'rgba(46,91,255,0.1)' : 'rgba(255,87,34,0.1)';
+                          const taskName = isInstall ? 'Instalasi' : isDelivery ? 'Pengiriman' : (TASK_LABELS[l.task_type] || 'Servis');
+                          const customerName = l.unit?.current_client?.company_name || l.client?.company_name || l.client_name || l.unit?.client?.company_name || 'Customer Umum';
+
+                          return (
+                            <div key={l.id} className={styles.tooltipItem} style={{ borderLeftColor: badgeColor }}>
+                              <div className={styles.tooltipItemHeader}>
+                                <span className={styles.tooltipCallId} style={{ fontWeight: 800, color: '#1e3a8a' }}>
+                                  {customerName}
+                                </span>
+                                <span className={styles.tooltipTaskBadge} style={{ background: badgeBg, color: badgeColor }}>
+                                  {taskName}
+                                </span>
+                              </div>
+                              <div className={styles.tooltipUnit}>
+                                {l.unit?.model_name || 'Unit Mesin'}
+                                {l.unit?.serial_number && <span style={{ color: '#64748b', fontWeight: 400 }}> (SN: {l.unit.serial_number})</span>}
+                                <span style={{ marginLeft: '6px', color: '#94a3b8', fontSize: '0.72rem' }}>#{l.call_id || l.id}</span>
+                              </div>
+                              <div className={styles.tooltipMeta}>
+                                <span>Teknisi: <strong style={{ color: '#1e293b' }}>{l.technician_name || 'Belum ditugaskan'}</strong></span>
+                                <span style={{ fontWeight: 700, color: l.status === 'COMPLETED' ? '#059669' : '#d97706' }}>{l.status}</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
 
           <div className={styles.calendarLegend}>
             <div className={styles.legendItem}><span className={`${styles.calendarDot} ${styles.calendarDotService}`} /> Servis (Perbaikan / Perawatan)</div>

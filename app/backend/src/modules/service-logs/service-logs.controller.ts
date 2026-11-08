@@ -2,6 +2,7 @@ import { Controller, Get, Post, Put, Body, Param, UseGuards, Request, Query, Use
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { ServiceLogsService } from './service-logs.service';
+import { ServiceLogsBulkService } from './service-logs-bulk.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -13,7 +14,10 @@ import { CreateServiceLogDto } from './dto/create-service-log.dto';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class ServiceLogsController {
-  constructor(private readonly serviceLogsService: ServiceLogsService) {}
+  constructor(
+    private readonly serviceLogsService: ServiceLogsService,
+    private readonly bulkService: ServiceLogsBulkService,
+  ) { }
 
   @Get()
   @Roles(UserRole.ADMIN, UserRole.PARTNER, UserRole.MECHANIC)
@@ -84,5 +88,45 @@ export class ServiceLogsController {
   @ApiOperation({ summary: 'Admin: Reschedule multiple service logs at once' })
   bulkReschedule(@Body() body: { ids: string[]; newDate: string; newDeliveryDate?: string }) {
     return this.serviceLogsService.bulkReschedule(body.ids, body.newDate, body.newDeliveryDate);
+  }
+
+  @Post('bulk-delete')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Admin: Bulk delete service logs by IDs' })
+  bulkDelete(@Body() body: { ids: string[] }) {
+    return this.serviceLogsService.bulkDelete(body.ids);
+  }
+
+  @Post('clear-all')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Admin: Clear all service logs (reset dummy data)' })
+  clearAll() {
+    return this.serviceLogsService.clearAll();
+  }
+
+  @Post('bulk-upload')
+  @Roles(UserRole.ADMIN)
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Admin: Bulk upload service logs from CSV / Spreadsheet' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary' },
+      },
+    },
+  })
+  async bulkUpload(
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 50 }), // 50MB (ribuan baris)
+        ],
+      }),
+    )
+    file: Express.Multer.File,
+  ) {
+    return this.bulkService.bulkUpload(file.buffer);
   }
 }

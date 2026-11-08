@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Proposal Struktur Biaya & Pricing IoT</title>
+<style>
+  body { font-family: 'Calibri', 'Segoe UI', Arial, sans-serif; font-size: 11pt; line-height: 1.6; color: #1e293b; margin: 30px; }
+  h1 { color: #1e3a8a; font-size: 18pt; border-bottom: 2px solid #1e3a8a; padding-bottom: 6px; margin-bottom: 6px; }
+  h2 { color: #1e40af; font-size: 13pt; margin-top: 20px; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px; }
+  h3 { color: #0f172a; font-size: 11pt; margin-top: 14px; font-weight: bold; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; }
+  th { background-color: #f1f5f9; color: #0f172a; font-weight: bold; border: 1px solid #cbd5e1; padding: 8px 10px; text-align: left; font-size: 10pt; }
+  td { border: 1px solid #cbd5e1; padding: 8px 10px; font-size: 10pt; }
+  tr:nth-child(even) { background-color: #f8fafc; }
+  blockquote { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 10px 14px; margin: 12px 0; }
+  ul, ol { margin: 6px 0; padding-left: 20px; }
+  li { margin-bottom: 4px; }
+  code { font-family: Consolas, monospace; background: #f1f5f9; padding: 1px 4px; font-size: 9.5pt; }
+</style>
+</head>
+<body>
+<h1>PROPOSAL STRUKTUR BIAYA & SKEMA PRICING IOT CLOUD SERVICE</h1>
+<p><strong>Holicindo Unit Passport Portal</strong></p>
+<p><em>Dokumen Rujukan Project Manager (PM) untuk Meeting Klien / Customer</em></p>
+<p>---</p>
+<h2>1. Executive Summary</h2>
+<p>Dokumen ini disusun untuk memberikan landasan finansial dan teknis yang akurat dalam penentuan harga langganan layanan IoT (<em>IoT Cloud Subscription Fee</em>) per unit mesin pendingin (chiller/freezer).</p>
+<p>Berdasarkan data aktual pada <strong>AWS Cost Explorer</strong> (Oktober 2026), total biaya operasional infrastruktur cloud Holicindo tercatat sebesar <strong>\$96.87 / bulan</strong> (setara <strong>± Rp 1.550.000 / bulan</strong>). Dokumen ini membedah kalkulasi modal dasar per unit (<em>Cost of Goods Sold / COGS</em>), logika harga dinamis berdasarkan skala volume unit (< 50 vs ≥ 50 unit), serta validasi fitur teknis yang siap didemokan.</p>
+<p>---</p>
+<h2>2. Struktur Biaya Infrastruktur Cloud Aktual (AWS)</h2>
+<p>Infrastruktur pendukung Unit Passport Portal dan modul IoT ESP32 berjalan di region <code>ap-southeast-2</code> dengan rincian biaya aktual per bulan sebagai berikut:</p>
+<table>
+<tr><th>Komponen Layanan AWS</th><th>Spesifikasi Teknis</th><th>Biaya Bulanan (USD)</th><th>Biaya Bulanan (IDR)*</th><th>Peran / Fungsi</th></tr>
+<tr><td><strong>Amazon EC2 + Compute</strong></td><td>Instance Server Backend (NestJS)</td><td>\$32.83</td><td>Rp 525.280</td><td>Pemrosesan logic telemetri, alert engine, & API</td></tr>
+<tr><td><strong>AWS Amplify</strong></td><td>Hosting Frontend (Next.js)</td><td>\$21.30</td><td>Rp 340.800</td><td>Web Portal Client & Admin Dashboard</td></tr>
+<tr><td><strong>Amazon RDS (PostgreSQL)</strong></td><td>`db.t3.micro` + GP2 Storage</td><td>\$18.91</td><td>Rp 302.560</td><td>Database master unit & riwayat telemetri (5-min throttle)</td></tr>
+<tr><td><strong>AWS VPC & Networking</strong></td><td>Public IPv4 Address allocation</td><td>\$14.14</td><td>Rp 226.240</td><td>Konektivitas publik dan gateway aman</td></tr>
+<tr><td><strong>Pajak (Tax / PPN)</strong></td><td>AWS Tax Invoice</td><td>\$9.60</td><td>Rp 153.600</td><td>Pajak resmi AWS</td></tr>
+<tr><td><strong>Amazon S3 Storage</strong></td><td>Bucket `holicindo-attachments`</td><td>\$0.08</td><td>Rp 1.280</td><td>Penyimpanan file lampiran & servis</td></tr>
+<tr><td><strong>TOTAL FIXED COST AWS</strong></td><td><strong>Multi-Tenant Infrastructure</strong></td><td><strong>\$96.87</strong></td><td><strong>Rp 1.549.760</strong></td><td><strong>Total Biaya Tetap per Bulan</strong></td></tr>
+</table>
+<p><em>\</em>Kurs estimasi: 1 USD = Rp 16.000*</p>
+<blockquote><strong>CATATAN PENTING:</strong><br>Biaya \$96.87/bulan ini bersifat **Fixed Baseline Infrastructure**. Biaya ini relatif stabil baik untuk melayani 10 unit maupun 100 unit. Oleh karena itu, semakin banyak unit yang terhubung, **biaya modal riil AWS per unit akan menurun drastis**.</blockquote>
+<p>---</p>
+<h2>3. Kalkulasi Modal Riil AWS per Unit (COGS Analysis)</h2>
+<p>Tabel berikut menunjukkan biaya modal murni AWS yang ditanggung Holicindo untuk setiap unit per bulan:</p>
+<table>
+<tr><th>Skala Unit Terpasang</th><th>Total Cost AWS / Bln</th><th>Modal Riil AWS per Unit / Bulan</th><th>Margin Risiko Holicindo</th></tr>
+<tr><td><strong>10 Unit</strong></td><td>Rp 1.550.000</td><td><strong>Rp 155.000 / unit</strong></td><td><strong>Sangat Tinggi</strong> (Rentan nombok jika harga jual rendah)</td></tr>
+<tr><td><strong>20 Unit</strong></td><td>Rp 1.550.000</td><td><strong>Rp 77.500 / unit</strong></td><td><strong>Tinggi</strong></td></tr>
+<tr><td><strong>35 Unit</strong></td><td>Rp 1.550.000</td><td><strong>Rp 44.300 / unit</strong></td><td><strong>Moderat</strong></td></tr>
+<tr><td><strong>50 Unit</strong></td><td>Rp 1.600.000</td><td><strong>Rp 32.000 / unit</strong></td><td><strong>Break-Even Threshold</strong></td></tr>
+<tr><td><strong>80 Unit</strong></td><td>Rp 1.650.000</td><td><strong>Rp 20.625 / unit</strong></td><td><strong>Aman & Efisien</strong></td></tr>
+<tr><td><strong>100 Unit</strong></td><td>Rp 1.700.000</td><td><strong>Rp 17.000 / unit</strong></td><td><strong>Sangat Efisien (<em>Economies of Scale</em>)</strong></td></tr>
+<tr><td><strong>200 Unit</strong></td><td>Rp 1.850.000</td><td><strong>Rp 9.250 / unit</strong></td><td><strong>Optimal</strong></td></tr>
+</table>
+<p>---</p>
+<h2>4. Logika Harga Dinamis (Dynamic Tiering Model)</h2>
+<p>Untuk mengantisipasi risiko modal pada populasi unit sedikit dan memberikan insentif diskon volume pada populasi besar, ditetapkan <strong>2 Kategori Harga Resmi</strong>:</p>
+<pre style="background:#f1f5f9; padding:10px; border-radius:4px; font-family:Consolas, monospace; font-size:9pt;">flowchart TD
+    A[Unit IoT Terdaftar Klien] --> B{Jumlah Unit Aktif?}
+    B -->|Kurang dari 50 Unit| C[TIER 1: Standard / Pilot Tier]
+    B -->|50 Unit atau Lebih| D[TIER 2: Enterprise / Volume Tier]
+    
+    C --> C1[Harga: Rp 55.000 / unit / bln]
+    C --> C2[Melindungi Fixed Cost Server Holicindo]
+    
+    D --> D1[Harga: Rp 35.000 / unit / bln]
+    D --> D2[Diskon Volume ~36% untuk Customer]
+</pre>
+<h3>Rincian Skema:</h3>
+<h3>A. TIER 1: Standard / Pilot Tier (Pemakaian < 50 Unit)</h3>
+<ul><li><strong>Harga Penawaran:</strong> <strong>Rp 55.000 / unit / bulan</strong> (atau <strong>\$3.50 / unit / bulan</strong>)</li></ul>
+<ul><li><strong>Rasional Finansial:</strong></li></ul>
+<ul><li>Pada skala di bawah 50 unit, beban server per unit masih tinggi.</li></ul>
+<ul><li>Pada 30 unit: Pendapatan = <code>30 × Rp 55.000 = Rp 1.650.000</code>. Ini menutup penuh biaya server AWS (Rp 1.550.000) dan memastikan Holicindo tidak mengalami kerugian operasional server (*cashflow positive*).</li></ul>
+<h3>B. TIER 2: Enterprise / Volume Tier (Pemakaian ≥ 50 Unit)</h3>
+<ul><li><strong>Harga Penawaran:</strong> <strong>Rp 35.000 / unit / bulan</strong> (atau <strong>\$2.20 / unit / bulan</strong>) — *Diskon Volume 36%*</li></ul>
+<ul><li><strong>Rasional Finansial:</strong></li></ul>
+<ul><li>Mendorong klien untuk melakukan rollout menyeluruh pada semua unit chiller yang mereka miliki.</li></ul>
+<ul><li>Pada 60 unit: Pendapatan = <code>60 × Rp 35.000 = Rp 2.100.000</code> (Gross Profit ± Rp 500.000/bln).</li></ul>
+<ul><li>Pada 100 unit: Pendapatan = <code>100 × Rp 35.000 = Rp 3.500.000</code> (Gross Profit ± Rp 1.800.000/bln).</li></ul>
+<p>---</p>
+<h2>5. Ringkasan Format Penawaran ke Klien</h2>
+<p>PM dapat membawa tabel rangkuman komersial ini langsung ke meja negosiasi:</p>
+<table>
+<tr><th>Kategori Paket</th><th>Volume Unit</th><th>Biaya Layanan Cloud IoT / Unit / Bulan</th><th>Simulasi Biaya Klien / Bulan</th><th>Status Diskon</th></tr>
+<tr><td><strong>Standard Tier</strong></td><td>1 – 49 Unit</td><td><strong>Rp 55.000</strong></td><td>20 Unit = Rp 1.100.000</td><td>Regular Rate</td></tr>
+<tr><td><strong>Enterprise Tier</strong></td><td>≥ 50 Unit</td><td><strong>Rp 35.000</strong></td><td>60 Unit = Rp 2.100.000</td><td><strong>Diskon 36%</strong></td></tr>
+</table>
+<p><em>(Catatan: Biaya di atas belum termasuk pengadaan perangkat hardware ESP32 + sensor fisik PZEM/DS18B20 jika perangkat dibeli terpisah di awal).</em></p>
+<p>---</p>
+<h2>6. Kesiapan Teknis & Selling Points (Validasi Sistem)</h2>
+<p>Semua poin nilai tambah (<em>value proposition</em>) yang ditawarkan kepada klien <strong>telah terpasang dan beroperasi secara riil di dalam kode produksi</strong>:</p>
+<ol><li><strong>Pemantauan 24/7 Real-Time Telemetry</strong></li></ol>
+<ul><li>*Status Teknis:* Live melalui MQTT HiveMQ broker terhubung ke ESP32.</li></ul>
+<ul><li>*Parameter Terukur:* Suhu kabinet, suhu evaporator, suhu kondensor, voltase PLN, daya (Watt), dan sensor 4 pintu.</li></ul>
+<ul><li>*Lokasi Kode:* <code>app/backend/src/modules/iot/iot.service.ts</code> (Line 141-152).</li></ul>
+<ol><li><strong>Deteksi Anomali & Early Warning Alert Otomatis</strong></li></ol>
+<ul><li>*Status Teknis:* Sistem aktif melakukan komparasi terhadap ambang batas batas aman (*safety thresholds*).</li></ul>
+<ul><li>*Proteksi:* Memicu alert darurat ketika suhu kabinet naik di atas 10°C, tegangan listrik tidak stabil (< 190V atau > 240V), atau pintu kabinet terbuka terlalu lama.</li></ul>
+<ul><li>*Lokasi Kode:* <code>app/backend/src/modules/iot/iot.service.ts</code> (Line 193-250).</li></ul>
+<ol><li><strong>Algoritma Health Score & Predictive Maintenance</strong></li></ol>
+<ul><li>*Status Teknis:* Menghitung kondisi keausan mesin dengan skor komprehensif (0-100%).</li></ul>
+<ul><li>*Fitur Pintar:* Menghitung sub-skor pendinginan kabinet, sub-skor kelistrikan, serta waktu pemulihan suhu pasca pintu dibuka (*door recovery time*). Mengeluarkan rekomendasi langsung ke staf operasional klien.</li></ul>
+<ul><li>*Lokasi Kode:* <code>app/frontend/src/components/iot/UnitHealthWidget.tsx</code> (Line 9-45).</li></ul>
+<ol><li><strong>Audit Trail & Data Retention</strong></li></ol>
+<ul><li>*Status Teknis:* Snapshot riwayat berkala tersimpan otomatis setiap 5 menit ke tabel PostgreSQL AWS RDS (<code>iot_telemetry_logs</code>) untuk kebutuhan laporan kepatuhan suhu (HACCP/SOP).</li></ul>
+<ul><li>*Lokasi Kode:* <code>app/backend/src/modules/iot/iot.service.ts</code> (Line 115-137).</li></ul>
+<p>---</p>
+<p><em>Dokumen ini diterbitkan oleh Tim Engineering Holicindo Unit Passport Portal sebagai panduan resmi komersial dan operasional.</em></p>
+</body></html>

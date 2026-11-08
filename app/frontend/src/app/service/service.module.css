@@ -1513,4 +1513,145 @@
   box-shadow: 0 0 0 3px rgba(46, 91, 255, 0.1);
 }
 
+/* ==================== BULK BAR & PAGINATION ==================== */
+.bulkBar {
+  background: var(--color-deep-navy, #0f172a);
+  color: #ffffff;
+  padding: 12px 24px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.15);
+  animation: fadeIn 0.25s ease-out;
+}
+
+.bulkBarText {
+  font-size: 0.9rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bulkBarActions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.bulkBtn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.bulkBtnDelete {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.bulkBtnDelete:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+.bulkBtnClearAll {
+  background: #b91c1c;
+  color: #ffffff;
+}
+
+.bulkBtnClearAll:hover {
+  background: #991b1b;
+}
+
+.bulkBtnCancel {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+.bulkBtnCancel:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Pagination */
+.paginationContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 8px 12px 8px;
+  flex-wrap: wrap;
+  gap: 16px;
+  border-top: 1px solid rgba(0, 31, 63, 0.08);
+  margin-top: 8px;
+}
+
+.paginationInfo {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.paginationInfo strong {
+  color: var(--color-deep-navy, #0f172a);
+  font-weight: 700;
+}
+
+.paginationControls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.paginationBtn {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 31, 63, 0.12);
+  background: #ffffff;
+  color: #334155;
+  font-size: 0.82rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.paginationBtn:hover:not(:disabled) {
+  border-color: var(--color-cobalt-blue, #2E5BFF);
+  color: var(--color-cobalt-blue, #2E5BFF);
+  background: rgba(46, 91, 255, 0.04);
+}
+
+.paginationBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.paginationBtnActive {
+  background: var(--color-cobalt-blue, #2E5BFF) !important;
+  color: #ffffff !important;
+  border-color: var(--color-cobalt-blue, #2E5BFF) !important;
+  font-weight: 800;
+}
+
+.paginationEllipsis {
+  padding: 0 4px;
+  color: #94a3b8;
+  font-size: 0.82rem;
+}
+
+
 

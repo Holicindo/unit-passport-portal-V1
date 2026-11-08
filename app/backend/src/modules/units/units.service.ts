@@ -57,20 +57,38 @@ export class UnitsService {
     return unit;
   }
 
-  // L4 Admin — Full list with pagination
+  // L4 Admin — Full list with pagination (IoT units diprioritaskan di paling atas)
   async findAll(page: number = 1, limit: number = 10, search?: string, city?: string, client?: string) {
-    const where: any = {};
-    if (search) where.serial_number = ILike(`%${search}%`);
-    if (city) where.city = city;
-    if (client) where.current_client = { id: client };
+    const qb = this.unitRepo.createQueryBuilder('unit')
+      .leftJoinAndSelect('unit.current_client', 'current_client')
+      .leftJoinAndSelect('unit.warranties', 'warranties')
+      .leftJoinAndSelect('unit.service_logs', 'service_logs');
 
-    const [data, total] = await this.unitRepo.findAndCount({
-      where,
-      relations: ['current_client', 'warranties', 'service_logs'],
-      skip: (page - 1) * limit,
-      take: limit,
-      order: { created_at: 'DESC' },
-    });
+    if (search) {
+      qb.andWhere('(unit.serial_number ILIKE :search OR unit.model_name ILIKE :search OR current_client.company_name ILIKE :search)', {
+        search: `%${search}%`,
+      });
+    }
+
+    if (city) {
+      qb.andWhere('(unit.city = :city OR current_client.city = :city)', { city });
+    }
+
+    if (client) {
+      qb.andWhere('current_client.id = :client', { client });
+    }
+
+    // Prioritaskan unit yang terpasang IoT di baris paling atas halaman (CASE WHEN iot_unit_id IS NOT NULL THEN 0 ELSE 1 END), lalu created_at DESC
+    qb.addSelect(
+      `CASE WHEN unit.iot_unit_id IS NOT NULL AND unit.iot_unit_id != '' THEN 0 ELSE 1 END`,
+      'has_iot'
+    );
+    qb.orderBy('has_iot', 'ASC')
+      .addOrderBy('unit.created_at', 'DESC');
+
+    qb.skip((page - 1) * limit).take(limit);
+
+    const [data, total] = await qb.getManyAndCount();
 
     return {
       data,

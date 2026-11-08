@@ -24,7 +24,7 @@ export class ServiceLogsService {
       relations: ['unit', 'unit.current_client', 'partner', 'attachments'],
       skip: (page - 1) * limit,
       take: limit,
-      order: { created_at: 'DESC' },
+      order: { service_date: 'DESC', created_at: 'DESC' },
     });
 
     return {
@@ -171,5 +171,17 @@ export class ServiceLogsService {
       return log;
     });
     return this.logRepo.save(updated);
+  }
+
+  async bulkDelete(ids: string[]) {
+    if (!ids || ids.length === 0) return { deleted: 0 };
+    const res = await this.logRepo.delete(ids);
+    return { deleted: res.affected || 0 };
+  }
+
+  async clearAll() {
+    // Menghapus semua service logs (bersihkan database dari dummy data)
+    await this.logRepo.createQueryBuilder().delete().from(ServiceLog).execute();
+    return { success: true, message: 'Seluruh data log servis telah dikosongkan.' };
   }
 }

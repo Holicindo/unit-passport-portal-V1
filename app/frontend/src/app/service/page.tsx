@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { serviceLogApi, unitApi, partnerApi, userApi } from '@/lib/api';
 import {
-  Wrench, Search, Plus, Loader2, FileText, CheckCircle2, AlertTriangle, Edit2, Check, X, RefreshCw, ChevronDown, CalendarDays, Users
+  Wrench, Search, Plus, Loader2, FileText, CheckCircle2, AlertTriangle, Edit2, Check, X, RefreshCw, ChevronDown, CalendarDays, Users, Trash2, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import { MultiSelect } from '@/components/ui/MultiSelect';
@@ -14,6 +14,8 @@ import { parseIssueDescription, formatDate } from './utils';
 import ServiceFormModal, { ConfirmSubmitModal } from './components/ServiceFormModal';
 import ServiceDetailModal from './components/ServiceDetailModal';
 import CompleteSparepartModal from './components/CompleteSparepartModal';
+import BulkUploadModal from './components/BulkUploadModal';
+import { UploadCloud } from 'lucide-react';
 import styles from './service.module.css';
 
 export default function ServicePage() {
@@ -56,6 +58,11 @@ export default function ServicePage() {
   const [searchQuery, setSearchQuery] = useState(initialCallId);
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [pageSize, setPageSize] = useState(20);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedCallIds, setSelectedCallIds] = useState<string[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showClearAllModal, setShowClearAllModal] = useState(false);
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
 
   // Modals
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -70,6 +77,9 @@ export default function ServicePage() {
 
   // Complete Sparepart Modal State
   const [sparepartModalTicket, setSparepartModalTicket] = useState<any | null>(null);
+
+  // Bulk Upload Modal State
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
 
   // Sub-row inline edit & add row states
   const [editingRowId, setEditingRowId] = useState<string | null>(null);
@@ -104,7 +114,7 @@ export default function ServicePage() {
     setError(null);
     try {
       const [logsSettled, unitsSettled, partnersSettled, usersSettled] = await Promise.allSettled([
-        serviceLogApi.findAll(1, 200),
+        serviceLogApi.findAll(1, 10000),
         unitApi.findAll(1, 1000),
         partnerApi.findAll(),
         userApi.findAll(),
@@ -193,24 +203,100 @@ export default function ServicePage() {
   const filteredLogs = logs.filter(log => {
     const matchesStatus = statusFilter === 'ALL' || log.status === statusFilter;
     const q = searchQuery.toLowerCase();
-    const matchesSearch = [log.unit?.serial_number, log.unit?.model_name, log.partner?.partner_name, log.issue_description, log.technician_name]
+    const matchesSearch = [log.unit?.serial_number, log.unit?.model_name, log.partner?.partner_name, log.issue_description, log.technician_name, log.call_id]
       .some(v => v?.toLowerCase().includes(q));
     return matchesStatus && matchesSearch;
-  }).slice(0, pageSize);
+  });
 
   const totalRequests = logs.length;
   const pendingRequests = logs.filter(l => l.status === 'PENDING').length;
   const completedRequests = logs.filter(l => l.status === 'COMPLETED').length;
 
+  // Grouping logs by call_id
   const groupedLogs = (Object.values(filteredLogs.reduce((acc, log) => {
     const cid = log.call_id || log.id;
     if (!acc[cid]) acc[cid] = [];
     acc[cid].push(log);
     return acc;
   }, {} as Record<string, any[]>)) as any[][]).map((group: any[]) => {
-    group.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    return { mainLog: group[0], history: group };
+    // Sort riwayat sub-kegiatan di dalam call_id: yang terbaru di atas
+    group.sort((a, b) => new Date(b.service_date || b.created_at).getTime() - new Date(a.service_date || a.created_at).getTime());
+    return { mainLog: group[0], history: group, allLogIds: group.map(g => g.id) };
   });
+
+  // Urutkan grup tiket: Tahun/Tanggal terbaru paling atas (DESC)
+  // Jadi tahun 2026 / tiket baru tampil paling depan/atas, tahun 2023 / lama di barisan belakang
+  groupedLogs.sort((a, b) => {
+    const timeA = new Date(a.mainLog.service_date || a.mainLog.created_at).getTime() || 0;
+    const timeB = new Date(b.mainLog.service_date || b.mainLog.created_at).getTime() || 0;
+    return timeB - timeA;
+  });
+
+  // Pagination kalkulasi
+  const totalPages = Math.max(1, Math.ceil(groupedLogs.length / pageSize));
+  const validCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (validCurrentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, groupedLogs.length);
+  const paginatedGroupedLogs = groupedLogs.slice(startIndex, endIndex);
+
+  // Checkbox helpers
+  const currentPageCallIds = paginatedGroupedLogs.map(g => g.mainLog.call_id || g.mainLog.id);
+  const isAllCurrentPageSelected = currentPageCallIds.length > 0 && currentPageCallIds.every(cid => selectedCallIds.includes(cid));
+
+  const toggleSelectAllCurrentPage = () => {
+    if (isAllCurrentPageSelected) {
+      setSelectedCallIds(prev => prev.filter(cid => !currentPageCallIds.includes(cid)));
+    } else {
+      setSelectedCallIds(prev => Array.from(new Set([...prev, ...currentPageCallIds])));
+    }
+  };
+
+  const toggleSelectCallId = (cid: string) => {
+    setSelectedCallIds(prev =>
+      prev.includes(cid) ? prev.filter(id => id !== cid) : [...prev, cid]
+    );
+  };
+
+  // Handler Bulk Delete
+  const handleBulkDelete = async () => {
+    if (selectedCallIds.length === 0) return;
+
+    try {
+      setIsDeleting(true);
+      // Kumpulkan semua log IDs yang termasuk dalam call_id yang dipilih
+      const targetLogIds: string[] = [];
+      groupedLogs.forEach(g => {
+        const cid = g.mainLog.call_id || g.mainLog.id;
+        if (selectedCallIds.includes(cid)) {
+          targetLogIds.push(...g.allLogIds);
+        }
+      });
+
+      await serviceLogApi.bulkDelete(targetLogIds);
+      setSelectedCallIds([]);
+      setShowBulkDeleteModal(false);
+      await fetchData();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Gagal menghapus tiket terpilih.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Handler Clear All (Kosongkan Semua Data Dummy)
+  const handleClearAllData = async () => {
+    try {
+      setIsDeleting(true);
+      await serviceLogApi.clearAll();
+      setShowClearAllModal(false);
+      setSelectedCallIds([]);
+      await fetchData();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Gagal mengosongkan data.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const toggleExpand = (e: React.MouseEvent, cid: string) => {
     e.stopPropagation();
@@ -405,6 +491,22 @@ export default function ServicePage() {
           </div>
           <button
             className="dtToolbarCreateBtn"
+            onClick={() => setIsBulkModalOpen(true)}
+            style={{ background: '#059669', color: '#fff' }}
+            title="Import data CSV / Spreadsheet servis"
+          >
+            <UploadCloud size={16} strokeWidth={2.5} />Import CSV
+          </button>
+          <button
+            className="dtToolbarCreateBtn"
+            onClick={() => setShowClearAllModal(true)}
+            style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#dc2626', border: '1px solid rgba(239, 68, 68, 0.3)' }}
+            title="Bersihkan data dummy atau reset seluruh data servis"
+          >
+            <Trash2 size={16} strokeWidth={2.5} />Kosongkan Data
+          </button>
+          <button
+            className="dtToolbarCreateBtn"
             onClick={() => setIsModalOpen(true)}
             style={{ background: '#2E5BFF', color: '#fff' }}
           >
@@ -425,12 +527,39 @@ export default function ServicePage() {
         </div>
       </div>
 
+      {/* Bulk Action Bar (saat ada tiket yang dicentang) */}
+      {selectedCallIds.length > 0 && (
+        <div className={styles.bulkBar}>
+          <div className={styles.bulkBarText}>
+            <CheckCircle2 size={18} style={{ color: '#60a5fa' }} />
+            <span><strong>{selectedCallIds.length}</strong> tiket servis terpilih</span>
+          </div>
+          <div className={styles.bulkBarActions}>
+            <button
+              className={`${styles.bulkBtn} ${styles.bulkBtnDelete}`}
+              onClick={() => setShowBulkDeleteModal(true)}
+              disabled={isDeleting}
+            >
+              {isDeleting ? <Loader2 size={14} className={styles.spin} /> : <Trash2 size={14} />}
+              Hapus Tiket Terpilih
+            </button>
+            <button
+              className={`${styles.bulkBtn} ${styles.bulkBtnCancel}`}
+              onClick={() => setSelectedCallIds([])}
+              disabled={isDeleting}
+            >
+              Batal
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Table / Cards */}
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '60px' }}><Loader2 size={36} className={styles.spin} style={{ color: 'var(--color-cobalt-blue)' }} /></div>
       ) : error ? (
         <div className={styles.errorAlert}>{error}</div>
-      ) : filteredLogs.length === 0 ? (
+      ) : groupedLogs.length === 0 ? (
         <div className={styles.tableContainer}><div className={styles.emptyState}><Wrench size={48} style={{ color: 'var(--color-space-grey)', opacity: 0.4 }} /><h3 className={styles.emptyTitle}>Belum Ada Log Servis</h3><p className={styles.emptyDesc}>Tidak ada permintaan servis yang sesuai.</p></div></div>
       ) : (<>
         {/* Desktop Table */}
@@ -438,27 +567,45 @@ export default function ServicePage() {
           <table className={styles.table}>
             <thead>
               <tr>
+                <th style={{ width: '40px', textAlign: 'center' }}>
+                  <input
+                    type="checkbox"
+                    checked={isAllCurrentPageSelected}
+                    onChange={toggleSelectAllCurrentPage}
+                    title="Pilih semua di halaman ini"
+                    style={{ cursor: 'pointer', width: '15px', height: '15px', accentColor: '#2E5BFF' }}
+                  />
+                </th>
                 <th style={{ width: '11%' }}>CALL ID</th>
                 <th style={{ width: '10%' }}>COMPLAINT DATE</th>
                 <th style={{ width: '15%' }}>CUSTOMER &amp; BRANCH</th>
                 <th style={{ width: '14%' }}>PRODUCT (UNIT)</th>
                 <th style={{ width: '15%' }}>ISSUE </th>
                 <th style={{ width: '14%' }}>HANDLING</th>
-                <th style={{ width: '14%' }}>RESULT</th>
+                <th style={{ width: '13%' }}>RESULT</th>
                 <th style={{ width: '10%' }}>SPAREPART</th>
                 <th style={{ width: '8%', textAlign: 'center' }}>STATUS</th>
               </tr>
             </thead>
             <tbody>
-              {groupedLogs.map(({ mainLog, history }, cardIdx) => {
+              {paginatedGroupedLogs.map(({ mainLog, history }, cardIdx) => {
                 const cid = mainLog.call_id || mainLog.id;
                 const isExpanded = expandedCallIds[cid];
                 const cardColors = [styles.cardBlue, styles.cardEmerald, styles.cardAmber, styles.cardPurple, styles.cardRose];
                 const cardAccentClass = cardColors[cardIdx % cardColors.length];
+                const isChecked = selectedCallIds.includes(cid);
 
                 return (
                   <React.Fragment key={mainLog.id}>
-                    <tr className={`${cardAccentClass} ${styles.clickableRow}`} style={{ cursor: 'pointer', background: isExpanded ? 'rgba(46,91,255,0.03)' : undefined }}>
+                    <tr className={`${cardAccentClass} ${styles.clickableRow}`} style={{ cursor: 'pointer', background: isChecked ? 'rgba(46,91,255,0.06)' : isExpanded ? 'rgba(46,91,255,0.03)' : undefined }}>
+                      <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => toggleSelectCallId(cid)}
+                          style={{ cursor: 'pointer', width: '15px', height: '15px', accentColor: '#2E5BFF' }}
+                        />
+                      </td>
                       <td className={styles.logId}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <button onClick={(e) => toggleExpand(e, cid)} className={styles.expandBtn} title={isExpanded ? 'Tutup riwayat' : 'Buka riwayat'}>
@@ -603,7 +750,7 @@ export default function ServicePage() {
                     </tr>
                     {isExpanded && (
                       <tr>
-                        <td colSpan={9} style={{ padding: 0, background: '#f8fafc', borderBottom: '2px solid #cbd5e1' }}>
+                        <td colSpan={10} style={{ padding: 0, background: '#f8fafc', borderBottom: '2px solid #cbd5e1' }}>
                           <div style={{ padding: '16px 24px 16px 36px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
                               <h4 style={{ fontSize: '0.8rem', color: '#1e293b', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 800 }}>
@@ -958,15 +1105,24 @@ export default function ServicePage() {
 
         {/* Mobile Cards (Dengan variasi warna border/aksen dan field bersih) */}
         <div className={styles.mobileView}>
-          {groupedLogs.map(({ mainLog }, cardIdx) => {
+          {paginatedGroupedLogs.map(({ mainLog }, cardIdx) => {
             const cid = mainLog.call_id || mainLog.id;
             const cardColors = [styles.cardBlue, styles.cardEmerald, styles.cardAmber, styles.cardPurple, styles.cardRose];
             const cardAccentClass = cardColors[cardIdx % cardColors.length];
+            const isChecked = selectedCallIds.includes(cid);
 
             return (
               <div key={mainLog.id} className={`${styles.mobileCard} ${cardAccentClass} ${styles.clickableCard}`} onClick={() => setSelectedDetailLog(mainLog)}>
                 <div className={styles.mobileCardHeader}>
-                  <span className={styles.mobileLogId} style={{ cursor: 'pointer', textDecoration: 'underline', textDecorationColor: 'rgba(46,91,255,0.3)' }}>{cid}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={(e) => { e.stopPropagation(); toggleSelectCallId(cid); }}
+                      style={{ cursor: 'pointer', width: '16px', height: '16px', accentColor: '#2E5BFF' }}
+                    />
+                    <span className={styles.mobileLogId} style={{ cursor: 'pointer', textDecoration: 'underline', textDecorationColor: 'rgba(46,91,255,0.3)' }}>{cid}</span>
+                  </div>
                   <span className={`${styles.badge} ${mainLog.status === 'PENDING' ? styles.badgePending : mainLog.status === 'IN PROGRESS' ? styles.badgeInProgress : mainLog.status === 'COMPLETED' ? styles.badgeCompleted : styles.badgeCancelled}`}>
                     Kondisi: {mainLog.status}
                   </span>
@@ -1001,6 +1157,65 @@ export default function ServicePage() {
               </div>
             );
           })}
+        </div>
+
+        {/* ================= PAGINATION CONTROLS ================= */}
+        <div className={styles.paginationContainer}>
+          <div className={styles.paginationInfo}>
+            Menampilkan <strong>{groupedLogs.length === 0 ? 0 : startIndex + 1}</strong> - <strong>{endIndex}</strong> dari <strong>{groupedLogs.length}</strong> tiket
+            {searchQuery && <span> (difilter dari {totalRequests} total entri)</span>}
+          </div>
+          <div className={styles.paginationControls}>
+            <button
+              className={styles.paginationBtn}
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={validCurrentPage <= 1}
+              title="Halaman Sebelumnya"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            {(() => {
+              const pages: (number | string)[] = [];
+              const maxButtons = 5;
+              if (totalPages <= maxButtons) {
+                for (let i = 1; i <= totalPages; i++) pages.push(i);
+              } else {
+                pages.push(1);
+                if (validCurrentPage > 3) pages.push('...');
+                const start = Math.max(2, validCurrentPage - 1);
+                const end = Math.min(totalPages - 1, validCurrentPage + 1);
+                for (let i = start; i <= end; i++) {
+                  if (!pages.includes(i)) pages.push(i);
+                }
+                if (validCurrentPage < totalPages - 2) pages.push('...');
+                if (!pages.includes(totalPages)) pages.push(totalPages);
+              }
+
+              return pages.map((p, idx) => {
+                if (typeof p === 'string') {
+                  return <span key={`ellipsis-${idx}`} className={styles.paginationEllipsis}>…</span>;
+                }
+                const isActive = p === validCurrentPage;
+                return (
+                  <button
+                    key={p}
+                    className={`${styles.paginationBtn} ${isActive ? styles.paginationBtnActive : ''}`}
+                    onClick={() => setCurrentPage(p)}
+                  >
+                    {p}
+                  </button>
+                );
+              });
+            })()}
+            <button
+              className={styles.paginationBtn}
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={validCurrentPage >= totalPages}
+              title="Halaman Berikutnya"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
         </div>
       </>)}
 
@@ -1142,6 +1357,115 @@ export default function ServicePage() {
         onConfirm={handleConfirmCompleteSparepart}
         loading={submitting}
       />
+
+      {/* Modal Bulk Upload CSV */}
+      <BulkUploadModal
+        isOpen={isBulkModalOpen}
+        onClose={() => setIsBulkModalOpen(false)}
+        onSuccess={() => {
+          fetchData();
+        }}
+      />
+
+      {/* Modal Konfirmasi Kosongkan Semua Data */}
+      {showClearAllModal && (
+        <div className={styles.modalOverlay} onClick={() => !isDeleting && setShowClearAllModal(false)}>
+          <div className={styles.modalCard} onClick={e => e.stopPropagation()} style={{ maxWidth: '480px', textAlign: 'center', padding: '32px 24px' }}>
+            <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#fee2e2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+              <Trash2 size={28} />
+            </div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginBottom: '8px' }}>
+              Kosongkan Seluruh Data Servis?
+            </h3>
+            <p style={{ fontSize: '0.88rem', color: '#64748b', lineHeight: 1.5, marginBottom: '24px' }}>
+              Tindakan ini akan <strong>menghapus permanen seluruh data log servis</strong> di database. Gunakan ini sebelum Anda mengimpor data melalui fitur Bulk Upload.
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button
+                type="button"
+                className={styles.cancelBtn}
+                onClick={() => setShowClearAllModal(false)}
+                disabled={isDeleting}
+                style={{ minWidth: '100px' }}
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                className={styles.deleteConfirmBtn}
+                onClick={handleClearAllData}
+                disabled={isDeleting}
+                style={{
+                  background: '#dc2626',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '10px 20px',
+                  fontWeight: 700,
+                  fontSize: '0.85rem',
+                  cursor: isDeleting ? 'not-allowed' : 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                {isDeleting ? <Loader2 size={16} className={styles.spin} /> : <Trash2 size={16} />}
+                Ya, Bersihkan Semua
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Konfirmasi Hapus Massal Tiket Terpilih */}
+      {showBulkDeleteModal && (
+        <div className={styles.modalOverlay} onClick={() => !isDeleting && setShowBulkDeleteModal(false)}>
+          <div className={styles.modalCard} onClick={e => e.stopPropagation()} style={{ maxWidth: '480px', textAlign: 'center', padding: '32px 24px' }}>
+            <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#fee2e2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+              <Trash2 size={28} />
+            </div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginBottom: '8px' }}>
+              Hapus {selectedCallIds.length} Tiket Servis?
+            </h3>
+            <p style={{ fontSize: '0.88rem', color: '#64748b', lineHeight: 1.5, marginBottom: '24px' }}>
+              Apakah Anda yakin ingin menghapus <strong>{selectedCallIds.length} tiket</strong> yang dipilih? Seluruh riwayat kunjungan dan progres pada tiket-tiket ini akan dihapus secara permanen.
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button
+                type="button"
+                className={styles.cancelBtn}
+                onClick={() => setShowBulkDeleteModal(false)}
+                disabled={isDeleting}
+                style={{ minWidth: '100px' }}
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                className={styles.deleteConfirmBtn}
+                onClick={handleBulkDelete}
+                disabled={isDeleting}
+                style={{
+                  background: '#dc2626',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '10px 20px',
+                  fontWeight: 700,
+                  fontSize: '0.85rem',
+                  cursor: isDeleting ? 'not-allowed' : 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                {isDeleting ? <Loader2 size={16} className={styles.spin} /> : <Trash2 size={16} />}
+                Ya, Hapus Terpilih
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

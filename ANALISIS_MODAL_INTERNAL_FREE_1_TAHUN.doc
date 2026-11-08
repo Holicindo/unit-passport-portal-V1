@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+<meta charset="utf-8">
+<title>Analisis Beban Modal Internal Holicindo - Program Free Trial 1 Tahun</title>
+<style>
+  body {
+    font-family: 'Calibri', 'Segoe UI', Arial, sans-serif;
+    font-size: 11pt;
+    line-height: 1.6;
+    color: #1e293b;
+    margin: 35px;
+  }
+  h1 {
+    color: #0f172a;
+    font-size: 17pt;
+    border-bottom: 2.5px solid #2563eb;
+    padding-bottom: 6px;
+    margin-bottom: 6px;
+  }
+  .subtitle {
+    color: #64748b;
+    font-size: 10.5pt;
+    margin-top: -2px;
+    margin-bottom: 22px;
+    font-style: italic;
+  }
+  h2 {
+    color: #1e40af;
+    font-size: 13pt;
+    margin-top: 22px;
+    border-bottom: 1px solid #cbd5e1;
+    padding-bottom: 4px;
+  }
+  h3 {
+    color: #0f172a;
+    font-size: 11.5pt;
+    margin-top: 14px;
+    font-weight: bold;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 14px 0;
+  }
+  th {
+    background-color: #f1f5f9;
+    color: #0f172a;
+    font-weight: bold;
+    border: 1px solid #cbd5e1;
+    padding: 8px 10px;
+    text-align: left;
+    font-size: 10pt;
+  }
+  td {
+    border: 1px solid #cbd5e1;
+    padding: 8px 10px;
+    font-size: 10pt;
+    vertical-align: top;
+  }
+  tr:nth-child(even) {
+    background-color: #f8fafc;
+  }
+  .highlight-row {
+    background-color: #eff6ff !important;
+    font-weight: bold;
+  }
+  .highlight-opt {
+    background-color: #f0fdf4 !important;
+    font-weight: bold;
+  }
+  .box-strategy {
+    background: #eff6ff;
+    border-left: 4px solid #2563eb;
+    padding: 12px 16px;
+    margin: 14px 0;
+    border-radius: 0 4px 4px 0;
+  }
+  .box-danger {
+    background: #fef2f2;
+    border-left: 4px solid #ef4444;
+    padding: 12px 16px;
+    margin: 14px 0;
+    border-radius: 0 4px 4px 0;
+  }
+  .box-success {
+    background: #f0fdf4;
+    border-left: 4px solid #16a34a;
+    padding: 12px 16px;
+    margin: 14px 0;
+    border-radius: 0 4px 4px 0;
+  }
+  ul {
+    margin: 6px 0;
+    padding-left: 20px;
+  }
+  li {
+    margin-bottom: 4px;
+  }
+  code {
+    font-family: Consolas, monospace;
+    background: #f1f5f9;
+    padding: 1px 4px;
+    font-size: 9.5pt;
+  }
+</style>
+</head>
+<body>
+
+<h1>ANALISIS BEBAN MODAL INTERNAL (COGS) HOLICINDO<br>PROGRAM "FREE CLOUD MONITORING 1 TAHUN PERTAMA"</h1>
+<div class="subtitle">Strategi Efisiensi Server AWS & Budgeting Modal Akuisisi Klien (Customer Acquisition Cost) | Project Manager Review</div>
+
+<div class="box-strategy">
+  <strong>Latar Belakang Strategi PM:</strong><br>
+  PM berencana memberikan <strong>Layanan Cloud Monitoring IoT GRATIS selama 1 Tahun Pertama</strong> kepada customer sebagai daya tarik penjualan unit chiller Holicindo. Pertanyaan intinya: <em>"Berapa modal riil internal yang harus disiapkan/ditalangi oleh Holicindo per unit selama 1 tahun tersebut, dan bagaimana cara memangkas tagihan AWS Rp 1,5 Juta/bulan agar tidak terlalu berat bagi perusahaan?"</em>
+</div>
+
+---
+
+<h2>1. Masalah Utama: Mengapa Tagihan AWS Kita Saat Ini Rp 1,55 Juta / Bulan?</h2>
+<p>Berdasarkan data AWS Cost Explorer (Oktober 2026), tagihan kita saat ini mencapai <strong>$96.87 / bulan (Rp 1.550.000)</strong> bukan karena beban modul IoT, melainkan karena server disetup dengan beberapa komponen "mewah" yang belum dioptimasi:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Komponen Layanan</th>
+      <th>Biaya Saat Ini</th>
+      <th>Fakta Penyebab Biaya</th>
+      <th>Bisa Dipangkas (Optimasi)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Amplify Frontend</strong></td>
+      <td>$21.30 (~Rp 340rb)</td>
+      <td>Menggunakan build & hosting AWS Amplify untuk Next.js portal.</td>
+      <td><strong>Bisa $0 (Gratis)</strong> jika frontend dipindahkan hosting ke <strong>Vercel Free Tier</strong> atau static export di EC2.</td>
+    </tr>
+    <tr>
+      <td><strong>AWS VPC Public IPv4</strong></td>
+      <td>$14.14 (~Rp 226rb)</td>
+      <td>Biaya sewa baru AWS untuk setiap Public IPv4 address ($0.005/jam).</td>
+      <td>Bisa dihemat dengan menggunakan IPv6 atau arsitektur Cloudflare Tunnel.</td>
+    </tr>
+    <tr>
+      <td><strong>EC2 Backend (t3.small)</strong></td>
+      <td>$32.83 (~Rp 525rb)</td>
+      <td>Server NestJS berjalan on-demand penuh di Sydney.</td>
+      <td>Bisa turun ke <strong>$15 - $20/bln</strong> jika beli <em>1-Year Reserved Instance / Savings Plans</em> (Hemat 40%).</td>
+    </tr>
+    <tr>
+      <td><strong>RDS PostgreSQL</strong></td>
+      <td>$18.91 (~Rp 302rb)</td>
+      <td>db.t3.micro + 20GB GP2 storage.</td>
+      <td>Sudah cukup minimal ($18/bln), tapi bisa hemat jika ambil 1-Year Reserved Instance.</td>
+    </tr>
+    <tr>
+      <td><strong>S3 Storage</strong></td>
+      <td>$0.08 (~Rp 1.280)</td>
+      <td>Penyimpanan file foto & lampiran servis.</td>
+      <td>Bahkan jika foto bertambah banyak, biayanya tetap hanya $1 - $3/bln.</td>
+    </tr>
+    <tr class="highlight-row">
+      <td><strong>TOTAL KONDISI SEKARANG</strong></td>
+      <td><strong>$96.87 (Rp 1.550.000)</strong></td>
+      <td colspan="2">Belum dioptimasi (On-Demand Pricing)</td>
+    </tr>
+    <tr class="highlight-opt">
+      <td><strong>POTENSI SETELAH DIOPTIMASI</strong></td>
+      <td><strong>$45.00 - $55.00 (± Rp 750.000 - Rp 850.000 / bulan)</strong></td>
+      <td colspan="2">Pangkas Amplify ke Vercel + Savings Plans AWS (Hemat 50%!)</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+<h2>2. Berapa Beban Modal Riil (COGS) Holicindo Jika Digratiskan 1 Tahun?</h2>
+
+<p>Kunci penting: <strong>Biaya Hardware (Rp 1.000.000) hanya keluar 1x di awal</strong>. Sedangkan biaya server AWS adalah biaya tetap yang dibagi ke seluruh unit yang berpartisipasi dalam program trial 1 tahun.</p>
+
+<h3>Tabel Simulasi Modal Internal Holicindo Selama 1 Tahun Penuh (12 Bulan):</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 15%;">Jumlah Unit Diberi Free 1 Thn</th>
+      <th style="width: 25%;">Modal Hardware (1x di Awal)</th>
+      <th style="width: 25%;">Beban Cloud AWS (1 Thn Penuh) [Baseline Rp 1,55 Jt/bln]</th>
+      <th style="width: 20%;">Total Modal Holicindo / Unit (Hardware + Cloud 1 Thn)</th>
+      <th style="width: 15%;">Modal Cloud per Unit / Bulan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>1 Unit</strong></td>
+      <td>Rp 1.000.000</td>
+      <td>Rp 18.600.000 (100% ditanggung 1 unit)</td>
+      <td><span style="color:red; font-weight:bold;">Rp 19.600.000 / unit</span></td>
+      <td>Rp 1.550.000 / bln</td>
+    </tr>
+    <tr>
+      <td><strong>10 Unit</strong></td>
+      <td>Rp 10.000.000</td>
+      <td>Rp 18.600.000 (dibagi 10 unit)</td>
+      <td><strong>Rp 2.860.000 / unit</strong></td>
+      <td>Rp 155.000 / bln</td>
+    </tr>
+    <tr>
+      <td><strong>25 Unit</strong></td>
+      <td>Rp 25.000.000</td>
+      <td>Rp 18.600.000 (dibagi 25 unit)</td>
+      <td><strong>Rp 1.744.000 / unit</strong></td>
+      <td>Rp 62.000 / bln</td>
+    </tr>
+    <tr class="highlight-row">
+      <td><strong>50 Unit</strong></td>
+      <td>Rp 50.000.000</td>
+      <td>Rp 18.600.000 (dibagi 50 unit)</td>
+      <td><strong>Rp 1.372.000 / unit</strong></td>
+      <td><strong>Rp 31.000 / bln</strong></td>
+    </tr>
+    <tr class="highlight-opt">
+      <td><strong>100 Unit</strong></td>
+      <td>Rp 100.000.000</td>
+      <td>Rp 20.000.000 (dibagi 100 unit)</td>
+      <td><strong>Rp 1.200.000 / unit</strong></td>
+      <td><strong>Rp 16.600 / bln</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="box-success">
+  <strong>Poin Kunci untuk PM:</strong><br>
+  Jika Holicindo pasang di <strong>50 unit</strong>, modal cloud yang ditalangi Holicindo selama 1 tahun penuh <strong>hanya Rp 372.000 / unit / tahun (atau cuma Rp 31.000 / unit / bulan)</strong>!<br>
+  Jika tembus <strong>100 unit</strong>, beban cloud gratis itu <strong>hanya Rp 200.000 / unit / tahun (Rp 16.600 / unit / bulan)</strong>!
+</div>
+
+---
+
+<h2>3. Strategi Bisnis PM agar Holicindo Tidak Nombok</h2>
+
+<p>Jika PM ingin menggratiskan cloud 1 tahun pertama demi memenangkan tender/meeting klien, gunakan <strong>salah satu dari 2 jurus ini</strong>:</p>
+
+<h3>Jurus A: Subsidi Silang ke Harga Jual Hardware Unit (Paling Cerdas)</h3>
+<ul>
+  <li>Customer diberitahu: <em>"Bapak/Ibu beli chiller + modul IoT seharga <strong>Rp 1.500.000</strong> (atau dimasukkan ke harga unit pendingin). <strong>GRATIS BIAYA CLOUD MONITORING SELAMA 1 TAHUN PERTAMA!</strong>"</em></li>
+  <li><strong>Dapur Finansial Holicindo:</strong>
+    <ul>
+      <li>Uang masuk dari customer di awal = <strong>Rp 1.500.000</strong></li>
+      <li>Modal hardware riil = <strong>Rp 1.000.000</strong></li>
+      <li>Sisa selisih = <strong>Rp 500.000</strong></li>
+      <li>Uang Rp 500.000 ini dipakai untuk <strong>menutup biaya server AWS selama 12 bulan penuh</strong> (beban AWS per unit cuma ~Rp 372.000 di 50 unit).</li>
+      <li><strong>Hasilnya:</strong> Customer merasa dapat gratis 1 tahun, dan <strong>Holicindo 100% tidak keluar uang sepeserpun untuk nalangi server AWS</strong>!</li>
+    </ul>
+  </li>
+</ul>
+
+<h3>Jurus B: Terapkan Kuota Minimal Unit (Min. Order Quantity / MOQ)</h3>
+<ul>
+  <li>Jangan berikan gratis 1 tahun jika customer hanya beli <strong>1 atau 2 unit</strong> (karena Holicindo akan nombok biaya server Rp 1,5 jt tiap bulan).</li>
+  <li>Kunci syarat promo: <em>"Gratis langganan cloud 1 tahun berlaku untuk pembelian/pemasangan minimal <strong>20 atau 50 unit</strong>."</em></li>
+</ul>
+
+---
+
+<h2>4. Template Jawaban Singkat untuk Diskusi dengan PM</h2>
+
+<div class="box-strategy">
+  <em>"Pak, ide promo <strong>Gratis Cloud 1 Tahun Pertama</strong> itu sangat bagus untuk memikat customer. Tapi ada 2 hal penting yang perlu kita atur:<br><br>
+  1. <strong>Beban riil server kita:</strong> Jika customer pasang 50 unit, modal server yang kita tanggung selama setahun sebenarnya sangat murah, yaitu <strong>cuma Rp 31.000 / unit / bulan (atau ~Rp 370.000 per unit untuk 1 tahun penuh)</strong>.<br><br>
+  2. <strong>Cara agar kita tidak nombok Rp 1,5 Juta/bulan:</strong> Kita jual modul IoT di awal seharga <strong>Rp 1.400.000 - Rp 1.500.000</strong> dengan label <strong>'Include Free 1 Year Cloud'</strong>. Modal alat Rp 1 Juta, dan sisa Rp 400-500rb itu otomatis menutupi biaya AWS setahun penuh. Customer senang dapat free 1 tahun, Holicindo tetap untung dan aman dari nombok server.<br><br>
+  3. <strong>Optimasi AWS:</strong> Biaya AWS Rp 1,55 Juta saat ini masih bisa kita pangkas hingga 40-50% (jadi ~Rp 800rb/bln) dengan memindahkan frontend ke Vercel dan ambil komitmen 1-year savings plan di AWS."</em>
+</div>
+
+</body>
+</html>

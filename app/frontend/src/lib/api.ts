@@ -135,6 +135,16 @@ export const serviceLogApi = {
   findByUnit: (unitId: string) => api.get(`/service-logs/unit/${unitId}`),
   bulkReschedule: (ids: string[], newDate: string, newDeliveryDate?: string) =>
     api.post('/service-logs/bulk-reschedule', { ids, newDate, newDeliveryDate }),
+  bulkDelete: (ids: string[]) => api.post('/service-logs/bulk-delete', { ids }),
+  clearAll: () => api.post('/service-logs/clear-all'),
+  bulkUpload: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/service-logs/bulk-upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 300000, // 5 menit untuk ribuan baris
+    });
+  },
 };
 
 export const partnerApi = {
