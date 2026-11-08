@@ -491,14 +491,6 @@ export default function CustomerHealthWidget({ unitId }: Props) {
               <div style={{ fontSize: '.72rem', color: '#94a3b8', fontWeight: 500, lineHeight: 1.35 }}>
                 {status.sublabel}
               </div>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                <span style={{ fontSize: '.62rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '.05em' }}>
-                  Akurasi
-                </span>
-                <span style={{ fontSize: '.65rem', fontWeight: 700, color: '#38bdf8', background: 'rgba(56, 189, 248, 0.1)', border: '1px solid rgba(56, 189, 248, 0.2)', padding: '1px 7px', borderRadius: 10 }}>
-                  {(conf * 100).toFixed(0)}%
-                </span>
-              </div>
             </div>
           </div>
 

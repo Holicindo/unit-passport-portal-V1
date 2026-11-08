@@ -39,6 +39,7 @@ export default function GraphicRecordPage() {
   const [loadingData, setLoadingData] = useState(isEditMode);
   const [isConfirm, setIsConfirm]     = useState(false);
   const [isSuccess, setIsSuccess]     = useState(false);
+  const [createdReportId, setCreatedReportId] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [form, setForm]               = useState<any>(EMPTY_FORM);
 
@@ -85,7 +86,21 @@ export default function GraphicRecordPage() {
   const handleChange = (key: string, val: any) =>
     setForm((prev: any) => ({ ...prev, [key]: val }));
 
-  const handleSubmit = async () => {
+    const handleBack = () => {
+    const returnUnit = searchParams.get('returnUnit');
+    if (returnUnit) {
+      router.push('/id/' + returnUnit);
+      return;
+    }
+    const unitToken = unit?.qr_token || (unit?.serial_number ? ('holi-cp-' + unit.serial_number.toLowerCase()) : null);
+    if (unitToken) {
+      router.push('/id/' + unitToken);
+      return;
+    }
+    router.back();
+  };
+
+const handleSubmit = async () => {
     if (!unit) return alert('Pilih unit terlebih dahulu!');
     setLoading(true);
     try {
@@ -132,12 +147,14 @@ export default function GraphicRecordPage() {
       if (isEditMode && editId) {
         await reportApi.update(editId, { data: formData, photo_urls: photoUrls });
       } else {
-        await reportApi.create({
+        const res = await reportApi.create({
           unitId: unit.id,
           form_type: 'COMMISSIONING',
           data: formData,
           photo_urls: photoUrls,
         });
+
+        if (res?.data?.id) setCreatedReportId(res.data.id);
       }
 
       setIsConfirm(false);
@@ -166,7 +183,7 @@ export default function GraphicRecordPage() {
 
       {/* ── Toolbar ── */}
       <div className={styles.toolbar}>
-        <button className={styles.backBtn} onClick={() => router.back()}>
+        <button className={styles.backBtn} onClick={handleBack}>
           <ArrowLeft size={16} />
         </button>
         <h1 className={styles.title}>
@@ -272,7 +289,20 @@ export default function GraphicRecordPage() {
       />
       <Modal
         isOpen={isSuccess}
-        onClose={() => router.push('/reports/history')}
+        onClose={() => {
+          const repId = createdReportId || editId;
+          const returnUnit = searchParams.get('returnUnit');
+          const returnParam = returnUnit ? ('?returnUnit=' + encodeURIComponent(returnUnit)) : '';
+          if (repId) {
+            router.push('/reports/view/' + repId + returnParam);
+            return;
+          }
+          if (returnUnit) {
+            router.push('/id/' + returnUnit);
+            return;
+          }
+          router.push('/reports/history');
+        }}
         title={isEditMode ? 'Laporan Berhasil Diperbarui!' : 'Graphic Record Berhasil Disimpan!'}
         message={`Graphic Record untuk serial number ${unit?.serial_number} telah berhasil ${isEditMode ? 'diperbarui' : 'dicatat'}.`}
         type="success"

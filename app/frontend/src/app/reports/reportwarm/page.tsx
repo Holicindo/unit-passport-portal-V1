@@ -24,6 +24,7 @@ export default function ReportWarmPage() {
   const [loadingData, setLoadingData] = useState(isEditMode);
   const [isConfirm, setIsConfirm] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [createdReportId, setCreatedReportId] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [photos, setPhotos] = useState<File[]>([]);
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
@@ -103,7 +104,21 @@ export default function ReportWarmPage() {
     setPhotoUrls(u);
   };
 
-  const handleSubmit = async () => {
+    const handleBack = () => {
+    const returnUnit = searchParams.get('returnUnit');
+    if (returnUnit) {
+      router.push('/id/' + returnUnit);
+      return;
+    }
+    const unitToken = unit?.qr_token || (unit?.serial_number ? ('holi-cp-' + unit.serial_number.toLowerCase()) : null);
+    if (unitToken) {
+      router.push('/id/' + unitToken);
+      return;
+    }
+    router.back();
+  };
+
+const handleSubmit = async () => {
     if (!unit) return alert('Pilih unit terlebih dahulu!');
     setLoading(true);
     try {
@@ -115,7 +130,7 @@ export default function ReportWarmPage() {
         } catch {}
       }
       if (isEditMode && editId) {
-        await reportApi.create({
+        const res = await reportApi.create({
           unitId: unit.id,
           form_type: 'COOLING_WARM',
           data: form,
@@ -123,14 +138,18 @@ export default function ReportWarmPage() {
           baseReportId: editId,
           service_log_id: searchParams.get('serviceLogId') || undefined,
         });
+
+        if (res?.data?.id) setCreatedReportId(res.data.id);
       } else {
-        await reportApi.create({
+        const res = await reportApi.create({
           unitId: unit.id,
           form_type: 'COOLING_WARM',
           data: form,
           photo_urls: uploadedUrls,
           service_log_id: searchParams.get('serviceLogId') || undefined,
         });
+
+        if (res?.data?.id) setCreatedReportId(res.data.id);
       }
       setIsConfirm(false);
       setIsSuccess(true);
@@ -167,7 +186,7 @@ export default function ReportWarmPage() {
     <div className={styles.pageWrapper}>
       {/* Toolbar */}
       <div className={styles.toolbar}>
-        <button className={styles.backBtn} onClick={() => router.back()}>
+        <button className={styles.backBtn} onClick={handleBack}>
           <ArrowLeft size={16} />
         </button>
         {/* ── Cooling Type Switcher Dropdown ── */}
@@ -397,7 +416,20 @@ export default function ReportWarmPage() {
       />
       <Modal
         isOpen={isSuccess}
-        onClose={() => router.push('/reports/history')}
+        onClose={() => {
+          const repId = createdReportId || editId;
+          const returnUnit = searchParams.get('returnUnit');
+          const returnParam = returnUnit ? ('?returnUnit=' + encodeURIComponent(returnUnit)) : '';
+          if (repId) {
+            router.push('/reports/view/' + repId + returnParam);
+            return;
+          }
+          if (returnUnit) {
+            router.push('/id/' + returnUnit);
+            return;
+          }
+          router.push('/reports/history');
+        }}
         title={
           isEditMode
             ? 'Laporan Berhasil Diperbarui!'

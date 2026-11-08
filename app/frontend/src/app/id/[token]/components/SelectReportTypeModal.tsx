@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowLeft, FileText, Check, CheckCircle2, ExternalLink, UserCheck, Plus, Sparkles } from 'lucide-react';
+import { ArrowLeft, FileText, Check, CheckCircle2, ExternalLink, UserCheck, Plus, Sparkles, ChevronDown, ChevronRight, Eye } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import styles from '../id.module.css';
 
@@ -38,7 +38,15 @@ export default function SelectReportTypeModal({
 }: SelectReportTypeModalProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'reports' | 'create'>('reports');
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    '__COOLING__': true,
+    'INSPECTION': true,
+  });
   const isEditing = !!editBlocks?.qc;
+
+  const toggleSection = (key: string) => {
+    setExpandedSections(prev => ({ ...prev, [key]: !prev[key] }));
+  };
 
   if (!show || !unit) return null;
 
@@ -76,15 +84,17 @@ export default function SelectReportTypeModal({
     const url = unit?.specs?.[item.urlKey];
     const isReportLink = item.routePath !== null;
     const isCooling = item.formType === '__COOLING__';
-    const unitParam = unit?.id ? `?unit=${unit.id}` : '';
+    const passportToken = unit?.qr_token || unit?.token || (unit?.serial_number ? `holi-cp-${unit.serial_number.toLowerCase()}` : '');
+    const returnParam = passportToken ? `&returnUnit=${encodeURIComponent(passportToken)}` : '';
+    const unitParam = unit?.id ? `?unit=${unit.id}${returnParam}` : '';
 
     if (isReportLink) {
       if (isCooling) {
         if (coolingTotal === 1) {
           const r = unitReports.find((r: any) => coolingTypes.includes(r.form_type));
-          if (r) { router.push(`/reports/view/${r.id}`); onClose(); return; }
+          if (r) { router.push(`/reports/view/${r.id}${passportToken ? `?returnUnit=${encodeURIComponent(passportToken)}` : ''}`); onClose(); return; }
         } else if (coolingTotal > 1) {
-          router.push(`/reports/history?unit=${unit?.id}&type=COOLING_1`);
+          router.push(`/reports/history?unit=${unit?.id}&type=COOLING_1${returnParam}`);
           onClose();
           return;
         }
@@ -93,9 +103,9 @@ export default function SelectReportTypeModal({
         const reportCount = unitReports.filter((r: any) => r.form_type === item.formType).length;
         if (reportCount === 1) {
           const r = unitReports.find((r: any) => r.form_type === item.formType);
-          if (r) { router.push(`/reports/view/${r.id}`); onClose(); return; }
+          if (r) { router.push(`/reports/view/${r.id}${passportToken ? `?returnUnit=${encodeURIComponent(passportToken)}` : ''}`); onClose(); return; }
         } else if (reportCount > 1) {
-          router.push(`/reports/history?unit=${unit?.id}&type=${item.formType}`);
+          router.push(`/reports/history?unit=${unit?.id}&type=${item.formType}${returnParam}`);
           onClose();
           return;
         }
@@ -429,62 +439,188 @@ export default function SelectReportTypeModal({
               </div>
             </div>
           ) : activeTab === 'reports' ? (
-            /* Mode View List persis Gambar 1 */
+            /* Mode View List persis Gambar 1 dengan Sub-list / Accordion jika ada laporan */
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {qcItems.map((item) => {
                 const url = unit?.specs?.[item.urlKey];
                 const isReportLink = item.routePath !== null;
                 const isCooling = item.formType === '__COOLING__';
+                const isInspection = item.formType === 'INSPECTION';
                 const isClickable = isReportLink ? true : !!url;
-                const reportCount = isCooling ? coolingTotal : (item.formType ? unitReports.filter((r: any) => r.form_type === item.formType).length : 0);
+                const passportToken = unit?.qr_token || unit?.token || (unit?.serial_number ? `holi-cp-${unit.serial_number.toLowerCase()}` : '');
+
+                // Ambil semua laporan yang relevan untuk item ini
+                const matchingReports: any[] = isCooling
+                  ? unitReports.filter((r: any) => coolingTypes.includes(r.form_type))
+                  : isInspection
+                  ? unitReports.filter((r: any) => r.form_type === 'INSPECTION')
+                  : (item.formType ? unitReports.filter((r: any) => r.form_type === item.formType) : []);
+
+                const reportCount = matchingReports.length;
+                const sectionKey = item.formType || item.label;
+                const isExpanded = !!expandedSections[sectionKey];
+                const hasSubReports = isReportLink && reportCount > 0;
 
                 return (
                   <div
                     key={item.label}
-                    onClick={() => isClickable && handleItemClick(item)}
                     style={{
                       display: 'flex',
-                      alignItems: 'center',
-                      gap: '14px',
-                      padding: '15px 18px',
+                      flexDirection: 'column',
                       background: isClickable ? 'rgba(23, 37, 66, 0.75)' : 'rgba(15, 23, 42, 0.5)',
                       borderRadius: '12px',
                       border: isClickable ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid rgba(255, 255, 255, 0.05)',
-                      cursor: isClickable ? 'pointer' : 'default',
                       transition: 'all 0.2s ease',
                       opacity: isClickable ? 1 : 0.6,
-                    }}
-                    onMouseEnter={(e) => {
-                      if (isClickable) {
-                        e.currentTarget.style.background = 'rgba(30, 58, 110, 0.85)';
-                        e.currentTarget.style.borderColor = 'rgba(96, 165, 250, 0.6)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (isClickable) {
-                        e.currentTarget.style.background = 'rgba(23, 37, 66, 0.75)';
-                        e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.3)';
-                      }
+                      overflow: 'hidden',
                     }}
                   >
-                    <FileText size={18} color={isClickable ? '#60a5fa' : '#64748b'} style={{ flexShrink: 0 }} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: '0.92rem', fontWeight: 700, color: isClickable ? '#ffffff' : '#64748b' }}>
-                        {item.label}
+                    {/* Header Row Baris Utama */}
+                    <div
+                      onClick={() => {
+                        if (hasSubReports) {
+                          toggleSection(sectionKey);
+                        } else if (isClickable) {
+                          handleItemClick(item);
+                        }
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '14px',
+                        padding: '15px 18px',
+                        cursor: isClickable ? 'pointer' : 'default',
+                      }}
+                      onMouseEnter={(e) => {
+                        if (isClickable) {
+                          e.currentTarget.style.background = 'rgba(30, 58, 110, 0.85)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (isClickable) {
+                          e.currentTarget.style.background = 'transparent';
+                        }
+                      }}
+                    >
+                      <FileText size={18} color={isClickable ? '#60a5fa' : '#64748b'} style={{ flexShrink: 0 }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '0.92rem', fontWeight: 700, color: isClickable ? '#ffffff' : '#64748b', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span>{item.label}</span>
+                          {hasSubReports && (
+                            <span style={{ fontSize: '0.7rem', color: '#93c5fd', background: 'rgba(59,130,246,0.18)', padding: '1px 7px', borderRadius: '8px', fontWeight: 600 }}>
+                              {reportCount} Jenis Tersimpan
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: '0.74rem', color: '#94a3b8', marginTop: '2px' }}>
+                          {isReportLink
+                            ? (reportCount > 0 ? (hasSubReports ? 'Klik untuk melihat rincian laporan yang sudah tercatat' : `${reportCount} laporan tersedia`) : 'Belum ada laporan')
+                            : (url ? 'Dokumen terlampir' : 'Belum ada dokumen')}
+                        </div>
                       </div>
-                      <div style={{ fontSize: '0.74rem', color: '#94a3b8', marginTop: '2px' }}>
-                        {isReportLink
-                          ? (reportCount > 0 ? `${reportCount} laporan tersedia` : 'Belum ada laporan')
-                          : (url ? 'Dokumen terlampir' : 'Belum ada dokumen')}
-                      </div>
+
+                      {/* Aksi Samping */}
+                      {hasSubReports ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ background: 'rgba(16,185,129,0.2)', color: '#10b981', borderRadius: '10px', padding: '2px 8px', fontSize: '0.72rem', fontWeight: 700 }}>
+                            {reportCount}
+                          </span>
+                          {isExpanded ? <ChevronDown size={17} color="#93c5fd" /> : <ChevronRight size={17} color="#93c5fd" />}
+                        </div>
+                      ) : (
+                        isClickable && <ExternalLink size={15} color="#93c5fd" style={{ flexShrink: 0, opacity: 0.8 }} />
+                      )}
                     </div>
-                    {isReportLink && reportCount > 0 && (
-                      <span style={{ background: 'rgba(16,185,129,0.2)', color: '#10b981', borderRadius: '10px', padding: '2px 8px', fontSize: '0.72rem', fontWeight: 700 }}>
-                        {reportCount}
-                      </span>
-                    )}
-                    {isClickable && (
-                      <ExternalLink size={15} color="#93c5fd" style={{ flexShrink: 0, opacity: 0.8 }} />
+
+                    {/* Sub-list Lembar Laporan Yang Sudah Tercatat (Accordion Content) */}
+                    {hasSubReports && isExpanded && (
+                      <div style={{
+                        background: 'rgba(10, 18, 36, 0.85)',
+                        borderTop: '1px solid rgba(59, 130, 246, 0.2)',
+                        padding: '10px 14px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '6px',
+                      }}>
+                        {matchingReports.map((r: any, idx: number) => {
+                          const typeLabel = coolingLabels[r.form_type] || r.form_type;
+                          const createdDate = r.created_at
+                            ? new Date(r.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
+                            : '-';
+
+                          return (
+                            <div
+                              key={r.id || idx}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onClose();
+                                router.push(`/reports/view/${r.id}${passportToken ? `?returnUnit=${encodeURIComponent(passportToken)}` : ''}`);
+                              }}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                gap: '10px',
+                                padding: '9px 12px',
+                                background: 'rgba(23, 37, 66, 0.6)',
+                                border: '1px solid rgba(59, 130, 246, 0.25)',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                transition: 'all 0.15s ease',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'rgba(37, 99, 235, 0.25)';
+                                e.currentTarget.style.borderColor = 'rgba(96, 165, 250, 0.5)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'rgba(23, 37, 66, 0.6)';
+                                e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.25)';
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '9px', minWidth: 0 }}>
+                                <FileText size={15} color="#38bdf8" style={{ flexShrink: 0 }} />
+                                <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                                  <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#f1f5f9' }}>
+                                    {isCooling ? `Cooling System ${typeLabel}` : (item.label)}
+                                  </span>
+                                  <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>
+                                    ID: <span style={{ color: '#cbd5e1' }}>#{r.id}</span> · Tanggal: {createdDate}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                                {r.status && (
+                                  <span style={{
+                                    fontSize: '0.65rem',
+                                    fontWeight: 700,
+                                    padding: '2px 7px',
+                                    borderRadius: '6px',
+                                    background: r.status === 'APPROVED' ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)',
+                                    color: r.status === 'APPROVED' ? '#34d399' : '#fbbf24',
+                                  }}>
+                                    {r.status === 'APPROVED' ? 'Disetujui' : r.status}
+                                  </span>
+                                )}
+                                <span style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 700,
+                                  color: '#60a5fa',
+                                  background: 'rgba(59,130,246,0.15)',
+                                  padding: '4px 9px',
+                                  borderRadius: '6px',
+                                  border: '1px solid rgba(59,130,246,0.3)',
+                                }}>
+                                  <Eye size={12} /> Buka Laporan
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     )}
                   </div>
                 );
@@ -587,35 +723,39 @@ export default function SelectReportTypeModal({
           ) : (
             /* Mode Buat Baru */
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '12px' }}>
-              {createReportTypes.map(t => (
-                <button
-                  key={t.path}
-                  type="button"
-                  onClick={() => { router.push(`${t.path}?unit=${unit.id}`); onClose(); }}
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '6px',
-                    padding: '16px',
-                    background: 'rgba(23, 37, 66, 0.85)',
-                    border: '1px solid rgba(59, 130, 246, 0.3)',
-                    borderRadius: '12px',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    color: '#fff',
-                    transition: 'all 0.2s',
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(30, 58, 110, 0.95)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(23, 37, 66, 0.85)'}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <FileText size={18} color={t.color} />
-                    <ExternalLink size={13} color="#94a3b8" />
-                  </div>
-                  <span style={{ fontSize: '0.88rem', fontWeight: 700, color: '#fff', marginTop: '6px' }}>{t.name}</span>
-                  <span style={{ fontSize: '0.74rem', color: '#94a3b8' }}>{t.desc}</span>
-                </button>
-              ))}
+              {createReportTypes.map(t => {
+                const passportToken = unit?.qr_token || unit?.token || (unit?.serial_number ? `holi-cp-${unit.serial_number.toLowerCase()}` : '');
+                const targetUrl = `${t.path}?unit=${unit.id}${passportToken ? `&returnUnit=${encodeURIComponent(passportToken)}` : ''}`;
+                return (
+                  <button
+                    key={t.path}
+                    type="button"
+                    onClick={() => { router.push(targetUrl); onClose(); }}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '6px',
+                      padding: '16px',
+                      background: 'rgba(23, 37, 66, 0.85)',
+                      border: '1px solid rgba(59, 130, 246, 0.3)',
+                      borderRadius: '12px',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      color: '#fff',
+                      transition: 'all 0.2s',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(30, 58, 110, 0.95)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'rgba(23, 37, 66, 0.85)'}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <FileText size={18} color={t.color} />
+                      <ExternalLink size={13} color="#94a3b8" />
+                    </div>
+                    <span style={{ fontSize: '0.88rem', fontWeight: 700, color: '#fff', marginTop: '6px' }}>{t.name}</span>
+                    <span style={{ fontSize: '0.74rem', color: '#94a3b8' }}>{t.desc}</span>
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>

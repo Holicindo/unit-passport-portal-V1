@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { reportApi } from '@/lib/api';
 import { Printer, FileDown, ArrowLeft, Loader2, Camera } from 'lucide-react';
 import InspectionReportTemplate from '@/components/reports/InspectionReportTemplate';
@@ -40,11 +40,26 @@ function HolicLogo({ size = 22 }: { size?: number }) {
 export default function ReportView() {
   const { id } = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [report, setReport] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [isAdmin, setIsAdmin] = useState(true);
+
+  const handleBack = () => {
+    const returnUnit = searchParams.get('returnUnit');
+    if (returnUnit) {
+      router.push(`/id/${returnUnit}`);
+      return;
+    }
+    const unitQr = report?.unit?.qr_token;
+    if (unitQr) {
+      router.push(`/id/${unitQr}`);
+      return;
+    }
+    router.back();
+  };
 
   // Redirect CLIENT users to client portal report view
   useEffect(() => {
@@ -113,7 +128,7 @@ export default function ReportView() {
     return (
       <div className={styles.pageContainer}>
         <div className={styles.toolbar}>
-          <button onClick={() => router.back()} className={styles.backBtn}>
+          <button onClick={handleBack} className={styles.backBtn}>
             <ArrowLeft size={16} /> Kembali
           </button>
         </div>
@@ -130,7 +145,7 @@ export default function ReportView() {
       {/* Action Toolbar */}
       <header className={styles.toolbar}>
         <div className={styles.toolbarLeft}>
-          <button onClick={() => router.back()} className={styles.backBtn}>
+          <button onClick={handleBack} className={styles.backBtn} title="Kembali ke Passport Unit">
             <ArrowLeft size={16} />
           </button>
           <div>
