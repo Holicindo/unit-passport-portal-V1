@@ -7,6 +7,7 @@ import { CreateServiceLogDto } from './dto/create-service-log.dto';
 import { StorageService } from '../storage/storage.service';
 import { User } from '../auth/entities/user.entity';
 import { Notification, NotificationType } from '../notifications/entities/notification.entity';
+import { Unit } from '../units/entities/unit.entity';
 
 
 @Injectable()
@@ -180,8 +181,29 @@ export class ServiceLogsService {
   }
 
   async clearAll() {
-    // Menghapus semua service logs (bersihkan database dari dummy data)
+    // 1. Hapus semua service logs
     await this.logRepo.createQueryBuilder().delete().from(ServiceLog).execute();
-    return { success: true, message: 'Seluruh data log servis telah dikosongkan.' };
+
+    // 2. Bersihkan unit-unit yang terbuat otomatis dari upload servis (cache/numpuk),
+    //    TETAPI jaga unit master/asli:
+    //    - Unit yang memiliki iot_unit_id (unit IoT pameran/demo)
+    //    - Unit yang memiliki garansi (warranties)
+    //    - Unit yang memiliki riwayat kepemilikan (ownership_history)
+    //    - Unit yang didaftarkan sebelum migrasi bulk service
+    try {
+      const unitRepo = this.logRepo.manager.getRepository(Unit);
+      await unitRepo.createQueryBuilder()
+        .delete()
+        .from(Unit)
+        .where('iot_unit_id IS NULL')
+        .andWhere('id NOT IN (SELECT unit_id FROM warranties WHERE unit_id IS NOT NULL)')
+        .andWhere('id NOT IN (SELECT unit_id FROM ownership_history WHERE unit_id IS NOT NULL)')
+        .andWhere('created_at >= :recentDate', { recentDate: new Date('2026-11-06T00:00:00Z') })
+        .execute();
+    } catch (err) {
+      console.error('Failed to clean up uploaded units cache during clearAll:', err);
+    }
+
+    return { success: true, message: 'Seluruh data log servis dan unit hasil upload berhasil dibersihkan.' };
   }
 }

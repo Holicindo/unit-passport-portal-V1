@@ -85,33 +85,6 @@ export default function QrPassportPage() {
   const [showAllPicModal, setShowAllPicModal] = useState(false);
   const [showImageModal, setShowImageModal] = useState<string | null>(null);
 
-  // Anti-zoom effect: keep content at 100% scale regardless of browser zoom
-  useEffect(() => {
-    const handleZoom = () => {
-      const container = document.querySelector(`.${styles.container}`) as HTMLElement;
-      if (!container) return;
-
-      // Detect browser zoom level
-      const zoomLevel = Math.round((window.outerWidth / window.innerWidth) * 100) / 100;
-      
-      // Counter-scale to maintain 100% size
-      if (zoomLevel !== 1) {
-        container.style.transform = `scale(${1 / zoomLevel})`;
-        container.style.transformOrigin = 'top center';
-        container.style.width = `${95 * zoomLevel}%`;
-        container.style.maxWidth = `${1600 * zoomLevel}px`;
-      } else {
-        container.style.transform = 'none';
-        container.style.width = '95%';
-        container.style.maxWidth = '1600px';
-      }
-    };
-
-    handleZoom();
-    window.addEventListener('resize', handleZoom);
-    return () => window.removeEventListener('resize', handleZoom);
-  }, []);
-
   if (loading) return <div className={styles.loadingContainer} suppressHydrationWarning><Loader2 className={styles.spinner} size={48} /><p>Memindai QR Passport...</p></div>;
   if (error || !unit) return (
     <div className={styles.errorContainer}><div className={styles.errorCard}>

@@ -60,11 +60,6 @@
   position: relative;
   overflow-x: hidden;
   isolation: isolate;
-  /* Prevent browser zoom from affecting content size */
-  zoom: 1;
-  -webkit-text-size-adjust: 100%;
-  -moz-text-size-adjust: 100%;
-  text-size-adjust: 100%;
 }
 
 .dotGrid {
@@ -106,8 +101,6 @@
   margin: 0 auto;
   padding: 32px 24px;
   animation: pageFadeIn 0.55s cubic-bezier(0.16, 1, 0.3, 1);
-  /* Font sizes use px to prevent shrinking on zoom out */
-  font-size: 16px;
 }
 
 /* Visibility helpers */

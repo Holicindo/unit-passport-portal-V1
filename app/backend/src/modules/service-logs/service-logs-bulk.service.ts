@@ -143,14 +143,34 @@ export class ServiceLogsBulkService {
           currentSectionYear = parseInt(complainDateRaw.trim(), 10);
         }
 
-        // 1. Validasi Serial Number: Jika kosong atau '-' atau 'null', lewati baris ini (Opsi 1)
-        const sn = rawSn ? rawSn.trim() : '';
-        if (!sn || sn === '-' || sn.toLowerCase() === 'null') {
+        // 1. Validasi Serial Number: Jika kosong atau '-' atau 'null', lewati baris ini
+        const rawSnTrimmed = rawSn ? rawSn.trim() : '';
+        if (!rawSnTrimmed || rawSnTrimmed === '-' || rawSnTrimmed.toLowerCase() === 'null') {
           result.skippedNoSerial++;
           continue;
         }
 
-        // 2. Resolve or Create Client
+        // Split multiple SNs dalam satu cell (dipisah newline atau spasi antar SN).
+        // Contoh: "A23060648\nA23060634" → ['A23060648', 'A23060634']
+        // Pola SN Holicindo: 1-2 huruf diikuti 6-10 digit angka (contoh: A23060648, ST1070236)
+        const snList = rawSnTrimmed
+          .split(/[\n\r]+/)                              // split by newline first
+          .flatMap(line => line.split(/\s+/))            // then split tokens by whitespace
+          .map(s => s.trim())
+          .filter(s => {
+            // Hanya terima token yang terlihat seperti serial number (hanya huruf+angka, min 5 char)
+            if (!s || s === '-' || s.toLowerCase() === 'null') return false;
+            // Tolak token yang terlalu pendek atau mengandung karakter aneh
+            return s.length >= 5 && /^[A-Za-z0-9\-]+$/.test(s);
+          });
+
+        // Jika setelah filter tidak ada SN valid, lewati baris
+        if (snList.length === 0) {
+          result.skippedNoSerial++;
+          continue;
+        }
+
+        // 2. Resolve or Create Client (sekali per baris CSV, tidak per SN)
         const custKey = custName.toLowerCase().trim();
         let client = clientMap.get(custKey);
         if (!client) {
@@ -163,23 +183,7 @@ export class ServiceLogsBulkService {
           createdClientsList.push(client);
         }
 
-        // 3. Resolve or Create Unit
-        const snKey = sn.toLowerCase().trim();
-        let unit = unitMap.get(snKey);
-        if (!unit) {
-          unit = new Unit();
-          unit.id = generatePrefixedId('UNT');
-          unit.serial_number = sn;
-          unit.model_name = itemDesc;
-          unit.outlet_branch = branch || '';
-          unit.current_client = client;
-          unit.status = 'ACTIVE';
-          unit.qr_token = generatePrefixedId('QR');
-          unitMap.set(snKey, unit);
-          createdUnitsList.push(unit);
-        }
-
-        // 4. Resolve Call ID
+        // 4. Resolve Call ID (sekali per baris CSV)
         let callId = rawCallId ? rawCallId.trim() : '';
         if (!callId || callId === '-' || callId.toLowerCase() === 'null') {
           callId = generatePrefixedId('ID');
@@ -202,26 +206,45 @@ export class ServiceLogsBulkService {
           else if (sUpper.includes('DONE') || sUpper.includes('COMPL')) status = ServiceStatus.COMPLETED;
         }
 
-        // 7. Push to Batch Service Log
-        const logId = generatePrefixedId('ID');
         const internalNotesCombined = [currentActivity, remarks].filter(Boolean).join(' | ');
 
-        logsToInsert.push({
-          id: logId,
-          call_id: callId,
-          unit: unit,
-          service_date: parsedServiceDate,
-          scheduled_date: parsedExecDate,
-          completed_at: status === ServiceStatus.COMPLETED ? parsedExecDate : undefined,
-          issue_description: issue,
-          action_taken: handling,
-          planning_notes: resText,
-          internal_notes: internalNotesCombined || undefined,
-          technician_name: technician || 'Internal Team',
-          status: status,
-          task_type: 'CORRECTIVE',
-          is_allocated: true,
-        });
+        // 7. Loop per SN: buat 1 unit + 1 service log entry per Serial Number
+        for (const snSingle of snList) {
+          // 3. Resolve or Create Unit per SN
+          const snKey = snSingle.toLowerCase().trim();
+          let unit = unitMap.get(snKey);
+          if (!unit) {
+            unit = new Unit();
+            unit.id = generatePrefixedId('UNT');
+            unit.serial_number = snSingle;
+            unit.model_name = itemDesc;
+            unit.outlet_branch = branch || '';
+            unit.current_client = client;
+            unit.status = 'ACTIVE';
+            unit.qr_token = generatePrefixedId('QR');
+            unitMap.set(snKey, unit);
+            createdUnitsList.push(unit);
+          }
+
+          // Push 1 service log entry per SN
+          logsToInsert.push({
+            id: generatePrefixedId('ID'),
+            call_id: callId,
+            unit: unit,
+            service_date: parsedServiceDate,
+            scheduled_date: parsedExecDate,
+            completed_at: status === ServiceStatus.COMPLETED ? parsedExecDate : undefined,
+            issue_description: issue,
+            action_taken: handling,
+            planning_notes: resText,
+            internal_notes: internalNotesCombined || undefined,
+            technician_name: technician || 'Internal Team',
+            status: status,
+            task_type: 'CORRECTIVE',
+            is_allocated: true,
+            outlet_address: address || undefined,
+          });
+        }
       } catch (err: any) {
         result.errors.push(`Baris ${i + 1}: ${err.message}`);
       }

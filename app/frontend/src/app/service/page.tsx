@@ -203,7 +203,7 @@ export default function ServicePage() {
   const filteredLogs = logs.filter(log => {
     const matchesStatus = statusFilter === 'ALL' || log.status === statusFilter;
     const q = searchQuery.toLowerCase();
-    const matchesSearch = [log.unit?.serial_number, log.unit?.model_name, log.partner?.partner_name, log.issue_description, log.technician_name, log.call_id]
+    const matchesSearch = [log.unit?.serial_number, log.unit?.model_name, log.partner?.partner_name, log.issue_description, log.technician_name, log.call_id, log.outlet_address, log.unit?.current_client?.company_name]
       .some(v => v?.toLowerCase().includes(q));
     return matchesStatus && matchesSearch;
   });
@@ -212,11 +212,13 @@ export default function ServicePage() {
   const pendingRequests = logs.filter(l => l.status === 'PENDING').length;
   const completedRequests = logs.filter(l => l.status === 'COMPLETED').length;
 
-  // Grouping logs by call_id
+  // Grouping logs by call_id AND unit (agar unit yang berbeda dengan call_id sama berdiri sendiri, dan riwayat kunjungan tidak terduplikasi)
   const groupedLogs = (Object.values(filteredLogs.reduce((acc, log) => {
     const cid = log.call_id || log.id;
-    if (!acc[cid]) acc[cid] = [];
-    acc[cid].push(log);
+    const unitKey = log.unit?.id || log.unit?.serial_number || 'nounit';
+    const groupKey = `${cid}__${unitKey}`;
+    if (!acc[groupKey]) acc[groupKey] = [];
+    acc[groupKey].push(log);
     return acc;
   }, {} as Record<string, any[]>)) as any[][]).map((group: any[]) => {
     // Sort riwayat sub-kegiatan di dalam call_id: yang terbaru di atas
@@ -283,7 +285,7 @@ export default function ServicePage() {
     }
   };
 
-  // Handler Clear All (Kosongkan Semua Data Dummy)
+  // Handler Clear All (Kosongkan Semua Data Servis)
   const handleClearAllData = async () => {
     try {
       setIsDeleting(true);
@@ -501,7 +503,7 @@ export default function ServicePage() {
             className="dtToolbarCreateBtn"
             onClick={() => setShowClearAllModal(true)}
             style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#dc2626', border: '1px solid rgba(239, 68, 68, 0.3)' }}
-            title="Bersihkan data dummy atau reset seluruh data servis"
+            title="Kosongkan seluruh data log servis"
           >
             <Trash2 size={16} strokeWidth={2.5} />Kosongkan Data
           </button>
@@ -577,13 +579,14 @@ export default function ServicePage() {
                   />
                 </th>
                 <th style={{ width: '11%' }}>CALL ID</th>
-                <th style={{ width: '10%' }}>COMPLAINT DATE</th>
-                <th style={{ width: '15%' }}>CUSTOMER &amp; BRANCH</th>
-                <th style={{ width: '14%' }}>PRODUCT (UNIT)</th>
-                <th style={{ width: '15%' }}>ISSUE </th>
-                <th style={{ width: '14%' }}>HANDLING</th>
-                <th style={{ width: '13%' }}>RESULT</th>
-                <th style={{ width: '10%' }}>SPAREPART</th>
+                <th style={{ width: '9%' }}>COMPLAINT DATE</th>
+                <th style={{ width: '11%' }}>CUSTOMER &amp; BRANCH</th>
+                <th style={{ width: '13%' }}>ADDRESS</th>
+                <th style={{ width: '11%' }}>PRODUCT (UNIT)</th>
+                <th style={{ width: '13%' }}>ISSUE </th>
+                <th style={{ width: '12%' }}>HANDLING</th>
+                <th style={{ width: '10%' }}>RESULT</th>
+                <th style={{ width: '8%' }}>SPAREPART</th>
                 <th style={{ width: '8%', textAlign: 'center' }}>STATUS</th>
               </tr>
             </thead>
@@ -633,6 +636,21 @@ export default function ServicePage() {
                           <span style={{ fontSize: '0.74rem', color: '#64748b' }}>
                             {mainLog.unit?.current_client?.branch || mainLog.unit?.current_client?.address || 'Pusat / Cabang'}
                           </span>
+                        </div>
+                      </td>
+                      {/* Kolom Address */}
+                      <td onClick={(e) => e.stopPropagation()}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                          {mainLog.outlet_address ? (
+                            <span style={{ fontSize: '0.74rem', color: '#475569', lineHeight: 1.4 }}
+                              title={mainLog.outlet_address}>
+                              {mainLog.outlet_address.length > 60
+                                ? mainLog.outlet_address.slice(0, 60) + '…'
+                                : mainLog.outlet_address}
+                            </span>
+                          ) : (
+                            <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontStyle: 'italic' }}>—</span>
+                          )}
                         </div>
                       </td>
                       <td onClick={(e) => e.stopPropagation()}>
@@ -786,193 +804,213 @@ export default function ServicePage() {
                                 </tr>
                               </thead>
                               <tbody>
-                                {history.map((hlog: any) => {
-                                  const isRowEditing = editingRowId === hlog.id;
-                                  const progressLabel = hlog.status === 'COMPLETED' ? 'Done' : hlog.status === 'PENDING' ? 'Waiting' : 'Scheduled';
+                                {(() => {
+                                  // Deduplikasi riwayat sub-kegiatan berdasarkan kombinasi tanggal eksekusi, teknisi, dan action taken
+                                  // (menghindari duplikasi baris ketika 1 tiket servis menangani beberapa unit sekaligus)
+                                  const seenHistory = new Set<string>();
+                                  const uniqueHistory = history.filter((hlog: any) => {
+                                    const dStr = formatDate(hlog.scheduled_date || hlog.service_date || hlog.created_at);
+                                    const tStr = (hlog.technician_name || '').trim().toLowerCase();
+                                    const aStr = (hlog.action_taken || '').trim().toLowerCase();
+                                    const rStr = (hlog.planning_notes || '').trim().toLowerCase();
+                                    const key = `${dStr}__${tStr}__${aStr}__${rStr}`;
+                                    if (seenHistory.has(key)) return false;
+                                    seenHistory.add(key);
+                                    return true;
+                                  });
+
                                   return (
-                                    <tr key={hlog.id}>
-                                      <td style={{ color: 'var(--color-deep-navy)', fontWeight: 600 }}>
-                                        {isRowEditing ? (
-                                          <DatePicker
-                                            value={editRowDate}
-                                            onChange={(val) => setEditRowDate(val)}
-                                            customTrigger={(formatted) => (
-                                              <button
-                                                type="button"
-                                                className={styles.neuDateInput}
-                                                style={{
-                                                  display: 'flex',
-                                                  alignItems: 'center',
-                                                  justifyContent: 'space-between',
-                                                  cursor: 'pointer',
-                                                  textAlign: 'left',
-                                                  fontSize: '0.8rem',
-                                                  background: '#ffffff',
-                                                }}
-                                              >
-                                                <span>{editRowDate || 'Pilih tanggal...'}</span>
-                                                <CalendarDays size={14} style={{ color: '#2E5BFF', opacity: 0.8 }} />
-                                              </button>
-                                            )}
-                                          />
-                                        ) : (
-                                          formatDate(hlog.scheduled_date || hlog.service_date || hlog.created_at)
-                                        )}
-                                      </td>
-                                      <td>
-                                        {isRowEditing ? (
-                                          <div onClick={(e) => e.stopPropagation()}>
-                                            <MultiSelect
-                                              value={editRowTech ? editRowTech.split(',').map((s: string) => s.trim()).filter(Boolean) : []}
-                                              onChange={(arr) => setEditRowTech(arr.join(', '))}
-                                              options={technicianOptions}
-                                              placeholder="Pilih teknisi..."
-                                              fullWidth
-                                            />
-                                          </div>
-                                        ) : (
-                                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', alignItems: 'center' }}>
-                                            {hlog.technician_name ? (
-                                              hlog.technician_name.split(',').map((tName: string, tIdx: number) => (
+                                    <>
+                                      {uniqueHistory.map((hlog: any) => {
+                                        const isRowEditing = editingRowId === hlog.id;
+                                        const progressLabel = hlog.status === 'COMPLETED' ? 'Done' : hlog.status === 'PENDING' ? 'Waiting' : 'Scheduled';
+                                        return (
+                                          <tr key={hlog.id}>
+                                            <td style={{ color: 'var(--color-deep-navy)', fontWeight: 600 }}>
+                                              {isRowEditing ? (
+                                                <DatePicker
+                                                  value={editRowDate}
+                                                  onChange={(val) => setEditRowDate(val)}
+                                                  customTrigger={(formatted) => (
+                                                    <button
+                                                      type="button"
+                                                      className={styles.neuDateInput}
+                                                      style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'space-between',
+                                                        cursor: 'pointer',
+                                                        textAlign: 'left',
+                                                        fontSize: '0.8rem',
+                                                        background: '#ffffff',
+                                                      }}
+                                                    >
+                                                      <span>{editRowDate || 'Pilih tanggal...'}</span>
+                                                      <CalendarDays size={14} style={{ color: '#2E5BFF', opacity: 0.8 }} />
+                                                    </button>
+                                                  )}
+                                                />
+                                              ) : (
+                                                formatDate(hlog.scheduled_date || hlog.service_date || hlog.created_at)
+                                              )}
+                                            </td>
+                                            <td>
+                                              {isRowEditing ? (
+                                                <div onClick={(e) => e.stopPropagation()}>
+                                                  <MultiSelect
+                                                    value={editRowTech ? editRowTech.split(',').map((s: string) => s.trim()).filter(Boolean) : []}
+                                                    onChange={(arr) => setEditRowTech(arr.join(', '))}
+                                                    options={technicianOptions}
+                                                    placeholder="Pilih teknisi..."
+                                                    fullWidth
+                                                  />
+                                                </div>
+                                              ) : (
+                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', alignItems: 'center' }}>
+                                                  {hlog.technician_name ? (
+                                                    hlog.technician_name.split(',').map((tName: string, tIdx: number) => (
+                                                      <span
+                                                        key={tIdx}
+                                                        style={{
+                                                          fontSize: '0.74rem',
+                                                          fontWeight: 600,
+                                                          background: 'rgba(46,91,255,0.08)',
+                                                          color: '#1E40AF',
+                                                          padding: '2px 7px',
+                                                          borderRadius: '4px',
+                                                          display: 'inline-block',
+                                                        }}
+                                                      >
+                                                        {tName.trim()}
+                                                      </span>
+                                                    ))
+                                                  ) : (
+                                                    <span style={{ color: '#94a3b8', fontStyle: 'italic', fontSize: '0.78rem' }}>Menunggu Teknisi</span>
+                                                  )}
+                                                </div>
+                                              )}
+                                            </td>
+                                            <td>
+                                              {isRowEditing ? (
+                                                <textarea
+                                                  value={editRowAction}
+                                                  onChange={(e) => setEditRowAction(e.target.value)}
+                                                  onClick={(e) => e.stopPropagation()}
+                                                  placeholder="Handling teknisi..."
+                                                  style={{ width: '100%', padding: '6px 8px', borderRadius: '4px', border: '1px solid #2E5BFF', fontSize: '0.82rem', minHeight: '44px', fontFamily: 'inherit' }}
+                                                />
+                                              ) : (
+                                                <span style={{ color: '#334155', lineHeight: 1.4 }}>{hlog.action_taken}</span>
+                                              )}
+                                            </td>
+                                            <td>
+                                              {isRowEditing ? (
+                                                <textarea
+                                                  value={editRowResult}
+                                                  onChange={(e) => setEditRowResult(e.target.value)}
+                                                  onClick={(e) => e.stopPropagation()}
+                                                  placeholder="Hasil akhir / result..."
+                                                  style={{ width: '100%', padding: '6px 8px', borderRadius: '4px', border: '1px solid #10b981', fontSize: '0.82rem', minHeight: '44px', fontFamily: 'inherit' }}
+                                                />
+                                              ) : (
+                                                <span style={{ color: '#047857', fontWeight: 600, fontSize: '0.8rem' }}>
+                                                  {hlog.planning_notes || (hlog.status === 'COMPLETED' ? 'Unit telah normal kembali' : <span style={{ color: '#94a3b8', fontStyle: 'italic', fontWeight: 400 }}>—</span>)}
+                                                </span>
+                                              )}
+                                            </td>
+                                            <td>
+                                              {isRowEditing ? (
+                                                <CustomSelect
+                                                  value={editRowStatus}
+                                                  options={[
+                                                    { value: 'Done', label: 'Done' },
+                                                    { value: 'Scheduled', label: 'Scheduled' },
+                                                    { value: 'Waiting', label: 'Waiting' },
+                                                  ]}
+                                                  showSearch={false}
+                                                  onChange={(val) => setEditRowStatus(val)}
+                                                  customTrigger={(opt, isOpen) => {
+                                                    const cur = opt ? opt.value : editRowStatus;
+                                                    const pClass =
+                                                      cur === 'Done'
+                                                        ? styles.progressDone
+                                                        : cur === 'Scheduled'
+                                                          ? styles.progressScheduled
+                                                          : styles.progressWaiting;
+                                                    return (
+                                                      <button
+                                                        type="button"
+                                                        className={`${styles.neuStatusPillTrigger} ${pClass}`}
+                                                        style={{ padding: '4px 10px', fontSize: '0.68rem' }}
+                                                      >
+                                                        <span>{opt ? opt.label : cur}</span>
+                                                        <ChevronDown
+                                                          size={12}
+                                                          style={{
+                                                            transform: isOpen ? 'rotate(180deg)' : 'none',
+                                                            transition: 'transform 0.2s ease',
+                                                          }}
+                                                        />
+                                                      </button>
+                                                    );
+                                                  }}
+                                                />
+                                              ) : (
                                                 <span
-                                                  key={tIdx}
                                                   style={{
-                                                    fontSize: '0.74rem',
-                                                    fontWeight: 600,
-                                                    background: 'rgba(46,91,255,0.08)',
-                                                    color: '#1E40AF',
-                                                    padding: '2px 7px',
-                                                    borderRadius: '4px',
+                                                    fontSize: '0.68rem',
+                                                    fontWeight: 800,
+                                                    padding: '3px 8px',
+                                                    borderRadius: '12px',
+                                                    textTransform: 'uppercase',
                                                     display: 'inline-block',
+                                                    background: progressLabel === 'Done' ? 'rgba(16, 185, 129, 0.12)' : progressLabel === 'Scheduled' ? 'rgba(0, 71, 171, 0.1)' : 'rgba(245, 158, 11, 0.12)',
+                                                    color: progressLabel === 'Done' ? '#059669' : progressLabel === 'Scheduled' ? '#0047AB' : '#d97706',
+                                                    border: `1px solid ${progressLabel === 'Done' ? 'rgba(16, 185, 129, 0.3)' : progressLabel === 'Scheduled' ? 'rgba(0, 71, 171, 0.25)' : 'rgba(245, 158, 11, 0.3)'}`,
                                                   }}
                                                 >
-                                                  {tName.trim()}
+                                                  {progressLabel}
                                                 </span>
-                                              ))
-                                            ) : (
-                                              <span style={{ color: '#94a3b8', fontStyle: 'italic', fontSize: '0.78rem' }}>Menunggu Teknisi</span>
-                                            )}
-                                          </div>
-                                        )}
-                                      </td>
-                                      <td>
-                                        {isRowEditing ? (
-                                          <textarea
-                                            value={editRowAction}
-                                            onChange={(e) => setEditRowAction(e.target.value)}
-                                            onClick={(e) => e.stopPropagation()}
-                                            placeholder="Handling teknisi..."
-                                            style={{ width: '100%', padding: '6px 8px', borderRadius: '4px', border: '1px solid #2E5BFF', fontSize: '0.82rem', minHeight: '44px', fontFamily: 'inherit' }}
-                                          />
-                                        ) : (
-                                          <span style={{ color: '#334155', lineHeight: 1.4 }}>{hlog.action_taken}</span>
-                                        )}
-                                      </td>
-                                      <td>
-                                        {isRowEditing ? (
-                                          <textarea
-                                            value={editRowResult}
-                                            onChange={(e) => setEditRowResult(e.target.value)}
-                                            onClick={(e) => e.stopPropagation()}
-                                            placeholder="Hasil akhir / result..."
-                                            style={{ width: '100%', padding: '6px 8px', borderRadius: '4px', border: '1px solid #10b981', fontSize: '0.82rem', minHeight: '44px', fontFamily: 'inherit' }}
-                                          />
-                                        ) : (
-                                          <span style={{ color: '#047857', fontWeight: 600, fontSize: '0.8rem' }}>
-                                            {hlog.planning_notes || (hlog.status === 'COMPLETED' ? 'Unit telah normal kembali' : <span style={{ color: '#94a3b8', fontStyle: 'italic', fontWeight: 400 }}>—</span>)}
-                                          </span>
-                                        )}
-                                      </td>
-                                      <td>
-                                        {isRowEditing ? (
-                                          <CustomSelect
-                                            value={editRowStatus}
-                                            options={[
-                                              { value: 'Done', label: 'Done' },
-                                              { value: 'Scheduled', label: 'Scheduled' },
-                                              { value: 'Waiting', label: 'Waiting' },
-                                            ]}
-                                            showSearch={false}
-                                            onChange={(val) => setEditRowStatus(val)}
-                                            customTrigger={(opt, isOpen) => {
-                                              const cur = opt ? opt.value : editRowStatus;
-                                              const pClass =
-                                                cur === 'Done'
-                                                  ? styles.progressDone
-                                                  : cur === 'Scheduled'
-                                                    ? styles.progressScheduled
-                                                    : styles.progressWaiting;
-                                              return (
+                                              )}
+                                            </td>
+                                            <td style={{ textAlign: 'center' }}>
+                                              {isRowEditing ? (
+                                                <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
+                                                  <button
+                                                    type="button"
+                                                    onClick={(e) => handleSaveRowEdit(e, hlog)}
+                                                    className={styles.subRowBtn}
+                                                    style={{ background: '#10b981', color: '#fff', border: 'none' }}
+                                                    title="Simpan"
+                                                  >
+                                                    <Check size={12} />
+                                                  </button>
+                                                  <button
+                                                    type="button"
+                                                    onClick={(e) => { e.stopPropagation(); setEditingRowId(null); }}
+                                                    className={styles.subRowBtn}
+                                                    title="Batal"
+                                                  >
+                                                    <X size={12} />
+                                                  </button>
+                                                </div>
+                                              ) : (
                                                 <button
                                                   type="button"
-                                                  className={`${styles.neuStatusPillTrigger} ${pClass}`}
-                                                  style={{ padding: '4px 10px', fontSize: '0.68rem' }}
+                                                  onClick={(e) => handleStartRowEdit(e, hlog)}
+                                                  className={styles.subRowBtn}
+                                                  title="Edit in Row"
                                                 >
-                                                  <span>{opt ? opt.label : cur}</span>
-                                                  <ChevronDown
-                                                    size={12}
-                                                    style={{
-                                                      transform: isOpen ? 'rotate(180deg)' : 'none',
-                                                      transition: 'transform 0.2s ease',
-                                                    }}
-                                                  />
+                                                  <Edit2 size={12} /> Edit
                                                 </button>
-                                              );
-                                            }}
-                                          />
-                                        ) : (
-                                          <span
-                                            style={{
-                                              fontSize: '0.68rem',
-                                              fontWeight: 800,
-                                              padding: '3px 8px',
-                                              borderRadius: '12px',
-                                              textTransform: 'uppercase',
-                                              display: 'inline-block',
-                                              background: progressLabel === 'Done' ? 'rgba(16, 185, 129, 0.12)' : progressLabel === 'Scheduled' ? 'rgba(0, 71, 171, 0.1)' : 'rgba(245, 158, 11, 0.12)',
-                                              color: progressLabel === 'Done' ? '#059669' : progressLabel === 'Scheduled' ? '#0047AB' : '#d97706',
-                                              border: `1px solid ${progressLabel === 'Done' ? 'rgba(16, 185, 129, 0.3)' : progressLabel === 'Scheduled' ? 'rgba(0, 71, 171, 0.25)' : 'rgba(245, 158, 11, 0.3)'}`,
-                                            }}
-                                          >
-                                            {progressLabel}
-                                          </span>
-                                        )}
-                                      </td>
-                                      <td style={{ textAlign: 'center' }}>
-                                        {isRowEditing ? (
-                                          <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
-                                            <button
-                                              type="button"
-                                              onClick={(e) => handleSaveRowEdit(e, hlog)}
-                                              className={styles.subRowBtn}
-                                              style={{ background: '#10b981', color: '#fff', border: 'none' }}
-                                              title="Simpan"
-                                            >
-                                              <Check size={12} />
-                                            </button>
-                                            <button
-                                              type="button"
-                                              onClick={(e) => { e.stopPropagation(); setEditingRowId(null); }}
-                                              className={styles.subRowBtn}
-                                              title="Batal"
-                                            >
-                                              <X size={12} />
-                                            </button>
-                                          </div>
-                                        ) : (
-                                          <button
-                                            type="button"
-                                            onClick={(e) => handleStartRowEdit(e, hlog)}
-                                            className={styles.subRowBtn}
-                                            title="Edit in Row"
-                                          >
-                                            <Edit2 size={12} /> Edit
-                                          </button>
-                                        )}
-                                      </td>
-                                    </tr>
+                                              )}
+                                            </td>
+                                          </tr>
+                                        );
+                                      })}
+                                    </>
                                   );
-                                })}
+                                })()}
 
                                 {/* Inline Add Row Form */}
                                 {addingToCallId === cid && (
@@ -1378,7 +1416,7 @@ export default function ServicePage() {
               Kosongkan Seluruh Data Servis?
             </h3>
             <p style={{ fontSize: '0.88rem', color: '#64748b', lineHeight: 1.5, marginBottom: '24px' }}>
-              Tindakan ini akan <strong>menghapus permanen seluruh data log servis</strong> di database. Gunakan ini sebelum Anda mengimpor data melalui fitur Bulk Upload.
+              Tindakan ini akan <strong>menghapus permanen seluruh data riwayat servis</strong> dan membersihkan cache unit hasil upload dari database. Unit asli/master dan unit IoT Anda tetap aman terjaga.
             </p>
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
               <button

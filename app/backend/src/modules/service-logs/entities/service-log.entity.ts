@@ -78,6 +78,9 @@ export class ServiceLog {
   @Column({ type: 'text', nullable: true })
   replaced_sparepart!: string;
 
+  @Column({ type: 'text', nullable: true })
+  outlet_address!: string;
+
   @Column({ default: false })
   is_allocated!: boolean;
 
