@@ -81,36 +81,37 @@ export default function QrCard({ token, serialNumber, modelName }: QrCardProps) 
 
   return (
     <section className={styles.panel}>
-      <div className={styles.panelHeader} style={{ padding: '14px 18px 8px' }}>
+      <div className={styles.panelHeader} style={{ padding: '10px 14px 6px' }}>
         <div className={styles.panelHeaderLeft}>
-          <QrCode size={15} color="#60a5fa" />
-          <h2 style={{ fontSize: '0.88rem', fontWeight: 800, whiteSpace: 'nowrap' }}>QR Passport</h2>
+          <QrCode size={13} color="#60a5fa" />
+          <h2 style={{ fontSize: '0.82rem', fontWeight: 800, whiteSpace: 'nowrap' }}>QR Passport</h2>
         </div>
       </div>
       <div className={`${styles.panelContent} ${styles.qrCard}`}>
-        {/* Serial Number */}
-        <div className={styles.qrSerial}>{serialNumber}</div>
-
-        {/* QR Code inside neumorphic inset plate */}
+        {/* Semua konten di dalam frame neumorphic */}
         <div className={styles.qrFrame}>
+          {/* Serial Number */}
+          <div className={styles.qrSerial}>{serialNumber}</div>
+
+          {/* QR Code */}
           <img
             src={qrApiUrl}
             alt={`QR Code untuk ${serialNumber}`}
             className={styles.qrCodeImg}
           />
-        </div>
 
-        {/* Model Name — di bawah QR */}
-        <div className={styles.qrModel}>{modelName}</div>
+          {/* Model Name */}
+          <div className={styles.qrModel}>{modelName}</div>
 
-        {/* Actions */}
-        <div className={styles.qrActions}>
-          <button className={styles.qrBtn} onClick={handleDownload} title="Download QR">
-            <Download size={12} /> Download
-          </button>
-          <button className={`${styles.qrBtn} ${styles.qrBtnPrimary}`} onClick={handlePrint} title="Print QR">
-            <Printer size={12} /> Print
-          </button>
+          {/* Actions */}
+          <div className={styles.qrActions}>
+            <button className={styles.qrBtn} onClick={handleDownload} title="Download QR">
+              <Download size={12} /> Download
+            </button>
+            <button className={`${styles.qrBtn} ${styles.qrBtnPrimary}`} onClick={handlePrint} title="Print QR">
+              <Printer size={12} /> Print
+            </button>
+          </div>
         </div>
       </div>
     </section>
