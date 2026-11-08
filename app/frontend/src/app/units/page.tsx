@@ -69,6 +69,15 @@ function UnitsPageInner() {
         countValue = data.meta?.total ?? data.total ?? data.count ?? unitsArray.length;
       }
 
+      // Prioritaskan unit IoT di urutan paling atas di sisi frontend (fallback jika API backend production belum refresh)
+      unitsArray.sort((a: any, b: any) => {
+        const aHasIot = Boolean(a.iot_unit_id && String(a.iot_unit_id).trim() !== '');
+        const bHasIot = Boolean(b.iot_unit_id && String(b.iot_unit_id).trim() !== '');
+        if (aHasIot && !bHasIot) return -1;
+        if (!aHasIot && bHasIot) return 1;
+        return 0;
+      });
+
       setUnits(unitsArray);
       setTotalCount(countValue);
     } catch (err: any) {
