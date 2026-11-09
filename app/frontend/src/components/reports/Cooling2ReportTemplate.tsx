@@ -10,8 +10,9 @@ function CheckboxDisplay({ checked, onChange, disabled }: { checked: boolean; on
   );
 }
 
-export default function Cooling2ReportTemplate({ mode = 'edit', data = {}, unit = {}, onChange }: any) {
+export default function Cooling2ReportTemplate({ mode = 'edit', data = {}, unit = {}, photos = [], onChange }: any) {
   const isEdit = mode === 'edit';
+  const nameplatePhoto = (photos && photos.length > 0) ? photos[0] : (data?.photos?.[0] || null);
   const setHeader = (k: string, v: any) => { if (onChange && isEdit) onChange('header', { ...data.header, [k]: v }); };
   const setTempRow = (row: 'cake' | 'rtd', k: string, v: any) => {
     if (onChange && isEdit) onChange('general_inspection', { ...data.general_inspection, [row]: { ...(data.general_inspection?.[row] || {}), [k]: v } });
@@ -464,6 +465,33 @@ export default function Cooling2ReportTemplate({ mode = 'edit', data = {}, unit 
               )}
               <span>Suhu tercapai dalam <span style={{ margin: '0 4px' }}>{isEdit ? <input type="text" className={styles.inlineInput} style={{ width: '30px', margin: '0 4px', borderBottom: '1px dotted #000' }} value={data.performance_inspection?.qc_2_time || ''} onChange={e => setPerf('qc_2_time', e.target.value)} /> : (data.performance_inspection?.qc_2_time || '___')}</span> menit</span>
             </label>
+
+            {/* Kotak Nameplate / Foto Dokumentasi QC di bawah Checklist */}
+            <div style={{
+              marginTop: '10px',
+              border: '1px solid #334155',
+              borderRadius: '3px',
+              padding: '4px',
+              minHeight: '85px',
+              maxHeight: '120px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: '#f8fafc',
+              overflow: 'hidden'
+            }}>
+              {nameplatePhoto ? (
+                <img
+                  src={nameplatePhoto}
+                  alt="Nameplate / Foto QC"
+                  style={{ width: '100%', height: '100%', maxHeight: '110px', objectFit: 'contain', display: 'block' }}
+                />
+              ) : (
+                <div style={{ fontSize: '8px', color: '#94a3b8', textAlign: 'center', fontStyle: 'italic' }}>
+                  [ Area Nameplate / Foto QC ]
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

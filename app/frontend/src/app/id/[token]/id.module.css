@@ -266,7 +266,7 @@
 
 @media (max-width: 768px) {
   .topRowGrid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr
   }
 }
 
@@ -523,7 +523,7 @@
   font-family: var(--font-heading);
   font-size: 0.78rem;
   font-weight: 700;
-  box-shadow: -2px -2px 5px rgba(255,255,255,0.04), 2px 2px 5px rgba(0,0,0,0.35);
+  box-shadow: -2px -2px 5px rgba(255, 255, 255, 0.04), 2px 2px 5px rgba(0, 0, 0, 0.35);
 }
 
 .headerRight {
@@ -556,7 +556,7 @@
   border: 1px solid rgba(255, 255, 255, 0.12);
   padding: 5px 12px;
   border-radius: 50px;
-  box-shadow: -2px -2px 5px rgba(255,255,255,0.04), 2px 2px 5px rgba(0,0,0,0.35);
+  box-shadow: -2px -2px 5px rgba(255, 255, 255, 0.04), 2px 2px 5px rgba(0, 0, 0, 0.35);
 }
 
 /* ============================================================

@@ -360,7 +360,7 @@ const handleSubmit = async () => {
       {/* Content: Form or Preview */}
       <div id={showPreview ? 'report-print-area' : undefined} className={showPreview ? styles.sheetContainer : styles.formContainer}>
         {showPreview ? (
-          <CoolingReportTemplate mode="view" data={form} unit={unit || {}} />
+          <CoolingReportTemplate mode="view" data={form} unit={unit || {}} photos={photoUrls} />
         ) : (
           <CoolingReportForm
             data={form}

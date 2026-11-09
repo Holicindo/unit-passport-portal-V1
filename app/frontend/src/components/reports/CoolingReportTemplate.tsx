@@ -32,8 +32,9 @@ function CheckboxDisplay({ checked, onChange, disabled }: { checked: boolean; on
   );
 }
 
-export default function CoolingReportTemplate({ mode = 'edit', data = {}, unit = {}, onChange }: any) {
+export default function CoolingReportTemplate({ mode = 'edit', data = {}, unit = {}, photos = [], onChange }: any) {
   const isEdit = mode === 'edit';
+  const nameplatePhoto = (photos && photos.length > 0) ? photos[0] : (data?.photos?.[0] || null);
 
   const setHeader = (key: string, val: any) => {
     if (onChange && isEdit) onChange('header', { ...data.header, [key]: val });
@@ -590,6 +591,33 @@ export default function CoolingReportTemplate({ mode = 'edit', data = {}, unit =
               <CheckboxDisplay checked={data.performance_inspection?.qc_4 || false} onChange={(e) => setPerf('qc_4', e.target.checked)} disabled={!isEdit} />
               <span>Unit telah melewati test tegangan listrik</span>
             </label>
+
+            {/* Kotak Nameplate / Foto Dokumentasi QC di bawah Checklist */}
+            <div style={{
+              marginTop: '10px',
+              border: '1px solid #334155',
+              borderRadius: '3px',
+              padding: '4px',
+              minHeight: '85px',
+              maxHeight: '120px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: '#f8fafc',
+              overflow: 'hidden'
+            }}>
+              {nameplatePhoto ? (
+                <img
+                  src={nameplatePhoto}
+                  alt="Nameplate / Foto QC"
+                  style={{ width: '100%', height: '100%', maxHeight: '110px', objectFit: 'contain', display: 'block' }}
+                />
+              ) : (
+                <div style={{ fontSize: '8px', color: '#94a3b8', textAlign: 'center', fontStyle: 'italic' }}>
+                  [ Area Nameplate / Foto QC ]
+                </div>
+              )}
+            </div>
           </div>
               </div>
             </td>

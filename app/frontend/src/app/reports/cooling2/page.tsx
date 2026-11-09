@@ -212,7 +212,7 @@ const handleSubmit = async () => {
 
       <div id={showPreview ? 'report-print-area' : undefined} className={showPreview ? styles.sheetContainer : styles.formContainer}>
         {showPreview
-          ? <Cooling2ReportTemplate mode="view" data={form} unit={unit || {}} />
+          ? <Cooling2ReportTemplate mode="view" data={form} unit={unit || {}} photos={photoUrls} />
           : <Cooling2ReportForm data={form} onChange={(key, val) => setForm((prev: any) => ({ ...prev, [key]: val }))} />}
       </div>
 

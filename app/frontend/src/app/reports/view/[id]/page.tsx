@@ -98,8 +98,60 @@ export default function ReportView() {
   }, [id]);
 
   const handlePrint = () => {
-    // Natively trigger browser print (user can select printer or save as PDF)
-    window.print();
+    // Print hanya konten lembar laporan (tanpa sidebar, header kop surat, status approval, atau footer digital stamp)
+    const printArea = document.getElementById('report-print-area');
+    if (!printArea) { window.print(); return; }
+
+    const clone = printArea.cloneNode(true) as HTMLElement;
+    // Hapus semua elemen dengan class printExclude atau photoContainerPrintExclude
+    clone.querySelectorAll('.printExclude, .photoContainerPrintExclude').forEach((el) => el.remove());
+
+    const pw = window.open('', '_blank', 'width=900,height=1200');
+    if (!pw) { window.print(); return; }
+
+    // Ambil semua stylesheet dari halaman utama
+    const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
+      .map(el => el.outerHTML).join('\n');
+
+    pw.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Laporan - Cetak</title>
+  ${styles}
+  <style>
+    @page { 
+      size: A4 portrait; 
+      margin: 4mm; 
+    }
+    * { 
+      box-sizing: border-box; 
+      -webkit-print-color-adjust: exact !important; 
+      print-color-adjust: exact !important; 
+    }
+    html, body { 
+      margin: 0 !important; 
+      padding: 0 !important; 
+      background: #fff !important; 
+      width: 100% !important;
+      height: 100% !important;
+    }
+    .printExclude, .photoContainerPrintExclude {
+      display: none !important;
+    }
+    /* Pastikan lebar tabel mengisi 100% kertas */
+    table {
+      width: 100% !important;
+    }
+  </style>
+</head>
+<body>
+${clone.innerHTML}
+</body>
+</html>`);
+    pw.document.close();
+    pw.onload = () => { pw.focus(); pw.print(); };
+    setTimeout(() => { try { pw.focus(); pw.print(); } catch {} }, 1200);
   };
 
   const handleUpdateStatus = async (newStatus: string, revisionNote?: string) => {
@@ -248,8 +300,8 @@ export default function ReportView() {
 
       {/* Screen Render Container */}
       <div id="report-print-area" className={styles.previewWrapper}>
-        {/* Official Kop Surat Holicindo */}
-        <div className="officialKopSurat" style={{
+        {/* Official Kop Surat Holicindo — hanya tampil di layar, tidak di print */}
+        <div className="officialKopSurat printExclude" style={{
           padding: '20px 24px 16px 24px',
           borderBottom: '3px double #2E5BFF',
           marginBottom: '16px',
@@ -295,11 +347,11 @@ export default function ReportView() {
         </div>
 
         {report.form_type === 'COOLING_1' ? (
-          <CoolingReportTemplate mode="view" data={report.data} unit={report.unit} />
+          <CoolingReportTemplate mode="view" data={report.data} unit={report.unit} photos={report.photo_urls} />
         ) : report.form_type === 'COOLING_2' ? (
-          <Cooling2ReportTemplate mode="view" data={report.data} unit={report.unit} />
+          <Cooling2ReportTemplate mode="view" data={report.data} unit={report.unit} photos={report.photo_urls} />
         ) : report.form_type === 'COOLING_3' ? (
-          <Cooling3ReportTemplate mode="view" data={report.data} unit={report.unit} />
+          <Cooling3ReportTemplate mode="view" data={report.data} unit={report.unit} photos={report.photo_urls} />
         ) : report.form_type === 'COOLING_WARM' ? (
           <WarmReportTemplate mode="view" data={report.data} unit={report.unit} />
         ) : report.form_type === 'REWORK' ? (
@@ -379,7 +431,7 @@ export default function ReportView() {
           </div>
         )}
         {/* Official Digital Verification Stamp Footer */}
-        <div style={{
+        <div className="printExclude" style={{
           marginTop: '24px',
           padding: '12px 20px',
           borderTop: '1px solid #e2e8f0',

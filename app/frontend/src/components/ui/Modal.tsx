@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import styles from './Modal.module.css';
 import { X, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
@@ -24,10 +26,16 @@ export default function Modal({
   confirmText = 'Ya, Simpan',
   cancelText = 'Batal'
 }: ModalProps) {
-  if (!isOpen) return null;
+  const [mounted, setMounted] = useState(false);
 
-  return (
-    <div className={styles.overlay}>
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!isOpen || !mounted) return null;
+
+  return createPortal(
+    <div className={styles.overlay} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className={styles.modal}>
         <button className={styles.closeBtn} onClick={onClose}><X size={20} /></button>
         
@@ -52,6 +60,7 @@ export default function Modal({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
