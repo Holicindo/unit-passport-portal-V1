@@ -203,30 +203,6 @@ export default function ClientDashboard() {
     }
   });
 
-  // ── MOCK DATA PENGINGAT (REMINDERS) UNTUK DEMO ──
-  // Menambahkan jadwal servis dan pengingat di sekitar tanggal hari ini
-  const mockDates = [
-    { offset: 2, type: 'service' as const, id: 'demo1', serial: 'A26051860', model: 'Cold Case CX3-1500 [GOLD]' },
-    { offset: 5, type: 'warranty-expiring' as const, id: 'demo2', serial: 'B99201991', model: 'Showcase Cooler V2' },
-    { offset: -3, type: 'service' as const, id: 'demo3', serial: 'C10293847', model: 'Freezer Max 300L' },
-  ];
-
-  mockDates.forEach(mock => {
-    const d = new Date(today.getTime() + mock.offset * 24 * 60 * 60 * 1000);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    if (!calendarEvents[key]) {
-      calendarEvents[key] = { type: mock.type, units: [] };
-    }
-    // Jika tidak ada unit aslinya di tanggal tersebut, atau untuk memperkaya data:
-    if (!calendarEvents[key].units.some(u => u.serial === mock.serial)) {
-      calendarEvents[key].units.push({
-        id: mock.id,
-        serial: mock.serial,
-        model: mock.model,
-      });
-    }
-  });
-
   // Fallback greeting name: hindari kata "Unknown"
   const rawName = user?.name?.trim();
   const isValidName = rawName && !rawName.toLowerCase().includes('unknown');
