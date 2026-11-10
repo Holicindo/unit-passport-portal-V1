@@ -8,6 +8,7 @@ import { StorageService } from '../storage/storage.service';
 import { User } from '../auth/entities/user.entity';
 import { Notification, NotificationType } from '../notifications/entities/notification.entity';
 import { Unit } from '../units/entities/unit.entity';
+import { Client } from '../clients/entities/client.entity';
 
 
 @Injectable()
@@ -184,8 +185,8 @@ export class ServiceLogsService {
     // 1. Hapus semua service logs
     await this.logRepo.createQueryBuilder().delete().from(ServiceLog).execute();
 
-    // 2. Bersihkan unit-unit yang terbuat otomatis dari upload servis (cache/numpuk),
-    //    TETAPI jaga unit master/asli:
+    // 2. Bersihkan unit & client yang terbuat otomatis dari upload servis (cache/numpuk),
+    //    TETAPI jaga data master/asli:
     //    - Unit yang memiliki iot_unit_id (unit IoT pameran/demo)
     //    - Unit yang memiliki garansi (warranties)
     //    - Unit yang memiliki riwayat kepemilikan (ownership_history)
@@ -198,12 +199,23 @@ export class ServiceLogsService {
         .where('iot_unit_id IS NULL')
         .andWhere('id NOT IN (SELECT unit_id FROM warranties WHERE unit_id IS NOT NULL)')
         .andWhere('id NOT IN (SELECT unit_id FROM ownership_history WHERE unit_id IS NOT NULL)')
-        .andWhere('created_at >= :recentDate', { recentDate: new Date('2026-11-06T00:00:00Z') })
+        .andWhere('created_at >= :recentDate', { recentDate: new Date('2026-11-01T00:00:00Z') })
+        .execute();
+
+      // Bersihkan client yang otomatis terbuat dari upload servis dan tidak memiliki unit atau user
+      const clientRepo = this.logRepo.manager.getRepository(Client);
+      await clientRepo.createQueryBuilder()
+        .delete()
+        .from(Client)
+        .where('created_at >= :recentDate', { recentDate: new Date('2026-11-01T00:00:00Z') })
+        .andWhere('id != :pameranId', { pameranId: 'CLI-23JZHA7' })
+        .andWhere('id NOT IN (SELECT DISTINCT "currentClientId" FROM units WHERE "currentClientId" IS NOT NULL)')
+        .andWhere('id NOT IN (SELECT DISTINCT client_id FROM users WHERE client_id IS NOT NULL)')
         .execute();
     } catch (err) {
-      console.error('Failed to clean up uploaded units cache during clearAll:', err);
+      console.error('Failed to clean up uploaded units/clients cache during clearAll:', err);
     }
 
-    return { success: true, message: 'Seluruh data log servis dan unit hasil upload berhasil dibersihkan.' };
+    return { success: true, message: 'Seluruh data log servis, unit, dan klien hasil upload berhasil dibersihkan.' };
   }
 }
