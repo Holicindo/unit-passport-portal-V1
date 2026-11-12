@@ -213,76 +213,93 @@ export default function ClientDashboard() {
 
   return (
     <div className={styles.dashboardContainer}>
-      <div className={styles.pageHeader}>
-        <h1 className={styles.pageTitle}>
-          {greeting}{greetingName ? `, ${greetingName}` : ''}
-        </h1>
-        <p className={styles.pageDescription}>
-          {companyName ? `Ringkasan status armada unit ${companyName}.` : 'Ringkasan status unit dan armada Anda.'}
-        </p>
+      {/* ── HEADER ROW (Salam di kiri, Quick Actions Pills elegan di kanan) ── */}
+      <div className={styles.desktopHeaderRow}>
+        <div className={styles.pageHeader} style={{ marginBottom: 0 }}>
+          <h1 className={styles.pageTitle}>
+            {greeting}{greetingName ? `, ${greetingName}` : ''}
+          </h1>
+          <p className={styles.pageDescription} style={{ marginBottom: 0 }}>
+            {companyName ? `Ringkasan status armada unit ${companyName}.` : 'Ringkasan status unit dan armada Anda.'}
+          </p>
+        </div>
+
+        <div className={styles.desktopHeaderActions}>
+          <Link href="/client-portal/service-request" className={`${styles.desktopPillBtn} ${styles.desktopPillBtnPrimary}`}>
+            <Calendar size={15} /> + Ajukan Servis
+          </Link>
+          <Link href="/client-portal/fleet" className={styles.desktopPillBtn}>
+            <Package size={15} /> Semua Unit
+          </Link>
+          <Link href="/client-portal/units/scan" className={styles.desktopPillBtn}>
+            <QrCode size={15} /> Scan QR
+          </Link>
+          <Link href="/client-portal/messages" className={styles.desktopPillBtn}>
+            <LifeBuoy size={15} /> Bantuan
+          </Link>
+        </div>
       </div>
 
-      {loading ? (
-        <><SkeletonCard /><SkeletonCard /></>
-      ) : (
-        <>
-          {/* ── HERO CARD (Gopay-style Saldo) ── */}
-          <div className={styles.heroCard}>
-            <div className={styles.heroHeader}>
-              <span className={styles.heroHeading}>Kesehatan Fleet</span>
-              <span className={styles.heroTotal}>{totalUnits} Unit</span>
-            </div>
-            <div className={styles.heroStatsRow}>
-              <div className={styles.heroStatItem}>
-                <span className={styles.heroStatValue}>{activeUnits}</span>
-                <span className={styles.heroStatLabel}>Aktif Beroperasi</span>
-              </div>
-              <div className={styles.heroStatDivider} />
-              <div className={styles.heroStatItem}>
-                <span className={styles.heroStatValue} style={{ color: maintUnits > 0 ? '#FFA07A' : 'inherit' }}>
-                  {maintUnits}
-                </span>
-                <span className={styles.heroStatLabel}>Perlu Servis</span>
-              </div>
-              <div className={styles.heroStatDivider} />
-              <div className={styles.heroStatItem}>
-                <span className={styles.heroStatValue} style={{ color: expiringWarr > 0 ? '#FFA07A' : 'inherit' }}>
-                  {expiringWarr}
-                </span>
-                <span className={styles.heroStatLabel}>Garansi Kritis</span>
-              </div>
-            </div>
-          </div>
-
-          {/* ── QUICK ACTIONS (Menu Bersih, Elegan & Senada) ── */}
-          <div className={styles.quickActions}>
-            <Link href="/client-portal/fleet" className={styles.actionBtn}>
-              <div className={styles.actionIcon}><Package size={22} /></div>
-              <span className={styles.actionLabel}>Daftar Unit</span>
-            </Link>
-            <Link href="/client-portal/service-request" className={styles.actionBtn}>
-              <div className={styles.actionIcon}><Calendar size={22} /></div>
-              <span className={styles.actionLabel}>Jadwal Servis</span>
-            </Link>
-            <Link href="/client-portal/warranty" className={styles.actionBtn}>
-              <div className={styles.actionIcon}><ShieldCheck size={22} /></div>
-              <span className={styles.actionLabel}>Garansi</span>
-            </Link>
-            <Link href="/client-portal/units/scan" className={styles.actionBtn}>
-              <div className={styles.actionIcon}><QrCode size={22} /></div>
-              <span className={styles.actionLabel}>Scan QR</span>
-            </Link>
-            <Link href="/client-portal/messages" className={styles.actionBtn}>
-              <div className={styles.actionIcon}><LifeBuoy size={22} /></div>
-              <span className={styles.actionLabel}>Pesan & Bantuan</span>
-            </Link>
-          </div>
-        </>
-      )}
-
       <div className={styles.twoCol}>
-        {/* Kolom kiri — Unit Terdaftar (List View) */}
+        {/* ══════════════ KOLOM KIRI (64%): Stat Cards + Unit Terdaftar ══════════════ */}
         <div className={styles.twoColLeft}>
+          
+          {/* 3 Mini Stat Cards (Unit Aktif, Perlu Servis, Garansi Kritis) */}
+          <div className={styles.threeStatsRow}>
+            {/* Stat 1: Aktif */}
+            <div className={styles.miniStatCard}>
+              <div className={styles.miniStatTop}>
+                <span className={styles.miniStatLabel}>Aktif Beroperasi</span>
+                <div className={styles.miniStatIcon} style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981' }}>
+                  <TrendingUp size={16} />
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+                <span className={styles.miniStatValue}>{loading ? '-' : activeUnits}</span>
+                <span style={{ fontSize: '0.72rem', color: '#10b981', fontWeight: 700 }}>
+                  {totalUnits > 0 ? Math.round((activeUnits / totalUnits) * 100) : 100}% Fleet
+                </span>
+              </div>
+            </div>
+
+            {/* Stat 2: Perlu Servis */}
+            <div className={styles.miniStatCard}>
+              <div className={styles.miniStatTop}>
+                <span className={styles.miniStatLabel}>Perlu Servis</span>
+                <div className={styles.miniStatIcon} style={{ background: maintUnits > 0 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(56, 189, 248, 0.12)', color: maintUnits > 0 ? '#ef4444' : '#38bdf8' }}>
+                  <Wrench size={16} />
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+                <span className={styles.miniStatValue} style={{ color: maintUnits > 0 ? '#ef4444' : '#ffffff' }}>
+                  {loading ? '-' : maintUnits}
+                </span>
+                <span style={{ fontSize: '0.72rem', color: maintUnits > 0 ? '#ef4444' : '#94a3b8', fontWeight: 600 }}>
+                  {maintUnits > 0 ? 'Tindakan diperlukan' : 'Kondisi Normal'}
+                </span>
+              </div>
+            </div>
+
+            {/* Stat 3: Garansi Kritis */}
+            <div className={styles.miniStatCard}>
+              <div className={styles.miniStatTop}>
+                <span className={styles.miniStatLabel}>Garansi Kritis</span>
+                <div className={styles.miniStatIcon} style={{ background: expiringWarr > 0 ? 'rgba(245, 158, 11, 0.15)' : 'rgba(56, 189, 248, 0.12)', color: expiringWarr > 0 ? '#f59e0b' : '#38bdf8' }}>
+                  <ShieldCheck size={16} />
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+                <span className={styles.miniStatValue} style={{ color: expiringWarr > 0 ? '#f59e0b' : '#ffffff' }}>
+                  {loading ? '-' : expiringWarr}
+                </span>
+                <span style={{ fontSize: '0.72rem', color: expiringWarr > 0 ? '#f59e0b' : '#94a3b8', fontWeight: 600 }}>
+                  {expiringWarr > 0 ? '< 30 Hari' : 'Terlindungi'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Unit Terdaftar Card */}
           <div className={`${styles.card} ${styles.cardStretch}`}>
             <div className={styles.cardHeader}>
               <h2 className={styles.cardTitle}>Unit Terdaftar</h2>
@@ -372,9 +389,10 @@ export default function ClientDashboard() {
           </div>
         </div>
 
-        {/* Kolom kanan — kalender + servis terbaru */}
+        {/* ══════════════ KOLOM KANAN (36%): Kalender Jadwal + Servis Terbaru ══════════════ */}
         <div className={styles.twoColRight}>
           <MiniCalendar events={calendarEvents} />
+          
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <h2 className={styles.cardTitle}>Servis Terbaru</h2>
@@ -440,21 +458,21 @@ export default function ClientDashboard() {
                                 gap: '5px',
                                 fontSize: '0.735rem',
                                 fontWeight: 600,
-                                color: '#2e5bff',
-                                background: 'rgba(46, 91, 255, 0.08)',
-                                border: '1px solid rgba(46, 91, 255, 0.22)',
+                                color: '#38bdf8',
+                                background: 'rgba(56, 189, 248, 0.08)',
+                                border: '1px solid rgba(56, 189, 248, 0.22)',
                                 padding: '3px 10px',
                                 borderRadius: '12px',
                                 cursor: 'pointer',
                                 transition: 'all 0.15s ease',
                               }}
                               onMouseEnter={(e) => {
-                                e.currentTarget.style.background = '#2e5bff';
+                                e.currentTarget.style.background = '#0284c7';
                                 e.currentTarget.style.color = '#ffffff';
                               }}
                               onMouseLeave={(e) => {
-                                e.currentTarget.style.background = 'rgba(46, 91, 255, 0.08)';
-                                e.currentTarget.style.color = '#2e5bff';
+                                e.currentTarget.style.background = 'rgba(56, 189, 248, 0.08)';
+                                e.currentTarget.style.color = '#38bdf8';
                               }}
                             >
                               Lihat Live Service Tracker

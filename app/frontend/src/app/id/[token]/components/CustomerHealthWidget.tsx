@@ -93,7 +93,7 @@ interface BreakdownItem {
   benchmark?: string; // Teks benchmark selalu tampil, misal: "Target ≤ 82% | Kritis > 92%"
 }
 
-function ScoreTooltip({ items, score, label, align = 'center' }: { items: BreakdownItem[]; score: number; label: string; align?: 'left' | 'right' | 'center' }) {
+function ScoreTooltip({ items, score, label, align = 'center', onClose }: { items: BreakdownItem[]; score: number; label: string; align?: 'left' | 'right' | 'center'; onClose?: () => void }) {
   const c = sc(score);
   const positionStyle: React.CSSProperties =
     align === 'right'
@@ -110,23 +110,25 @@ function ScoreTooltip({ items, score, label, align = 'center' }: { items: Breakd
       : { left: '50%', transform: 'translateX(-50%)' };
 
   return (
-    <div style={{
-      position: 'absolute',
-      bottom: 'calc(100% + 10px)',
-      ...positionStyle,
-      zIndex: 99999,
-      minWidth: 230,
-      maxWidth: 275,
-      background: 'rgba(6, 16, 40, 0.98)',
-      border: `1px solid ${c}45`,
-      borderRadius: 10,
-      padding: '10px 12px',
-      boxShadow: `0 8px 28px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.04)`,
-      pointerEvents: 'none',
-    }}>
+    <div
+      onClick={e => e.stopPropagation()}
+      style={{
+        position: 'absolute',
+        top: 'calc(100% + 8px)',
+        ...positionStyle,
+        zIndex: 99999,
+        minWidth: 240,
+        maxWidth: 285,
+        background: 'rgba(6, 16, 40, 0.98)',
+        border: `1px solid ${c}60`,
+        borderRadius: 12,
+        padding: '10px 12px',
+        boxShadow: `0 12px 32px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.06)`,
+      }}
+    >
       <div style={{
         position: 'absolute',
-        bottom: -7,
+        top: -7,
         ...arrowStyle,
         width: 13,
         height: 7,
@@ -136,13 +138,36 @@ function ScoreTooltip({ items, score, label, align = 'center' }: { items: Breakd
           width: 13,
           height: 13,
           background: 'rgba(6, 16, 40, 0.98)',
-          border: `1px solid ${c}45`,
+          border: `1px solid ${c}60`,
           transform: 'rotate(45deg)',
-          marginTop: -7,
+          marginTop: 1,
         }} />
       </div>
-      <div style={{ fontSize: '.6rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>
-        Rincian — {label}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+        <div style={{ fontSize: '.62rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '.08em' }}>
+          Rincian — {label}
+        </div>
+        {onClose && (
+          <button
+            type="button"
+            onClick={e => {
+              e.stopPropagation();
+              onClose();
+            }}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#64748b',
+              cursor: 'pointer',
+              padding: 0,
+              fontSize: '.75rem',
+              fontWeight: 800,
+              lineHeight: 1,
+            }}
+          >
+            ✕
+          </button>
+        )}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
         {items.map((item, i) => {
@@ -173,20 +198,26 @@ function ScoreTooltip({ items, score, label, align = 'center' }: { items: Breakd
   );
 }
 
-// ─── SUBSYSTEM CARD (SLIM & COMPACT, HOVER TOOLTIP) ──────────────────────────
-function SubCard({ label, score, accent, breakdown, isOffline, align = 'center' }: {
-  label: string; score: number; accent: string; breakdown: BreakdownItem[]; isOffline?: boolean; align?: 'left' | 'right' | 'center';
+// ─── SUBSYSTEM CARD (SLIM & COMPACT, CLICK TO SELECT) ──────────────────────────
+function SubCard({ label, score, accent, breakdown, isOffline, isSelected = false, onToggle }: {
+  label: string; score: number; accent: string; breakdown: BreakdownItem[]; isOffline?: boolean;
+  isSelected?: boolean; onToggle?: () => void;
 }) {
-  const [hovered, setHovered] = useState(false);
   const c = sc(score, isOffline), lbl = sl(score, isOffline), pct = isOffline ? 0 : Math.min(100, Math.max(0, score));
   return (
     <div
+      onClick={e => {
+        e.stopPropagation();
+        if (onToggle && !isOffline && (breakdown ?? []).length > 0) {
+          onToggle();
+        }
+      }}
       style={{
-        background: 'rgba(0, 0, 0, 0.22)',
-        boxShadow: hovered
-          ? `inset 1px 1px 3px rgba(0,0,0,0.4), inset -1px -1px 3px rgba(255,255,255,0.03), 0 0 0 1px ${accent}35`
+        background: isSelected ? 'rgba(56, 189, 248, 0.12)' : 'rgba(0, 0, 0, 0.22)',
+        boxShadow: isSelected
+          ? `inset 1px 1px 3px rgba(0,0,0,0.4), inset -1px -1px 3px rgba(255,255,255,0.03), 0 0 0 1.5px ${accent}`
           : 'inset 1px 1px 3px rgba(0,0,0,0.4), inset -1px -1px 3px rgba(255,255,255,0.03)',
-        border: hovered ? `1px solid ${accent}50` : '1px solid rgba(255, 255, 255, 0.05)',
+        border: isSelected ? `1.5px solid ${accent}` : '1px solid rgba(255, 255, 255, 0.05)',
         borderRadius: 12,
         padding: '10px 12px',
         display: 'flex',
@@ -194,16 +225,12 @@ function SubCard({ label, score, accent, breakdown, isOffline, align = 'center' 
         gap: 6,
         minWidth: 0,
         position: 'relative',
-        cursor: 'default',
-        transition: 'border 0.15s ease, box-shadow 0.15s ease',
-        zIndex: hovered ? 1000 : 1,
+        cursor: isOffline ? 'default' : 'pointer',
+        transition: 'border 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, transform 0.15s ease',
+        transform: isSelected ? 'translateY(-1px)' : 'none',
+        zIndex: 2,
       }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
     >
-      {hovered && !isOffline && (breakdown ?? []).length > 0 && (
-        <ScoreTooltip items={breakdown} score={score} label={label} align={align} />
-      )}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
         <span style={{ fontSize: '.74rem', fontWeight: 700, color: '#e2e8f0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {label}
@@ -291,6 +318,14 @@ export default function CustomerHealthWidget({ unitId, unit, hideAnalytics = fal
   const [loading, setLoading] = useState(true);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [latestTelemetry, setLatestTelemetry] = useState<any>(null);
+  const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
+
+  // Close tooltip when clicking outside
+  useEffect(() => {
+    const handleGlobalClick = () => setActiveTooltip(null);
+    window.addEventListener('click', handleGlobalClick);
+    return () => window.removeEventListener('click', handleGlobalClick);
+  }, []);
 
   // Deteksi status offline:
   // Cek dari recorded_at live telemetry terbaru (realtime) ATAU unit.last_seen_at
@@ -506,6 +541,20 @@ export default function CustomerHealthWidget({ unitId, unit, hideAnalytics = fal
       benchmark: `Target ≤ 5% drop  |  Kritis > 20% drop  |  Standar PLN 198V–242V`,
     },
   ];
+
+  // Active Subsystem for Details
+  const activeItem = activeTooltip === 'Kabinet'
+    ? { breakdown: cabBreakdown, score: cabScore, accent: '#3b82f6' }
+    : activeTooltip === 'Evaporator'
+    ? { breakdown: evapBreakdown, score: evapScore, accent: '#06b6d4' }
+    : activeTooltip === 'Kondensor'
+    ? { breakdown: condBreakdown, score: condScore, accent: '#f97316' }
+    : activeTooltip === 'Kelistrikan'
+    ? { breakdown: elecBreakdown, score: elecScore, accent: '#8b5cf6' }
+    : null;
+  const activeColor = activeItem ? sc(activeItem.score, isOffline) : '#38bdf8';
+  const activeScore = activeItem ? activeItem.score : 0;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
@@ -557,16 +606,137 @@ export default function CustomerHealthWidget({ unitId, unit, hideAnalytics = fal
               <span style={{ fontSize: '.65rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '.06em' }}>
                 Skor 4 Bagian Mesin
               </span>
-              <span style={{ fontSize: '.58rem', color: '#475569', fontWeight: 600 }}>Arahkan kursor untuk detail</span>
+              <span style={{ fontSize: '.58rem', color: '#38bdf8', fontWeight: 600 }}>Klik card untuk rincian</span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, overflow: 'visible' }}>
-              <SubCard label="Kabinet"    score={cabScore}  accent="#3b82f6" breakdown={cabBreakdown} isOffline={isOffline} align="left" />
-              <SubCard label="Evaporator" score={evapScore} accent="#06b6d4" breakdown={evapBreakdown} isOffline={isOffline} align="right" />
-              <SubCard label="Kondensor"  score={condScore} accent="#f97316" breakdown={condBreakdown} isOffline={isOffline} align="left" />
-              <SubCard label="Kelistrikan" score={elecScore} accent="#8b5cf6" breakdown={elecBreakdown} isOffline={isOffline} align="right" />
+              <SubCard
+                label="Kabinet"
+                score={cabScore}
+                accent="#3b82f6"
+                breakdown={cabBreakdown}
+                isOffline={isOffline}
+                isSelected={activeTooltip === 'Kabinet'}
+                onToggle={() => setActiveTooltip(prev => prev === 'Kabinet' ? null : 'Kabinet')}
+              />
+              <SubCard
+                label="Evaporator"
+                score={evapScore}
+                accent="#06b6d4"
+                breakdown={evapBreakdown}
+                isOffline={isOffline}
+                isSelected={activeTooltip === 'Evaporator'}
+                onToggle={() => setActiveTooltip(prev => prev === 'Evaporator' ? null : 'Evaporator')}
+              />
+              <SubCard
+                label="Kondensor"
+                score={condScore}
+                accent="#f97316"
+                breakdown={condBreakdown}
+                isOffline={isOffline}
+                isSelected={activeTooltip === 'Kondensor'}
+                onToggle={() => setActiveTooltip(prev => prev === 'Kondensor' ? null : 'Kondensor')}
+              />
+              <SubCard
+                label="Kelistrikan"
+                score={elecScore}
+                accent="#8b5cf6"
+                breakdown={elecBreakdown}
+                isOffline={isOffline}
+                isSelected={activeTooltip === 'Kelistrikan'}
+                onToggle={() => setActiveTooltip(prev => prev === 'Kelistrikan' ? null : 'Kelistrikan')}
+              />
             </div>
           </div>
         </div>
+
+        {/* Panel Rincian Terbuka (Inline Accordion Panel — 100% Bebas Kepotong) */}
+        {activeItem && !isOffline && (
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              marginTop: 6,
+              padding: '14px 16px',
+              borderRadius: 14,
+              background: 'rgba(6, 16, 40, 0.95)',
+              border: `1.5px solid ${activeColor}55`,
+              boxShadow: `0 8px 24px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06)`,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 10,
+              animation: 'fadeIn 0.2s ease',
+            }}
+          >
+            {/* Header Panel */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: activeColor, boxShadow: `0 0 8px ${activeColor}` }} />
+                <span style={{ fontSize: '.78rem', fontWeight: 800, color: '#ffffff', textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                  Rincian Analisis — {activeTooltip}
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ fontSize: '.85rem', fontWeight: 900, color: activeColor, fontFamily: 'monospace' }}>
+                  {Math.round(activeScore)}<span style={{ fontSize: '.65rem', color: '#64748b' }}>/100</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setActiveTooltip(null)}
+                  style={{
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    borderRadius: 6,
+                    color: '#94a3b8',
+                    cursor: 'pointer',
+                    width: 22,
+                    height: 22,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '.75rem',
+                    fontWeight: 800,
+                    lineHeight: 1,
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Items Breakdown */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 10 }}>
+              {activeItem.breakdown.map((item, idx) => {
+                const barColor = item.safe ? '#10b981' : item.penaltyPct > 60 ? '#ef4444' : '#f59e0b';
+                return (
+                  <div
+                    key={idx}
+                    style={{
+                      padding: '9px 12px',
+                      background: 'rgba(0,0,0,0.25)',
+                      borderRadius: 10,
+                      border: '1px solid rgba(255,255,255,0.04)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 4,
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                      <span style={{ fontSize: '.72rem', fontWeight: 600, color: '#cbd5e1', lineHeight: 1.35 }}>{item.label}</span>
+                      <span style={{ fontSize: '.75rem', fontWeight: 800, color: barColor, flexShrink: 0, fontFamily: 'monospace' }}>{item.value}</span>
+                    </div>
+                    {item.benchmark && (
+                      <div style={{ fontSize: '.62rem', fontWeight: 600, color: '#64748b', letterSpacing: '.02em' }}>
+                        {item.benchmark}
+                      </div>
+                    )}
+                    <div style={{ height: 4, borderRadius: 99, background: 'rgba(255,255,255,0.06)', overflow: 'hidden', marginTop: 2 }}>
+                      <div style={{ height: '100%', width: `${item.penaltyPct}%`, borderRadius: 99, background: barColor, transition: 'width 0.6s ease' }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Toggle Button: Analitik Lanjutan — sembunyikan jika hideAnalytics=true (client portal) */}
         {!hideAnalytics && <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 2 }}>

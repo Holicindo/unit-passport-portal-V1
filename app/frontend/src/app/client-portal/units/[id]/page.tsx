@@ -282,9 +282,6 @@ export default function ClientUnitDetail() {
         </button>
         <div className={unitStyles.unitHeader}>
           <div className={unitStyles.unitHeaderLeft}>
-            <div className={unitStyles.unitIconBox}>
-              <Box size={28} />
-            </div>
             <div>
               <h1 className={styles.pageTitle} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 {unit.serial_number}
@@ -328,13 +325,17 @@ export default function ClientUnitDetail() {
               </h2>
             </div>
             <div className={styles.cardBody} style={{ padding: '22px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1.05fr 1fr', gap: '22px', alignItems: 'stretch' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.05fr) minmax(0,1fr)', gap: '22px', alignItems: 'stretch' }}
+                className={unitStyles.infoUnitInnerGrid}
+              >
                 
                 {/* ── Sisi Kiri: Foto Gallery + Diagram Schematics Container ── */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                   
                   {/* Container Foto Unit */}
-                  <div style={{
+                  <div
+                    className={unitStyles.photoContainer}
+                    style={{
                     position: 'relative',
                     height: '260px',
                     borderRadius: '16px',
@@ -346,24 +347,34 @@ export default function ClientUnitDetail() {
                     justifyContent: 'center',
                     boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.5)'
                   }}>
-                    {photos.length > 0 ? (
-                      <img
-                        src={photos[clampedPhotoIdx]}
-                        alt={`Foto ${unit.serial_number} ${clampedPhotoIdx + 1}`}
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'contain',
-                          display: 'block',
-                          padding: '8px'
-                        }}
-                      />
-                    ) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', color: '#64748b' }}>
-                        <ImageIcon size={32} />
-                        <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>Foto belum tersedia</span>
-                      </div>
-                    )}
+                    {/* Carousel Photos Stacked with eager loading */}
+                    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                      {photos.map((src: string, idx: number) => (
+                        <img
+                          key={src + idx}
+                          src={src}
+                          alt={`Foto ${unit.serial_number} ${idx + 1}`}
+                          loading="eager"
+                          style={{
+                            position: 'absolute',
+                            inset: 0,
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'contain',
+                            padding: '8px',
+                            opacity: idx === clampedPhotoIdx ? 1 : 0,
+                            pointerEvents: idx === clampedPhotoIdx ? 'auto' : 'none',
+                            transition: 'opacity 0.15s ease-in-out',
+                          }}
+                        />
+                      ))}
+                      {photos.length === 0 && (
+                        <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', color: '#64748b' }}>
+                          <ImageIcon size={32} />
+                          <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>Foto belum tersedia</span>
+                        </div>
+                      )}
+                    </div>
 
                     {/* Navigasi Carousel Foto */}
                     {photos.length > 1 && (
@@ -441,18 +452,48 @@ export default function ClientUnitDetail() {
                     {/* Preview Image Diagram */}
                     <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '6px' }}>
                       {manuals.length > 0 ? (
-                        isManualImage ? (
-                          <img
-                            src={currentManual}
-                            alt={`Diagram ${clampedManualIdx + 1}`}
-                            style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
-                          />
-                        ) : (
-                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', color: '#94a3b8' }}>
-                            <FileText size={28} color="#38bdf8" />
-                            <span style={{ fontSize: '0.78rem' }}>Dokumen Diagram PDF</span>
-                          </div>
-                        )
+                        <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                          {manuals.map((src: string, idx: number) => {
+                            const isImg = /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(src);
+                            return isImg ? (
+                              <img
+                                key={src + idx}
+                                src={src}
+                                alt={`Diagram ${idx + 1}`}
+                                loading="eager"
+                                style={{
+                                  position: 'absolute',
+                                  inset: 0,
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: 'contain',
+                                  opacity: idx === clampedManualIdx ? 1 : 0,
+                                  pointerEvents: idx === clampedManualIdx ? 'auto' : 'none',
+                                  transition: 'opacity 0.15s ease-in-out',
+                                }}
+                              />
+                            ) : (
+                              <div
+                                key={src + idx}
+                                style={{
+                                  position: 'absolute',
+                                  inset: 0,
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '6px',
+                                  color: '#94a3b8',
+                                  opacity: idx === clampedManualIdx ? 1 : 0,
+                                  pointerEvents: idx === clampedManualIdx ? 'auto' : 'none',
+                                }}
+                              >
+                                <FileText size={28} color="#38bdf8" />
+                                <span style={{ fontSize: '0.78rem' }}>Dokumen Diagram PDF</span>
+                              </div>
+                            );
+                          })}
+                        </div>
                       ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', color: '#64748b' }}>
                           <BookOpen size={28} />
@@ -578,11 +619,12 @@ export default function ClientUnitDetail() {
                           borderBottom: idx < arr.length - 1 ? '1px solid rgba(56, 189, 248, 0.1)' : 'none',
                           display: 'flex',
                           justifyContent: 'space-between',
-                          alignItems: 'center'
+                          alignItems: 'flex-start',
+                          gap: '8px',
                         }}
                       >
-                        <span style={{ fontSize: '0.82rem', color: '#94a3b8', fontWeight: 600 }}>{label}</span>
-                        <span style={{ fontSize: '0.88rem', color: '#ffffff', fontWeight: 800, textAlign: 'right' }}>{value || '—'}</span>
+                        <span style={{ fontSize: '0.82rem', color: '#94a3b8', fontWeight: 600, flexShrink: 0 }}>{label}</span>
+                        <span style={{ fontSize: '0.88rem', color: '#ffffff', fontWeight: 800, textAlign: 'right', wordBreak: 'break-word' }}>{value || '—'}</span>
                       </div>
                     ))}
                   </div>
@@ -602,44 +644,48 @@ export default function ClientUnitDetail() {
               </h2>
             </div>
             <div className={styles.cardBody} style={{ padding: '22px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: '24px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: '24px' }}
+                className={unitStyles.kepemilikanGrid}
+              >
                 
                 {/* Sub-kolom 1: Data Pelanggan / Kantor Pusat */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Customer Name</span>
+                  <div className={unitStyles.infoRow}>
+                    <span className={unitStyles.infoLabel}>Customer Name</span>
                     <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#38bdf8' }}>
                       {unit.current_client?.company_name || 'PAMERAN FHI'}
                     </span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
-                    <span style={{ fontSize: '0.8rem', color: '#94a3b8', flexShrink: 0 }}>HQ Address</span>
-                    <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#ffffff', textAlign: 'right', lineHeight: 1.4 }}>
+                  <div className={unitStyles.infoRow}>
+                    <span className={unitStyles.infoLabel}>HQ Address</span>
+                    <span className={unitStyles.infoValue} style={{ lineHeight: 1.4 }}>
                       {unit.current_client?.address || 'Thamrin Plaza, Jl. M.H. Thamrin Kav. 8-9, Lantai PH / 12-13, Kelurahan Kebon Melati, Kecamatan Tanah Abang, Jakarta Pusat 10230'}
                     </span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>SO Number</span>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#ffffff' }}>
+                  <div className={unitStyles.infoRow}>
+                    <span className={unitStyles.infoLabel}>SO Number</span>
+                    <span className={unitStyles.infoValue}>
                       {unit.so_number || 'S026025531'}
                     </span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>DO Number</span>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#ffffff' }}>
+                  <div className={unitStyles.infoRow}>
+                    <span className={unitStyles.infoLabel}>DO Number</span>
+                    <span className={unitStyles.infoValue}>
                       {unit.do_number || 'DO26073545'}
                     </span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Delivery Date</span>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#ffffff' }}>
+                  <div className={unitStyles.infoRow}>
+                    <span className={unitStyles.infoLabel}>Delivery Date</span>
+                    <span className={unitStyles.infoValue}>
                       {unit.delivery_date ? new Date(unit.delivery_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '23 Oktober 2026'}
                     </span>
                   </div>
                 </div>
 
                 {/* Sub-kolom 2: Lokasi Unit / Cabang Outlet */}
-                <div style={{
+                <div
+                  className={unitStyles.kepemilikanRight}
+                  style={{
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '10px',
@@ -656,21 +702,21 @@ export default function ClientUnitDetail() {
                   }}>
                     Lokasi Unit (Branch)
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Outlet Branch</span>
-                    <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#ffffff' }}>
+                  <div className={unitStyles.infoRow}>
+                    <span className={unitStyles.infoLabel}>Outlet Branch</span>
+                    <span className={unitStyles.infoValue} style={{ fontWeight: 800, color: '#ffffff' }}>
                       {unit.outlet_branch || 'Fore Donut Lippo Mall Puri'}
                     </span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
-                    <span style={{ fontSize: '0.8rem', color: '#94a3b8', flexShrink: 0 }}>Branch Address</span>
-                    <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#ffffff', textAlign: 'right', lineHeight: 1.4 }}>
+                  <div className={unitStyles.infoRow}>
+                    <span className={unitStyles.infoLabel}>Branch Address</span>
+                    <span className={unitStyles.infoValue} style={{ lineHeight: 1.4 }}>
                       {unit.branch_address || 'Jl. Puri Indah Raya Blok U1, RT.3/RW.2, Kembangan Sel., Kec. Kembangan, Kota Jakarta Barat, DKI Jakarta 11610'}
                     </span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>City & Province</span>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#ffffff' }}>
+                  <div className={unitStyles.infoRow}>
+                    <span className={unitStyles.infoLabel}>City & Province</span>
+                    <span className={unitStyles.infoValue}>
                       {unit.current_client?.city || 'Jakarta Pusat'}, DKI Jakarta
                     </span>
                   </div>
@@ -750,32 +796,38 @@ export default function ClientUnitDetail() {
                           transition: 'all 0.2s ease'
                         }}
                       >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <span style={{ color: '#38bdf8', fontSize: '0.8rem' }}>•</span>
-                              <h4 style={{ margin: 0, fontSize: '0.83rem', fontWeight: 700, color: '#ffffff', lineHeight: 1.3 }}>
-                                {log.action_taken || log.issue_description || 'Servis & Pemeliharaan'}
-                              </h4>
-                            </div>
-                            <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 4, marginLeft: 12 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <h4 style={{ margin: 0, fontSize: '0.83rem', fontWeight: 700, color: '#ffffff', lineHeight: 1.3 }}>
+                              {log.action_taken || log.issue_description || 'Servis & Pemeliharaan'}
+                            </h4>
+                            <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 4 }}>
                               {log.service_date
                                 ? new Date(log.service_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
                                 : '—'}
                             </div>
                           </div>
-                          <span style={{
-                            background: 'rgba(245, 158, 11, 0.15)',
-                            color: '#f59e0b',
-                            fontSize: '0.65rem',
-                            fontWeight: 700,
-                            padding: '2px 8px',
-                            borderRadius: '10px',
-                            border: '1px solid rgba(245, 158, 11, 0.3)',
-                            flexShrink: 0
-                          }}>
-                            Proses
-                          </span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                            <span style={{
+                              background: 'rgba(245, 158, 11, 0.15)',
+                              color: '#f59e0b',
+                              fontSize: '0.65rem',
+                              fontWeight: 700,
+                              padding: '2px 8px',
+                              borderRadius: '10px',
+                              border: '1px solid rgba(245, 158, 11, 0.3)',
+                            }}>
+                              Proses
+                            </span>
+                            <ChevronDown
+                              size={16}
+                              color="#38bdf8"
+                              style={{
+                                transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                                transition: 'transform 0.2s ease',
+                              }}
+                            />
+                          </div>
                         </div>
 
                         {/* Collapsed/Expanded detail */}

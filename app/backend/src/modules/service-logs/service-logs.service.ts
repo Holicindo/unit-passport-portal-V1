@@ -5,7 +5,7 @@ import { ServiceLog } from './entities/service-log.entity';
 import { ServiceLogAttachment } from './entities/service-log-attachment.entity';
 import { CreateServiceLogDto } from './dto/create-service-log.dto';
 import { StorageService } from '../storage/storage.service';
-import { User } from '../auth/entities/user.entity';
+import { User, UserRole } from '../auth/entities/user.entity';
 import { Notification, NotificationType } from '../notifications/entities/notification.entity';
 import { Unit } from '../units/entities/unit.entity';
 import { Client } from '../clients/entities/client.entity';
@@ -125,7 +125,12 @@ export class ServiceLogsService {
       const notifRepo = this.logRepo.manager.getRepository(Notification);
 
       const clientUsers = await userRepo.find({
-        where: { client_id: clientId },
+        where: [
+          { client_id: clientId },
+          ...(fullLog.unit.current_client?.email
+            ? [{ role: UserRole.CLIENT, email: fullLog.unit.current_client.email }]
+            : [])
+        ],
       });
 
       const sn = fullLog.unit.serial_number;

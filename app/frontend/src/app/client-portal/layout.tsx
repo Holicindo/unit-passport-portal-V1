@@ -279,7 +279,7 @@ export default function ClientPortalLayout({ children }: { children: React.React
           <div className={styles.navLogoIcon}>
             <HolicLogo size={22} />
           </div>
-          <span className={styles.navBrandName}>Holicindo Client Portal</span>
+          <span className={styles.navBrandName}>Holic Client Portal</span>
         </Link>
 
         {/* Menu Tengah - Hide on desktop, show on mobile/tablet */}

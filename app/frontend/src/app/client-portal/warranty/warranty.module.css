@@ -23,7 +23,7 @@
 
 /* ── Accordion Card ── */
 .accordionCard {
-  border-bottom: 1px solid rgba(0, 31, 63, 0.06);
+  border-bottom: 1px solid rgba(56, 189, 248, 0.15);
 }
 
 .accordionCard:last-child {
@@ -38,7 +38,7 @@
   width: 100%;
   background: none;
   border: none;
-  padding: 12px 4px;
+  padding: 14px 4px;
   cursor: pointer;
   gap: 8px;
   text-align: left;
@@ -54,9 +54,9 @@
 }
 
 .accordionSerial {
-  font-size: 0.875rem;
-  font-weight: 700;
-  color: var(--brand-cobalt-blue, #2E5BFF);
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #38bdf8;
   font-family: var(--font-heading);
   text-decoration: none;
   white-space: nowrap;
@@ -65,8 +65,8 @@
 }
 
 .accordionModel {
-  font-size: 0.78rem;
-  color: var(--brand-space-grey, #717378);
+  font-size: 0.8rem;
+  color: #94a3b8;
   font-family: var(--font-body);
   white-space: nowrap;
   overflow: hidden;
@@ -83,7 +83,7 @@
 }
 
 .accordionChevron {
-  color: var(--brand-space-grey, #717378);
+  color: #38bdf8;
   transition: transform 0.2s ease;
   flex-shrink: 0;
 }
@@ -94,10 +94,10 @@
 
 /* Expanded body */
 .accordionBody {
-  padding: 4px 4px 14px;
+  padding: 6px 4px 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   animation: expandIn 0.15s ease;
 }
 
@@ -114,9 +114,9 @@
 }
 
 .detailLabel {
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  color: var(--brand-space-grey, #717378);
+  color: #94a3b8;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-family: var(--font-heading);
@@ -125,9 +125,9 @@
 }
 
 .detailValue {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--brand-deep-navy, #001F3F);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #ffffff;
   font-family: var(--font-body);
   text-align: right;
 }
@@ -136,19 +136,21 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  margin-top: 4px;
+  gap: 6px;
+  margin-top: 6px;
   padding: 8px;
   border-radius: 8px;
-  background: rgba(46, 91, 255, 0.05);
-  color: var(--brand-cobalt-blue, #2E5BFF);
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  color: #38bdf8;
   font-size: 0.82rem;
-  font-weight: 600;
+  font-weight: 700;
   text-decoration: none;
   font-family: var(--font-heading);
-  transition: background 0.15s;
+  transition: all 0.2s ease;
 }
 
 .accordionDetailBtn:hover {
-  background: rgba(46, 91, 255, 0.1);
+  background: rgba(56, 189, 248, 0.22);
+  color: #ffffff;
 }

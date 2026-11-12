@@ -1,33 +1,32 @@
 /* ============================================================
-   CLIENT PORTAL — Messages Page — Neumorphism Theme
-   Base: #E4E6EF | Holicindo Brand Identity
+   CLIENT PORTAL — Messages Page — Dark Blue Modern Theme
    ============================================================ */
 
-/* ── Chat Layout — Clean Flat Card ── */
+/* ── Chat Layout — Dark Navy Container ── */
 .chatLayout {
   display: grid;
   grid-template-columns: 300px 1fr;
   gap: 0;
   height: calc(100vh - 180px);
   min-height: 500px;
-  background: #FFFFFF;
-  border-radius: 16px;
-  border: 1px solid #E2E8F0;
+  background: linear-gradient(145deg, #0e243d 0%, #081729 60%, #050f1b 100%);
+  border-radius: 20px;
+  border: 1px solid rgba(56, 189, 248, 0.28);
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 16px 36px -6px rgba(0, 0, 0, 0.5);
 }
 
 /* ── Panel Kiri: Daftar Percakapan ── */
 .convPanel {
-  border-right: 1px solid #E2E8F0;
+  border-right: 1px solid rgba(56, 189, 248, 0.15);
   display: flex;
   flex-direction: column;
-  background: #F8FAFC;
+  background: rgba(7, 23, 41, 0.75);
 }
 
 .convHeader {
-  padding: 20px;
-  border-bottom: 1px solid rgba(0, 31, 63, 0.06);
+  padding: 18px 20px;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.15);
   background: transparent;
   display: flex;
   align-items: center;
@@ -35,9 +34,9 @@
 }
 
 .convHeaderTitle {
-  font-size: 0.875rem;
-  font-weight: 700;
-  color: var(--brand-deep-navy);
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #38bdf8;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-family: var(--font-heading);
@@ -45,39 +44,28 @@
 
 /* Tombol tambah percakapan baru */
 .newConvBtn {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 8px;
-  border: none;
-  background: #E4E6EF;
-  color: var(--brand-cobalt-blue);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  background: rgba(56, 189, 248, 0.12);
+  color: #38bdf8;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s;
   flex-shrink: 0;
-  box-shadow:
-    -2px -2px 5px rgba(255, 255, 255, 0.72),
-     2px  2px 5px rgba(0, 31, 63, 0.14);
 }
 
 .newConvBtn:hover:not(:disabled) {
-  box-shadow:
-    -3px -3px 7px rgba(255, 255, 255, 0.80),
-     3px  3px 7px rgba(0, 31, 63, 0.18);
+  background: rgba(56, 189, 248, 0.25);
+  color: #ffffff;
   transform: translateY(-1px);
 }
 
-.newConvBtn:active:not(:disabled) {
-  box-shadow:
-    inset 2px 2px 4px rgba(0, 31, 63, 0.07),
-    inset -2px -2px 4px rgba(255, 255, 255, 0.90);
-  transform: translateY(0);
-}
-
 .newConvBtn:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
@@ -94,44 +82,39 @@
   width: 100%;
   padding: 12px;
   border-radius: 12px;
-  border: none;
+  border: 1px solid transparent;
   background: transparent;
   cursor: pointer;
   text-align: left;
   transition: all 0.2s;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 
 .convItem:hover {
-  background: rgba(255, 255, 255, 0.55);
-  box-shadow:
-    -2px -2px 5px rgba(255, 255, 255, 0.72),
-     2px  2px 5px rgba(0, 31, 63, 0.10);
+  background: rgba(56, 189, 248, 0.08);
+  border-color: rgba(56, 189, 248, 0.2);
 }
 
-/* Item aktif — clean flat highlight */
 .convItemActive {
-  background: #EFF6FF !important;
-  border-left: 3px solid #2E5BFF !important;
-  box-shadow: none !important;
+  background: rgba(56, 189, 248, 0.15) !important;
+  border: 1px solid rgba(56, 189, 248, 0.4) !important;
+  border-left: 4px solid #38bdf8 !important;
 }
 
 .convAvatar {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: var(--brand-deep-navy);
-  color: var(--brand-optic-white);
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 0.9rem;
   flex-shrink: 0;
   font-family: var(--font-heading);
-  box-shadow:
-    -2px -2px 5px rgba(255, 255, 255, 0.50),
-     2px  2px 5px rgba(0, 31, 63, 0.25);
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35);
 }
 
 .convInfo {
@@ -140,9 +123,9 @@
 }
 
 .convName {
-  font-size: 0.875rem;
-  font-weight: 700;
-  color: var(--brand-deep-navy);
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #ffffff;
   margin-bottom: 2px;
   white-space: nowrap;
   overflow: hidden;
@@ -152,20 +135,19 @@
 
 .convPreview {
   font-size: 0.78rem;
-  color: var(--brand-space-grey);
+  color: #94a3b8;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   font-family: var(--font-body);
 }
 
-/* Badge unread */
 .unreadBadge {
-  background: var(--brand-safety-orange);
-  color: var(--brand-optic-white);
+  background: #ea580c;
+  color: #ffffff;
   font-size: 0.65rem;
-  font-weight: 700;
-  padding: 2px 6px;
+  font-weight: 800;
+  padding: 2px 7px;
   border-radius: 10px;
   min-width: 20px;
   text-align: center;
@@ -181,7 +163,7 @@
   justify-content: center;
   gap: 12px;
   padding: 32px;
-  color: var(--brand-space-grey);
+  color: #94a3b8;
   font-size: 0.875rem;
   text-align: center;
   font-family: var(--font-body);
@@ -191,7 +173,7 @@
 .chatPanel {
   display: flex;
   flex-direction: column;
-  background: var(--neu-base);
+  background: transparent;
 }
 
 .chatEmpty {
@@ -202,52 +184,47 @@
   justify-content: center;
   gap: 12px;
   padding: 48px;
-  color: var(--brand-space-grey);
+  color: #94a3b8;
   text-align: center;
 }
 
-/* Header chat */
 .chatHeader {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 16px 20px;
-  border-bottom: 1px solid rgba(0, 31, 63, 0.06);
-  background: transparent;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.15);
+  background: rgba(14, 36, 61, 0.5);
 }
 
 .chatHeaderAvatar {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: var(--brand-deep-navy);
-  color: var(--brand-optic-white);
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 0.9rem;
   flex-shrink: 0;
   font-family: var(--font-heading);
-  box-shadow:
-    -2px -2px 5px rgba(255, 255, 255, 0.50),
-     2px  2px 5px rgba(0, 31, 63, 0.25);
 }
 
 .chatHeaderName {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--brand-deep-navy);
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #ffffff;
   font-family: var(--font-heading);
 }
 
 .chatHeaderSub {
   font-size: 0.75rem;
-  color: var(--brand-space-grey);
+  color: #94a3b8;
   font-family: var(--font-body);
 }
 
-/* Area pesan — sedikit lebih dalam dari base */
 .chatMessages {
   flex: 1;
   overflow-y: auto;
@@ -255,19 +232,17 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  background: rgba(220, 222, 228, 0.60);
-  box-shadow: inset 3px 3px 10px rgba(0, 31, 63, 0.07), inset -3px -3px 10px rgba(255, 255, 255, 0.50);
+  background: rgba(5, 15, 27, 0.5);
 }
 
 .chatNoMsg {
   text-align: center;
-  color: var(--brand-space-grey);
+  color: #94a3b8;
   font-size: 0.875rem;
   padding: 32px;
   font-family: var(--font-body);
 }
 
-/* Baris pesan */
 .msgRow {
   display: flex;
   align-items: flex-end;
@@ -286,15 +261,15 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: var(--brand-space-grey);
-  color: var(--brand-optic-white);
+  background: #334155;
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  font-size: 0.72rem;
 }
 
-/* Bubble pesan */
 .msgBubble {
   max-width: 65%;
   padding: 10px 14px;
@@ -304,25 +279,18 @@
   gap: 4px;
 }
 
-/* Bubble saya — Cobalt Blue dengan neumorphic shadow */
 .msgBubbleMine {
-  background: var(--brand-cobalt-blue);
-  color: var(--brand-optic-white);
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  color: #ffffff;
   border-bottom-right-radius: 4px;
-  box-shadow:
-    -2px -2px 5px rgba(255, 255, 255, 0.18),
-     2px  2px 6px rgba(0, 20, 80, 0.28);
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
 }
 
-/* Bubble orang lain — neumorphic raised */
 .msgBubbleOther {
-  background: #E4E6EF;
-  color: var(--brand-deep-navy);
-  border: none;
+  background: rgba(14, 36, 61, 0.85);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  color: #f8fafc;
   border-bottom-left-radius: 4px;
-  box-shadow:
-    -3px -3px 6px rgba(255, 255, 255, 0.72),
-     3px  3px 6px rgba(0, 31, 63, 0.12);
 }
 
 .msgText {
@@ -334,21 +302,20 @@
 
 .msgTime {
   font-size: 0.65rem;
-  opacity: 0.7;
+  color: rgba(255, 255, 255, 0.65);
   align-self: flex-end;
   font-family: var(--font-body);
 }
 
-/* Area input kirim */
 .chatInputArea {
   padding: 16px 20px;
-  border-top: 1px solid rgba(0, 31, 63, 0.06);
-  background: transparent;
+  border-top: 1px solid rgba(56, 189, 248, 0.15);
+  background: rgba(7, 23, 41, 0.75);
 }
 
 .sendError {
   font-size: 0.78rem;
-  color: var(--brand-safety-orange);
+  color: #f87171;
   margin: 0 0 8px 0;
   font-family: var(--font-body);
 }
@@ -359,34 +326,35 @@
   align-items: center;
 }
 
-/* Input — clean flat */
 .chatInput {
   flex: 1;
   height: 42px;
-  border: 1px solid #CBD5E1;
-  border-radius: 10px;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 12px;
   padding: 0 16px;
   font-size: 0.875rem;
-  color: #1E293B;
-  background: #FFFFFF;
+  color: #ffffff;
+  background: rgba(7, 23, 41, 0.85);
   outline: none;
   transition: all 0.2s ease;
   font-family: var(--font-body);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .chatInput:focus {
-  border-color: var(--brand-cobalt-blue);
-  box-shadow: 0 0 0 3px rgba(46, 91, 255, 0.12);
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.22);
 }
 
-/* Tombol kirim — clean flat Cobalt Blue */
+.chatInput::placeholder {
+  color: #64748b;
+}
+
 .sendBtn {
   width: 42px;
   height: 42px;
-  border-radius: 10px;
-  background: var(--brand-cobalt-blue);
-  color: var(--brand-optic-white);
+  border-radius: 12px;
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  color: #ffffff;
   border: none;
   display: flex;
   align-items: center;
@@ -394,18 +362,12 @@
   cursor: pointer;
   transition: all 0.2s ease;
   flex-shrink: 0;
-  box-shadow: 0 2px 4px rgba(46, 91, 255, 0.25);
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35);
 }
 
 .sendBtn:hover:not(:disabled) {
-  background: #1e47e6;
+  background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(46, 91, 255, 0.35);
-}
-
-.sendBtn:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow: 0 1px 2px rgba(46, 91, 255, 0.25);
 }
 
 .sendBtn:disabled {
@@ -413,7 +375,6 @@
   cursor: not-allowed;
 }
 
-/* ── Responsive — tata letak mobile ── */
 @media (max-width: 768px) {
   .chatLayout {
     grid-template-columns: 1fr;
@@ -423,7 +384,7 @@
 
   .convPanel {
     border-right: none;
-    border-bottom: 1px solid rgba(0, 31, 63, 0.06);
+    border-bottom: 1px solid rgba(56, 189, 248, 0.15);
     max-height: 240px;
   }
 
@@ -431,20 +392,18 @@
     min-height: 300px;
   }
 
-  /* Tampilkan back button di chat header hanya pada mobile */
   .chatBackBtn {
     display: flex;
   }
 }
 
-/* ── Back button di page header ── */
 .pageBackBtn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   background: none;
   border: none;
-  color: var(--brand-space-grey);
+  color: #94a3b8;
   cursor: pointer;
   font-weight: 600;
   font-size: 0.82rem;
@@ -454,16 +413,15 @@
   font-family: var(--font-body);
 }
 
-.pageBackBtn:hover { color: var(--brand-cobalt-blue); }
+.pageBackBtn:hover { color: #38bdf8; }
 
-/* ── Back button di chat header (mobile only) ── */
 .chatBackBtn {
   display: none;
   width: 32px;
   height: 32px;
   border: none;
   background: none;
-  color: var(--brand-deep-navy);
+  color: #ffffff;
   cursor: pointer;
   align-items: center;
   justify-content: center;
@@ -474,5 +432,5 @@
 }
 
 .chatBackBtn:hover {
-  background: rgba(0, 31, 63, 0.06);
+  background: rgba(56, 189, 248, 0.15);
 }

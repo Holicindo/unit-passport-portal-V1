@@ -502,9 +502,83 @@
     gap: 4px !important;
     border-radius: 12px !important;
   }
+
+  /* ── Informasi Unit inner grid: stack vertically on mobile ── */
+  .infoUnitInnerGrid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  /* ── Kepemilikan Unit inner grid: stack vertically on mobile ── */
+  .kepemilikanGrid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  /* Right sub-column border becomes top border on mobile */
+  .kepemilikanGrid > div:last-child {
+    padding-left: 0 !important;
+    border-left: none !important;
+    border-top: 1px solid rgba(56, 189, 248, 0.15) !important;
+    padding-top: 16px !important;
+  }
+
+  /* Override inline styles via class */
+  .kepemilikanRight {
+    padding-left: 0 !important;
+    border-left: none !important;
+    border-top: 1px solid rgba(56, 189, 248, 0.15) !important;
+    padding-top: 16px !important;
+  }
+
+  /* Photo container: smaller height on mobile */
+  .photoContainer {
+    height: 200px !important;
+  }
+
+  /* Diagram container: smaller on mobile */
+  .diagramContainer {
+    height: 180px !important;
+  }
 }
 
 /* Base logic for mobile badge */
 .mobileBadgeOnly {
   display: none;
+}
+
+/* kepemilikanRight — right sub-column in Kepemilikan section */
+.kepemilikanRight {
+  /* inherits inline styles, overridden on mobile below */
+}
+
+/* ── Info row: label + value pair (diberi garis pembatas halus per row) ── */
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.1);
+}
+
+.infoRow:last-child {
+  border-bottom: none;
+}
+
+.infoLabel {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  font-weight: 500;
+  flex-shrink: 0;
+  font-family: var(--font-body);
+}
+
+.infoValue {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #ffffff;
+  text-align: right;
+  font-family: var(--font-body);
+  word-break: break-word;
 }
