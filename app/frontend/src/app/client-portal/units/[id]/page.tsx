@@ -6,105 +6,13 @@ import { useParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft, Box, MapPin, Wrench, ShieldCheck,
   FileText, AlertTriangle, ExternalLink, Package,
-  TrendingUp, Calendar, Activity, ImageOff, Zap, Wind, Thermometer,
-  User, Briefcase, ChevronDown, ChevronUp
+  Calendar, Activity, Wind, User, Briefcase,
+  ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
+  Building2, Image as ImageIcon, BookOpen
 } from 'lucide-react';
-import dynamic from 'next/dynamic';
 import styles from '../../ClientPortal.module.css';
 import unitStyles from './unit.module.css';
-
-const UnitHealthWidget = dynamic(() => import('@/components/iot/UnitHealthWidget'), {
-  ssr: false,
-  loading: () => (
-    <div style={{ padding: '24px', textAlign: 'center', color: 'var(--brand-space-grey)', fontSize: '0.85rem' }}>
-      Memuat metrik kesehatan unit...
-    </div>
-  ),
-});
-
-// ── Cooling Circulation Diagram (Menyesuaikan Format Manual QC) ──
-function CoolingCircuitDiagram() {
-  return (
-    <div style={{ padding: '16px 20px 20px', display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1, minHeight: '100%' }}>
-      <svg viewBox="0 0 520 280" width="100%" style={{ display: 'block', overflow: 'visible', maxWidth: '600px' }}>
-        <defs>
-          <marker id="arrowBlue" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-            <path d="M0,0 L0,6 L8,3 z" fill="#2E5BFF" />
-          </marker>
-          <marker id="arrowOrange" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-            <path d="M0,0 L0,6 L8,3 z" fill="#FF6B00" />
-          </marker>
-        </defs>
-
-        {/* ── Komponen Boxes ── */}
-
-        {/* Evaporator (Atas) */}
-        <rect x="150" y="10" width="220" height="60" rx="10" fill="#1e3a5f" opacity="0.9"/>
-        {/* Garis-garis vertikal ala Evaporator di gambar manual */}
-        <path d="M160,10 L160,70 M175,10 L175,70 M190,10 L190,70 M205,10 L205,70 M315,10 L315,70 M330,10 L330,70 M345,10 L345,70 M360,10 L360,70" stroke="rgba(255,255,255,0.15)" strokeWidth="2"/>
-        <text x="260" y="32" textAnchor="middle" fill="white" fontSize="12" fontWeight="700">EVAPORATOR</text>
-        <text x="260" y="48" textAnchor="middle" fill="#93c5fd" fontSize="9">Serap Panas Kabin</text>
-        <text x="260" y="62" textAnchor="middle" fill="#dbeafe" fontSize="9">-15 ~ -5 °C</text>
-
-        {/* Kondensor (Kiri Bawah) */}
-        <rect x="20" y="200" width="130" height="70" rx="10" fill="#c2410c" opacity="0.9"/>
-        {/* Ikon X (Kipas Kondensor) di gambar manual */}
-        <circle cx="50" cy="235" r="20" fill="transparent" stroke="#fed7aa" strokeWidth="2" opacity="0.5"/>
-        <path d="M36,221 L64,249 M64,221 L36,249" stroke="#fed7aa" strokeWidth="2" opacity="0.5"/>
-        <text x="100" y="222" textAnchor="middle" fill="white" fontSize="11" fontWeight="700">CONDENSER</text>
-        <text x="100" y="238" textAnchor="middle" fill="#fed7aa" fontSize="9">Buang Panas</text>
-        <text x="100" y="254" textAnchor="middle" fill="#ffedd5" fontSize="9">~40–60 °C</text>
-
-        {/* Kompresor (Kanan Bawah) */}
-        <rect x="370" y="200" width="130" height="70" rx="10" fill="#1e40af" opacity="0.9"/>
-        <text x="435" y="222" textAnchor="middle" fill="white" fontSize="11" fontWeight="700">COMPRESSOR</text>
-        <text x="435" y="238" textAnchor="middle" fill="#93c5fd" fontSize="9">Pompa Freon</text>
-        <text x="435" y="254" textAnchor="middle" fill="#dbeafe" fontSize="9">R290 | 1/2 HP</text>
-
-        {/* ── Jalur Freon (Menyesuaikan Arah Panah di Manual) ── */}
-        
-        {/* Kondensor → Evaporator (Kiri, arah Atas) */}
-        <path d="M85,200 L85,40 L150,40" fill="none" stroke="#2E5BFF" strokeWidth="2.5" markerEnd="url(#arrowBlue)"/>
-        {/* Panah dekoratif besar di tengah jalur kiri (seperti di manual) */}
-        <path d="M75,130 L85,115 L95,130 Z" fill="#2E5BFF" opacity="0.4"/>
-        <text x="75" y="100" textAnchor="end" fill="#2E5BFF" fontSize="9" fontWeight="600">Cairan Dingin</text>
-
-        {/* Evaporator → Kompresor (Kanan, arah Bawah) */}
-        <path d="M370,40 L435,40 L435,200" fill="none" stroke="#2E5BFF" strokeWidth="2.5" markerEnd="url(#arrowBlue)"/>
-        {/* Panah dekoratif besar di tengah jalur kanan (seperti di manual) */}
-        <path d="M425,115 L435,130 L445,115 Z" fill="#2E5BFF" opacity="0.4"/>
-        <text x="445" y="100" textAnchor="start" fill="#2E5BFF" fontSize="9" fontWeight="600">Uap Dingin</text>
-
-        {/* Kompresor → Kondensor (Bawah, arah Kiri) */}
-        <path d="M370,235 L150,235" fill="none" stroke="#FF6B00" strokeWidth="2.5" markerEnd="url(#arrowOrange)"/>
-        <text x="260" y="230" textAnchor="middle" fill="#FF6B00" fontSize="9" fontWeight="600">← Freon Panas</text>
-        {/* Panah dekoratif besar di tengah jalur bawah */}
-        <path d="M280,245 L265,235 L280,225 Z" fill="#FF6B00" opacity="0.4"/>
-
-        {/* ── Teks Tengah (Dalam Kabinet) ── */}
-        <rect x="200" y="100" width="120" height="70" rx="8" fill="#f8fafc" stroke="#e2e8f0" strokeWidth="1"/>
-        <text x="260" y="120" textAnchor="middle" fill="#0f172a" fontSize="10" fontWeight="700" textDecoration="underline">Dalam Kabinet</text>
-        <text x="220" y="140" textAnchor="middle" fill="#64748b" fontSize="9">Min</text>
-        <text x="300" y="140" textAnchor="middle" fill="#64748b" fontSize="9">Max</text>
-        <text x="260" y="160" textAnchor="middle" fill="#475569" fontSize="9" fontWeight="500">Humidity  -  %</text>
-
-        {/* Label Min/Max tambahan di luar (seperti di sudut-sudut komponen) */}
-        <text x="140" y="20" fill="#94a3b8" fontSize="8">Min</text>
-        <text x="140" y="30" fill="#94a3b8" fontSize="8">Max</text>
-        
-        <text x="375" y="20" fill="#94a3b8" fontSize="8">Min</text>
-        <text x="375" y="30" fill="#94a3b8" fontSize="8">Max</text>
-
-        <text x="20" y="185" fill="#94a3b8" fontSize="8">Min</text>
-        <text x="20" y="195" fill="#94a3b8" fontSize="8">Max</text>
-
-        <text x="480" y="185" fill="#94a3b8" fontSize="8">Min</text>
-        <text x="480" y="195" fill="#94a3b8" fontSize="8">Max</text>
-
-      </svg>
-    </div>
-  );
-}
+import CustomerHealthWidget from '@/app/id/[token]/components/CustomerHealthWidget';
 
 // ── Status Badge ──
 function StatusBadge({ status }: { status: string }) {
@@ -112,7 +20,7 @@ function StatusBadge({ status }: { status: string }) {
   if (s === 'ACTIVE')      return <span className={styles.badgeActive}>Active</span>;
   if (s === 'MAINTENANCE') return <span className={styles.badgeMaintenance}>Maintenance</span>;
   if (s === 'INACTIVE')    return <span className={styles.badgeInactive}>Inactive</span>;
-  return <span className={styles.badgeInactive}>{status}</span>;
+  return <span className={styles.badgeInactive}>{status || 'ACTIVE'}</span>;
 }
 
 // ── Warranty Badge ──
@@ -217,7 +125,6 @@ function ServiceRequestModal({
               <button type="button" className={styles.btnSecondary} onClick={() => onClose()}>
                 Batal
               </button>
-              {/* Tombol Request Service — Safety Orange */}
               <button type="submit" className={styles.btnWarning} disabled={loading}>
                 {loading ? 'Mengirim...' : 'Kirim Permintaan'}
               </button>
@@ -231,19 +138,19 @@ function ServiceRequestModal({
 
 export default function ClientUnitDetail() {
   const { id: rawId } = useParams();
-  // Decode in case ID was URL-encoded (e.g. IDs with spaces like "UNT VHIEU3R")
   const id = rawId ? decodeURIComponent(rawId as string) : rawId;
-  const router   = useRouter();
-  const [unit, setUnit]           = useState<any>(null);
-  const [logs, setLogs]           = useState<any[]>([]);
-  const [reports, setReports]     = useState<any[]>([]);
-  const [loading, setLoading]     = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const router = useRouter();
+
+  const [unit, setUnit]                       = useState<any>(null);
+  const [logs, setLogs]                       = useState<any[]>([]);
+  const [reports, setReports]                 = useState<any[]>([]);
+  const [loading, setLoading]                 = useState(true);
+  const [showModal, setShowModal]             = useState(false);
   const [serviceRequested, setServiceRequested] = useState(false);
-  const [expandedLogId, setExpandedLogId]       = useState<string | null>(null);
-  const [showAllReports, setShowAllReports]     = useState(false);
-  const [showAllWarranties, setShowAllWarranties] = useState(false);
+  const [expandedLogId, setExpandedLogId]     = useState<string | null>(null);
+  const [showAllReports, setShowAllReports]   = useState(false);
+  const [photoIdx, setPhotoIdx]               = useState(0);
+  const [manualIdx, setManualIdx]             = useState(0);
 
   useEffect(() => {
     if (!id) return;
@@ -258,26 +165,25 @@ export default function ClientUnitDetail() {
         
         if (logsRes.status === 'fulfilled') {
           let fetchedLogs = logsRes.value.data || [];
-          // MOCK DATA UNTUK DEMO PM JIKA KOSONG
           if (fetchedLogs.length === 0) {
             fetchedLogs = [
               {
                 id: 'mock-log-1',
-                action_taken: 'Pembersihan Evaporator & Cek Freon',
-                issue_description: 'Suhu kurang maksimal, dilakukan pembersihan sirip evaporator.',
-                service_date: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-                technician_name: 'Budi Santoso',
-                partner: { partner_name: 'PT Pendingin Utama' },
-                status: 'COMPLETED'
+                action_taken: 'Menunggu penugasan teknisi dari Holicindo HQ.',
+                issue_description: 'Dalam proses verifikasi jadwal teknisi lapangan.',
+                service_date: new Date().toISOString(),
+                technician_name: 'Pending HQ Assignment',
+                partner: { partner_name: 'Holicindo HQ' },
+                status: 'IN_PROGRESS'
               },
               {
                 id: 'mock-log-2',
-                action_taken: 'Inspeksi Rutin & Kalibrasi Sensor IoT',
-                issue_description: 'Pengecekan bulanan kompresor dan kalibrasi sensor suhu.',
-                service_date: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
-                technician_name: 'Agus Riyadi',
-                partner: { partner_name: 'Holicindo Tech Team' },
-                status: 'COMPLETED'
+                action_taken: 'Dalam proses pengecekan teknis.',
+                issue_description: 'Pengecekan rutin dan pembersihan filter berkala.',
+                service_date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+                technician_name: 'Menunggu Alokasi',
+                partner: { partner_name: 'Holicindo Tech' },
+                status: 'IN_PROGRESS'
               }
             ];
           }
@@ -286,20 +192,19 @@ export default function ClientUnitDetail() {
 
         if (reportsRes.status === 'fulfilled') {
           let fetchedReports = reportsRes.value.data || [];
-          // MOCK DATA UNTUK DEMO PM JIKA KOSONG
           if (fetchedReports.length === 0) {
             fetchedReports = [
               {
                 id: 'mock-report-1',
-                form_type: 'PREVENTIVE_MAINTENANCE',
-                created_at: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-                created_by: { name: 'Budi Santoso' }
+                form_type: 'COMMISSIONING',
+                created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+                created_by: { name: 'Holicindo QA Team' }
               },
               {
                 id: 'mock-report-2',
-                form_type: 'ROUTINE_INSPECTION',
-                created_at: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
-                created_by: { name: 'Agus Riyadi' }
+                form_type: 'COOLING 1',
+                created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+                created_by: { name: 'QC Dept' }
               }
             ];
           }
@@ -316,17 +221,13 @@ export default function ClientUnitDetail() {
 
   if (loading) {
     return (
-      <div>
+      <div style={{ padding: '40px 0' }}>
         <div style={{ marginBottom: 24 }}>
-          <div className={styles.skeleton} style={{ height: 20, width: 160 }} />
+          <div className={styles.skeleton} style={{ height: 28, width: 220 }} />
         </div>
-        <div className={styles.statsGrid}>
-          {[1,2,3,4].map(i => (
-            <div key={i} className={styles.statCard}>
-              <div className={styles.skeleton} style={{ height: 14, width: '60%', marginBottom: 12 }} />
-              <div className={styles.skeleton} style={{ height: 28, width: '40%' }} />
-            </div>
-          ))}
+        <div className={unitStyles.unitDetailGrid}>
+          <div className={styles.card} style={{ height: 480 }} />
+          <div className={styles.card} style={{ height: 480 }} />
         </div>
       </div>
     );
@@ -351,9 +252,27 @@ export default function ClientUnitDetail() {
 
   const warrantyExpiry = unit.warranty_expiry || unit.warranties?.[0]?.end_date;
 
+  // Process Photos
+  const photos = unit.specs?.photo_gallery
+    ? String(unit.specs.photo_gallery).split(',').filter(Boolean)
+    : (unit.test_run_image_url ? [unit.test_run_image_url] : []);
+  const clampedPhotoIdx = Math.min(photoIdx, Math.max(0, photos.length - 1));
+  const prevPhoto = () => setPhotoIdx(i => (i - 1 + photos.length) % photos.length);
+  const nextPhoto = () => setPhotoIdx(i => (i + 1) % photos.length);
+
+  // Process Diagrams / Manuals
+  const manuals = unit.specs?.manuals_urls
+    ? String(unit.specs.manuals_urls).split(',').filter(Boolean)
+    : [];
+  const clampedManualIdx = Math.min(manualIdx, Math.max(0, manuals.length - 1));
+  const prevManual = () => setManualIdx(i => (i - 1 + manuals.length) % manuals.length);
+  const nextManual = () => setManualIdx(i => (i + 1) % manuals.length);
+  const currentManual = manuals[clampedManualIdx];
+  const isManualImage = currentManual ? /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(currentManual) : false;
+
   return (
     <div>
-      {/* ── Breadcrumb ── */}
+      {/* ── Breadcrumb & Top Action Header ── */}
       <div className={styles.pageHeader}>
         <button
           className={styles.pageBackBtn}
@@ -369,7 +288,6 @@ export default function ClientUnitDetail() {
             <div>
               <h1 className={styles.pageTitle} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 {unit.serial_number}
-                {/* Badge for mobile, hidden on desktop */}
                 <div className={unitStyles.mobileBadgeOnly}>
                   <StatusBadge status={unit.status} />
                 </div>
@@ -378,7 +296,6 @@ export default function ClientUnitDetail() {
             </div>
           </div>
           <div className={unitStyles.unitHeaderRight}>
-            {/* Badge for desktop, hidden on mobile */}
             <div className={unitStyles.desktopBadgeOnly}>
               <StatusBadge status={unit.status} />
             </div>
@@ -396,175 +313,497 @@ export default function ClientUnitDetail() {
         </div>
       </div>
 
-      {/* ── 3 KOLOM SEJAJAR: 1. Info Unit | 2. Indeks Kesehatan | 3. Garansi & Laporan Terbaru ── */}
+      {/* ── Balanced 2-Column Dashboard Layout (Sesuai Referensi Personal Finance) ── */}
       <div className={unitStyles.unitDetailGrid}>
         
-        {/* ── KOLOM 1: Informasi Unit (Foto, Spesifikasi, Diagram) ── */}
-        <div className={styles.card}>
-          <div className={styles.cardHeader}>
-            <h2 className={styles.cardTitle}>
-              <Box size={16} style={{ display: 'inline', marginRight: 8, color: 'var(--brand-cobalt-blue)' }} />
-              Informasi Unit
-            </h2>
-          </div>
-          <div className={styles.cardBody} style={{ padding: '24px' }}>
-            
-            {/* Foto Unit */}
-            <div style={{ marginBottom: '22px', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 14px rgba(0,0,0,0.08)' }}>
-              {unit.test_run_image_url ? (
-                <img
-                  src={unit.test_run_image_url}
-                  alt={`Foto ${unit.serial_number}`}
-                  style={{ width: '100%', maxHeight: '280px', objectFit: 'cover', display: 'block' }}
-                />
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 180, gap: 12, padding: 24, background: 'linear-gradient(135deg, rgba(30,64,175,0.06) 0%, rgba(46,91,255,0.04) 100%)' }}>
-                  <svg viewBox="0 0 120 160" width="90" style={{ opacity: 0.6 }}>
-                    <rect x="10" y="15" width="100" height="130" rx="8" fill="none" stroke="#2E5BFF" strokeWidth="2"/>
-                    <rect x="16" y="21" width="88" height="105" rx="5" fill="rgba(46,91,255,0.06)" stroke="#2E5BFF" strokeWidth="1.2" strokeDasharray="4 2"/>
-                    <rect x="56" y="55" width="8" height="50" rx="4" fill="#2E5BFF" opacity="0.5"/>
-                    <line x1="16" y1="65" x2="104" y2="65" stroke="#93c5fd" strokeWidth="1"/>
-                    <line x1="16" y1="95" x2="104" y2="95" stroke="#93c5fd" strokeWidth="1"/>
-                    <rect x="10" y="145" width="100" height="12" rx="4" fill="#1e40af" opacity="0.4"/>
-                    <rect x="20" y="22" width="80" height="4" rx="2" fill="#60a5fa" opacity="0.7"/>
-                    <text x="60" y="110" textAnchor="middle" fontSize="22" fill="#2E5BFF" opacity="0.4">❄</text>
-                  </svg>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--brand-space-grey)', fontWeight: 600 }}>Foto belum tersedia</span>
-                </div>
-              )}
-            </div>
-
-            {/* Tabel Spesifikasi */}
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {[
-                { label: 'Model',           value: unit.model_name },
-                { label: 'Serial Number',   value: unit.serial_number },
-                { label: 'Kompresor',       value: unit.specs?.compressor || 'NT6226GK' },
-                { label: 'Refrigeran',      value: unit.specs?.refrigerant || 'R404A' },
-                { label: 'Daya / Power',    value: unit.specs?.power || '1350 watt' },
-                { label: 'Production Date', value: unit.production_date ? new Date(unit.production_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '1 Juli 2026' },
-              ].map(({ label, value }) => (
-                <div key={label} className={styles.infoRow} style={{ padding: '12px 0', borderBottom: '1px solid var(--brand-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.82rem', color: 'var(--brand-space-grey)', fontWeight: 600 }}>{label}</span>
-                  <span style={{ fontSize: '0.9rem', color: 'var(--brand-deep-navy)', fontWeight: 800, textAlign: 'right' }}>{value || '—'}</span>
-                </div>
-              ))}
-            </div>
-
-            {/* Diagram Sirkulasi Pendinginan */}
-            <div style={{ marginTop: '22px', paddingTop: '18px', borderTop: '2px solid rgba(46, 91, 255, 0.1)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-                <Wind size={16} color="var(--brand-cobalt-blue)" />
-                <h3 style={{ 
-                  fontSize: '0.92rem', 
-                  fontWeight: 800, 
-                  color: 'var(--brand-deep-navy)', 
-                  margin: 0,
-                  letterSpacing: '0.02em',
-                }}>
-                  Diagram Sirkulasi Pendinginan
-                </h3>
-              </div>
-              <div style={{ 
-                background: 'rgba(8, 18, 50, 0.04)',
-                border: '1px solid rgba(46, 91, 255, 0.1)',
-                borderRadius: '12px',
-                padding: '12px',
-                overflow: 'hidden',
-              }}>
-                <CoolingCircuitDiagram />
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        {/* ── KOLOM 2: Indeks Kesehatan Unit (Lega, elegan, tidak mepet) ── */}
-        <div className={styles.card}>
-          <div className={styles.cardHeader}>
-            <h2 className={styles.cardTitle}>
-              <Activity size={16} style={{ display: 'inline', marginRight: 8, color: 'var(--brand-cobalt-blue)' }} />
-              Indeks Kesehatan Unit
-            </h2>
-          </div>
-          <div className={styles.cardBody} style={{ padding: '24px 20px' }}>
-            <UnitHealthWidget 
-              unitId={unit.id} 
-              serialNumber={unit.serial_number}
-              onRequestService={() => router.push(`/client-portal/service-request?unit_id=${encodeURIComponent(unit.id)}`)}
-              emergencyWhatsapp="6281234567890"
-            />
-          </div>
-        </div>
-
-        {/* ── KOLOM 3: Garansi (Atas) & Laporan Terbaru (Bawah) Stack Compact Tanpa Ruang Kosong ── */}
-        <div className={unitStyles.rightColStack}>
+        {/* ══════════════ KOLOM KIRI (Informasi Unit + Kepemilikan Unit) ══════════════ */}
+        <div className={unitStyles.leftSectionStack}>
           
-          {/* Card Garansi */}
+          {/* Card 1: Informasi Unit (Foto & Diagram di kiri, Garansi & Spesifikasi di kanan) */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <h2 className={styles.cardTitle}>
-                <MapPin size={16} style={{ display: 'inline', marginRight: 8, color: 'var(--brand-cobalt-blue)' }} />
-                Garansi
+                <Box size={18} style={{ display: 'inline', marginRight: 8, color: '#38bdf8', verticalAlign: 'text-bottom' }} />
+                Informasi Unit
               </h2>
             </div>
-            <div className={styles.cardBody} style={{ padding: '18px 20px' }}>
-              <div style={{ marginBottom: 14 }}>
-                <span style={{ fontSize: '0.72rem', color: 'var(--brand-space-grey)', fontWeight: 700, display: 'block', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Status Garansi</span>
-                <div style={{ marginTop: 6 }}><WarrantyBadge endDate={warrantyExpiry} /></div>
+            <div className={styles.cardBody} style={{ padding: '22px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.05fr 1fr', gap: '22px', alignItems: 'stretch' }}>
+                
+                {/* ── Sisi Kiri: Foto Gallery + Diagram Schematics Container ── */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  
+                  {/* Container Foto Unit */}
+                  <div style={{
+                    position: 'relative',
+                    height: '260px',
+                    borderRadius: '16px',
+                    overflow: 'hidden',
+                    background: 'radial-gradient(circle at center, #0f2b48 0%, #061526 100%)',
+                    border: '1px solid rgba(56, 189, 248, 0.22)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.5)'
+                  }}>
+                    {photos.length > 0 ? (
+                      <img
+                        src={photos[clampedPhotoIdx]}
+                        alt={`Foto ${unit.serial_number} ${clampedPhotoIdx + 1}`}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'contain',
+                          display: 'block',
+                          padding: '8px'
+                        }}
+                      />
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', color: '#64748b' }}>
+                        <ImageIcon size={32} />
+                        <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>Foto belum tersedia</span>
+                      </div>
+                    )}
+
+                    {/* Navigasi Carousel Foto */}
+                    {photos.length > 1 && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={prevPhoto}
+                          style={{
+                            position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)',
+                            background: 'rgba(7, 23, 41, 0.75)', border: '1px solid rgba(56, 189, 248, 0.3)',
+                            borderRadius: '50%', width: '32px', height: '32px', display: 'flex',
+                            alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                            color: '#ffffff', backdropFilter: 'blur(4px)', zIndex: 2
+                          }}
+                        >
+                          <ChevronLeft size={18} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={nextPhoto}
+                          style={{
+                            position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
+                            background: 'rgba(7, 23, 41, 0.75)', border: '1px solid rgba(56, 189, 248, 0.3)',
+                            borderRadius: '50%', width: '32px', height: '32px', display: 'flex',
+                            alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                            color: '#ffffff', backdropFilter: 'blur(4px)', zIndex: 2
+                          }}
+                        >
+                          <ChevronRight size={18} />
+                        </button>
+                        <span style={{
+                          position: 'absolute', bottom: '10px', right: '12px',
+                          background: 'rgba(7, 23, 41, 0.85)', color: '#38bdf8',
+                          fontSize: '0.72rem', fontWeight: 700, padding: '2px 8px',
+                          borderRadius: '12px', border: '1px solid rgba(56, 189, 248, 0.3)',
+                          zIndex: 2
+                        }}>
+                          {clampedPhotoIdx + 1}/{photos.length}
+                        </span>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Container Diagram / Manual */}
+                  <div style={{
+                    position: 'relative',
+                    height: '240px',
+                    borderRadius: '16px',
+                    overflow: 'hidden',
+                    background: 'radial-gradient(circle at center, #0f2b48 0%, #061526 100%)',
+                    border: '1px solid rgba(56, 189, 248, 0.22)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.5)'
+                  }}>
+                    {/* Header bar diagram */}
+                    <div style={{
+                      padding: '8px 14px',
+                      background: 'rgba(7, 23, 41, 0.75)',
+                      borderBottom: '1px solid rgba(56, 189, 248, 0.15)',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}>
+                      <span style={{ fontSize: '0.76rem', fontWeight: 700, color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <BookOpen size={13} /> Diagram / QC Manual
+                      </span>
+                      {manuals.length > 1 && (
+                        <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8' }}>
+                          {clampedManualIdx + 1}/{manuals.length}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Preview Image Diagram */}
+                    <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '6px' }}>
+                      {manuals.length > 0 ? (
+                        isManualImage ? (
+                          <img
+                            src={currentManual}
+                            alt={`Diagram ${clampedManualIdx + 1}`}
+                            style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+                          />
+                        ) : (
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', color: '#94a3b8' }}>
+                            <FileText size={28} color="#38bdf8" />
+                            <span style={{ fontSize: '0.78rem' }}>Dokumen Diagram PDF</span>
+                          </div>
+                        )
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', color: '#64748b' }}>
+                          <BookOpen size={28} />
+                          <span style={{ fontSize: '0.78rem' }}>Diagram belum tersedia</span>
+                        </div>
+                      )}
+
+                      {manuals.length > 1 && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={prevManual}
+                            style={{
+                              position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)',
+                              background: 'rgba(7, 23, 41, 0.8)', border: '1px solid rgba(56, 189, 248, 0.3)',
+                              borderRadius: '50%', width: '28px', height: '28px', display: 'flex',
+                              alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                              color: '#ffffff', zIndex: 2
+                            }}
+                          >
+                            <ChevronLeft size={16} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={nextManual}
+                            style={{
+                              position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)',
+                              background: 'rgba(7, 23, 41, 0.8)', border: '1px solid rgba(56, 189, 248, 0.3)',
+                              borderRadius: '50%', width: '28px', height: '28px', display: 'flex',
+                              alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                              color: '#ffffff', zIndex: 2
+                            }}
+                          >
+                            <ChevronRight size={16} />
+                          </button>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Bottom bar with open link */}
+                    {currentManual && (
+                      <div style={{
+                        padding: '6px 14px',
+                        background: 'rgba(7, 23, 41, 0.9)',
+                        borderTop: '1px solid rgba(56, 189, 248, 0.15)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <span style={{ fontSize: '0.72rem', color: '#cbd5e1' }}>Diagram {clampedManualIdx + 1}</span>
+                        <a
+                          href={currentManual}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: '4px',
+                            fontSize: '0.72rem', fontWeight: 700, color: '#38bdf8', textDecoration: 'none'
+                          }}
+                        >
+                          Buka Tab Baru <ExternalLink size={12} />
+                        </a>
+                      </div>
+                    )}
+                  </div>
+
+                </div>
+
+                {/* ── Sisi Kanan: Widget Garansi di ATAS & Tabel Spesifikasi di BAWAH ── */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  
+                  {/* Widget Garansi Unit (Dipindahkan ke atas spesifikasi sesuai instruksi user) */}
+                  <div style={{
+                    padding: '16px 18px',
+                    borderRadius: '16px',
+                    background: 'linear-gradient(145deg, rgba(14, 36, 61, 0.8) 0%, rgba(7, 23, 41, 0.9) 100%)',
+                    border: '1px solid rgba(56, 189, 248, 0.22)',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.25)'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <ShieldCheck size={16} color="#38bdf8" /> Garansi Unit
+                      </span>
+                      <WarrantyBadge endDate={warrantyExpiry} />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem' }}>
+                        <span style={{ color: '#94a3b8' }}>Kota Penempatan</span>
+                        <span style={{ fontWeight: 700, color: '#ffffff' }}>
+                          {unit.current_client?.city || unit.specs?.city || 'JAKARTA'}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem' }}>
+                        <span style={{ color: '#94a3b8' }}>Garansi Berakhir</span>
+                        <span style={{ fontWeight: 700, color: '#ffffff' }}>
+                          {warrantyExpiry ? new Date(warrantyExpiry).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '15 November 2027'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tabel Spesifikasi Unit */}
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    padding: '8px 16px',
+                    borderRadius: '16px',
+                    background: 'rgba(7, 23, 41, 0.45)',
+                    border: '1px solid rgba(56, 189, 248, 0.15)'
+                  }}>
+                    {[
+                      { label: 'Model',           value: unit.model_name },
+                      { label: 'Serial Number',   value: unit.serial_number },
+                      { label: 'Kompresor',       value: unit.specs?.compressor || 'FFI12HBK' },
+                      { label: 'Refrigeran',      value: unit.specs?.refrigerant || 'R134' },
+                      { label: 'Daya / Power',    value: unit.specs?.power || '660 watt' },
+                      { label: 'Production Date', value: unit.production_date ? new Date(unit.production_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '17 September 2026' },
+                    ].map(({ label, value }, idx, arr) => (
+                      <div
+                        key={label}
+                        style={{
+                          padding: '10px 0',
+                          borderBottom: idx < arr.length - 1 ? '1px solid rgba(56, 189, 248, 0.1)' : 'none',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center'
+                        }}
+                      >
+                        <span style={{ fontSize: '0.82rem', color: '#94a3b8', fontWeight: 600 }}>{label}</span>
+                        <span style={{ fontSize: '0.88rem', color: '#ffffff', fontWeight: 800, textAlign: 'right' }}>{value || '—'}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                </div>
+
               </div>
-
-              {[
-                { label: 'Kota Penempatan', value: unit.current_client?.city || unit.specs?.city },
-                { label: 'Tgl. Produksi',   value: unit.production_date ? new Date(unit.production_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : null },
-                { label: 'Garansi Habis',   value: warrantyExpiry ? new Date(warrantyExpiry).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : null },
-              ].map(({ label, value }) => (
-                <div key={label} style={{ padding: '10px 0', borderTop: '1px solid var(--brand-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.78rem', color: 'var(--brand-space-grey)', fontWeight: 600 }}>{label}</span>
-                  <span style={{ fontSize: '0.85rem', color: 'var(--brand-deep-navy)', fontWeight: 700, textAlign: 'right' }}>{value || '—'}</span>
-                </div>
-              ))}
-
-              {/* Ekstra Garansi Info jika showAllWarranties */}
-              {showAllWarranties && (
-                <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px dashed var(--brand-border)' }}>
-                  <div style={{ padding: '8px 0', display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: '0.78rem', color: 'var(--brand-space-grey)' }}>Tipe Garansi:</span>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--brand-deep-navy)' }}>Full Coverage (Sparepart & Jasa)</span>
-                  </div>
-                  <div style={{ padding: '8px 0', display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: '0.78rem', color: 'var(--brand-space-grey)' }}>Layanan:</span>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--brand-deep-navy)' }}>SLA Respon 1x24 Jam</span>
-                  </div>
-                </div>
-              )}
-              
-              {/* Tombol Aksi Riwayat Servis (Membuka Modal Riwayat Lengkap) */}
-              <button 
-                onClick={() => setShowHistoryModal(true)}
-                style={{ 
-                  width: '100%', marginTop: '14px', padding: '11px 14px', 
-                  background: 'rgba(0, 31, 63, 0.04)', border: '1px solid rgba(0, 31, 63, 0.08)', 
-                  borderRadius: '10px', color: 'var(--brand-deep-navy)', 
-                  fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer',
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  transition: 'background 0.2s'
-                }}
-                onMouseOver={(e) => e.currentTarget.style.background = 'rgba(46, 91, 255, 0.08)'}
-                onMouseOut={(e) => e.currentTarget.style.background = 'rgba(0, 31, 63, 0.04)'}
-              >
-                <span>Lihat Riwayat Servis ({logs.length})</span>
-                <span style={{ color: 'var(--brand-space-grey)', fontSize: '1.1rem', lineHeight: 0.8 }}>›</span>
-              </button>
             </div>
           </div>
 
-          {/* Card Laporan Terbaru */}
+          {/* Card 2: Kepemilikan Unit (Melebar horizontal penuh di bawah Info Unit) */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <h2 className={styles.cardTitle}>
-                <FileText size={16} style={{ display: 'inline', marginRight: 8, color: 'var(--brand-cobalt-blue)' }} />
-                Laporan Terbaru
+                <Building2 size={18} style={{ display: 'inline', marginRight: 8, color: '#38bdf8', verticalAlign: 'text-bottom' }} />
+                Kepemilikan Unit
+              </h2>
+            </div>
+            <div className={styles.cardBody} style={{ padding: '22px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: '24px' }}>
+                
+                {/* Sub-kolom 1: Data Pelanggan / Kantor Pusat */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Customer Name</span>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#38bdf8' }}>
+                      {unit.current_client?.company_name || 'PAMERAN FHI'}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
+                    <span style={{ fontSize: '0.8rem', color: '#94a3b8', flexShrink: 0 }}>HQ Address</span>
+                    <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#ffffff', textAlign: 'right', lineHeight: 1.4 }}>
+                      {unit.current_client?.address || 'Thamrin Plaza, Jl. M.H. Thamrin Kav. 8-9, Lantai PH / 12-13, Kelurahan Kebon Melati, Kecamatan Tanah Abang, Jakarta Pusat 10230'}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>SO Number</span>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#ffffff' }}>
+                      {unit.so_number || 'S026025531'}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>DO Number</span>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#ffffff' }}>
+                      {unit.do_number || 'DO26073545'}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Delivery Date</span>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#ffffff' }}>
+                      {unit.delivery_date ? new Date(unit.delivery_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '23 Oktober 2026'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Sub-kolom 2: Lokasi Unit / Cabang Outlet */}
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px',
+                  paddingLeft: '20px',
+                  borderLeft: '1px solid rgba(56, 189, 248, 0.15)'
+                }}>
+                  <div style={{
+                    fontSize: '0.72rem',
+                    fontWeight: 800,
+                    color: '#38bdf8',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    marginBottom: 2
+                  }}>
+                    Lokasi Unit (Branch)
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Outlet Branch</span>
+                    <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#ffffff' }}>
+                      {unit.outlet_branch || 'Fore Donut Lippo Mall Puri'}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
+                    <span style={{ fontSize: '0.8rem', color: '#94a3b8', flexShrink: 0 }}>Branch Address</span>
+                    <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#ffffff', textAlign: 'right', lineHeight: 1.4 }}>
+                      {unit.branch_address || 'Jl. Puri Indah Raya Blok U1, RT.3/RW.2, Kembangan Sel., Kec. Kembangan, Kota Jakarta Barat, DKI Jakarta 11610'}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>City & Province</span>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#ffffff' }}>
+                      {unit.current_client?.city || 'Jakarta Pusat'}, DKI Jakarta
+                    </span>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        {/* ══════════════ KOLOM KANAN (Kesehatan Unit, Riwayat Servis, Laporan Terbaru) ══════════════ */}
+        <div className={unitStyles.rightColStack}>
+          
+          {/* Card 1: Kesehatan Unit (IoT Analysis) */}
+          <div className={styles.card}>
+            <div className={styles.cardHeader}>
+              <h2 className={styles.cardTitle}>
+                <Activity size={18} style={{ display: 'inline', marginRight: 8, color: '#38bdf8', verticalAlign: 'text-bottom' }} />
+                Kesehatan Unit
+              </h2>
+              <span style={{
+                background: 'rgba(16, 185, 129, 0.15)',
+                color: '#10b981',
+                padding: '4px 10px',
+                borderRadius: '12px',
+                fontSize: '0.7rem',
+                fontWeight: 800,
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px'
+              }}>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
+                LIVE
+              </span>
+            </div>
+            <div className={styles.cardBody} style={{ padding: '16px' }}>
+              <CustomerHealthWidget
+                unitId={unit.id}
+                unit={unit}
+                hideAnalytics={true}
+              />
+            </div>
+          </div>
+
+          {/* Card 2: Riwayat Servis */}
+          <div className={styles.card}>
+            <div className={styles.cardHeader}>
+              <h2 className={styles.cardTitle}>
+                <Wrench size={18} style={{ display: 'inline', marginRight: 8, color: '#38bdf8', verticalAlign: 'text-bottom' }} />
+                Riwayat Servis
+              </h2>
+              <span style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 600 }}>
+                {logs.length} catatan
+              </span>
+            </div>
+            <div className={styles.cardBody} style={{ padding: '14px 16px' }}>
+              {logs.length === 0 ? (
+                <div style={{ padding: '24px', textAlign: 'center', color: '#94a3b8', fontSize: '0.85rem' }}>
+                  Belum ada catatan servis
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {logs.map((log: any) => {
+                    const isExpanded = expandedLogId === log.id;
+                    return (
+                      <div
+                        key={log.id}
+                        onClick={() => setExpandedLogId(isExpanded ? null : log.id)}
+                        style={{
+                          padding: '12px 14px',
+                          borderRadius: '12px',
+                          background: 'rgba(7, 23, 41, 0.55)',
+                          border: '1px solid rgba(56, 189, 248, 0.15)',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ color: '#38bdf8', fontSize: '0.8rem' }}>•</span>
+                              <h4 style={{ margin: 0, fontSize: '0.83rem', fontWeight: 700, color: '#ffffff', lineHeight: 1.3 }}>
+                                {log.action_taken || log.issue_description || 'Servis & Pemeliharaan'}
+                              </h4>
+                            </div>
+                            <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 4, marginLeft: 12 }}>
+                              {log.service_date
+                                ? new Date(log.service_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+                                : '—'}
+                            </div>
+                          </div>
+                          <span style={{
+                            background: 'rgba(245, 158, 11, 0.15)',
+                            color: '#f59e0b',
+                            fontSize: '0.65rem',
+                            fontWeight: 700,
+                            padding: '2px 8px',
+                            borderRadius: '10px',
+                            border: '1px solid rgba(245, 158, 11, 0.3)',
+                            flexShrink: 0
+                          }}>
+                            Proses
+                          </span>
+                        </div>
+
+                        {/* Collapsed/Expanded detail */}
+                        {isExpanded && (
+                          <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px dashed rgba(56, 189, 248, 0.15)', fontSize: '0.75rem', color: '#cbd5e1' }}>
+                            {log.issue_description && (
+                              <p style={{ margin: '0 0 8px 0', lineHeight: 1.4 }}>{log.issue_description}</p>
+                            )}
+                            <div style={{ display: 'flex', gap: '14px', color: '#94a3b8' }}>
+                              {log.technician_name && <span>Teknisi: {log.technician_name}</span>}
+                              {log.partner?.partner_name && <span>Mitra: {log.partner.partner_name}</span>}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Card 3: Laporan Terbaru (Dipindahkan ke kolom kanan di bawah Riwayat Servis) */}
+          <div className={styles.card}>
+            <div className={styles.cardHeader}>
+              <h2 className={styles.cardTitle}>
+                <FileText size={18} style={{ display: 'inline', marginRight: 8, color: '#38bdf8', verticalAlign: 'text-bottom' }} />
+                Laporan Terbaru ({reports.length})
               </h2>
               {reports.length > 2 && (
                 <button
@@ -576,45 +815,40 @@ export default function ClientUnitDetail() {
                 </button>
               )}
             </div>
-            <div className={styles.cardBody} style={{ padding: '4px 0 12px 0' }}>
+            <div className={styles.cardBody} style={{ padding: '12px 16px' }}>
               {reports.length === 0 ? (
-                <div style={{ padding: '20px', textAlign: 'center' }}>
-                  <div style={{ color: 'var(--brand-space-grey)', fontWeight: 600, fontSize: '0.82rem' }}>Belum ada laporan</div>
+                <div style={{ padding: '20px', textAlign: 'center', color: '#94a3b8', fontSize: '0.82rem' }}>
+                  Belum ada laporan
                 </div>
               ) : (
-                <div 
-                  style={{ 
-                    display: 'flex', 
-                    flexDirection: 'column',
-                    maxHeight: showAllReports ? '260px' : 'none',
-                    overflowY: showAllReports ? 'auto' : 'visible'
-                  }}
-                >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {(showAllReports ? reports : reports.slice(0, 3)).map((rep: any) => (
                     <a
                       key={rep.id}
                       href={`/client-portal/reports/${rep.id}`}
-                      style={{ 
-                        padding: '11px 18px', 
-                        borderBottom: '1px solid var(--brand-border)', 
+                      style={{
+                        padding: '10px 14px',
+                        borderRadius: '10px',
+                        background: 'rgba(7, 23, 41, 0.55)',
+                        border: '1px solid rgba(56, 189, 248, 0.15)',
                         textDecoration: 'none',
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
-                        transition: 'background 0.2s'
+                        transition: 'all 0.2s ease'
                       }}
-                      onMouseOver={(e) => e.currentTarget.style.background = 'rgba(46, 91, 255, 0.05)'}
-                      onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                      onMouseOver={e => e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.4)'}
+                      onMouseOut={e => e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.15)'}
                     >
                       <div>
-                        <div style={{ fontWeight: 700, fontSize: '0.82rem', color: 'var(--brand-deep-navy)', marginBottom: 2 }}>
+                        <div style={{ fontWeight: 800, fontSize: '0.82rem', color: '#ffffff', letterSpacing: '0.3px' }}>
                           {rep.form_type?.replace(/_/g, ' ') || 'Laporan'}
                         </div>
-                        <div style={{ fontSize: '0.72rem', color: 'var(--brand-space-grey)' }}>
+                        <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 2 }}>
                           {rep.created_at ? new Date(rep.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
                         </div>
                       </div>
-                      <ExternalLink size={13} color="var(--brand-cobalt-blue)" />
+                      <ExternalLink size={14} color="#38bdf8" />
                     </a>
                   ))}
                 </div>
@@ -623,124 +857,8 @@ export default function ClientUnitDetail() {
           </div>
 
         </div>
+
       </div>
-
-      {/* ── Modal Riwayat Servis ── */}
-      {showHistoryModal && (
-        <div className={unitStyles.modalOverlay} onClick={() => setShowHistoryModal(false)}>
-          <div 
-            className={unitStyles.modal} 
-            onClick={e => e.stopPropagation()} 
-          >
-            <div className={unitStyles.modalHeader} style={{ flexShrink: 0 }}>
-              <h2 className={unitStyles.modalTitle}>
-                <Wrench size={18} style={{ display: 'inline', marginRight: 8, color: 'var(--brand-cobalt-blue)', verticalAlign: 'text-bottom' }} />
-                Riwayat Servis
-              </h2>
-              <button className={unitStyles.modalClose} onClick={() => setShowHistoryModal(false)}>×</button>
-            </div>
-            
-            <div style={{ padding: 0, overflowY: 'auto', flexGrow: 1 }}>
-              {logs.length === 0 ? (
-                <div style={{ padding: '40px', textAlign: 'center' }}>
-                  <Wrench size={24} color="var(--brand-space-grey)" style={{ marginBottom: 12 }} />
-                  <div style={{ color: 'var(--brand-space-grey)', fontWeight: 600 }}>Belum ada riwayat servis</div>
-                </div>
-              ) : (
-                <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', position: 'relative' }}>
-                  {/* Timeline vertical line */}
-                  <div style={{ position: 'absolute', left: '33px', top: '24px', bottom: '24px', width: '2px', background: 'var(--brand-border)', zIndex: 0 }} />
-                  
-                  {logs.map((log: any, index: number) => {
-                    const isExpanded = expandedLogId === log.id;
-                    return (
-                    <div key={log.id} style={{ display: 'flex', gap: '16px', position: 'relative', zIndex: 1 }}>
-                      {/* Timeline Dot */}
-                      <div style={{ 
-                        width: '28px', height: '28px', borderRadius: '50%', background: '#fff', 
-                        border: '2px solid var(--brand-cobalt-blue)', display: 'flex', alignItems: 'center', 
-                        justifyContent: 'center', flexShrink: 0, marginTop: '2px', boxShadow: '0 0 0 4px #fff' 
-                      }}>
-                        <Wrench size={12} color="var(--brand-cobalt-blue)" />
-                      </div>
-
-                      {/* Content Card */}
-                      <div 
-                        style={{ 
-                          flex: 1, background: 'var(--brand-bg-light)', border: '1px solid rgba(0, 31, 63, 0.05)', 
-                          borderRadius: '12px', padding: '12px 14px', boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
-                          display: 'flex', flexDirection: 'column', gap: '8px',
-                          cursor: 'pointer', transition: 'all 0.2s'
-                        }}
-                        onClick={() => setExpandedLogId(isExpanded ? null : log.id)}
-                      >
-                        
-                        {/* Header: Title & Date & Toggle Icon */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 800, color: 'var(--brand-deep-navy)', lineHeight: 1.3 }}>
-                              {log.action_taken || log.issue_description || 'Servis & Pemeliharaan'}
-                            </h4>
-                            <span style={{ 
-                              background: 'rgba(46, 91, 255, 0.08)', color: 'var(--brand-cobalt-blue)', 
-                              padding: '3px 8px', borderRadius: '16px', fontSize: '0.65rem', fontWeight: 700,
-                              display: 'inline-flex', alignItems: 'center', gap: '4px', alignSelf: 'flex-start',
-                              border: '1px solid rgba(46, 91, 255, 0.1)'
-                            }}>
-                              <Calendar size={10} />
-                              {log.service_date
-                                ? new Date(log.service_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
-                                : '—'}
-                            </span>
-                          </div>
-                          <div style={{ padding: '4px', color: 'var(--brand-space-grey)' }}>
-                            {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                          </div>
-                        </div>
-
-                        {/* Collapsible Content */}
-                        {isExpanded && (
-                          <div style={{ marginTop: '6px', paddingTop: '10px', borderTop: '1px dashed var(--brand-border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            {/* Description / Actions Taken */}
-                            {log.issue_description && (
-                              <div>
-                                <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--brand-slate)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Keterangan</span>
-                                <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--brand-space-grey)', lineHeight: 1.5 }}>
-                                  {log.issue_description}
-                                </p>
-                              </div>
-                            )}
-
-                            {/* Footer Meta: Technician & Partner */}
-                            <div style={{ 
-                              display: 'flex', gap: '12px', flexWrap: 'wrap'
-                            }}>
-                              {log.technician_name && (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.7rem', color: 'var(--brand-space-grey)' }}>
-                                  <User size={12} color="var(--brand-slate)" />
-                                  <span style={{ fontWeight: 600 }}>Teknisi:</span> {log.technician_name}
-                                </div>
-                              )}
-                              {log.partner?.partner_name && (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.7rem', color: 'var(--brand-space-grey)' }}>
-                                  <Briefcase size={12} color="var(--brand-slate)" />
-                                  <span style={{ fontWeight: 600 }}>Mitra:</span> {log.partner.partner_name}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                      </div>
-                    </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ── Modal Request Servis ── */}
       {showModal && (

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { BarChart2, TableProperties, RefreshCw, TrendingDown, TrendingUp, Minus, Download, ChevronDown, Settings2, X, Check, FileText } from 'lucide-react';
+import { BarChart2, TableProperties, RefreshCw, TrendingDown, TrendingUp, Minus, Download, ChevronDown, Settings2, X, Check, FileText, WifiOff, Clock } from 'lucide-react';
 import { iotApi, unitApi } from '@/lib/api';
 import CalibrationModal from './CalibrationModal';
 import OperatingSessionCard from './OperatingSessionCard';
@@ -181,6 +181,12 @@ function computeElectricalSummary(data: HistoryPoint[]): ElectricalSummary {
 
 // ─── SVG Line Chart (Industrial Style) ──────────────────────────────────────────
 function SensorLineChart({ data }: { data: HistoryPoint[] }) {
+  const [hoveredPoint, setHoveredPoint] = useState<{
+    x: number;
+    y: number;
+    dataPoint: HistoryPoint;
+  } | null>(null);
+
   const W = 1000; // viewBox width
   const H = 420; // viewBox height
   const PAD_LEFT = 80;
@@ -251,7 +257,23 @@ function SensorLineChart({ data }: { data: HistoryPoint[] }) {
     return data.map((d, i) => {
       const v = d[key] as number | null;
       if (v === null || v === -127 || v === 85 || d.is_offline_gap) return null;
-      return <circle key={i} cx={xOf(d)} cy={yOf(v)} r={3} fill={color} stroke="#fff" strokeWidth={1} />;
+      const cx = xOf(d);
+      const cy = yOf(v);
+      const isHovered = hoveredPoint?.dataPoint.recorded_at === d.recorded_at;
+      return (
+        <circle
+          key={i}
+          cx={cx}
+          cy={cy}
+          r={isHovered ? 6 : 3.5}
+          fill={color}
+          stroke="#ffffff"
+          strokeWidth={isHovered ? 2.5 : 1.2}
+          style={{ transition: 'all 0.15s ease', cursor: 'pointer' }}
+          onMouseEnter={() => setHoveredPoint({ x: cx, y: cy, dataPoint: d })}
+          onMouseLeave={() => setHoveredPoint(null)}
+        />
+      );
     });
   }
 
@@ -344,7 +366,7 @@ function SensorLineChart({ data }: { data: HistoryPoint[] }) {
           );
         })}
 
-        {/* Area Penanda Unit Offline / Terputus */}
+        {/* Area Penanda Unit Offline / Terputus — Clean subtle vertical indicator */}
         {data.map((d, i) => {
           if (d.is_offline_gap && i < data.length - 1 && data[i + 1].is_offline_gap) {
             const xStart = xOf(d);
@@ -352,33 +374,41 @@ function SensorLineChart({ data }: { data: HistoryPoint[] }) {
             const width = Math.max(2, xEnd - xStart);
             return (
               <g key={`gap-${i}`}>
-                {/* Area offline - background merah halus */}
-                <rect x={xStart} y={PAD_TOP} width={width} height={chartH} fill="rgba(239, 68, 68, 0.06)" />
-                {/* Garis batas kiri & kanan gap */}
-                <line x1={xStart} y1={PAD_TOP} x2={xStart} y2={PAD_TOP + chartH} stroke="#ef4444" strokeWidth="1.5" strokeDasharray="5 3" />
-                <line x1={xStart + width} y1={PAD_TOP} x2={xStart + width} y2={PAD_TOP + chartH} stroke="#ef4444" strokeWidth="1.5" strokeDasharray="5 3" />
-                {/* Badge "UNIT OFFLINE" — hanya 1 badge, di atas chart */}
-                <rect
-                  x={Math.max(xStart, xStart + width / 2 - 44)}
-                  y={PAD_TOP + 8}
-                  width={88}
-                  height={18}
-                  rx="5"
-                  fill="#ef4444"
-                />
-                <text
-                  x={Math.max(xStart + 44, xStart + width / 2)}
-                  y={PAD_TOP + 17}
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                  fontSize="9"
-                  fill="white"
-                  fontWeight="700"
-                  fontFamily="sans-serif"
-                  letterSpacing="0.05em"
-                >
-                  UNIT OFFLINE
-                </text>
+                {/* Area offline - background merah sangat halus */}
+                <rect x={xStart} y={PAD_TOP} width={width} height={chartH} fill="rgba(239, 68, 68, 0.04)" />
+                {/* Hanya tampilkan batas vertikal jika gap cukup lebar (>15px) agar tidak bertumpuk */}
+                {width >= 15 && (
+                  <>
+                    <line x1={xStart} y1={PAD_TOP} x2={xStart} y2={PAD_TOP + chartH} stroke="#ef4444" strokeWidth="1" strokeDasharray="3 3" opacity="0.4" />
+                    <line x1={xStart + width} y1={PAD_TOP} x2={xStart + width} y2={PAD_TOP + chartH} stroke="#ef4444" strokeWidth="1" strokeDasharray="3 3" opacity="0.4" />
+                  </>
+                )}
+                {/* Badge "OFFLINE" ringkas hanya jika area gap cukup lebar (>70px) */}
+                {width >= 70 && (
+                  <g>
+                    <rect
+                      x={xStart + width / 2 - 28}
+                      y={PAD_TOP + 8}
+                      width={56}
+                      height={16}
+                      rx="4"
+                      fill="rgba(239, 68, 68, 0.85)"
+                    />
+                    <text
+                      x={xStart + width / 2}
+                      y={PAD_TOP + 16}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fontSize="8"
+                      fill="#ffffff"
+                      fontWeight="800"
+                      fontFamily="sans-serif"
+                      letterSpacing="0.04em"
+                    >
+                      OFFLINE
+                    </text>
+                  </g>
+                )}
               </g>
             );
           }
@@ -392,6 +422,85 @@ function SensorLineChart({ data }: { data: HistoryPoint[] }) {
         {buildDots('temp_cabinet', '#10b981')}
         {buildDots('temp_evaporator', '#2E5BFF')}
         {buildDots('temp_condenser', '#ef4444')}
+
+        {/* Hover Tooltip on Dot Cursor */}
+        {hoveredPoint && (() => {
+          const { x, y, dataPoint } = hoveredPoint;
+          const timeStr = new Date(dataPoint.recorded_at).toLocaleTimeString('id-ID', {
+            timeZone: 'Asia/Jakarta',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+          }).replace(/\./g, ':');
+          const dateStr = new Date(dataPoint.recorded_at).toLocaleDateString('id-ID', {
+            timeZone: 'Asia/Jakarta',
+            day: '2-digit',
+            month: 'short',
+          });
+
+          // Prevent tooltip overflow beyond chart bounds
+          const tooltipWidth = 140;
+          const tooltipHeight = 78;
+          let tooltipX = x - tooltipWidth / 2;
+          if (tooltipX < PAD_LEFT) tooltipX = PAD_LEFT;
+          if (tooltipX + tooltipWidth > W - PAD_RIGHT) tooltipX = W - PAD_RIGHT - tooltipWidth;
+          const tooltipY = Math.max(10, y - tooltipHeight - 12);
+
+          return (
+            <g pointerEvents="none">
+              {/* Vertical Guide Line */}
+              <line
+                x1={x}
+                y1={PAD_TOP}
+                x2={x}
+                y2={PAD_TOP + chartH}
+                stroke="rgba(255,255,255,0.25)"
+                strokeWidth="1"
+                strokeDasharray="3 3"
+              />
+              {/* Tooltip Box */}
+              <rect
+                x={tooltipX}
+                y={tooltipY}
+                width={tooltipWidth}
+                height={tooltipHeight}
+                rx="8"
+                fill="rgba(6, 16, 40, 0.95)"
+                stroke="rgba(255,255,255,0.18)"
+                strokeWidth="1"
+              />
+              {/* Timestamp Header */}
+              <text
+                x={tooltipX + 10}
+                y={tooltipY + 16}
+                fontSize="10"
+                fill="#94a3b8"
+                fontWeight="700"
+                fontFamily="sans-serif"
+              >
+                {dateStr} · {timeStr} WIB
+              </text>
+              {/* Kabinet */}
+              <circle cx={tooltipX + 14} cy={tooltipY + 32} r={3} fill="#10b981" />
+              <text x={tooltipX + 22} y={tooltipY + 35} fontSize="10" fill="#cbd5e1" fontFamily="sans-serif">Kabinet:</text>
+              <text x={tooltipX + tooltipWidth - 10} y={tooltipY + 35} fontSize="10" fill="#10b981" fontWeight="800" textAnchor="end" fontFamily="monospace">
+                {dataPoint.temp_cabinet !== null && dataPoint.temp_cabinet !== undefined ? `${Number(dataPoint.temp_cabinet).toFixed(1)}°` : '—'}
+              </text>
+              {/* Evaporator */}
+              <circle cx={tooltipX + 14} cy={tooltipY + 48} r={3} fill="#2E5BFF" />
+              <text x={tooltipX + 22} y={tooltipY + 51} fontSize="10" fill="#cbd5e1" fontFamily="sans-serif">Evap:</text>
+              <text x={tooltipX + tooltipWidth - 10} y={tooltipY + 51} fontSize="10" fill="#2E5BFF" fontWeight="800" textAnchor="end" fontFamily="monospace">
+                {dataPoint.temp_evaporator !== null && dataPoint.temp_evaporator !== undefined ? `${Number(dataPoint.temp_evaporator).toFixed(1)}°` : '—'}
+              </text>
+              {/* Kondensor */}
+              <circle cx={tooltipX + 14} cy={tooltipY + 64} r={3} fill="#ef4444" />
+              <text x={tooltipX + 22} y={tooltipY + 67} fontSize="10" fill="#cbd5e1" fontFamily="sans-serif">Kondensor:</text>
+              <text x={tooltipX + tooltipWidth - 10} y={tooltipY + 67} fontSize="10" fill="#ef4444" fontWeight="800" textAnchor="end" fontFamily="monospace">
+                {dataPoint.temp_condenser !== null && dataPoint.temp_condenser !== undefined ? `${Number(dataPoint.temp_condenser).toFixed(1)}°` : '—'}
+              </text>
+            </g>
+          );
+        })()}
       </svg>
     </div>
   );
@@ -643,7 +752,7 @@ function ElectricalLineChart({ data }: { data: HistoryPoint[] }) {
         {/* Border */}
         <rect x={PAD_LEFT} y={PAD_TOP} width={chartW} height={chartH} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
 
-        {/* Area Penanda Unit Offline / Terputus */}
+        {/* Area Penanda Unit Offline / Terputus — Clean subtle vertical indicator */}
         {data.map((d, i) => {
           if (d.is_offline_gap && i < data.length - 1 && data[i + 1].is_offline_gap) {
             const xStart = xOf(d);
@@ -651,33 +760,41 @@ function ElectricalLineChart({ data }: { data: HistoryPoint[] }) {
             const width = Math.max(2, xEnd - xStart);
             return (
               <g key={`gap-${i}`}>
-                {/* Area offline - background merah halus */}
-                <rect x={xStart} y={PAD_TOP} width={width} height={chartH} fill="rgba(239, 68, 68, 0.06)" />
-                {/* Garis batas kiri & kanan gap */}
-                <line x1={xStart} y1={PAD_TOP} x2={xStart} y2={PAD_TOP + chartH} stroke="#ef4444" strokeWidth="1.5" strokeDasharray="5 3" />
-                <line x1={xStart + width} y1={PAD_TOP} x2={xStart + width} y2={PAD_TOP + chartH} stroke="#ef4444" strokeWidth="1.5" strokeDasharray="5 3" />
-                {/* Badge "UNIT OFFLINE" — hanya 1 badge, di atas chart */}
-                <rect
-                  x={Math.max(xStart, xStart + width / 2 - 44)}
-                  y={PAD_TOP + 8}
-                  width={88}
-                  height={18}
-                  rx="5"
-                  fill="#ef4444"
-                />
-                <text
-                  x={Math.max(xStart + 44, xStart + width / 2)}
-                  y={PAD_TOP + 17}
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                  fontSize="9"
-                  fill="white"
-                  fontWeight="700"
-                  fontFamily="sans-serif"
-                  letterSpacing="0.05em"
-                >
-                  UNIT OFFLINE
-                </text>
+                {/* Area offline - background merah sangat halus */}
+                <rect x={xStart} y={PAD_TOP} width={width} height={chartH} fill="rgba(239, 68, 68, 0.04)" />
+                {/* Hanya tampilkan batas vertikal jika gap cukup lebar (>15px) agar tidak bertumpuk */}
+                {width >= 15 && (
+                  <>
+                    <line x1={xStart} y1={PAD_TOP} x2={xStart} y2={PAD_TOP + chartH} stroke="#ef4444" strokeWidth="1" strokeDasharray="3 3" opacity="0.4" />
+                    <line x1={xStart + width} y1={PAD_TOP} x2={xStart + width} y2={PAD_TOP + chartH} stroke="#ef4444" strokeWidth="1" strokeDasharray="3 3" opacity="0.4" />
+                  </>
+                )}
+                {/* Badge "OFFLINE" ringkas hanya jika area gap cukup lebar (>70px) */}
+                {width >= 70 && (
+                  <g>
+                    <rect
+                      x={xStart + width / 2 - 28}
+                      y={PAD_TOP + 8}
+                      width={56}
+                      height={16}
+                      rx="4"
+                      fill="rgba(239, 68, 68, 0.85)"
+                    />
+                    <text
+                      x={xStart + width / 2}
+                      y={PAD_TOP + 16}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fontSize="8"
+                      fill="#ffffff"
+                      fontWeight="800"
+                      fontFamily="sans-serif"
+                      letterSpacing="0.04em"
+                    >
+                      OFFLINE
+                    </text>
+                  </g>
+                )}
               </g>
             );
           }
@@ -699,6 +816,7 @@ const TIME_RANGES = [
   { label: '1 Jam', hours: 1 },
   { label: '7 Jam', hours: 7 },
   { label: '24 Jam', hours: 24 },
+  { label: '1 Minggu', hours: 168 },
   { label: '1 Bulan', hours: 720 },
   { label: '3 Bulan', hours: 2160 },
   { label: '1 Tahun', hours: 8760 },
@@ -711,10 +829,11 @@ interface IotHistoryWidgetProps {
 }
 
 export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHistoryWidgetProps) {
-  const [activeTab, setActiveTab] = useState<'temperature' | 'electrical'>('temperature');
+  const [activeTab, setActiveTab] = useState<'temperature' | 'electrical' | 'offline_logs'>('temperature');
   const [view, setView] = useState<'chart' | 'table'>('chart');
   const [showCalibrationModal, setShowCalibrationModal] = useState(false);
   const [rangeIdx, setRangeIdx] = useState(2); // default 24 Jam
+  const [rawData, setRawData] = useState<HistoryPoint[]>([]);
   const [data, setData] = useState<HistoryPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -769,10 +888,12 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
   // Kabinet > 25°C tapi evap < 15°C = sensor kabel bermasalah, koreksi dari evap
   // Deteksi jeda real data (> 15 menit). Jika unit dicabut/toko tutup:
   // Arus, Tegangan, Daya dijatuhkan ke 0, Suhu dibiarkan null (garis putus)
-  const insertOfflineGaps = (points: HistoryPoint[]): HistoryPoint[] => {
+  const insertOfflineGaps = (points: HistoryPoint[], hours: number): HistoryPoint[] => {
     if (points.length === 0) return points;
     const result: HistoryPoint[] = [];
-    const GAP_THRESHOLD_MS = 15 * 60 * 1000; // 15 menit jeda tanpa paket data
+    // Sesuaikan threshold gap dengan interval agregasi:
+    // Jika rentang > 24 jam (misal 1 Minggu atau 1 Bulan dengan data 1 jam), jangan buat gap 15 menit
+    const GAP_THRESHOLD_MS = hours <= 24 ? 15 * 60 * 1000 : (hours <= 168 ? 45 * 60 * 1000 : 2.5 * 60 * 60 * 1000);
 
     for (let i = 0; i < points.length; i++) {
       const curr = points[i];
@@ -813,7 +934,7 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
     }
 
     // PENTING: Cek apakah unit saat ini SEDANG OFFLINE sampai detik ini (waktu sekarang)
-    // Jika data terakhir sudah lebih dari 15 menit yang lalu, rentangkan area offline sampai sekarang (Date.now())
+    // Jika data terakhir sudah lebih dari GAP_THRESHOLD_MS yang lalu, rentangkan area offline sampai sekarang (Date.now())
     const lastPoint = points[points.length - 1];
     const tLast = new Date(lastPoint.recorded_at).getTime();
     const nowMs = Date.now();
@@ -871,9 +992,11 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
       // Tidak perlu lagi downsample di browser!
       const res = await iotApi.getHistory(unitId, range.hours);
       const raw: HistoryPoint[] = res.data || [];
+      const cleanRaw = raw.map(applyHack);
+      setRawData(cleanRaw);
       
       // Apply hack untuk unit bermasalah (tetap dipertahankan)
-      const mapped = insertOfflineGaps(raw.map(applyHack));
+      const mapped = insertOfflineGaps(cleanRaw, range.hours);
 
       // Enhanced logging
       console.log(`📊 ${range.label} Data Summary:`, {
@@ -904,6 +1027,58 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
   const tableSource = useMemo(() => data, [data]);
   const summary = useMemo(() => computeSummary(tableSource), [tableSource]);
   const electricalSummary = useMemo(() => computeElectricalSummary(tableSource), [tableSource]);
+
+  // Ekstrak daftar jeda offline riil murni dari data mentah
+  const offlineLogs = useMemo(() => {
+    if (rawData.length === 0) return [];
+    const logs: Array<{
+      id: string;
+      startTime: string;
+      endTime: string;
+      durationMs: number;
+      durationText: string;
+    }> = [];
+
+    const hours = TIME_RANGES[rangeIdx].hours;
+    const GAP_MS = hours <= 24 ? 15 * 60 * 1000 : (hours <= 168 ? 45 * 60 * 1000 : 2.5 * 60 * 60 * 1000);
+
+    for (let i = 0; i < rawData.length - 1; i++) {
+      const t1 = new Date(rawData[i].recorded_at).getTime();
+      const t2 = new Date(rawData[i + 1].recorded_at).getTime();
+      const diff = t2 - t1;
+      if (diff > GAP_MS) {
+        const dHours = Math.floor(diff / (1000 * 60 * 60));
+        const dMins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const durText = `${dHours > 0 ? `${dHours} Jam ` : ''}${dMins} Menit`;
+        logs.push({
+          id: `gap-${i}`,
+          startTime: rawData[i].recorded_at,
+          endTime: rawData[i + 1].recorded_at,
+          durationMs: diff,
+          durationText: durText || '< 1 Menit',
+        });
+      }
+    }
+
+    // Cek apakah data terakhir sampai sekarang sedang mati
+    const lastPoint = rawData[rawData.length - 1];
+    const tLast = new Date(lastPoint.recorded_at).getTime();
+    const diffNow = Date.now() - tLast;
+    if (diffNow > GAP_MS) {
+      const dHours = Math.floor(diffNow / (1000 * 60 * 60));
+      const dMins = Math.floor((diffNow % (1000 * 60 * 60)) / (1000 * 60));
+      logs.push({
+        id: `gap-current`,
+        startTime: lastPoint.recorded_at,
+        endTime: new Date().toISOString(),
+        durationMs: diffNow,
+        durationText: `${dHours > 0 ? `${dHours} Jam ` : ''}${dMins} Menit (Berlangsung)`,
+      });
+    }
+
+    // Urutkan dari kejadian offline terbaru ke terlama
+    return logs.reverse();
+  }, [rawData, rangeIdx]);
 
   // Table rows — oldest first, limited to 20 unless expanded
   const tableRows = useMemo(() => {
@@ -1437,6 +1612,39 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
         >
           Kelistrikan
         </button>
+        <button
+          onClick={() => setActiveTab('offline_logs')}
+          style={{
+            padding: '8px 18px',
+            borderRadius: '10px',
+            border: activeTab === 'offline_logs' ? '1.5px solid #ef4444' : '1px solid rgba(255,255,255,0.1)',
+            background: activeTab === 'offline_logs' ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.05)',
+            color: activeTab === 'offline_logs' ? '#ef4444' : '#94a3b8',
+            fontWeight: 800,
+            fontSize: '0.82rem',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            fontFamily: 'inherit',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+          }}
+        >
+          <WifiOff size={13} color={activeTab === 'offline_logs' ? '#ef4444' : '#94a3b8'} />
+          <span>Riwayat Offline</span>
+          {offlineLogs.length > 0 && (
+            <span style={{
+              fontSize: '0.62rem',
+              fontWeight: 800,
+              background: activeTab === 'offline_logs' ? '#ef4444' : 'rgba(239,68,68,0.2)',
+              color: '#ffffff',
+              borderRadius: '20px',
+              padding: '1px 6px',
+            }}>
+              {offlineLogs.length}
+            </span>
+          )}
+        </button>
       </div>
 
       {/* Controls Row */}
@@ -1696,7 +1904,7 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
           );
         })()}
         <span style={{ fontSize: '0.68rem', color: '#94a3b8', marginLeft: 'auto' }}>
-          {tableRows.length} titik data · interval 5 menit
+          {tableRows.length} titik data{TIME_RANGES[rangeIdx].hours <= 1 ? ' · interval 1 menit' : TIME_RANGES[rangeIdx].hours <= 24 ? ' · interval 5 menit' : TIME_RANGES[rangeIdx].hours <= 168 ? ' · interval 15 menit' : TIME_RANGES[rangeIdx].hours <= 720 ? ' · interval 1 jam' : ' · agregasi otomatis'}
         </span>
       </div>
 
@@ -1825,7 +2033,7 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
             </div>
           )}
         </>
-      ) : (
+      ) : activeTab === 'electrical' ? (
         /* ══════════════════ TAB KELISTRIKAN ══════════════════ */
         <>
           {/* Summary Stats Kelistrikan */}
@@ -1976,6 +2184,99 @@ export default function IotHistoryWidget({ unitId, unit, onUnitUpdate }: IotHist
             </div>
           )}
         </>
+      ) : (
+        /* ══════════════════ TAB RIWAYAT OFFLINE ══════════════════ */
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          {/* Summary Ringkas Offline */}
+          <div style={{
+            display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', justifyContent: 'space-between',
+            background: 'rgba(239, 68, 68, 0.08)',
+            border: '1px solid rgba(239, 68, 68, 0.25)',
+            borderRadius: '13px',
+            padding: '12px 16px',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{
+                width: '32px', height: '32px', borderRadius: '10px',
+                background: 'rgba(239, 68, 68, 0.15)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <WifiOff size={16} color="#ef4444" />
+              </div>
+              <div>
+                <div style={{ fontSize: '0.62rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Log Terputus & Jeda Offline
+                </div>
+                <div style={{ fontSize: '0.86rem', fontWeight: 900, color: '#f1f5f9' }}>
+                  Total {offlineLogs.length} Kejadian Offline Tercatat
+                </div>
+              </div>
+            </div>
+            <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+              Periode: {TIME_RANGES[rangeIdx].label}
+            </span>
+          </div>
+
+          {/* Tabel Log Offline */}
+          <div style={{ border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', overflow: 'hidden' }}>
+            {offlineLogs.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px 20px', color: '#94a3b8' }}>
+                <Clock size={32} style={{ opacity: 0.35, marginBottom: '8px', color: '#10b981' }} />
+                <p style={{ fontSize: '0.85rem', fontWeight: 700, color: '#f1f5f9' }}>Unit Beroperasi Tanpa Terputus</p>
+                <p style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '4px' }}>Tidak ada jeda pemadaman listrik atau sinyal offline dalam periode ini.</p>
+              </div>
+            ) : (
+              <div style={{ overflowX: 'auto', maxHeight: '420px' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78rem' }}>
+                  <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
+                    <tr style={{ background: 'rgba(8, 18, 50, 0.95)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                      <th style={{ padding: '12px 14px', textAlign: 'center', fontWeight: 800, color: '#94a3b8', fontSize: '0.68rem', textTransform: 'uppercase' }}>No</th>
+                      <th style={{ padding: '12px 14px', textAlign: 'left', fontWeight: 800, color: '#ef4444', fontSize: '0.68rem', textTransform: 'uppercase' }}>Mulai Mati / Terputus</th>
+                      <th style={{ padding: '12px 14px', textAlign: 'left', fontWeight: 800, color: '#10b981', fontSize: '0.68rem', textTransform: 'uppercase' }}>Selesai / Online Kembali</th>
+                      <th style={{ padding: '12px 14px', textAlign: 'left', fontWeight: 800, color: '#f59e0b', fontSize: '0.68rem', textTransform: 'uppercase' }}>Durasi Pemadaman</th>
+                      <th style={{ padding: '12px 14px', textAlign: 'center', fontWeight: 800, color: '#94a3b8', fontSize: '0.68rem', textTransform: 'uppercase' }}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {offlineLogs.map((log, idx) => (
+                      <tr key={log.id} style={{
+                        borderBottom: '1px solid rgba(255,255,255,0.04)',
+                        background: idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)',
+                      }}>
+                        <td style={{ padding: '10px 14px', textAlign: 'center', color: '#64748b', fontFamily: 'monospace' }}>
+                          {idx + 1}
+                        </td>
+                        <td style={{ padding: '10px 14px', fontFamily: 'monospace', fontWeight: 700, color: '#ef4444' }}>
+                          {formatTime(log.startTime)} WIB
+                        </td>
+                        <td style={{ padding: '10px 14px', fontFamily: 'monospace', fontWeight: 700, color: log.id === 'gap-current' ? '#94a3b8' : '#10b981' }}>
+                          {log.id === 'gap-current' ? 'Masih Offline (Sekarang)' : `${formatTime(log.endTime)} WIB`}
+                        </td>
+                        <td style={{ padding: '10px 14px', fontFamily: 'monospace', fontWeight: 800, color: '#f59e0b' }}>
+                          {log.durationText}
+                        </td>
+                        <td style={{ padding: '10px 14px', textAlign: 'center' }}>
+                          <span style={{
+                            fontSize: '0.62rem',
+                            fontWeight: 800,
+                            padding: '3px 8px',
+                            borderRadius: '20px',
+                            background: log.id === 'gap-current' ? 'rgba(239,68,68,0.2)' : 'rgba(100,116,139,0.2)',
+                            color: log.id === 'gap-current' ? '#ef4444' : '#94a3b8',
+                            border: `1px solid ${log.id === 'gap-current' ? 'rgba(239,68,68,0.4)' : 'rgba(100,116,139,0.3)'}`,
+                          }}>
+                            {log.id === 'gap-current' ? 'SEDANG OFFLINE' : 'SELESAI'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       {/* Settings Modal */}

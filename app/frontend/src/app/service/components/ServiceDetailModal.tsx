@@ -37,7 +37,26 @@ export default function ServiceDetailModal({ log, partners, technicianOptions = 
   const [editSparepartItems, setEditSparepartItems] = useState<string[]>(parseSparepartStr(log.replaced_sparepart || ''));
   const [sparepartSearch, setSparepartSearch] = useState('');
   const [showSparepartDropdown, setShowSparepartDropdown] = useState(false);
+  const [dbSpareparts, setDbSpareparts] = useState<any[]>(HOLIC_SPAREPARTS_INVENTORY);
   const editReplacedSparepart = editSparepartItems.join('; ');
+
+  useEffect(() => {
+    sparepartApi.getAll().then(res => {
+      if (res.data && res.data.length > 0) {
+        setDbSpareparts(res.data);
+      }
+    }).catch(() => {});
+  }, []);
+
+  const handleAddCustomSparepart = (val: string) => {
+    const trimmed = val.trim();
+    if (!trimmed) return;
+    if (!editSparepartItems.includes(trimmed)) {
+      setEditSparepartItems(prev => [...prev, trimmed]);
+    }
+    setSparepartSearch('');
+    setShowSparepartDropdown(false);
+  };
 
   // Laporan Kendala revision state
   const [isEditingIssue, setIsEditingIssue] = useState(false);
@@ -337,27 +356,73 @@ export default function ServiceDetailModal({ log, partners, technicianOptions = 
                         value={sparepartSearch}
                         onChange={(e) => { setSparepartSearch(e.target.value); setShowSparepartDropdown(true); }}
                         onFocus={() => setShowSparepartDropdown(true)}
-                        placeholder="+ Tambah Sparepart..."
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddCustomSparepart(sparepartSearch);
+                          }
+                        }}
+                        placeholder="+ Tambah / Ketik nama Sparepart..."
                         style={{ flex: 1, border: 'none', outline: 'none', fontSize: '0.88rem', color: 'var(--color-deep-navy)', background: 'transparent', fontWeight: 500 }}
                       />
+                      {sparepartSearch && (
+                        <button
+                          type="button"
+                          onClick={() => handleAddCustomSparepart(sparepartSearch)}
+                          style={{
+                            background: '#2E5BFF',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '6px',
+                            padding: '4px 10px',
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                        >
+                          <Plus size={12} /> Tambah
+                        </button>
+                      )}
                       {sparepartSearch && (
                         <button type="button" onClick={() => { setSparepartSearch(''); setShowSparepartDropdown(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex', padding: 0 }}><X size={14} /></button>
                       )}
                     </div>
                     {showSparepartDropdown && (() => {
-                      const filtered = HOLIC_SPAREPARTS_INVENTORY.filter(sp =>
+                      const filtered = dbSpareparts.filter(sp =>
                         !editSparepartItems.includes(sp.name) &&
-                        (sp.name.toLowerCase().includes(sparepartSearch.toLowerCase()) || sp.category.toLowerCase().includes(sparepartSearch.toLowerCase()))
+                        (sp.name.toLowerCase().includes(sparepartSearch.toLowerCase()) || (sp.category && sp.category.toLowerCase().includes(sparepartSearch.toLowerCase())))
                       );
-                      if (filtered.length === 0) return null;
+                      if (filtered.length === 0 && !sparepartSearch.trim()) return null;
                       // Group by category
                       const grouped = filtered.reduce<Record<string, typeof filtered>>((acc, sp) => {
-                        if (!acc[sp.category]) acc[sp.category] = [];
-                        acc[sp.category].push(sp);
+                        const cat = sp.category || 'Lain-lain';
+                        if (!acc[cat]) acc[cat] = [];
+                        acc[cat].push(sp);
                         return acc;
                       }, {});
                       return (
                         <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: '#fff', border: '1px solid #e2e8f0', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 9999, maxHeight: '220px', overflowY: 'auto' }}>
+                          {sparepartSearch.trim() && !editSparepartItems.includes(sparepartSearch.trim()) && (
+                            <div style={{ padding: '8px 12px', borderBottom: '1px solid #f1f5f9', background: 'rgba(46,91,255,0.04)' }}>
+                              <button
+                                type="button"
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  handleAddCustomSparepart(sparepartSearch);
+                                }}
+                                style={{
+                                  display: 'flex', alignItems: 'center', gap: '6px', width: '100%',
+                                  border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left',
+                                  fontSize: '0.82rem', color: '#2E5BFF', fontWeight: 700,
+                                }}
+                              >
+                                <Plus size={14} /> Gunakan custom: &quot;{sparepartSearch.trim()}&quot;
+                              </button>
+                            </div>
+                          )}
                           {Object.entries(grouped).map(([cat, items]) => (
                             <div key={cat}>
                               <div style={{ padding: '6px 12px 3px', fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', background: '#f8fafc', borderBottom: '1px solid #f1f5f9' }}>{cat}</div>
@@ -377,7 +442,7 @@ export default function ServiceDetailModal({ log, partners, technicianOptions = 
                                 >
                                   <Package size={12} style={{ color: '#2E5BFF', flexShrink: 0 }} />
                                   <span style={{ flex: 1 }}>{sp.name}</span>
-                                  <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>{sp.partNumber}</span>
+                                  <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>{sp.part_number || sp.partNumber || ''}</span>
                                 </button>
                               ))}
                             </div>

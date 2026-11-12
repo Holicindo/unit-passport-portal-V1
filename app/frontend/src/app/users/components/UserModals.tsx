@@ -6,7 +6,7 @@ import { CustomSelect } from '@/components/ui/CustomSelect';
 import { clientApi, partnerApi } from '@/lib/api';
 import styles from '../users.module.css';
 
-type UserRole = 'SUPER_ADMIN' | 'MECHANIC' | 'CLIENT' | 'QC';
+type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'PARTNER' | 'MECHANIC' | 'CLIENT' | 'QC';
 type UserStatus = 'ACTIVE' | 'SUSPENDED';
 
 interface UserFormModalProps {
@@ -26,8 +26,31 @@ export function UserFormModal({ editingUser, onClose, onSave }: UserFormModalPro
   const [formClientId, setFormClientId] = useState(editingUser?.client_id || '');
   const [formPartnerId, setFormPartnerId] = useState(editingUser?.partner_id || '');
 
-  const [clients, setClients] = useState<{id: string, company_name: string}[]>([]);
-  const [partners, setPartners] = useState<{id: string, company_name: string}[]>([]);
+  const [clients, setClients] = useState<{ id: string, company_name: string }[]>([]);
+  const [partners, setPartners] = useState<{ id: string, company_name: string }[]>([]);
+
+  // Synchronize form when editingUser changes or modal opens
+  useEffect(() => {
+    if (editingUser) {
+      setFormName(editingUser.name || '');
+      setFormEmail(editingUser.email || '');
+      setFormPhone(editingUser.phone || '');
+      setFormRole(editingUser.role || 'CLIENT');
+      setFormStatus(editingUser.status || 'ACTIVE');
+      setFormClientId(editingUser.client_id || '');
+      setFormPartnerId(editingUser.partner_id || '');
+      setFormPassword('');
+    } else {
+      setFormName('');
+      setFormEmail('');
+      setFormPhone('');
+      setFormRole('CLIENT');
+      setFormStatus('ACTIVE');
+      setFormClientId('');
+      setFormPartnerId('');
+      setFormPassword('');
+    }
+  }, [editingUser]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -36,8 +59,14 @@ export function UserFormModal({ editingUser, onClose, onSave }: UserFormModalPro
           clientApi.findAll(200),
           partnerApi.findAll()
         ]);
-        if (clientRes.data) setClients(clientRes.data.data || clientRes.data);
-        if (partnerRes.data) setPartners(partnerRes.data);
+        if (clientRes.data) {
+          const rawClients = clientRes.data.data || clientRes.data;
+          setClients(Array.isArray(rawClients) ? rawClients : []);
+        }
+        if (partnerRes.data) {
+          const rawPartners = partnerRes.data.data || partnerRes.data;
+          setPartners(Array.isArray(rawPartners) ? rawPartners : []);
+        }
       } catch (err) {
         console.error('Failed to fetch relations:', err);
       }
@@ -47,12 +76,12 @@ export function UserFormModal({ editingUser, onClose, onSave }: UserFormModalPro
 
   const handleSave = () => {
     if (!formName || !formEmail) return;
-    onSave({ 
-      name: formName, 
-      email: formEmail, 
+    onSave({
+      name: formName,
+      email: formEmail,
       phone: formPhone || undefined,
-      role: formRole, 
-      status: formStatus, 
+      role: formRole,
+      status: formStatus,
       password: formPassword,
       client_id: formRole === 'CLIENT' ? (formClientId || undefined) : undefined,
       partner_id: formRole === 'MECHANIC' ? (formPartnerId || undefined) : undefined
@@ -61,8 +90,15 @@ export function UserFormModal({ editingUser, onClose, onSave }: UserFormModalPro
 
 
   return (
-    <div className={styles.modalOverlay} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+    <div
+      className={styles.modalOverlay}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <div className={styles.modal} onMouseDown={(e) => e.stopPropagation()}>
         <div className={styles.modalHeader}>
           <div className={styles.modalHeaderTitle}>
             <UserPlus size={22} className={styles.modalHeaderIcon} />
@@ -110,6 +146,8 @@ export function UserFormModal({ editingUser, onClose, onSave }: UserFormModalPro
               <CustomSelect value={formRole} onChange={(val) => setFormRole(val)}
                 options={[
                   { value: 'SUPER_ADMIN', label: 'Super Admin' },
+                  { value: 'ADMIN', label: 'Admin' },
+                  { value: 'PARTNER', label: 'Partner' },
                   { value: 'MECHANIC', label: 'Teknisi' },
                   { value: 'CLIENT', label: 'Klien' },
                   { value: 'QC', label: 'Quality Control' },
@@ -128,14 +166,14 @@ export function UserFormModal({ editingUser, onClose, onSave }: UserFormModalPro
           {formRole === 'CLIENT' && (
             <div className={styles.formGroup}>
               <label className={styles.formLabel}>Hubungkan ke Klien (Opsional)</label>
-              <CustomSelect 
-                value={formClientId} 
+              <CustomSelect
+                value={formClientId}
                 onChange={setFormClientId}
                 placeholder="Pilih Klien (Otomatis buat baru jika kosong)"
                 options={[
                   { value: '', label: 'Buat Klien Baru (Otomatis)' },
                   ...clients.map(c => ({ value: c.id, label: c.company_name }))
-                ]} 
+                ]}
               />
             </div>
           )}
@@ -143,14 +181,14 @@ export function UserFormModal({ editingUser, onClose, onSave }: UserFormModalPro
           {formRole === 'MECHANIC' && (
             <div className={styles.formGroup}>
               <label className={styles.formLabel}>Hubungkan ke Mitra/Partner Regional (Opsional)</label>
-              <CustomSelect 
-                value={formPartnerId} 
+              <CustomSelect
+                value={formPartnerId}
                 onChange={setFormPartnerId}
                 placeholder="Pilih Mitra/Partner"
                 options={[
                   { value: '', label: 'Holicindo Internal / Tanpa Mitra Khusus' },
                   ...partners.map(p => ({ value: p.id, label: (p as any).partner_name || p.company_name }))
-                ]} 
+                ]}
               />
             </div>
           )}
@@ -176,12 +214,19 @@ interface DeleteConfirmModalProps {
 
 export function DeleteConfirmModal({ userName, onClose, onConfirm }: DeleteConfirmModalProps) {
   return (
-    <div className={styles.modalOverlay} onClick={onClose}>
-      <div className={styles.modalSmall} onClick={(e) => e.stopPropagation()}>
+    <div
+      className={styles.modalOverlay}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <div className={styles.modalSmall} onMouseDown={(e) => e.stopPropagation()}>
         <div className={styles.deleteConfirmWrapper}>
           <div className={styles.deleteConfirmIconBg}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#E11D48" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
             </svg>
           </div>
           <h3 className={styles.deleteConfirmTitle}>Hapus Pengguna?</h3>

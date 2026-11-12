@@ -42,8 +42,9 @@ export function useAdminActions(
       if (unit?.id) {
         const payload: any = {};
 
-        // Spesifikasi block: model_name, specs, warranty_expiry, diagram_image_url
+        // Spesifikasi block: serial_number, model_name, specs, warranty_expiry, diagram_image_url
         if (block === 'spesifikasi') {
+          if (editData.serial_number !== undefined) payload.serial_number = editData.serial_number;
           if (editData.model_name !== undefined) payload.model_name = editData.model_name;
           if (editData.specs !== undefined) {
             // Sanitize: hapus field undefined, JSON.parse(JSON.stringify()) untuk clean

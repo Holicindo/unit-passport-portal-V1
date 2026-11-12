@@ -121,7 +121,10 @@ export default function PartnersPage() {
       await partnerApi.delete(deleteTarget.id);
       setDeleteTarget(null);
       fetchPartners();
-    } catch { alert('Gagal menghapus mitra. Coba lagi.'); }
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'Gagal menghapus mitra. Coba lagi.';
+      alert(msg);
+    }
     finally { setDeleting(false); }
   };
 

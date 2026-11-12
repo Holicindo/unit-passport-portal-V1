@@ -40,8 +40,10 @@ export class ReportsController {
     @Query('limit') limit: number = 10,
     @Query('type') type?: string,
     @Query('status') status?: string,
+    @Query('unitId') unitId?: string,
+    @Query('search') search?: string,
   ) {
-    return this.reportsService.findAll(page, limit, type as any, status);
+    return this.reportsService.findAll(page, limit, type as any, status, unitId, search);
   }
 
   @Post()

@@ -20,6 +20,7 @@ function UnitsPageInner() {
   const [units, setUnits] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(15);
   const [totalCount, setTotalCount] = useState(0);
@@ -54,7 +55,7 @@ function UnitsPageInner() {
         router.push('/partner-portal');
         return;
       } else {
-        response = await unitApi.findAll(page, pageSize, searchTerm, cityFilter, clientFilter);
+        response = await unitApi.findAll(page, pageSize, debouncedSearch, cityFilter, clientFilter);
       }
 
       const { data } = response;
@@ -86,7 +87,16 @@ function UnitsPageInner() {
     } finally {
       setLoading(false);
     }
-  }, [pageSize, searchTerm, cityFilter, clientFilter, router]);
+  }, [pageSize, debouncedSearch, cityFilter, clientFilter, router]);
+
+  // Debounce search input to prevent rapid server refetches
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setCurrentPage(1);
+    }, 350);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
 
   useEffect(() => { loadUnits(currentPage); }, [currentPage, loadUnits]);
 
@@ -131,10 +141,7 @@ function UnitsPageInner() {
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-    setCurrentPage(1);
   };
-
-  useEffect(() => { loadUnits(1); }, [searchTerm, loadUnits]);
 
   const handleDelete = async (id: string) => {
     try {

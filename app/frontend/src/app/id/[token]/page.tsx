@@ -44,6 +44,7 @@ export default function QrPassportPage() {
 
   const autoUnitType = unit ? getUnitType(unit.model_name) : 'MESIN';
   const [photoIdx, setPhotoIdx] = useState(0);
+  const [manualIdx, setManualIdx] = useState(0);
   const [showReportSelector, setShowReportSelector] = useState(false);
   const [iotSlideTab, setIotSlideTab] = useState<'realtime' | 'history'>('realtime');
   const [showCalibrationModal, setShowCalibrationModal] = useState(false);
@@ -436,31 +437,37 @@ export default function QrPassportPage() {
 
             {/* Baris atas: Manuals (kiri) + Layanan & Dukungan (tengah) + QR Card (kanan) */}
             <div className={styles.topRowGrid}>
-              {/* Slide 5: Manuals (Kiri) */}
+              {/* Slide 5: Manual & Reports (Kiri) */}
               {(isAdmin || isPartner) && (
               <section className={`${styles.panel} ${styles.iotPanel}`} style={{ borderRadius: "18px", margin: 0, display: 'flex', flexDirection: 'column' }}>
                 <div className={styles.panelHeader}>
-                  <div className={styles.panelHeaderLeft}><BookOpen size={16} color="#60a5fa" /><h2>Manuals</h2></div>
-                  {isQC && (
-                  <div className={styles.partnerActions} style={{ width: '100%', textAlign: 'left' }}>
-                    <div style={{ marginBottom: '12px', display: 'flex', justifyContent: 'center' }}>
-                      <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(16,185,129,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(16,185,129,0.3)' }}>
-                        <CheckCircle2 size={20} color="#10b981" />
-                      </div>
-                    </div>
-                    <h3 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '4px', textAlign: 'center', color: '#ffffff' }}>Quality Control Mode</h3>
-                    <p className={styles.sectionInfo} style={{ textAlign: 'center', marginBottom: '16px', fontSize: '0.82rem', color: '#cbd5e1' }}>Inspeksi kualitas, sensor, dan laporan unit.</p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      <button className={styles.btnPrimary} onClick={() => setShowReportSelector(true)} style={{ background: 'linear-gradient(135deg, #10b981, #059669)', color: '#ffffff', border: 'none', fontWeight: 700, padding: '12px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                        <FileText size={16} /> Buka / Buat QC Report
-                      </button>
-                    </div>
+                  <div className={styles.panelHeaderLeft}><BookOpen size={16} color="#60a5fa" /><h2>Manual &amp; Reports</h2></div>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <button
+                      className={styles.btnPrimary}
+                      onClick={() => setShowReportSelector(true)}
+                      style={{
+                        padding: '5px 12px',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                        border: 'none',
+                        color: '#fff',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 6px rgba(37,99,235,0.3)',
+                      }}
+                    >
+                      <FileText size={13} /> QC Reports
+                    </button>
+                    {isAdmin && (<>
+                      {editBlocks.manuals && <button className={styles.btnCancel} onClick={() => cancelEdit('manuals')}>Batal</button>}
+                      <button className={editBlocks.manuals ? styles.btnSave : styles.btnRevise} onClick={() => toggleEdit('manuals')}>{editBlocks.manuals ? (isSaving ? 'Menyimpan…' : 'Simpan') : 'Revisi'}</button>
+                    </>)}
                   </div>
-                )}
-                {isAdmin && (<div style={{ display: 'flex', gap: '8px' }}>
-                    {editBlocks.manuals && <button className={styles.btnCancel} onClick={() => cancelEdit('manuals')}>Batal</button>}
-                    <button className={editBlocks.manuals ? styles.btnSave : styles.btnRevise} onClick={() => toggleEdit('manuals')}>{editBlocks.manuals ? (isSaving ? 'Menyimpan…' : 'Simpan') : 'Revisi'}</button>
-                  </div>)}
                 </div>
                 <div className={styles.mediaSingleItem} style={{ padding: '14px', flex: 1, display: 'flex', flexDirection: 'column' }}>
                   {editBlocks.manuals ? (
@@ -518,31 +525,123 @@ export default function QrPassportPage() {
                     </div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1, justifyContent: 'center' }}>
-                      {(() => { const urls = unit?.specs?.manuals_urls ? String(unit.specs.manuals_urls).split(',').filter(Boolean) : [];
-                        if (urls.length === 0) return (<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 12px', gap: '8px', background: 'rgba(0,0,0,0.25)', borderRadius: '12px', boxShadow: 'inset 2px 2px 5px rgba(0,0,0,0.3)', border: '1px dashed rgba(255,255,255,0.15)', height: '100%', minHeight: '140px' }}><BookOpen size={24} color="#94a3b8" /><p style={{ color: '#94a3b8', fontSize: '0.78rem', textAlign: 'center' }}>Belum ada diagram</p></div>);
-                        return urls.map((url: string, idx: number) => { const isPdf = url.includes('pdf'); const isImage = /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(url); const isYoutube = url.includes('youtube.com') || url.includes('youtu.be'); return (
-                          <div key={idx} style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                            {isYoutube ? (
-                              <button className={styles.btnPrimary} style={{ justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.35)', color: '#ffffff', fontFamily: 'inherit', fontSize: '0.78rem' }} onClick={() => window.open(url, '_blank')}>
-                                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="#ef4444"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-                                  Video YouTube {idx + 1}
+                      {(() => {
+                        const urls = unit?.specs?.manuals_urls ? String(unit.specs.manuals_urls).split(',').filter(Boolean) : [];
+                        if (urls.length === 0) return (<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 12px', gap: '8px', background: 'rgba(0,0,0,0.25)', borderRadius: '12px', boxShadow: 'inset 2px 2px 5px rgba(0,0,0,0.3)', border: '1px dashed rgba(255,255,255,0.15)', height: '100%', minHeight: '140px' }}><BookOpen size={24} color="#94a3b8" /><p style={{ color: '#94a3b8', fontSize: '0.78rem', textAlign: 'center' }}>Belum ada diagram atau manual</p></div>);
+                        
+                        const clampedManualIdx = Math.min(manualIdx, Math.max(0, urls.length - 1));
+                        const prevManual = () => setManualIdx(i => (i - 1 + urls.length) % urls.length);
+                        const nextManual = () => setManualIdx(i => (i + 1) % urls.length);
+                        const currentUrl = urls[clampedManualIdx];
+                        const isPdf = currentUrl.includes('pdf');
+                        const isImage = /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(currentUrl);
+                        const isYoutube = currentUrl.includes('youtube.com') || currentUrl.includes('youtu.be');
+
+                        return (
+                          <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '8px', height: '100%' }}>
+                            {/* Main manual item preview container */}
+                            <div style={{ position: 'relative', overflow: 'hidden', borderRadius: '12px', minHeight: '200px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                              {isYoutube ? (
+                                <button className={styles.btnPrimary} style={{ justifyContent: 'space-between', padding: '14px 18px', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.35)', color: '#ffffff', fontFamily: 'inherit', fontSize: '0.85rem', width: '100%', height: '100%', alignItems: 'center' }} onClick={() => window.open(currentUrl, '_blank')}>
+                                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="#ef4444"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                                    Video Panduan {clampedManualIdx + 1}
+                                  </span>
+                                  <ExternalLink size={15} color="#cbd5e1" style={{ flexShrink: 0 }} />
+                                </button>
+                              ) : isImage ? (
+                                <div onClick={() => window.open(currentUrl, '_blank')} style={{ cursor: 'pointer', borderRadius: '12px', overflow: 'hidden', background: '#ffffff', boxShadow: '0 4px 14px rgba(0,0,0,0.3)', display: 'flex', flexDirection: 'column', height: '100%', minHeight: '210px' }}>
+                                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff', overflow: 'hidden', padding: '6px' }}>
+                                    <img src={currentUrl} alt={`Diagram ${clampedManualIdx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'contain', maxHeight: '200px', display: 'block' }} />
+                                  </div>
+                                  <div style={{ padding: '8px 12px', background: 'rgba(13,43,94,0.95)', fontSize: '0.74rem', fontWeight: 600, color: '#f1f5f9', display: 'flex', alignItems: 'center', gap: '6px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                                    <ImageIcon size={13} color="#60a5fa" /> Diagram {clampedManualIdx + 1}
+                                  </div>
+                                </div>
+                              ) : (
+                                <button className={styles.btnPrimary} style={{ justifyContent: 'space-between', padding: '14px 18px', background: 'rgba(255,255,255,0.08)', color: '#ffffff', border: '1px solid rgba(255,255,255,0.12)', fontSize: '0.85rem', width: '100%', height: '100%', alignItems: 'center' }} onClick={() => window.open(currentUrl, '_blank')}>
+                                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <FileText size={16} color="#60a5fa" />{isPdf ? `Diagram PDF ${clampedManualIdx + 1}` : `File Diagram ${clampedManualIdx + 1}`}
+                                  </span>
+                                  <ExternalLink size={15} color="#cbd5e1" />
+                                </button>
+                              )}
+
+                              {/* Nav buttons — only show when >1 manual */}
+                              {urls.length > 1 && (<>
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); prevManual(); }}
+                                  style={{
+                                    position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)',
+                                    background: 'rgba(255,255,255,0.85)', border: 'none', borderRadius: '50%',
+                                    width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,31,63,0.25)', zIndex: 3,
+                                  }}
+                                  aria-label="Diagram sebelumnya"
+                                >
+                                  <ChevronLeft size={18} color="var(--color-deep-navy)" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); nextManual(); }}
+                                  style={{
+                                    position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)',
+                                    background: 'rgba(255,255,255,0.85)', border: 'none', borderRadius: '50%',
+                                    width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,31,63,0.25)', zIndex: 3,
+                                  }}
+                                  aria-label="Diagram berikutnya"
+                                >
+                                  <ChevronRight size={18} color="var(--color-deep-navy)" />
+                                </button>
+                                {/* Counter badge */}
+                                <span style={{
+                                  position: 'absolute', bottom: isImage ? '34px' : '10px', right: '10px',
+                                  background: 'rgba(0,31,63,0.65)', color: '#fff',
+                                  fontSize: '0.68rem', fontWeight: 700, fontFamily: 'var(--font-heading)',
+                                  padding: '2px 8px', borderRadius: '20px', zIndex: 3, backdropFilter: 'blur(4px)',
+                                }}>
+                                  {clampedManualIdx + 1}/{urls.length}
                                 </span>
-                                <ExternalLink size={13} color="#cbd5e1" style={{ flexShrink: 0 }} />
-                              </button>
-                            ) : isImage ? (
-                              <div onClick={() => window.open(url, '_blank')} style={{ cursor: 'pointer', borderRadius: '12px', overflow: 'hidden', background: '#ffffff', boxShadow: '0 4px 14px rgba(0,0,0,0.3)', display: 'flex', flexDirection: 'column', height: '100%', minHeight: '190px' }}>
-                                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff', overflow: 'hidden', padding: '6px' }}>
-                                  <img src={url} alt={`Diagram ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'contain', maxHeight: '200px', display: 'block' }} />
-                                </div>
-                                <div style={{ padding: '8px 12px', background: 'rgba(13,43,94,0.95)', fontSize: '0.74rem', fontWeight: 600, color: '#f1f5f9', display: 'flex', alignItems: 'center', gap: '6px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                                  <ImageIcon size={13} color="#60a5fa" /> Diagram {idx + 1}
-                                </div>
+                              </>)}
+                            </div>
+
+                            {/* Thumbnail strip — only when >1 item */}
+                            {urls.length > 1 && (
+                              <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: '2px' }}>
+                                {urls.map((url: string, idx: number) => {
+                                  const thumbIsImg = /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(url);
+                                  const thumbIsPdf = url.includes('pdf');
+                                  const thumbIsYt = url.includes('youtube.com') || url.includes('youtu.be');
+                                  return (
+                                    <button
+                                      key={idx}
+                                      type="button"
+                                      onClick={() => setManualIdx(idx)}
+                                      style={{
+                                        flexShrink: 0, width: '48px', height: '48px', padding: 0, border: 'none',
+                                        borderRadius: '6px', overflow: 'hidden', cursor: 'pointer',
+                                        outline: idx === clampedManualIdx ? '2px solid var(--color-cobalt-blue)' : '2px solid transparent',
+                                        outlineOffset: '1px', transition: 'outline 0.15s ease', opacity: idx === clampedManualIdx ? 1 : 0.65,
+                                        background: 'rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                      }}
+                                      aria-label={`Lihat manual ${idx + 1}`}
+                                    >
+                                      {thumbIsImg ? (
+                                        <img src={url} alt={`Thumbnail ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                                      ) : thumbIsYt ? (
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="#ef4444"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                                      ) : (
+                                        <FileText size={18} color="#60a5fa" />
+                                      )}
+                                    </button>
+                                  );
+                                })}
                               </div>
-                            ) : (
-                              <button className={styles.btnPrimary} style={{ justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(255,255,255,0.08)', color: '#ffffff', border: '1px solid rgba(255,255,255,0.12)', fontSize: '0.78rem' }} onClick={() => window.open(url, '_blank')}><span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><FileText size={14} color="#60a5fa" />{isPdf ? `Diagram PDF ${idx + 1}` : `File Diagram ${idx + 1}`}</span><ExternalLink size={14} color="#cbd5e1" /></button>
                             )}
-                          </div>); });
+                          </div>
+                        );
                       })()}
                     </div>
                   )}
@@ -639,7 +738,6 @@ export default function QrPassportPage() {
                   <h3 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '8px', textAlign: 'center', color: '#ffffff' }}>Administrator Control</h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
                     <button className={styles.btnEmergency} onClick={() => setShowServiceModal(true)}>Request Service</button>
-                    <button className={styles.btnPrimary} onClick={() => setShowReportSelector(true)} style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)' }}><FileText size={16} /> QC Reports</button>
                     <button className={styles.btnPrimary} onClick={() => setShowTransferModal(true)}>Pindahkan Kepemilikan</button>
                   </div>
                 </div>
@@ -663,7 +761,7 @@ export default function QrPassportPage() {
                   </span>
                 </div>
                 <div className={styles.panelContent}>
-                  <CustomerHealthWidget unitId={unit.id} />
+                  <CustomerHealthWidget unitId={unit.id} unit={unit} />
                 </div>
               </section>
             )}
@@ -829,6 +927,9 @@ export default function QrPassportPage() {
         <PartnerLogModal show={showLogModal} onClose={closeLogModal} onSubmit={handleAddLog} loading={logLoading} unit={unit}
           techName={techName} setTechName={setTechName} logType={logType} setLogType={setLogType} logNotes={logNotes} setLogNotes={setLogNotes}
           logStatus={logStatus} setLogStatus={setLogStatus} logComponents={logComponents} setLogComponents={setLogComponents} />
+        <AdminTransferModal show={showTransferModal} onClose={() => setShowTransferModal(false)} onSubmit={handleTransfer} loading={transferLoading}
+          unit={unit} clients={clients} targetClientId={targetClientId} setTargetClientId={setTargetClientId} transferReason={transferReason} setTransferReason={setTransferReason} />
+        <AllSpecsModal show={showAllSpecsModal} onClose={() => setShowAllSpecsModal(false)} unit={unit} />
         <SelectReportTypeModal
           show={showReportSelector}
           onClose={() => setShowReportSelector(false)}

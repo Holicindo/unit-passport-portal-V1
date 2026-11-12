@@ -72,6 +72,7 @@ export default function MasterDataSparepartPage() {
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -99,18 +100,32 @@ export default function MasterDataSparepartPage() {
   const [usageModal, setUsageModal] = useState<{ sparepart: Sparepart; tickets: UsageTicket[] } | null>(null);
   const [usageLoading, setUsageLoading] = useState(false);
 
+  // Delete Confirmation Modal State
+  const [deleteTarget, setDeleteTarget] = useState<Sparepart | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const [savingItem, setSavingItem] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
-    setTimeout(() => setToast(null), 3500);
+    setTimeout(() => setToast(null), 3000);
   };
 
-  const loadData = async () => {
-    setLoading(true);
+  // Debounce search so user gets fast real-time search without having to press Enter
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 350);
+    return () => clearTimeout(handler);
+  }, [search]);
+
+  const loadData = async (silent = false, searchOverride?: string) => {
+    if (!silent) setLoading(true);
     try {
+      const activeSearch = searchOverride !== undefined ? searchOverride : debouncedSearch;
       const [resParts, resCats] = await Promise.all([
-        sparepartApi.getAll(selectedCategory, search),
+        sparepartApi.getAll(selectedCategory, activeSearch),
         sparepartApi.getCategories(),
       ]);
       setSpareparts(resParts.data || []);
@@ -120,17 +135,17 @@ export default function MasterDataSparepartPage() {
       console.error(err);
       showToast('Gagal memuat data sparepart', 'error');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
     loadData();
-  }, [selectedCategory]);
+  }, [selectedCategory, debouncedSearch]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    loadData();
+    loadData(false, search);
   };
 
   const openAddModal = () => {
@@ -159,29 +174,42 @@ export default function MasterDataSparepartPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSavingItem(true);
     try {
       if (editingItem) {
         await sparepartApi.update(editingItem.id, formData);
-        showToast('Sparepart berhasil diperbarui');
+        showToast('Perubahan sparepart berhasil disimpan');
       } else {
         await sparepartApi.create(formData);
         showToast('Sparepart baru berhasil ditambahkan');
       }
       setShowModal(false);
-      loadData();
+      // Background silent refresh without full page spinning lazy loader
+      await loadData(true);
     } catch (err: any) {
       showToast(err.response?.data?.message || 'Gagal menyimpan sparepart', 'error');
+    } finally {
+      setSavingItem(false);
     }
   };
 
-  const handleDelete = async (item: Sparepart) => {
-    if (!confirm(`Hapus sparepart "${item.name}" (${item.part_number})?`)) return;
+  const handleDelete = (item: Sparepart) => {
+    setDeleteTarget(item);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
-      await sparepartApi.delete(item.id);
-      showToast('Sparepart berhasil dihapus');
-      loadData();
+      await sparepartApi.delete(deleteTarget.id);
+      showToast(`Sparepart "${deleteTarget.name}" berhasil dihapus`);
+      setDeleteTarget(null);
+      // Silent refresh without full table spin loader
+      await loadData(true);
     } catch (err: any) {
-      showToast('Gagal menghapus sparepart', 'error');
+      showToast(err.response?.data?.message || 'Gagal menghapus sparepart', 'error');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -338,17 +366,28 @@ export default function MasterDataSparepartPage() {
         }
       `}</style>
 
-      {/* Toast */}
+      {/* Toast Centered */}
       {toast && (
         <div style={{
-          position: 'fixed', top: '20px', right: '24px',
+          position: 'fixed',
+          top: '24px',
+          left: '50%',
+          transform: 'translateX(-50%)',
           background: toast.type === 'success' ? '#059669' : '#dc2626',
-          color: '#fff', padding: '12px 20px', borderRadius: '10px',
-          zIndex: 3000, boxShadow: '0 8px 20px rgba(0,0,0,0.2)',
-          display: 'flex', alignItems: 'center', gap: '8px',
-          fontSize: '0.85rem', fontWeight: 600,
+          color: '#fff',
+          padding: '12px 24px',
+          borderRadius: '12px',
+          zIndex: 9999,
+          boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          fontSize: '0.88rem',
+          fontWeight: 700,
+          whiteSpace: 'nowrap',
+          animation: 'spSlideUp 0.25s ease',
         }}>
-          {toast.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+          {toast.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
           {toast.message}
         </div>
       )}
@@ -662,11 +701,18 @@ export default function MasterDataSparepartPage() {
               </div>
 
               <div className={styles.modalActions}>
-                <button type="button" className={styles.secondaryBtn} onClick={() => setShowModal(false)}>
+                <button type="button" className={styles.cancelBtn} onClick={() => setShowModal(false)} disabled={savingItem}>
                   Batal
                 </button>
-                <button type="submit" className={styles.primaryBtn}>
-                  {editingItem ? 'Simpan Perubahan' : 'Tambah ke Katalog'}
+                <button type="submit" className={styles.saveBtn} disabled={savingItem}>
+                  {savingItem ? (
+                    <>
+                      <RefreshCw size={14} style={{ animation: 'spin 1s linear infinite' }} />
+                      <span>Menyimpan...</span>
+                    </>
+                  ) : (
+                    <span>{editingItem ? 'Simpan Perubahan' : 'Tambah ke Katalog'}</span>
+                  )}
                 </button>
               </div>
             </form>
@@ -938,6 +984,102 @@ export default function MasterDataSparepartPage() {
                   </button>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Konfirmasi Hapus Sparepart (Sesuai Tema) */}
+      {deleteTarget && (
+        <div className={styles.modalOverlay} onClick={() => { if (!deleting) setDeleteTarget(null); }}>
+          <div
+            style={{
+              background: '#fff',
+              borderRadius: '20px',
+              width: '100%',
+              maxWidth: '430px',
+              boxShadow: '0 24px 60px rgba(0, 31, 63, 0.25)',
+              overflow: 'hidden',
+              animation: 'spSlideUp 0.25s ease',
+              padding: '28px 24px 24px',
+              textAlign: 'center',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{
+              width: '54px',
+              height: '54px',
+              borderRadius: '50%',
+              background: 'rgba(225, 29, 72, 0.1)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#E11D48',
+              margin: '0 auto 16px',
+            }}>
+              <Trash2 size={26} />
+            </div>
+
+            <h3 style={{ margin: '0 0 8px', fontSize: '1.2rem', fontWeight: 800, color: 'var(--color-deep-navy)' }}>
+              Hapus Sparepart?
+            </h3>
+
+            <p style={{ margin: '0 0 20px', fontSize: '0.88rem', color: '#64748b', lineHeight: 1.5 }}>
+              Apakah Anda yakin ingin menghapus sparepart <br />
+              <strong style={{ color: 'var(--color-deep-navy)' }}>{deleteTarget.name}</strong>{' '}
+              <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>({deleteTarget.part_number})</span>?
+              <br />
+              <span style={{ fontSize: '0.78rem', color: '#E11D48', display: 'block', marginTop: '6px' }}>
+                Tindakan ini tidak dapat dibatalkan.
+              </span>
+            </p>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+              <button
+                type="button"
+                className={styles.cancelBtn}
+                onClick={() => setDeleteTarget(null)}
+                disabled={deleting}
+                style={{ flex: 1, padding: '10px 18px', fontSize: '0.85rem' }}
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={confirmDelete}
+                disabled={deleting}
+                style={{
+                  flex: 1,
+                  padding: '10px 18px',
+                  borderRadius: '24px',
+                  border: 'none',
+                  background: '#E11D48',
+                  color: '#fff',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  cursor: deleting ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  boxShadow: '0 4px 12px rgba(225, 29, 72, 0.3)',
+                  transition: 'all 0.2s',
+                  opacity: deleting ? 0.7 : 1,
+                }}
+              >
+                {deleting ? (
+                  <>
+                    <RefreshCw size={14} style={{ animation: 'spin 1s linear infinite' }} />
+                    <span>Menghapus...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={15} />
+                    <span>Ya, Hapus</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>

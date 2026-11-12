@@ -7,10 +7,18 @@ import {
   Activity, TrendingDown, TrendingUp, AlertCircle,
   DoorOpen, RefreshCw, BarChart2, Clock, ChevronDown, ChevronUp,
 } from 'lucide-react';
-import { healthScoreApi } from '@/lib/api';
+import { healthScoreApi, iotApi } from '@/lib/api';
 
 // ─── STATUS CONFIG ────────────────────────────────────────────────────────────
-function getStatusConfig(score: number, conf = 1) {
+function getStatusConfig(score: number, conf = 1, isOffline = false) {
+  if (isOffline) {
+    return {
+      label: 'Unit Offline', sublabel: 'Mesin tidak terhubung — skor dinonaktifkan',
+      color: '#94a3b8', bgColor: 'rgba(148,163,184,0.08)', borderColor: 'rgba(148,163,184,0.25)', glowColor: 'rgba(148,163,184,0.3)',
+      icon: WifiOff,
+      recommendation: 'Unit saat ini tidak mengirimkan sinyal telemetry. Perhitungan kesehatan mesin ditangguhkan hingga unit kembali online.',
+    };
+  }
   // Jika akurasi sangat rendah (< 15%), unit baru menyala / proses inisialisasi data
   if (conf < 0.15) {
     return {
@@ -40,12 +48,14 @@ function getStatusConfig(score: number, conf = 1) {
   };
 }
 
-function sc(score: number) {
+function sc(score: number, isOffline = false) {
+  if (isOffline) return '#64748b';
   if (score >= 80) return '#10b981';
   if (score >= 60) return '#f59e0b';
   return '#ef4444';
 }
-function sl(score: number) {
+function sl(score: number, isOffline = false) {
+  if (isOffline) return 'OFFLINE';
   if (score >= 80) return 'BAIK';
   if (score >= 60) return 'PERHATIAN';
   return 'KRITIS';
@@ -83,15 +93,28 @@ interface BreakdownItem {
   benchmark?: string; // Teks benchmark selalu tampil, misal: "Target ≤ 82% | Kritis > 92%"
 }
 
-function ScoreTooltip({ items, score, label }: { items: BreakdownItem[]; score: number; label: string }) {
+function ScoreTooltip({ items, score, label, align = 'center' }: { items: BreakdownItem[]; score: number; label: string; align?: 'left' | 'right' | 'center' }) {
   const c = sc(score);
+  const positionStyle: React.CSSProperties =
+    align === 'right'
+      ? { right: 0, left: 'auto', transform: 'none' }
+      : align === 'left'
+      ? { left: 0, right: 'auto', transform: 'none' }
+      : { left: '50%', transform: 'translateX(-50%)' };
+
+  const arrowStyle: React.CSSProperties =
+    align === 'right'
+      ? { right: 28, left: 'auto', transform: 'none' }
+      : align === 'left'
+      ? { left: 28, transform: 'none' }
+      : { left: '50%', transform: 'translateX(-50%)' };
+
   return (
     <div style={{
       position: 'absolute',
-      bottom: 'calc(100% + 8px)',
-      left: '50%',
-      transform: 'translateX(-50%)',
-      zIndex: 9999,
+      bottom: 'calc(100% + 10px)',
+      ...positionStyle,
+      zIndex: 99999,
       minWidth: 230,
       maxWidth: 275,
       background: 'rgba(6, 16, 40, 0.98)',
@@ -104,8 +127,7 @@ function ScoreTooltip({ items, score, label }: { items: BreakdownItem[]; score: 
       <div style={{
         position: 'absolute',
         bottom: -7,
-        left: '50%',
-        transform: 'translateX(-50%)',
+        ...arrowStyle,
         width: 13,
         height: 7,
         overflow: 'hidden',
@@ -152,11 +174,11 @@ function ScoreTooltip({ items, score, label }: { items: BreakdownItem[]; score: 
 }
 
 // ─── SUBSYSTEM CARD (SLIM & COMPACT, HOVER TOOLTIP) ──────────────────────────
-function SubCard({ label, score, accent, breakdown }: {
-  label: string; score: number; accent: string; breakdown: BreakdownItem[];
+function SubCard({ label, score, accent, breakdown, isOffline, align = 'center' }: {
+  label: string; score: number; accent: string; breakdown: BreakdownItem[]; isOffline?: boolean; align?: 'left' | 'right' | 'center';
 }) {
   const [hovered, setHovered] = useState(false);
-  const c = sc(score), lbl = sl(score), pct = Math.min(100, Math.max(0, score));
+  const c = sc(score, isOffline), lbl = sl(score, isOffline), pct = isOffline ? 0 : Math.min(100, Math.max(0, score));
   return (
     <div
       style={{
@@ -174,12 +196,13 @@ function SubCard({ label, score, accent, breakdown }: {
         position: 'relative',
         cursor: 'default',
         transition: 'border 0.15s ease, box-shadow 0.15s ease',
+        zIndex: hovered ? 1000 : 1,
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {hovered && (breakdown ?? []).length > 0 && (
-        <ScoreTooltip items={breakdown} score={score} label={label} />
+      {hovered && !isOffline && (breakdown ?? []).length > 0 && (
+        <ScoreTooltip items={breakdown} score={score} label={label} align={align} />
       )}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
         <span style={{ fontSize: '.74rem', fontWeight: 700, color: '#e2e8f0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -191,7 +214,7 @@ function SubCard({ label, score, accent, breakdown }: {
       </div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 3 }}>
         <span style={{ fontSize: '1.35rem', fontWeight: 900, color: c, fontFamily: 'monospace', lineHeight: 1 }}>
-          {Math.round(score)}
+          {isOffline ? '0' : Math.round(score)}
         </span>
         <span style={{ fontSize: '.68rem', color: '#64748b', fontWeight: 600 }}>/100</span>
       </div>
@@ -253,25 +276,59 @@ function SectionHeader({ title, badge }: { title: string; badge?: string }) {
 }
 
 const neuBox = {
-  background: 'var(--color-deep-navy, #0D2B5E)',
-  boxShadow: '-4px -4px 10px rgba(255,255,255,.05), 4px 4px 10px rgba(0,0,0,.4)',
+  background: 'rgba(6, 16, 32, 0.45)',
+  boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.06), 0 4px 16px rgba(0,0,0,0.25)',
+  border: '1px solid rgba(56, 189, 248, 0.15)',
   borderRadius: 16, padding: '16px 18px', display: 'flex', flexDirection: 'column' as const, gap: 13,
+  overflow: 'visible' as const,
 };
 
 // ─── MAIN WIDGET ─────────────────────────────────────────────────────────────
-interface Props { unitId?: string; }
+interface Props { unitId?: string; unit?: any; hideAnalytics?: boolean; }
 
-export default function CustomerHealthWidget({ unitId }: Props) {
+export default function CustomerHealthWidget({ unitId, unit, hideAnalytics = false }: Props) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showAnalytics, setShowAnalytics] = useState(false);
+  const [latestTelemetry, setLatestTelemetry] = useState<any>(null);
 
+  // Deteksi status offline:
+  // Cek dari recorded_at live telemetry terbaru (realtime) ATAU unit.last_seen_at
+  const isOffline = (() => {
+    const timeStr = latestTelemetry?.recorded_at || unit?.last_seen_at;
+    if (!timeStr) return true;
+    const date = new Date(timeStr.endsWith('Z') || timeStr.includes('+') ? timeStr : `${timeStr}Z`);
+    const secondsAge = Math.floor((Date.now() - date.getTime()) / 1000);
+    return isNaN(secondsAge) || secondsAge > 120;
+  })();
+
+  // 1. Fetch Health Score
   useEffect(() => {
     if (!unitId) { setLoading(false); return; }
     healthScoreApi.getByUnitId(unitId)
       .then(r => setData(r.data || null))
       .catch(() => setData(null))
       .finally(() => setLoading(false));
+  }, [unitId]);
+
+  // 2. Fetch Latest Telemetry & Polling agar status online/offline selalu sinkron dengan IotTelemetryWidget
+  useEffect(() => {
+    if (!unitId) return;
+
+    const checkLiveTelemetry = async () => {
+      try {
+        const { data: res } = await iotApi.getLatest(unitId);
+        if (res) {
+          setLatestTelemetry(res);
+        }
+      } catch {
+        // ignore network error
+      }
+    };
+
+    checkLiveTelemetry();
+    const interval = setInterval(checkLiveTelemetry, 5000);
+    return () => clearInterval(interval);
   }, [unitId]);
 
   if (loading) return (
@@ -291,18 +348,18 @@ export default function CustomerHealthWidget({ unitId }: Props) {
     </div>
   );
 
-  const score    = Number(data.overall_score ?? 0);
-  const conf     = Number(data.confidence_score ?? 0);
-  const status   = getStatusConfig(score, conf);
+  const score    = isOffline ? 0 : Number(data.overall_score ?? 0);
+  const conf     = isOffline ? 0 : Number(data.confidence_score ?? 0);
+  const status   = getStatusConfig(score, conf, isOffline);
   const Icon     = status.icon;
-  const lc       = data.lifecycle_state ?? 'LEARNING';
+  const lc       = isOffline ? 'OFFLINE' : (data.lifecycle_state ?? 'LEARNING');
 
-  // Subsystem scores
-  const cabScore  = Number(data.sub_cabinet_score    ?? 0);
-  const evapScore = Number(data.sub_evaporator_score ?? 0);
-  const condScore = Number(data.sub_condenser_score  ?? 0);
-  const elecScore = Number(data.sub_electrical_score ?? 0);
-  const baseScore = Number(data.sub_baseline_score   ?? 100);
+  // Subsystem scores — 0 jika offline
+  const cabScore  = isOffline ? 0 : Number(data.sub_cabinet_score    ?? 0);
+  const evapScore = isOffline ? 0 : Number(data.sub_evaporator_score ?? 0);
+  const condScore = isOffline ? 0 : Number(data.sub_condenser_score  ?? 0);
+  const elecScore = isOffline ? 0 : Number(data.sub_electrical_score ?? 0);
+  const baseScore = isOffline ? 0 : Number(data.sub_baseline_score   ?? 100);
 
   // Evidence
   const evCond = Number(data.evidence_condenser_issue  ?? 0);
@@ -453,13 +510,13 @@ export default function CustomerHealthWidget({ unitId }: Props) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
       {/* ── STATUS BAR ── */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 14px', background: 'var(--color-deep-navy, #0D2B5E)', boxShadow: 'inset -2px -2px 5px rgba(255,255,255,.05),inset 2px 2px 5px rgba(0,0,0,.4)', borderRadius: 11, fontSize: '.76rem', fontWeight: 700 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 14px', background: 'rgba(6, 16, 32, 0.45)', border: '1px solid rgba(56, 189, 248, 0.15)', boxShadow: 'inset 0 1px 1px rgba(255,255,255,.05)', borderRadius: 11, fontSize: '.76rem', fontWeight: 700 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: status.color }}>
-          <Wifi size={14} />
-          <span>IoT Aktif — Analisis Kesehatan Mesin</span>
+          {isOffline ? <WifiOff size={14} /> : <Wifi size={14} />}
+          <span>{isOffline ? 'Unit Terputus — Pemantauan Offline' : 'IoT Aktif — Analisis Kesehatan Mesin'}</span>
         </div>
-        <span style={{ fontSize: '.62rem', fontWeight: 800, background: lc === 'ACTIVE' ? 'rgba(16,185,129,.1)' : 'rgba(245,158,11,.1)', color: lc === 'ACTIVE' ? '#10b981' : '#f59e0b', border: `1px solid ${lc === 'ACTIVE' ? 'rgba(16,185,129,.25)' : 'rgba(245,158,11,.25)'}`, borderRadius: 20, padding: '3px 9px' }}>
-          {lcLabel}
+        <span style={{ fontSize: '.62rem', fontWeight: 800, background: isOffline ? 'rgba(239,68,68,.12)' : lc === 'ACTIVE' ? 'rgba(16,185,129,.1)' : 'rgba(245,158,11,.1)', color: isOffline ? '#ef4444' : lc === 'ACTIVE' ? '#10b981' : '#f59e0b', border: `1px solid ${isOffline ? 'rgba(239,68,68,.25)' : lc === 'ACTIVE' ? 'rgba(16,185,129,.25)' : 'rgba(245,158,11,.25)'}`, borderRadius: 20, padding: '3px 9px' }}>
+          {isOffline ? 'OFFLINE' : lcLabel}
         </span>
       </div>
 
@@ -503,16 +560,16 @@ export default function CustomerHealthWidget({ unitId }: Props) {
               <span style={{ fontSize: '.58rem', color: '#475569', fontWeight: 600 }}>Arahkan kursor untuk detail</span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, overflow: 'visible' }}>
-              <SubCard label="Kabinet"    score={cabScore}  accent="#3b82f6" breakdown={cabBreakdown} />
-              <SubCard label="Evaporator" score={evapScore} accent="#06b6d4" breakdown={evapBreakdown} />
-              <SubCard label="Kondensor"  score={condScore} accent="#f97316" breakdown={condBreakdown} />
-              <SubCard label="Kelistrikan" score={elecScore} accent="#8b5cf6" breakdown={elecBreakdown} />
+              <SubCard label="Kabinet"    score={cabScore}  accent="#3b82f6" breakdown={cabBreakdown} isOffline={isOffline} align="left" />
+              <SubCard label="Evaporator" score={evapScore} accent="#06b6d4" breakdown={evapBreakdown} isOffline={isOffline} align="right" />
+              <SubCard label="Kondensor"  score={condScore} accent="#f97316" breakdown={condBreakdown} isOffline={isOffline} align="left" />
+              <SubCard label="Kelistrikan" score={elecScore} accent="#8b5cf6" breakdown={elecBreakdown} isOffline={isOffline} align="right" />
             </div>
           </div>
         </div>
 
-        {/* Toggle Button: Analitik Lanjutan */}
-        <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 2 }}>
+        {/* Toggle Button: Analitik Lanjutan — sembunyikan jika hideAnalytics=true (client portal) */}
+        {!hideAnalytics && <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 2 }}>
           <button
             type="button"
             onClick={() => setShowAnalytics(!showAnalytics)}
@@ -549,20 +606,20 @@ export default function CustomerHealthWidget({ unitId }: Props) {
             <span>{showAnalytics ? 'Tutup Analitik Lanjutan' : 'Analitik Lanjutan'}</span>
             {showAnalytics ? <ChevronUp size={14} color="#ffffff" /> : <ChevronDown size={14} color="#ffffff" />}
           </button>
-        </div>
+        </div>}
       </div>
 
       {/* ── 2 CARD ANALITIK YANG DI-HIDE / DITAMPILKAN KETIKA BUTTON DIKLIK ── */}
-      {showAnalytics && (
+      {!hideAnalytics && showAnalytics && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, animation: 'fadeIn 0.3s ease' }}>
           {/* 1. ANALITIK V4 BARU */}
           <div style={neuBox}>
             <SectionHeader title="Analitik Lanjutan" badge="V4" />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(145px, 1fr))', gap: 10 }}>
-              <MetricPill icon={DoorOpen} label="Pemulihan Suhu Pintu" value={doorRec > 0 ? `${doorRec.toFixed(1)} mnt` : 'N/A'} sub={`${doorEvt} kali pintu dibuka hari ini`} good={doorRec <= 15} />
-              <MetricPill icon={RefreshCw} label="Siklus Defrost" value={`${defCycles}x`} sub={`Tidak normal: ${(defAnomaly*100).toFixed(0)}%`} good={defAnomaly <= 0.1} />
-              <MetricPill icon={Zap} label="Gangguan Tegangan Listrik" value={`${(voltAnomaly*100).toFixed(1)}%`} sub="Batas aman: 195V – 245V" good={voltAnomaly <= 0.02} />
-              <MetricPill icon={TrendingDown} label="Penurunan Performa vs Awal" value={blTIBDelta > 0 ? `-${blTIBDelta.toFixed(1)}%` : '0%'} sub={`Laju pendinginan turun ${blCoolDelta.toFixed(2)} °C/mnt`} good={blTIBDelta <= 5} />
+              <MetricPill icon={DoorOpen} label="Pemulihan Suhu Pintu" value={isOffline ? '0 mnt' : doorRec > 0 ? `${doorRec.toFixed(1)} mnt` : 'N/A'} sub={isOffline ? 'Unit offline' : `${doorEvt} kali pintu dibuka hari ini`} good={isOffline ? false : doorRec <= 15} />
+              <MetricPill icon={RefreshCw} label="Siklus Defrost" value={isOffline ? '0x' : `${defCycles}x`} sub={isOffline ? 'Unit offline' : `Tidak normal: ${(defAnomaly*100).toFixed(0)}%`} good={isOffline ? false : defAnomaly <= 0.1} />
+              <MetricPill icon={Zap} label="Gangguan Tegangan Listrik" value={isOffline ? '0%' : `${(voltAnomaly*100).toFixed(1)}%`} sub={isOffline ? 'Unit offline' : 'Batas aman: 195V – 245V'} good={isOffline ? false : voltAnomaly <= 0.02} />
+              <MetricPill icon={TrendingDown} label="Penurunan Performa vs Awal" value={isOffline ? '0%' : blTIBDelta > 0 ? `-${blTIBDelta.toFixed(1)}%` : '0%'} sub={isOffline ? 'Unit offline' : `Laju pendinginan turun ${blCoolDelta.toFixed(2)} °C/mnt`} good={isOffline ? true : blTIBDelta <= 5} />
             </div>
           </div>
 
@@ -570,10 +627,10 @@ export default function CustomerHealthWidget({ unitId }: Props) {
           <div style={neuBox}>
             <SectionHeader title="Metrik Operasional Harian" />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(145px, 1fr))', gap: 10 }}>
-              <MetricPill icon={Activity} label="Waktu Suhu dalam Target" value={`${tib.toFixed(1)}%`} sub="Target: ≥ 95%" good={tib >= 95} />
-              <MetricPill icon={TrendingUp} label="Akumulasi Panas Berlebih / Jam" value={`${hdm.toFixed(1)} °C·mnt`} sub="Target: ≤ 1.0" good={hdm <= 1} />
-              <MetricPill icon={Zap} label="Waktu Kompresor Menyala" value={`${duty.toFixed(1)}%`} sub="Target: ≤ 60%" good={duty <= 60} />
-              <MetricPill icon={Activity} label="Frekuensi Nyala Kompresor / Jam" value={`${starts.toFixed(1)}x`} sub="Target: ≤ 4x/jam" good={starts <= 4} />
+              <MetricPill icon={Activity} label="Waktu Suhu dalam Target" value={isOffline ? '0%' : `${tib.toFixed(1)}%`} sub={isOffline ? 'Unit offline' : 'Target: ≥ 95%'} good={isOffline ? false : tib >= 95} />
+              <MetricPill icon={TrendingUp} label="Akumulasi Panas Berlebih / Jam" value={isOffline ? '0.0 °C·mnt' : `${hdm.toFixed(1)} °C·mnt`} sub={isOffline ? 'Unit offline' : 'Target: ≤ 1.0'} good={isOffline ? true : hdm <= 1} />
+              <MetricPill icon={Zap} label="Waktu Kompresor Menyala" value={isOffline ? '0%' : `${duty.toFixed(1)}%`} sub={isOffline ? 'Unit offline' : 'Target: ≤ 60%'} good={isOffline ? false : duty <= 60} />
+              <MetricPill icon={Activity} label="Frekuensi Nyala Kompresor / Jam" value={isOffline ? '0x' : `${starts.toFixed(1)}x`} sub={isOffline ? 'Unit offline' : 'Target: ≤ 4x/jam'} good={isOffline ? false : starts <= 4} />
             </div>
           </div>
         </div>

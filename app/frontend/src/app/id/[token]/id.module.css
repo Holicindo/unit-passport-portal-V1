@@ -95,11 +95,11 @@
 .container {
   position: relative;
   z-index: 1;
-  max-width: 1560px;
+  max-width: 100%;
   width: 100%;
   box-sizing: border-box;
-  margin: 0 auto;
-  padding: 32px 24px;
+  margin: 0;
+  padding: 24px 32px;
   animation: pageFadeIn 0.55s cubic-bezier(0.16, 1, 0.3, 1);
 }
 

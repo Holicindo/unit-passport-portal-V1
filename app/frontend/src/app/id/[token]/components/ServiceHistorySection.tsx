@@ -87,7 +87,7 @@ export default function ServiceHistorySection({ serviceLogs }: ServiceHistorySec
 
   return (
     <section className={`${styles.panel} ${styles.iotPanel}`}>
-      <div className={styles.panelHeader} style={{ padding: '10px 18px' }}>
+      <div className={styles.panelHeader} style={{ padding: '10px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div className={styles.panelHeaderLeft}>
           <Wrench size={16} color="#60a5fa" />
           <h2>Riwayat Servis</h2>
@@ -105,6 +105,36 @@ export default function ServiceHistorySection({ serviceLogs }: ServiceHistorySec
             </span>
           )}
         </div>
+        <button
+          type="button"
+          onClick={() => router.push('/service')}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '6px 14px',
+            borderRadius: '9px',
+            background: 'linear-gradient(135deg, #2E5BFF 0%, #1e40af 100%)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            boxShadow: '-2px -2px 6px rgba(255,255,255,0.08), 3px 3px 8px rgba(0,0,0,0.4)',
+            color: '#ffffff',
+            fontSize: '0.72rem',
+            fontWeight: 800,
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-1px)';
+            e.currentTarget.style.filter = 'brightness(1.1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'none';
+            e.currentTarget.style.filter = 'none';
+          }}
+        >
+          <span>Ke Halaman Servis</span>
+          <ArrowRight size={13} color="#ffffff" />
+        </button>
       </div>
 
       <div className={styles.panelContent} style={{ padding: '14px', overflowX: 'auto' }}>

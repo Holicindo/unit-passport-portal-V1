@@ -134,10 +134,10 @@ export default function OperatingSessionCard({ data, isLiveOffline }: OperatingS
         </div>
         <div>
           <div style={{ fontSize: '0.62rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-            {sessionInfo.isCurrentlyDown ? 'Status Operasi Terputus' : 'Sesi Operasi Berjalan'}
+            {sessionInfo.isCurrentlyDown ? 'Status Operasi Terputus' : 'Sesi Operasi Aktif'}
           </div>
           <div style={{ fontSize: '0.86rem', fontWeight: 900, color: sessionInfo.isCurrentlyDown ? '#ef4444' : '#10b981', display: 'flex', alignItems: 'center', gap: '5px' }}>
-            {sessionInfo.isCurrentlyDown ? 'Mati Selama ' : 'Menyala Sejak '}
+            {sessionInfo.isCurrentlyDown ? 'Akumulasi Offline Selama ' : 'Aktif Selama '}
             <span style={{ fontFamily: 'monospace', color: '#f1f5f9' }}>{sessionInfo.durationText}</span>
           </div>
         </div>

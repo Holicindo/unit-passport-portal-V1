@@ -60,7 +60,10 @@ export default function UsersPage() {
   useEffect(() => { fetchUsers(); }, []);
 
   const openAddModal = () => { setEditingUser(null); setShowModal(true); };
-  const openEditModal = (user: User) => { setEditingUser(user); setShowModal(true); };
+  const openEditModal = (user: User) => {
+    setEditingUser({ ...user });
+    setShowModal(true);
+  };
 
   const handleSave = async (data: { name: string; email: string; phone?: string; role: string; status: UserStatus; password: string; client_id?: string; partner_id?: string }) => {
     try {
@@ -68,11 +71,11 @@ export default function UsersPage() {
         await userApi.update(editingUser.id, data);
         await fetchUsers();
       } else {
-        await authApi.register({ 
-          name: data.name, 
-          email: data.email, 
+        await authApi.register({
+          name: data.name,
+          email: data.email,
           phone: data.phone,
-          password: data.password || 'password123', 
+          password: data.password || 'password123',
           role: data.role,
           client_id: data.client_id,
           partner_id: data.partner_id
@@ -178,8 +181,8 @@ export default function UsersPage() {
           <thead>
             <tr>
               <th style={{ width: 40, textAlign: 'center' }}>
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   checked={filteredUsers.length > 0 && selectedIds.length === filteredUsers.length}
                   onChange={(e) => setSelectedIds(e.target.checked ? filteredUsers.map(u => u.id) : [])}
                   style={{ cursor: 'pointer' }}
@@ -192,8 +195,8 @@ export default function UsersPage() {
             {filteredUsers.map((user) => (
               <tr key={user.id}>
                 <td style={{ textAlign: 'center' }}>
-                  <input 
-                    type="checkbox" 
+                  <input
+                    type="checkbox"
                     checked={selectedIds.includes(user.id)}
                     onChange={(e) => setSelectedIds(prev => e.target.checked ? [...prev, user.id] : prev.filter(id => id !== user.id))}
                     style={{ cursor: 'pointer' }}
@@ -224,7 +227,7 @@ export default function UsersPage() {
             )}
             {!loading && filteredUsers.length === 0 && (
               <tr><td colSpan={6} className={styles.emptyCell}><div className={styles.emptyWrapper}>
-                <span className={styles.emptyIcon}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+                <span className={styles.emptyIcon}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg></span>
                 Tidak ada pengguna ditemukan.
               </div></td></tr>
             )}
@@ -233,7 +236,12 @@ export default function UsersPage() {
       </div>
 
       {showModal && (
-        <UserFormModal editingUser={editingUser} onClose={() => setShowModal(false)} onSave={handleSave} />
+        <UserFormModal
+          key={editingUser ? `edit-${editingUser.id}` : 'new-user'}
+          editingUser={editingUser}
+          onClose={() => setShowModal(false)}
+          onSave={handleSave}
+        />
       )}
 
       {showDeleteConfirm && (

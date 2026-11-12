@@ -30,15 +30,25 @@ function ReportHistoryInner() {
   const [unitFilter, setUnitFilter] = useState(() => searchParams.get('unit') || '');
   const [statusFilter, setStatusFilter] = useState(() => searchParams.get('status') || '');
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedReports, setSelectedReports] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const isAdmin = true;
 
+  // Debounce search input to prevent rapid refetches
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setPage(1);
+    }, 350);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
   const loadReports = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await reportApi.findAll(page, pageSize, typeFilter, unitFilter, statusFilter);
+      const { data } = await reportApi.findAll(page, pageSize, typeFilter, unitFilter, statusFilter, debouncedSearch);
       setReports(data.data || []);
       setTotalPages(data.meta?.last_page || 1);
     } catch (err) {
@@ -46,7 +56,7 @@ function ReportHistoryInner() {
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, typeFilter, unitFilter, statusFilter]);
+  }, [page, pageSize, typeFilter, unitFilter, statusFilter, debouncedSearch]);
 
   useEffect(() => { loadReports(); }, [loadReports]);
 

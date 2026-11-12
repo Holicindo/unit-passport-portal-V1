@@ -33,7 +33,7 @@ export class UnitsService {
   async findAllByClient(clientId: string) {
     return this.unitRepo.find({
       where: { current_client: { id: clientId } },
-      relations: ['warranties', 'service_logs'],
+      relations: ['warranties', 'service_logs', 'current_client', 'ownership_history', 'ownership_history.from_client', 'ownership_history.to_client'],
     });
   }
 
@@ -41,7 +41,7 @@ export class UnitsService {
   async findOneForClient(id: string, clientId: string) {
     const unit = await this.unitRepo.findOne({
       where: { id, current_client: { id: clientId } },
-      relations: ['current_client', 'warranties', 'service_logs'],
+      relations: ['current_client', 'warranties', 'service_logs', 'service_logs.partner', 'ownership_history', 'ownership_history.from_client', 'ownership_history.to_client'],
     });
     if (!unit) throw new NotFoundException('Unit tidak ditemukan atau tidak terdaftar atas nama perusahaan Anda.');
     return unit;
@@ -63,6 +63,16 @@ export class UnitsService {
       .leftJoinAndSelect('unit.current_client', 'current_client')
       .leftJoinAndSelect('unit.warranties', 'warranties')
       .leftJoinAndSelect('unit.service_logs', 'service_logs');
+
+    // Join latest health score (latest date per unit)
+    qb.leftJoinAndMapOne(
+      'unit.latest_health_score',
+      'unit_health_scores',
+      'hs',
+      `hs.unit_id = unit.id AND hs.date = (
+        SELECT MAX(hs2.date) FROM unit_health_scores hs2 WHERE hs2.unit_id = unit.id
+      )`,
+    );
 
     if (search) {
       qb.andWhere('(unit.serial_number ILIKE :search OR unit.model_name ILIKE :search OR current_client.company_name ILIKE :search)', {
@@ -102,7 +112,7 @@ export class UnitsService {
         { id: identifier },
         { serial_number: identifier }
       ],
-      relations: ['current_client', 'warranties', 'service_logs'],
+      relations: ['current_client', 'warranties', 'service_logs', 'service_logs.partner', 'ownership_history', 'ownership_history.from_client', 'ownership_history.to_client'],
     });
     if (!unit) throw new NotFoundException('Unit tidak ditemukan');
     return unit;
@@ -182,6 +192,17 @@ export class UnitsService {
     });
     if (!unit) throw new NotFoundException('Unit tidak ditemukan');
 
+    if (dto.serial_number !== undefined) {
+      const trimmedSn = dto.serial_number.trim();
+      if (trimmedSn && trimmedSn !== unit.serial_number) {
+        // Check uniqueness
+        const existing = await this.unitRepo.findOne({ where: { serial_number: trimmedSn } });
+        if (existing && existing.id !== unit.id) {
+          throw new BadRequestException(`Nomor seri ${trimmedSn} sudah digunakan oleh unit lain.`);
+        }
+        unit.serial_number = trimmedSn;
+      }
+    }
     if (dto.model_name !== undefined) unit.model_name = dto.model_name;
     if (dto.specs !== undefined) unit.specs = dto.specs;
     if (dto.warranty_expiry !== undefined) (unit as any).warranty_expiry = dto.warranty_expiry;

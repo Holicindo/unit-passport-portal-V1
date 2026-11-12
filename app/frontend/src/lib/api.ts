@@ -113,8 +113,8 @@ export const unitApi = {
 export const reportApi = {
   create: (data: any) => api.post('/reports', data),
   update: (id: string, data: any) => api.patch(`/reports/${id}`, data),
-  findAll: (page = 1, limit = 10, type?: string, unitId?: string, status?: string) =>
-    api.get(`/reports?page=${page}&limit=${limit}${type ? `&type=${type}` : ''}${unitId ? `&unitId=${unitId}` : ''}${status ? `&status=${status}` : ''}`),
+  findAll: (page = 1, limit = 10, type?: string, unitId?: string, status?: string, search?: string) =>
+    api.get(`/reports?page=${page}&limit=${limit}${type ? `&type=${type}` : ''}${unitId ? `&unitId=${unitId}` : ''}${status ? `&status=${status}` : ''}${search ? `&search=${encodeURIComponent(search)}` : ''}`),
   findOne: (id: string) => api.get(`/reports/${id}`),
   findByUnit: (unitId: string) => api.get(`/reports/unit/${unitId}`),
   findByServiceLog: (serviceLogId: string) => api.get(`/reports/service-log/${serviceLogId}`),

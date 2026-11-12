@@ -1,4 +1,4 @@
-﻿import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { IotTelemetryLog } from './entities/iot-telemetry-log.entity';
@@ -475,9 +475,12 @@ export class IotService {
       bucketSeconds = 5 * 60; // 5 menit → ~84 titik
     } else if (hours <= 24) {
       bucketSeconds = 5 * 60; // 5 menit → ~288 titik
+    } else if (hours <= 168) {
+      // 1 minggu (168 jam) → agregasi 15 menit (~672 titik) atau 30 menit
+      bucketSeconds = 15 * 60; // 15 menit
     } else if (hours <= 720) {
-      // 1 bulan
-      bucketSeconds = 60 * 60; // 1 jam → ~720 titik
+      // 1 bulan (720 jam) → agregasi 1 jam (1 state per 1 jam → 720 titik)
+      bucketSeconds = 60 * 60; // 1 jam
     } else if (hours <= 2160) {
       // 3 bulan
       bucketSeconds = 2 * 60 * 60; // 2 jam → ~1080 titik

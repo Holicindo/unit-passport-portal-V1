@@ -2,6 +2,11 @@ import { IsString, IsOptional, IsObject, IsDateString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateUnitDto {
+  @ApiProperty({ example: 'A26051860', required: false })
+  @IsString()
+  @IsOptional()
+  serial_number?: string;
+
   @ApiProperty({ example: 'Undercounter Chiller B610', required: false })
   @IsString()
   @IsOptional()

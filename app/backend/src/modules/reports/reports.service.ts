@@ -85,7 +85,7 @@ export class ReportsService {
     return report;
   }
 
-  async findAll(page: number = 1, limit: number = 10, type?: FormType | 'REVISED', status?: string) {
+  async findAll(page: number = 1, limit: number = 10, type?: FormType | 'REVISED', status?: string, unitId?: string, search?: string) {
     const query = this.reportRepo.createQueryBuilder('report')
       .leftJoinAndSelect('report.unit', 'unit')
       .leftJoinAndSelect('report.created_by', 'user')
@@ -103,6 +103,18 @@ export class ReportsService {
 
     if (status) {
       query.andWhere('report.status = :status', { status });
+    }
+
+    if (unitId) {
+      query.andWhere('report.unit_id = :unitId', { unitId });
+    }
+
+    if (search && search.trim()) {
+      const s = `%${search.trim()}%`;
+      query.andWhere(
+        '(report.id ILIKE :search OR unit.serial_number ILIKE :search OR unit.model_name ILIKE :search OR user.name ILIKE :search OR CAST(report.data AS text) ILIKE :search)',
+        { search: s },
+      );
     }
 
     const [data, total] = await query.getManyAndCount();

@@ -24,23 +24,54 @@
   color: var(--brand-cobalt-blue);
 }
 
-/* Responsive Grid untuk 3 Kolom Utama di Halaman Unit Detail */
+/* Responsive Grid untuk Layout 2-Kolom (Dashboard Style sesuai referensi UI/UX) */
 .unitDetailGrid {
   display: grid;
-  grid-template-columns: 1.15fr 1fr 1fr;
-  gap: 24px;
+  grid-template-columns: 1.65fr 1fr;
+  gap: 22px;
   align-items: start;
 }
 
+/* Kolom Kiri: 2-Baris (Atas: My Cards / Informasi Unit, Bawah: 2-Kolom Activity & Payments) */
+.leftSectionStack {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* Baris Bawah Kolom Kiri: 2 Card Bersebelahan (Activity / Kepemilikan & Payments / Garansi + Laporan) */
+.bottomTwoCardsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+  align-items: stretch;
+}
+
+/* Kolom Kanan: IoT Kesehatan Unit + Riwayat Servis */
 .rightColStack {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 22px;
   position: sticky;
   top: 92px;
-  max-height: calc(100vh - 110px);
-  overflow-y: auto;
-  padding-right: 4px;
+  overflow: visible;
+}
+
+@media (max-width: 1100px) {
+  .unitDetailGrid {
+    grid-template-columns: 1fr;
+  }
+  .rightColStack {
+    position: static;
+    max-height: none;
+    overflow-y: visible;
+  }
+}
+
+@media (max-width: 768px) {
+  .bottomTwoCardsGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Custom subtle scrollbar untuk rightColStack */

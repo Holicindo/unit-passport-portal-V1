@@ -70,7 +70,21 @@ export class PartnersService {
   }
 
   async remove(id: string) {
-    await this.partnerRepo.delete(id);
-    return { success: true };
+    // Unlink all foreign keys referencing this partner before deleting
+    await this.partnerRepo.manager.transaction(async (manager) => {
+      // 1. Unlink service_logs (kolomnya adalah "partnerId")
+      await manager.query(`UPDATE service_logs SET "partnerId" = NULL WHERE "partnerId" = $1`, [id]);
+      // 2. Unlink users (kolomnya adalah partner_id)
+      await manager.query(`UPDATE users SET partner_id = NULL WHERE partner_id = $1`, [id]);
+      // 3. Unlink operational tables (deliveries, installations, invoices)
+      await manager.query(`UPDATE deliveries SET "partnerId" = NULL WHERE "partnerId" = $1`, [id]);
+      await manager.query(`UPDATE installations SET "partnerId" = NULL WHERE "partnerId" = $1`, [id]);
+      await manager.query(`UPDATE invoices SET "partnerId" = NULL WHERE "partnerId" = $1`, [id]);
+
+      // 4. Delete the partner record
+      await manager.delete(Partner, id);
+    });
+
+    return { success: true, message: 'Mitra berhasil dihapus' };
   }
 }

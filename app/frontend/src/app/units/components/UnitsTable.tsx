@@ -27,6 +27,39 @@ export function TableSkeleton({ pageSize }: { pageSize: number }) {
 
 /* ── Helpers ── */
 function getHealthScore(unit: any) {
+  // Cek apakah unit sedang offline (> 120 detik tanpa data sinyal)
+  const isOffline = (() => {
+    const lastSeen = unit?.last_seen_at;
+    if (!lastSeen) return true;
+    const date = new Date(lastSeen.endsWith('Z') || lastSeen.includes('+') ? lastSeen : `${lastSeen}Z`);
+    const secondsAge = Math.floor((Date.now() - date.getTime()) / 1000);
+    return isNaN(secondsAge) || secondsAge > 120;
+  })();
+
+  if (isOffline) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#64748b' }} />
+        <span style={{ fontWeight: 600, color: '#64748b', fontSize: '0.85rem' }}>0%</span>
+      </div>
+    );
+  }
+
+  // Jika unit memiliki latest_health_score dari API (sama persis dengan Halaman Detail Unit saat online)
+  if (unit.latest_health_score && unit.latest_health_score.overall_score !== undefined && unit.latest_health_score.overall_score !== null) {
+    const score = Math.round(unit.latest_health_score.overall_score);
+    let color = '#10b981'; // green
+    if (score < 80) color = '#f59e0b'; // yellow
+    if (score < 60) color = '#ef4444'; // red
+
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: color }} />
+        <span style={{ fontWeight: 600, color, fontSize: '0.85rem' }}>{score}%</span>
+      </div>
+    );
+  }
+
   if (!unit.iot_unit_id && !unit.last_seen_at) return <span style={{ color: '#94a3b8' }}>—</span>;
   
   let score = 100;
@@ -70,8 +103,8 @@ function getHealthScore(unit: any) {
   }
   
   let color = '#10b981'; // green
-  if (score < 90) color = '#f59e0b'; // yellow
-  if (score < 70) color = '#ef4444'; // red
+  if (score < 80) color = '#f59e0b'; // yellow
+  if (score < 60) color = '#ef4444'; // red
   
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>

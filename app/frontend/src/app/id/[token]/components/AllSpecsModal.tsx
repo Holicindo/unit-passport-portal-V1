@@ -18,7 +18,7 @@ export default function AllSpecsModal({ show, onClose, unit }: AllSpecsModalProp
     { label: 'Production Date', value: (unit.specs?.production_date || unit.specs?.finish_date) ? new Date(unit.specs.production_date || unit.specs.finish_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '—' },
     ...(unit.specs
       ? Object.entries(unit.specs as Record<string, unknown>)
-          .filter(([k, v]) => v !== null && v !== undefined && v !== '' && typeof v !== 'object' && !['pro_number', 'qm_number', 'manufacture_sn', 'production_date', 'finish_date', 'delivery_date'].includes(k))
+          .filter(([k, v]) => v !== null && v !== undefined && v !== '' && typeof v !== 'object' && !['pro_number', 'qm_number', 'manufacture_sn', 'production_date', 'finish_date', 'delivery_date', 'manuals_urls', 'photo_gallery'].includes(k))
           .map(([k, v]) => ({
             label: k.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
             value: String(v),

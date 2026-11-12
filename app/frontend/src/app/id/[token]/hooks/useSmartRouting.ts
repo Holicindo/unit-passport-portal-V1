@@ -87,10 +87,16 @@ export function useSmartRouting(
       const { data } = await unitApi.requestService(unit.id, {
         city: contactInfo.city, notes: combinedNotes, contact_name: serviceName, contact_phone: servicePhone,
       });
-      setRoutingResult(data);
+
       loadUnitData();
+
       if (data.routed_to === 'HQ_FALLBACK' && data.whatsapp_link) {
-        setTimeout(() => window.open(data.whatsapp_link, '_blank'), 1500);
+        // Langsung redirect ke WhatsApp Admin tanpa transit ke halaman fallback result
+        closeServiceModal();
+        showToast('Permintaan servis tercatat! Mengalihkan ke WhatsApp Admin...', 'success');
+        window.location.href = data.whatsapp_link;
+      } else {
+        setRoutingResult(data);
       }
     } catch { showToast('Gagal mengirim permintaan servis.', 'error'); }
     finally { setRoutingLoading(false); }
