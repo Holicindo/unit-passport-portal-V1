@@ -94,16 +94,39 @@ export default function PartnerPortalPage() {
           return s === 'PENDING' || s === 'IN PROGRESS' || s === 'IN_PROGRESS' || s === 'SCHEDULED' || s === 'PROSES';
         };
 
-        const minePending = all.filter((log: any) => {
+        // Group by call_id, keep latest entry per call_id
+        const groupByCallId = (logs: any[]): any[] => {
+          const map = new Map<string, any>();
+          for (const log of logs) {
+            const key = log.call_id || log.id;
+            const existing = map.get(key);
+            if (!existing) {
+              map.set(key, log);
+            } else {
+              const existingDate = new Date(existing.created_at || existing.service_date || 0).getTime();
+              const thisDate = new Date(log.created_at || log.service_date || 0).getTime();
+              if (thisDate > existingDate) map.set(key, log);
+            }
+          }
+          return Array.from(map.values());
+        };
+
+        const matchedPending = all.filter((log: any) => {
           if (!isPendingOrInProgress(log.status)) return false;
           return isMatchTechnician(log);
         });
 
-        const mineCompleted = all.filter((log: any) => {
+        const matchedCompleted = all.filter((log: any) => {
           const s = (log.status || '').toUpperCase().trim();
           if (s !== 'COMPLETED' && s !== 'SELESAI' && s !== 'DONE') return false;
           return isMatchTechnician(log);
         });
+
+        // Deduplicate by call_id (latest entry wins), sort newest first
+        const minePending = groupByCallId(matchedPending)
+          .sort((a, b) => new Date(b.created_at || b.service_date || 0).getTime() - new Date(a.created_at || a.service_date || 0).getTime());
+        const mineCompleted = groupByCallId(matchedCompleted)
+          .sort((a, b) => new Date(b.created_at || b.service_date || 0).getTime() - new Date(a.created_at || a.service_date || 0).getTime());
 
         setStats({
           today: minePending.length,
@@ -166,32 +189,16 @@ export default function PartnerPortalPage() {
     setProgressModalOpen(true);
   };
 
-  // Submit progress update (Updates existing ticket OR adds multi-day sub-row)
+  // Submit progress update (Always updates existing ticket, never creates duplicate)
   const handleSaveProgress = async (data: {
     status: string;
     actionTaken: string;
     scheduledDate?: string;
-    createSubRow?: boolean;
   }) => {
     if (!ticketToProgress) return;
     setProgressLoading(true);
     try {
-      if (data.createSubRow && !ticketToProgress.id.startsWith('MOCK-')) {
-        // Create new progress record sharing the same call_id so history shows multi-day visits
-        await serviceLogApi.create({
-          unitId: ticketToProgress.unit?.id,
-          call_id: ticketToProgress.call_id || ticketToProgress.id,
-          issue_description: ticketToProgress.issue_description,
-          action_taken: data.actionTaken,
-          technician_name: ticketToProgress.technician_name || user?.name || undefined,
-          service_date: data.scheduledDate ? new Date(data.scheduledDate) : new Date(),
-          scheduled_date: data.scheduledDate ? new Date(data.scheduledDate) : undefined,
-          status: data.status,
-          task_type: 'CORRECTIVE',
-        });
-      }
-
-      // Also update the main ticket's current active status and latest action
+      // Only update the main ticket — no sub-row creation
       if (!ticketToProgress.id.startsWith('MOCK-')) {
         await serviceLogApi.update(ticketToProgress.id, {
           status: data.status,

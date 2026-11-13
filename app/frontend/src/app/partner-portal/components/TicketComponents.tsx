@@ -254,7 +254,6 @@ export interface ProgressModalProps {
     status: string;
     actionTaken: string;
     scheduledDate?: string;
-    createSubRow?: boolean;
   }) => Promise<void>;
   loading?: boolean;
 }
@@ -269,7 +268,6 @@ export function ProgressModal({
   const [status, setStatus] = useState<string>('IN PROGRESS');
   const [actionTaken, setActionTaken] = useState<string>('');
   const [scheduledDate, setScheduledDate] = useState<string>('');
-  const [saveAsSubRow, setSaveAsSubRow] = useState<boolean>(true);
 
   useEffect(() => {
     if (ticket) {
@@ -299,7 +297,6 @@ export function ProgressModal({
       status,
       actionTaken: actionTaken.trim(),
       scheduledDate: scheduledDate || undefined,
-      createSubRow: saveAsSubRow,
     });
   };
 
@@ -369,18 +366,6 @@ export function ProgressModal({
             <span className={styles.progressHelper}>
               Catatan ini langsung tersinkron real-time ke Dashboard Admin dan Portal Notifikasi Klien.
             </span>
-          </div>
-
-          <div className={styles.progressCheckField}>
-            <label className={styles.progressCheckLabel}>
-              <input
-                type="checkbox"
-                checked={saveAsSubRow}
-                onChange={(e) => setSaveAsSubRow(e.target.checked)}
-                style={{ width: '16px', height: '16px', accentColor: '#2E5BFF' }}
-              />
-              <span>Catat sebagai riwayat hari baru (Multi-day visit history)</span>
-            </label>
           </div>
 
           <div className={styles.progressActions}>

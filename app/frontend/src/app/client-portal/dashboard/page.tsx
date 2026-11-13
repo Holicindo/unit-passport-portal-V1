@@ -160,13 +160,14 @@ export default function ClientDashboard() {
     return e > today && e <= in30Days;
   }).length;
 
-  // ── Build calendar events dari warranty_expiry dan next_service_date fleet ──
+  // ── Build calendar events dari warranty_expiry, next_service_date, dan scheduled_date service_logs ──
   const calendarEvents: CalendarEvents = {};
+  
+  // 1. Event dari Fleet Units (Garansi & Next Service Date)
   fleet.forEach(u => {
-    // 1. Cek Garansi
+    // 1a. Cek Garansi
     if (u.warranty_expiry) {
       const exp = new Date(u.warranty_expiry);
-      // Key: YYYY-MM-DD (local date)
       const key = `${exp.getFullYear()}-${String(exp.getMonth() + 1).padStart(2, '0')}-${String(exp.getDate()).padStart(2, '0')}`;
       const type = exp < today ? 'warranty-expired' : exp <= in30Days ? 'warranty-expiring' : 'warranty-expiring';
       if (!calendarEvents[key]) {
@@ -181,24 +182,56 @@ export default function ClientDashboard() {
       if (exp < today) calendarEvents[key].type = 'warranty-expired';
     }
 
-    // 2. Cek Jadwal Servis (real-time dari backend jika field sudah ditambahkan)
+    // 1b. Cek Next Service Date di unit
     if (u.next_service_date) {
       const srv = new Date(u.next_service_date);
       const key = `${srv.getFullYear()}-${String(srv.getMonth() + 1).padStart(2, '0')}-${String(srv.getDate()).padStart(2, '0')}`;
       if (!calendarEvents[key]) {
         calendarEvents[key] = { type: 'service', units: [] };
       }
-      // Hindari menimpa status kritis (merah/oranye) dengan status servis jika tanggal sama
+      // Hindari menimpa status kritis (merah/oranye) dengan status servis
       if (calendarEvents[key].type !== 'warranty-expired' && calendarEvents[key].type !== 'warranty-expiring') {
         calendarEvents[key].type = 'service';
       }
-      // Hindari duplikasi push unit jika unit yang sama punya garansi habis & jadwal servis di hari yang sama
+      // Hindari duplikasi unit
       if (!calendarEvents[key].units.some(existing => existing.id === u.id)) {
         calendarEvents[key].units.push({
           id: u.id,
           serial: u.serial_number || '—',
           model: u.model_name || '—',
         });
+      }
+    }
+  });
+
+  // 2. Event dari Service Logs (Scheduled Date dari tiket servis)
+  recentLogs.forEach(log => {
+    // Hanya ambil tiket PENDING atau IN PROGRESS yang punya jadwal scheduled_date
+    const status = (log.status || '').toUpperCase();
+    if ((status === 'PENDING' || status === 'IN PROGRESS' || status === 'SCHEDULED') && log.scheduled_date) {
+      const srv = new Date(log.scheduled_date);
+      const key = `${srv.getFullYear()}-${String(srv.getMonth() + 1).padStart(2, '0')}-${String(srv.getDate()).padStart(2, '0')}`;
+      
+      const unitData = {
+        id: log.unit?.id,
+        serial: log.unit?.serial_number || log.unit_serial_number || '—',
+        model: log.unit?.model_name || log.unit_model_name || 'Unit Servis',
+      };
+
+      if (!calendarEvents[key]) {
+        calendarEvents[key] = { type: 'service', units: [] };
+      }
+      
+      // Hindari menimpa status kritis (merah/oranye) dengan status servis
+      if (calendarEvents[key].type !== 'warranty-expired' && calendarEvents[key].type !== 'warranty-expiring') {
+        calendarEvents[key].type = 'service';
+      }
+      
+      // Hindari duplikasi unit yang sama
+      if (!calendarEvents[key].units.some(existing => 
+        existing.id === unitData.id || existing.serial === unitData.serial
+      )) {
+        calendarEvents[key].units.push(unitData);
       }
     }
   });

@@ -120,6 +120,7 @@ export function MiniCalendar({ events = {} }: { events?: CalendarEvents }) {
             return (
               <div
                 key={i}
+                data-day={d}
                 className={[
                   styles.calendarDay,
                   isToday(d) ? styles.calendarDayToday : '',
@@ -152,19 +153,60 @@ export function MiniCalendar({ events = {} }: { events?: CalendarEvents }) {
                 return parseInt(y) === current.year && parseInt(m) - 1 === current.month;
               })
               .sort((a, b) => a[0].localeCompare(b[0]))
+              .slice(0, 5) // Limit to 5 upcoming events
               .map(([key, event]) => {
-                const dd = key.split('-')[2];
+                const [y, m, dd] = key.split('-');
+                const eventDate = new Date(parseInt(y), parseInt(m) - 1, parseInt(dd));
+                const isPast = eventDate < new Date(new Date().setHours(0, 0, 0, 0));
+                
                 let desc = '';
-                if (event.type === 'service') desc = 'Jadwal Servis';
-                if (event.type === 'warranty-expiring') desc = 'Garansi segera habis';
-                if (event.type === 'warranty-expired') desc = 'Garansi habis';
+                let icon = null;
+                if (event.type === 'service') {
+                  desc = `${event.units.length} unit dijadwalkan servis`;
+                  icon = <Wrench size={11} />;
+                }
+                if (event.type === 'warranty-expiring') {
+                  desc = `${event.units.length} unit garansi segera habis`;
+                  icon = <ShieldAlert size={11} />;
+                }
+                if (event.type === 'warranty-expired') {
+                  desc = `${event.units.length} unit garansi telah habis`;
+                  icon = <ShieldAlert size={11} />;
+                }
                 
                 return (
-                  <div key={key} className={calStyles.legendItem}>
-                    <strong style={{ color: getDotColor(event.type) }}>{dd} {MONTH_NAMES[current.month]}:</strong> {desc}
+                  <div 
+                    key={key} 
+                    className={calStyles.legendItem}
+                    style={{ 
+                      opacity: isPast ? 0.5 : 1,
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => {
+                      // Simulate click on calendar day
+                      const dayEl = document.querySelector(`[data-day="${parseInt(dd)}"]`) as HTMLElement;
+                      if (dayEl) dayEl.click();
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: getDotColor(event.type), fontWeight: 700, fontSize: '0.72rem' }}>
+                      {icon}
+                      <span>{dd} {MONTH_NAMES[current.month]}</span>
+                    </div>
+                    <span style={{ fontSize: '0.7rem', color: '#cbd5e1' }}>{desc}</span>
                   </div>
                 );
               })}
+            {Object.entries(events).filter(([key]) => {
+              const [y, m] = key.split('-');
+              return parseInt(y) === current.year && parseInt(m) - 1 === current.month;
+            }).length > 5 && (
+              <div style={{ fontSize: '0.68rem', color: '#64748b', fontStyle: 'italic', marginTop: '4px' }}>
+                +{Object.entries(events).filter(([key]) => {
+                  const [y, m] = key.split('-');
+                  return parseInt(y) === current.year && parseInt(m) - 1 === current.month;
+                }).length - 5} event lainnya bulan ini
+              </div>
+            )}
           </div>
         )}
 
@@ -179,18 +221,30 @@ export function MiniCalendar({ events = {} }: { events?: CalendarEvents }) {
                 <><ShieldAlert size={13} color="#FF6B00" /> <span style={{ color: '#FF6B00' }}>Garansi Segera Habis</span></>
               )}
               {tooltipEvent.type === 'service' && (
-                <><Wrench size={13} color="#2E5BFF" /> <span style={{ color: '#2E5BFF' }}>Servis</span></>
+                <><Wrench size={13} color="#2E5BFF" /> <span style={{ color: '#2E5BFF' }}>Jadwal Servis</span></>
               )}
+              <span style={{ marginLeft: 'auto', fontSize: '0.7rem', color: '#94a3b8', fontWeight: 600 }}>
+                {tooltipEvent.units.length} unit
+              </span>
             </div>
             <div className={calStyles.tooltipList}>
               {tooltipEvent.units.slice(0, 5).map((u, i) => (
                 <div 
                   key={i} 
                   className={calStyles.tooltipUnit}
-                  style={{ cursor: u.id ? 'pointer' : 'default' }}
+                  style={{ 
+                    cursor: u.id ? 'pointer' : 'default',
+                    transition: 'background 0.15s ease'
+                  }}
                   onClick={() => u.id && router.push(`/client-portal/units/${u.id}`)}
+                  onMouseEnter={(e) => {
+                    if (u.id) e.currentTarget.style.background = 'rgba(56, 189, 248, 0.08)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                  }}
                 >
-                  <span className={calStyles.tooltipSerial} style={{ color: u.id ? 'var(--brand-cobalt-blue)' : undefined }}>
+                  <span className={calStyles.tooltipSerial} style={{ color: u.id ? '#38bdf8' : '#f1f5f9' }}>
                     {u.serial}
                   </span>
                   <span className={calStyles.tooltipModel}>{u.model}</span>
@@ -201,13 +255,31 @@ export function MiniCalendar({ events = {} }: { events?: CalendarEvents }) {
               )}
             </div>
             <div 
-              style={{ padding: '8px 14px', borderTop: '1px solid rgba(0,31,63,0.06)', fontSize: '0.72rem', color: '#2E5BFF', cursor: 'pointer', textAlign: 'center', fontWeight: 600 }}
+              style={{ 
+                padding: '8px 14px', 
+                borderTop: '1px solid rgba(56, 189, 248, 0.12)', 
+                fontSize: '0.72rem', 
+                color: '#38bdf8', 
+                cursor: 'pointer', 
+                textAlign: 'center', 
+                fontWeight: 700,
+                transition: 'all 0.15s ease',
+                fontFamily: 'var(--font-heading)'
+              }}
               onClick={() => {
                 if (tooltipEvent.type.includes('warranty')) router.push('/client-portal/warranty');
                 else router.push('/client-portal/fleet');
               }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#38bdf8';
+                e.currentTarget.style.color = '#0a1929';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = '#38bdf8';
+              }}
             >
-              Lihat Selengkapnya &rarr;
+              Lihat Selengkapnya →
             </div>
           </div>
         )}

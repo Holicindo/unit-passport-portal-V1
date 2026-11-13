@@ -30,13 +30,7 @@ export default function LiveServiceTrackerModal({ log, onClose }: LiveServiceTra
   const model = unit.model_name || log.unit_model_name || 'Unit Holicindo';
   const callId = log.call_id || log.id?.slice(0, 8) || 'SR-001';
 
-  const isStage1Done = true;
-  const isStage2Done = status === 'IN PROGRESS' || status === 'COMPLETED';
-  const isStage2Current = status === 'PENDING';
-  const isStage3Done = status === 'COMPLETED';
-  const isStage3Current = status === 'IN PROGRESS';
-  const isStage4Done = status === 'COMPLETED';
-
+  // Helper untuk format tanggal
   const formatDate = (dateStr?: string | Date | null) => {
     if (!dateStr) return null;
     try {
@@ -54,11 +48,26 @@ export default function LiveServiceTrackerModal({ log, onClose }: LiveServiceTra
   const scheduledDate = formatDate(log.scheduled_date);
   const completedDate = formatDate(log.completed_at) || (status === 'COMPLETED' ? formatDate(log.service_date) : null);
 
+  // Check apakah teknisi sudah di-assign (bukan "Pending alokasi" atau sejenisnya)
   const techAssigned = log.technician_name &&
     !log.technician_name.toLowerCase().includes('pending') &&
     !log.technician_name.toLowerCase().includes('alokasi')
     ? log.technician_name
     : null;
+
+  // ── STAGE LOGIC (FIXED) ──
+  const isStage1Done = true; // Permintaan selalu sudah masuk
+
+  // Stage 2 SELESAI jika: teknisi sudah di-assign DAN jadwal sudah ada
+  const isStage2Done = !!(techAssigned && scheduledDate);
+  const isStage2Current = status === 'PENDING' && !isStage2Done;
+
+  // Stage 3 AKTIF jika: status IN PROGRESS ATAU ada action_taken dari teknisi
+  const isStage3Current = status === 'IN PROGRESS' || (!!(log.action_taken) && status !== 'COMPLETED');
+  const isStage3Done = status === 'COMPLETED';
+
+  // Stage 4 SELESAI jika status COMPLETED
+  const isStage4Done = status === 'COMPLETED';
 
   const waMessage = `Halo Tim Holicindo, saya ingin menanyakan status servis unit saya:\n- Unit: ${model}\n- Serial Number: ${sn}\n- ID Permintaan: #${callId}\n\nMohon update informasinya, terima kasih!`;
   const waUrl = `https://wa.me/6281287120358?text=${encodeURIComponent(waMessage)}`;
@@ -191,8 +200,16 @@ export default function LiveServiceTrackerModal({ log, onClose }: LiveServiceTra
                   <span className={styles.stepTitle}>3. Penanganan & Servis Lapangan</span>
                 </div>
                 <div className={styles.stepDesc}>
-                  {isStage3Current ? (
-                    <div>Teknisi sedang melakukan pengecekan mendalam & penanganan unit di outlet. {log.action_taken ? `Tindakan: ${log.action_taken}` : ''}</div>
+                  {isStage3Current && log.action_taken ? (
+                    <div>
+                      <div style={{ marginBottom: '6px' }}>Teknisi sedang melakukan pengecekan mendalam & penanganan unit di outlet.</div>
+                      <div style={{ background: 'rgba(56, 189, 248, 0.08)', padding: '8px 12px', borderRadius: '6px', borderLeft: '3px solid #38bdf8' }}>
+                        <strong style={{ color: '#0ea5e9', fontSize: '0.82rem' }}>Catatan Progres Teknisi:</strong>
+                        <div style={{ marginTop: '4px', color: '#334155' }}>{log.action_taken}</div>
+                      </div>
+                    </div>
+                  ) : isStage3Current ? (
+                    <div>Teknisi sedang melakukan pengecekan mendalam & penanganan unit di outlet.</div>
                   ) : isStage3Done ? (
                     <div>Tindakan: <strong>{log.action_taken || 'Pemeriksaan menyeluruh dan servis teknis selesai dilaksanakan.'}</strong></div>
                   ) : (

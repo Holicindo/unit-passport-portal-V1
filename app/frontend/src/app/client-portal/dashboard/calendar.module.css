@@ -19,19 +19,30 @@
 .legend {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  margin-top: 12px;
-  padding-top: 10px;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
   border-top: 1px solid rgba(56, 189, 248, 0.15);
 }
 
 .legendItem {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
+  gap: 2px;
   font-size: 0.72rem;
   color: #94a3b8;
   font-family: var(--font-body);
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgba(56, 189, 248, 0.04);
+  border: 1px solid rgba(56, 189, 248, 0.08);
+  transition: all 0.2s ease;
+}
+
+.legendItem:hover {
+  background: rgba(56, 189, 248, 0.1);
+  border-color: rgba(56, 189, 248, 0.2);
+  transform: translateX(2px);
 }
 
 .legendDot {

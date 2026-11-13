@@ -313,33 +313,46 @@ export default function ClientPortalLayout({ children }: { children: React.React
               <Bell size={18} />
               {notifCount > 0 && (
                 <span style={{
-                  position: 'absolute', top: '6px', right: '6px',
-                  width: '8px', height: '8px', borderRadius: '50%',
-                  background: 'var(--brand-safety-orange)',
-                  border: '2px solid var(--neu-base)',
-                }} />
+                  position: 'absolute', top: '-6px', right: '-6px',
+                  minWidth: '18px', height: '18px',
+                  background: '#ef4444',
+                  color: '#fff',
+                  borderRadius: '9999px',
+                  fontSize: '0.65rem',
+                  fontWeight: 800,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  padding: '0 4px',
+                  border: '2px solid #071729',
+                  lineHeight: 1,
+                  fontFamily: 'var(--font-heading)',
+                  pointerEvents: 'none',
+                }}>
+                  {notifCount > 9 ? '9+' : notifCount}
+                </span>
               )}
             </button>
             {notifPanelOpen && (
               <div style={{
-                position: 'absolute', top: 'calc(100% + 8px)', right: 0,
-                width: '300px',
-                background: '#E4E6EF',
-                border: 'none',
+                position: 'absolute', top: 'calc(100% + 10px)', right: 0,
+                width: '340px',
+                background: 'rgba(8,23,41,0.97)',
+                border: '1px solid rgba(56,189,248,0.2)',
                 borderRadius: '16px',
-                boxShadow: '-6px -6px 10px rgba(255,255,255,0.72), 6px 6px 12px rgba(0,31,63,0.14), 0 1px 3px rgba(0,31,63,0.05)',
+                boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
                 zIndex: 300, overflow: 'hidden',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
               }}>
-                <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(0,31,63,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--brand-deep-navy)', fontFamily: 'var(--font-heading)' }}>
-                    Notifikasi {notifCount > 0 && <span style={{ background: 'var(--brand-safety-orange)', color: 'white', borderRadius: '20px', padding: '1px 7px', fontSize: '0.7rem' }}>{notifCount}</span>}
+                <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(56,189,248,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#f8fafc', fontFamily: 'var(--font-heading)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    Notifikasi {notifCount > 0 && <span style={{ background: '#ef4444', color: 'white', borderRadius: '20px', padding: '1px 7px', fontSize: '0.7rem', fontWeight: 800 }}>{notifCount > 9 ? '9+' : notifCount}</span>}
                   </span>
-                  <button onClick={() => setNotifPanelOpen(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--brand-space-grey)', display: 'flex' }}>
+                  <button onClick={() => setNotifPanelOpen(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex' }}>
                     <X size={15} />
                   </button>
                 </div>
                 {notifications.length === 0 ? (
-                  <div style={{ padding: '28px', textAlign: 'center', color: 'var(--brand-space-grey)', fontSize: '0.82rem', fontFamily: 'var(--font-body)' }}>
+                  <div style={{ padding: '28px', textAlign: 'center', color: '#94a3b8', fontSize: '0.82rem', fontFamily: 'var(--font-body)' }}>
                     Tidak ada notifikasi
                   </div>
                 ) : (
@@ -348,20 +361,24 @@ export default function ClientPortalLayout({ children }: { children: React.React
                       <div
                         key={n.id}
                         style={{
-                          padding: '12px 16px', borderBottom: '1px solid rgba(0,31,63,0.06)',
-                          background: n.is_read ? 'transparent' : 'rgba(46,91,255,0.05)',
+                          padding: '12px 16px', borderBottom: '1px solid rgba(56,189,248,0.08)',
+                          background: n.is_read ? 'transparent' : 'rgba(56,189,248,0.08)',
+                          borderLeft: n.is_read ? 'none' : '3px solid #38bdf8',
                           cursor: 'pointer',
+                          transition: 'background 0.2s',
                         }}
                         onClick={() => {
                           notificationApi.markAsRead(n.id).catch(() => {});
                           setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, is_read: true } : x));
-                          setNotifCount(c => Math.max(0, c - 1));
+                          setNotifCount(c => Math.max(0, c - (n.is_read ? 0 : 1)));
+                          setNotifPanelOpen(false);
+                          router.push('/client-portal/dashboard');
                         }}
                       >
-                        <div style={{ fontSize: '0.82rem', color: 'var(--brand-deep-navy)', fontFamily: 'var(--font-body)', lineHeight: 1.5 }}>
+                        <div style={{ fontSize: '0.82rem', color: '#f8fafc', fontFamily: 'var(--font-body)', lineHeight: 1.5, fontWeight: n.is_read ? 400 : 600 }}>
                           {n.message || n.title || 'Notifikasi baru'}
                         </div>
-                        <div style={{ fontSize: '0.7rem', color: 'var(--brand-space-grey)', marginTop: '4px', fontFamily: 'var(--font-body)' }}>
+                        <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '4px', fontFamily: 'var(--font-body)' }}>
                           {n.created_at ? new Date(n.created_at).toLocaleString('id-ID', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) : ''}
                         </div>
                       </div>
