@@ -1846,6 +1846,19 @@
   line-height: 1;
 }
 
+/* Bottom row text (e.g., "100% Fleet", "Kondisi Normal", "Terlindungi") */
+.miniStatCard > div:last-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #94a3b8;
+  margin-top: 2px;
+  line-height: 1.3;
+}
+
 /* ── QUICK ACTIONS ── */
 .quickActions {
   display: flex;

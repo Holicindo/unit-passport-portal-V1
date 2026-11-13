@@ -78,13 +78,25 @@ function ManualSearch({ fleet }: { fleet: any[] }) {
   );
 }
 
-// QR Scanner menggunakan camera API browser
+// QR Scanner menggunakan camera API browser dengan fallback manual decoding
 function QrScanner({ onResult }: { onResult: (token: string) => void }) {
   const videoRef   = useRef<HTMLVideoElement>(null);
+  const canvasRef  = useRef<HTMLCanvasElement>(null);
   const streamRef  = useRef<MediaStream | null>(null);
   const [error, setError]   = useState('');
   const [active, setActive] = useState(false);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment'); // Default kamera belakang
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [jsQR, setJsQR] = useState<any>(null);
+
+  // Load jsQR library dynamically
+  useEffect(() => {
+    import('jsqr').then(module => {
+      setJsQR(() => module.default);
+    }).catch(() => {
+      console.warn('jsQR not available, will try BarcodeDetector');
+    });
+  }, []);
 
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
@@ -98,49 +110,117 @@ function QrScanner({ onResult }: { onResult: (token: string) => void }) {
     setActive(false);
   }, []);
 
+  const scanFrame = useCallback(() => {
+    if (!videoRef.current || !canvasRef.current || !jsQR) return null;
+    
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const context = canvas.getContext('2d');
+    
+    if (!context || video.readyState !== video.HAVE_ENOUGH_DATA) return null;
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+      inversionAttempts: 'dontInvert',
+    });
+
+    return code;
+  }, [jsQR]);
+
   const startCamera = useCallback(async () => {
     setError('');
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
-      });
+      const constraints = {
+        video: { 
+          facingMode: facingMode,
+          width: { ideal: 1280 }, 
+          height: { ideal: 720 }
+        },
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
+      
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
         setActive(true);
 
-        // Gunakan BarcodeDetector jika tersedia (Chrome/Android modern)
-        if ('BarcodeDetector' in window) {
-          const detector = new (window as any).BarcodeDetector({ formats: ['qr_code'] });
-          intervalRef.current = setInterval(async () => {
-            if (!videoRef.current) return;
-            try {
-              const barcodes = await detector.detect(videoRef.current);
-              if (barcodes.length > 0) {
-                const raw = barcodes[0].rawValue as string;
-                stopCamera();
-                // Ekstrak token dari URL atau pakai langsung
-                const match = raw.match(/\/id\/([^?#/]+)/);
-                onResult(match ? match[1] : raw);
-              }
-            } catch { /* silent */ }
-          }, 500);
+        // Coba gunakan BarcodeDetector dulu (lebih cepat)
+        if ('BarcodeDetector' in window && (window as any).BarcodeDetector) {
+          try {
+            const detector = new (window as any).BarcodeDetector({ formats: ['qr_code'] });
+            intervalRef.current = setInterval(async () => {
+              if (!videoRef.current) return;
+              try {
+                const barcodes = await detector.detect(videoRef.current);
+                if (barcodes.length > 0) {
+                  const raw = barcodes[0].rawValue as string;
+                  stopCamera();
+                  // Ekstrak token dari URL atau pakai langsung
+                  const match = raw.match(/\/id\/([^?#/]+)/);
+                  onResult(match ? match[1] : raw);
+                }
+              } catch { /* silent */ }
+            }, 300);
+          } catch (e) {
+            console.warn('BarcodeDetector failed, falling back to jsQR');
+            // Fallback ke jsQR
+            if (jsQR) {
+              intervalRef.current = setInterval(() => {
+                const code = scanFrame();
+                if (code && code.data) {
+                  stopCamera();
+                  const match = code.data.match(/\/id\/([^?#/]+)/);
+                  onResult(match ? match[1] : code.data);
+                }
+              }, 300);
+            } else {
+              setError('Scanner QR tidak tersedia di browser ini. Gunakan pencarian manual.');
+              stopCamera();
+            }
+          }
         } else {
-          setError('Browser Anda tidak mendukung BarcodeDetector. Gunakan pencarian manual di bawah.');
-          stopCamera();
+          // Browser tidak support BarcodeDetector, gunakan jsQR
+          if (jsQR) {
+            intervalRef.current = setInterval(() => {
+              const code = scanFrame();
+              if (code && code.data) {
+                stopCamera();
+                const match = code.data.match(/\/id\/([^?#/]+)/);
+                onResult(match ? match[1] : code.data);
+              }
+            }, 300);
+          } else {
+            setError('Scanner QR tidak tersedia. Gunakan pencarian manual di bawah.');
+            stopCamera();
+          }
         }
       }
     } catch (err: any) {
+      console.error('Camera error:', err);
       if (err.name === 'NotAllowedError') {
-        setError('Izin kamera ditolak. Aktifkan akses kamera di pengaturan browser, atau gunakan pencarian manual.');
+        setError('Izin kamera ditolak. Aktifkan akses kamera di pengaturan browser, lalu refresh halaman ini.');
       } else if (err.name === 'NotFoundError') {
-        setError('Kamera tidak ditemukan. Gunakan pencarian manual di bawah.');
+        setError('Kamera tidak ditemukan pada perangkat ini.');
       } else {
-        setError('Gagal mengakses kamera. Gunakan pencarian manual di bawah.');
+        setError('Gagal mengakses kamera. Coba gunakan pencarian manual.');
       }
     }
-  }, [onResult, stopCamera]);
+  }, [onResult, stopCamera, scanFrame, jsQR, facingMode]);
+
+  const toggleCamera = useCallback(async () => {
+    stopCamera();
+    setFacingMode(prev => prev === 'environment' ? 'user' : 'environment');
+    // Wait a bit before restarting
+    setTimeout(() => {
+      startCamera();
+    }, 300);
+  }, [stopCamera, startCamera]);
 
   useEffect(() => {
     return () => { stopCamera(); };
@@ -148,6 +228,7 @@ function QrScanner({ onResult }: { onResult: (token: string) => void }) {
 
   return (
     <div className={scanStyles.cameraWrap}>
+      <canvas ref={canvasRef} style={{ display: 'none' }} />
       <div className={scanStyles.viewfinder}>
         {active ? (
           <>
@@ -165,9 +246,14 @@ function QrScanner({ onResult }: { onResult: (token: string) => void }) {
               <span className={scanStyles.corner + ' ' + scanStyles.cornerBR} />
               <div className={scanStyles.scanLine} />
             </div>
-            <button className={scanStyles.stopBtn} onClick={stopCamera}>
-              <X size={16} /> Stop Kamera
-            </button>
+            <div className={scanStyles.cameraControls}>
+              <button className={scanStyles.flipBtn} onClick={toggleCamera} title="Balik kamera">
+                <Camera size={16} /> Balik
+              </button>
+              <button className={scanStyles.stopBtn} onClick={stopCamera}>
+                <X size={16} /> Stop
+              </button>
+            </div>
           </>
         ) : (
           <div className={scanStyles.cameraPrompt}>

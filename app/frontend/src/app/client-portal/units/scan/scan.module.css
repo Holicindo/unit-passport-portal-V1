@@ -178,14 +178,10 @@
 }
 
 .stopBtn {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 9px 20px;
+  padding: 9px 18px;
   border: 1px solid rgba(239, 68, 68, 0.4);
   border-radius: 20px;
   background: rgba(239, 68, 68, 0.85);
@@ -201,7 +197,42 @@
 
 .stopBtn:hover {
   background: #dc2626;
-  transform: translateX(-50%) translateY(-1px);
+  transform: translateY(-1px);
+}
+
+/* Camera controls wrapper (bottom center) */
+.cameraControls {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 10;
+}
+
+.flipBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  border-radius: 20px;
+  background: rgba(56, 189, 248, 0.2);
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  font-family: var(--font-heading);
+  transition: all 0.2s;
+  box-shadow: 0 4px 14px rgba(56, 189, 248, 0.25);
+}
+
+.flipBtn:hover {
+  background: rgba(56, 189, 248, 0.35);
+  transform: translateY(-1px);
 }
 
 /* Camera prompt (before starting) */
