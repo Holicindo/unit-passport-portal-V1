@@ -14,8 +14,10 @@ export interface Ticket {
   status: string;
   issue_description: string;
   action_taken?: string;
+  planning_notes?: string;
   replaced_sparepart?: string;
   service_date?: string;
+  scheduled_date?: string;
   completed_at?: string;
   technician_name?: string;
   unit?: { id: string; model_name: string; serial_number: string; qr_token: string };
@@ -25,35 +27,66 @@ interface TicketCardProps {
   log: Ticket;
   onCloseTicket: (log: Ticket) => void;
   onOpenNote: (log: Ticket) => void;
+  onUpdateProgress?: (log: Ticket) => void;
 }
 
-export function TicketCard({ log, onCloseTicket, onOpenNote }: TicketCardProps) {
+export function TicketCard({ log, onCloseTicket, onOpenNote, onUpdateProgress }: TicketCardProps) {
+  const isProgress = (log.status || '').toUpperCase().includes('PROGRESS');
   return (
     <div className={styles.ticketCard}>
       <div className={styles.ticketHeader}>
         <span className={styles.callIdBadge}>{log.call_id || log.id}</span>
-        <span className={styles.pendingBadge}>MENUNGGU</span>
+        <span className={isProgress ? styles.inProgressBadge : styles.pendingBadge}>
+          {isProgress ? 'DIJADWALKAN' : 'MENUNGGU'}
+        </span>
       </div>
       <div className={styles.unitInfo}>
         <span className={styles.unitModel}>{log.unit?.model_name || 'Unit'}</span>
         <span className={styles.unitSn}>SN: {log.unit?.serial_number || '—'}</span>
       </div>
       <div className={styles.issueText}>
-        {(log.issue_description || 'Tidak ada deskripsi').slice(0, 90)}
-        {(log.issue_description || '').length > 90 ? '…' : ''}
+        {(log.issue_description || 'Tidak ada deskripsi').slice(0, 110)}
+        {(log.issue_description || '').length > 110 ? '…' : ''}
       </div>
-      <div className={styles.ticketFooter}>
-        <div className={styles.ticketFooterMeta}>
-          <span className={styles.ticketDate}>
-            {log.service_date ? new Date(log.service_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'}
+
+      {/* Multi-Day Dates Row: Tanggal Keluhan & Jadwal Kunjungan */}
+      <div className={styles.ticketDatesRow}>
+        <div className={styles.ticketDateItem}>
+          <span className={styles.ticketDateLabel}>Tgl Keluhan:</span>
+          <span className={styles.ticketDateVal}>
+            {log.service_date ? new Date(log.service_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
           </span>
         </div>
+        <div className={styles.ticketDateItem}>
+          <span className={styles.ticketDateLabel}>Jadwal / Rencana:</span>
+          <span className={`${styles.ticketDateVal} ${styles.ticketDateSched}`}>
+            {log.scheduled_date ? new Date(log.scheduled_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : (log.service_date ? new Date(log.service_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '—')}
+          </span>
+        </div>
+      </div>
 
+      {/* Last Action / Progres Lapangan if available */}
+      {log.action_taken && (
+        <div className={styles.ticketProgressSummary}>
+          <span className={styles.ticketProgressLabel}>Progres Terakhir:</span>
+          <span className={styles.ticketProgressText}>{log.action_taken}</span>
+        </div>
+      )}
+
+      <div className={styles.ticketFooter}>
         <div className={styles.ticketActionGroup}>
-          <button className={styles.noteBtn} onClick={(e) => { e.stopPropagation(); onOpenNote(log); }}>
-            Tambah Catatan Servis
+          <button
+            type="button"
+            className={styles.updateProgressBtn}
+            onClick={(e) => { e.stopPropagation(); onUpdateProgress ? onUpdateProgress(log) : onOpenNote(log); }}
+          >
+            Update Progres Servis
           </button>
-          <button className={styles.closeBtn} onClick={(e) => { e.stopPropagation(); onCloseTicket(log); }}>
+          <button
+            type="button"
+            className={styles.closeBtn}
+            onClick={(e) => { e.stopPropagation(); onCloseTicket(log); }}
+          >
             Selesaikan &amp; Tutup Tiket
           </button>
         </div>
@@ -107,12 +140,14 @@ export interface TicketSliderProps {
   tickets: Ticket[];
   onCloseTicket: (log: Ticket) => void;
   onOpenNote: (log: Ticket) => void;
+  onUpdateProgress?: (log: Ticket) => void;
 }
 
 export function TicketSlider({
   tickets,
   onCloseTicket,
-  onOpenNote
+  onOpenNote,
+  onUpdateProgress
 }: TicketSliderProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -186,6 +221,7 @@ export function TicketSlider({
                 log={log}
                 onCloseTicket={onCloseTicket}
                 onOpenNote={onOpenNote}
+                onUpdateProgress={onUpdateProgress}
               />
             )}
           </div>
@@ -206,6 +242,173 @@ export function TicketSlider({
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+export interface ProgressModalProps {
+  isOpen: boolean;
+  ticket: Ticket | null;
+  onClose: () => void;
+  onSaveProgress: (data: {
+    status: string;
+    actionTaken: string;
+    scheduledDate?: string;
+    createSubRow?: boolean;
+  }) => Promise<void>;
+  loading?: boolean;
+}
+
+export function ProgressModal({
+  isOpen,
+  ticket,
+  onClose,
+  onSaveProgress,
+  loading = false,
+}: ProgressModalProps) {
+  const [status, setStatus] = useState<string>('IN PROGRESS');
+  const [actionTaken, setActionTaken] = useState<string>('');
+  const [scheduledDate, setScheduledDate] = useState<string>('');
+  const [saveAsSubRow, setSaveAsSubRow] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (ticket) {
+      setStatus(
+        (ticket.status || '').toUpperCase().includes('PROGRESS')
+          ? 'IN PROGRESS'
+          : ticket.status || 'IN PROGRESS'
+      );
+      setActionTaken(ticket.action_taken || '');
+      setScheduledDate(
+        ticket.scheduled_date
+          ? new Date(ticket.scheduled_date).toISOString().split('T')[0]
+          : new Date().toISOString().split('T')[0]
+      );
+    }
+  }, [ticket]);
+
+  if (!isOpen || !ticket) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!actionTaken.trim()) {
+      alert('Mohon isi catatan tindakan / progres pengerjaan.');
+      return;
+    }
+    await onSaveProgress({
+      status,
+      actionTaken: actionTaken.trim(),
+      scheduledDate: scheduledDate || undefined,
+      createSubRow: saveAsSubRow,
+    });
+  };
+
+  return (
+    <div className={styles.progressModalBackdrop} onClick={onClose}>
+      <div className={styles.progressModal} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.progressModalHeader}>
+          <div>
+            <div className={styles.progressModalBadge}>{ticket.call_id || ticket.id}</div>
+            <h3 className={styles.progressModalTitle}>Update Progres Lapangan</h3>
+          </div>
+          <button type="button" className={styles.progressModalClose} onClick={onClose}>
+            <X size={20} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className={styles.progressModalBody}>
+          <div className={styles.progressUnitBox}>
+            <div className={styles.progressUnitName}>{ticket.unit?.model_name || 'Unit Mesin'}</div>
+            <div className={styles.progressUnitSn}>SN: {ticket.unit?.serial_number || '—'}</div>
+            <div className={styles.progressIssueText}>Keluhan: {ticket.issue_description || '—'}</div>
+          </div>
+
+          <div className={styles.progressField}>
+            <label className={styles.progressLabel}>Status Pengerjaan</label>
+            <div className={styles.statusPills}>
+              {[
+                { val: 'IN PROGRESS', label: 'Sedang Dikerjakan' },
+                { val: 'SCHEDULED', label: 'Dijadwalkan Ulang' },
+                { val: 'WAITING FOR SPAREPARTS', label: 'Menunggu Sparepart' },
+                { val: 'PENDING', label: 'Tertunda' },
+              ].map((item) => (
+                <button
+                  key={item.val}
+                  type="button"
+                  className={`${styles.statusPill} ${status === item.val ? styles.statusPillActive : ''}`}
+                  onClick={() => setStatus(item.val)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className={styles.progressField}>
+            <label className={styles.progressLabel}>Tanggal Kunjungan / Target Berikutnya</label>
+            <input
+              type="date"
+              className={styles.progressInput}
+              value={scheduledDate}
+              onChange={(e) => setScheduledDate(e.target.value)}
+            />
+          </div>
+
+          <div className={styles.progressField}>
+            <label className={styles.progressLabel}>
+              Catatan Tindakan Lapangan <span style={{ color: '#ef4444' }}>*</span>
+            </label>
+            <textarea
+              className={styles.progressTextarea}
+              rows={4}
+              placeholder="Contoh: Pengecekan awal: freon stabil, relay kompresor aus. Sedang menunggu pengiriman part baru besok."
+              value={actionTaken}
+              onChange={(e) => setActionTaken(e.target.value)}
+              required
+            />
+            <span className={styles.progressHelper}>
+              Catatan ini langsung tersinkron real-time ke Dashboard Admin dan Portal Notifikasi Klien.
+            </span>
+          </div>
+
+          <div className={styles.progressCheckField}>
+            <label className={styles.progressCheckLabel}>
+              <input
+                type="checkbox"
+                checked={saveAsSubRow}
+                onChange={(e) => setSaveAsSubRow(e.target.checked)}
+                style={{ width: '16px', height: '16px', accentColor: '#2E5BFF' }}
+              />
+              <span>Catat sebagai riwayat hari baru (Multi-day visit history)</span>
+            </label>
+          </div>
+
+          <div className={styles.progressActions}>
+            <button
+              type="button"
+              className={styles.progressCancelBtn}
+              onClick={onClose}
+              disabled={loading}
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              className={styles.progressSubmitBtn}
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 size={16} className={styles.spin} />
+                  <span>Menyimpan...</span>
+                </>
+              ) : (
+                'Simpan & Perbarui Progres'
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

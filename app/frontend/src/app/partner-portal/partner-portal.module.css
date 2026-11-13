@@ -1,11 +1,11 @@
-/* ── Partner Portal — Dark Industrial Theme ── */
+/* ── Partner Portal — Crypto Wallet Mobile Theme (Clean Light Grey with Dark Island Cards) ── */
 .pageWrapper {
   min-height: 100vh;
-  background-color: #010412;
-  background-image:
-    radial-gradient(ellipse at 50% 0%, rgba(10, 40, 150, 0.4) 0%, transparent 60%),
-    radial-gradient(ellipse at 100% 100%, rgba(20, 80, 255, 0.2) 0%, transparent 50%);
-  color: #ffffff;
+  background-color: #f1f3f7;
+  background-image: 
+    radial-gradient(circle at 50% 0%, rgba(220, 230, 245, 0.8) 0%, transparent 50%),
+    radial-gradient(circle at 100% 100%, rgba(210, 225, 250, 0.5) 0%, transparent 60%);
+  color: #0f172a;
   font-family: var(--font-body);
 }
 
@@ -13,14 +13,15 @@
 .header {
   display: flex;
   flex-direction: column;
-  padding: 12px 16px 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(6, 13, 33, 0.95);
-  backdrop-filter: blur(12px);
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
   position: sticky;
   top: 0;
   z-index: 100;
   gap: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
 }
 
 /* Top row: brand icon+text + logout button */
@@ -41,7 +42,7 @@
 .brandRow {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
   flex: 1;
 }
@@ -54,22 +55,23 @@
 }
 
 .brandIcon {
-  width: 32px;
-  height: 32px;
-  background: var(--color-cobalt-blue, #2E5BFF);
-  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  background: #0f172a;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
 }
 
 .brandLabel {
   font-family: var(--font-heading);
-  font-size: 0.84rem;
+  font-size: 0.88rem;
   font-weight: 800;
-  letter-spacing: 0.02em;
-  color: #ffffff;
+  letter-spacing: -0.01em;
+  color: #0f172a;
   line-height: 1.25;
   white-space: nowrap;
   overflow: hidden;
@@ -89,33 +91,36 @@
 .profileChip {
   display: flex;
   align-items: center;
-  gap: 6px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 20px;
-  padding: 3px 8px 3px 4px;
+  gap: 8px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 9999px;
+  padding: 4px 10px 4px 5px;
   cursor: pointer;
-  transition: all 0.2s;
-  max-width: 140px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
 }
 
 .profileChip:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: #f8fafc;
+  border-color: rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
 }
 
 .profileAvatar {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #2E5BFF, #0a2eb5);
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--font-heading);
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 800;
   color: #ffffff;
   flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
 }
 
 .profileText {
@@ -128,9 +133,9 @@
 
 .profileName {
   font-family: var(--font-heading);
-  font-size: 0.74rem;
+  font-size: 0.78rem;
   font-weight: 700;
-  color: #ffffff;
+  color: #0f172a;
   line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
@@ -143,30 +148,29 @@
 
 @media (min-width: 640px) {
   .brandLabel {
-    font-size: 0.95rem;
+    font-size: 1rem;
   }
   .brandIcon {
-    width: 36px;
-    height: 36px;
-    border-radius: 9px;
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
   }
   .profileRole {
     display: block;
-    font-size: 0.6rem;
-    color: #8f9bb3;
+    font-size: 0.65rem;
+    color: #64748b;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
   .profileChip {
-    max-width: 170px;
-    padding: 4px 10px 4px 4px;
+    padding: 5px 12px 5px 6px;
   }
 }
 
 .dropdownIcon {
-  color: #8f9bb3;
-  margin-left: 4px;
+  color: #64748b;
+  margin-left: 2px;
   transition: transform 0.2s;
   flex-shrink: 0;
 }
@@ -179,33 +183,33 @@
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  background: #0d1529;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 6px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  padding: 8px;
   min-width: 220px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
   z-index: 101;
 }
 
 .dropdownHeader {
   padding: 10px 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   margin-bottom: 4px;
 }
 
 .dropdownFullName {
   font-family: var(--font-heading);
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   font-weight: 800;
-  color: #ffffff;
+  color: #0f172a;
   line-height: 1.3;
 }
 
 .dropdownFullRole {
-  font-size: 0.65rem;
-  color: #8f9bb3;
-  margin-top: 4px;
+  font-size: 0.68rem;
+  color: #64748b;
+  margin-top: 2px;
   line-height: 1.4;
 }
 
@@ -217,16 +221,30 @@
   padding: 10px 12px;
   background: transparent;
   border: none;
-  border-radius: 8px;
-  color: #FF6B00;
-  font-size: 0.8rem;
+  border-radius: 10px;
+  color: #dc2626;
+  font-size: 0.82rem;
   font-weight: 700;
   cursor: pointer;
   transition: background 0.2s;
 }
 
 .dropdownItem:hover {
-  background: rgba(255, 107, 0, 0.1);
+  background: rgba(220, 38, 38, 0.08);
+}
+
+/* Level Badge */
+.levelBadge {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #0284c7;
+  background: rgba(2, 132, 199, 0.08);
+  border: 1px solid rgba(2, 132, 199, 0.25);
+  padding: 3px 10px;
+  border-radius: 9999px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* Desktop: put badge inline in header top row */
@@ -260,51 +278,80 @@
   gap: 28px;
 }
 
-/* Quick Stats Section */
+/* Quick Stats Section — Sleek Capsule Island Widgets */
 .statsSection {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin-bottom: -8px;
+  gap: 12px;
+  margin-bottom: -4px;
 }
 
 .statCard {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  padding: 10px 12px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 18px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
 }
 
 .statCard:hover {
-  background: rgba(255, 255, 255, 0.07);
+  background: #ffffff;
   transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
 }
 
 .statCardAllActive {
-  background: rgba(46, 91, 255, 0.16) !important;
-  border-color: rgba(46, 91, 255, 0.5) !important;
-  box-shadow: 0 4px 18px rgba(46, 91, 255, 0.22);
+  background: #0f172a !important;
+  border-color: #0f172a !important;
+  color: #ffffff !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.25);
   transform: translateY(-2px);
+}
+
+.statCardAllActive .statValue {
+  color: #ffffff !important;
+}
+
+.statCardAllActive .statLabel {
+  color: #94a3b8 !important;
 }
 
 .statCardPendingActive {
-  background: rgba(255, 107, 0, 0.16) !important;
-  border-color: rgba(255, 107, 0, 0.5) !important;
-  box-shadow: 0 4px 18px rgba(255, 107, 0, 0.22);
+  background: #0f172a !important;
+  border-color: #0f172a !important;
+  color: #ffffff !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.25);
   transform: translateY(-2px);
 }
 
+.statCardPendingActive .statValue {
+  color: #ffffff !important;
+}
+
+.statCardPendingActive .statLabel {
+  color: #38bdf8 !important;
+}
+
 .statCardCompletedActive {
-  background: rgba(0, 214, 143, 0.16) !important;
-  border-color: rgba(0, 214, 143, 0.5) !important;
-  box-shadow: 0 4px 18px rgba(0, 214, 143, 0.22);
+  background: #0f172a !important;
+  border-color: #0f172a !important;
+  color: #ffffff !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.25);
   transform: translateY(-2px);
+}
+
+.statCardCompletedActive .statValue {
+  color: #ffffff !important;
+}
+
+.statCardCompletedActive .statLabel {
+  color: #34d399 !important;
 }
 
 .statHeader {
@@ -314,9 +361,9 @@
 }
 
 .statIcon {
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -325,35 +372,35 @@
 
 .statValue {
   font-family: var(--font-heading);
-  font-size: 1.15rem;
+  font-size: 1.25rem;
   font-weight: 800;
-  color: #ffffff;
+  color: #0f172a;
   line-height: 1;
 }
 
 .statLabel {
-  font-size: 0.65rem;
-  color: #8f9bb3;
+  font-size: 0.68rem;
+  color: #64748b;
   margin-top: 2px;
-  font-weight: 500;
+  font-weight: 600;
   white-space: nowrap;
 }
 
 /* Section Label */
 .sectionLabel {
   font-family: var(--font-heading);
-  font-size: 0.72rem;
+  font-size: 0.76rem;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: #8f9bb3;
-  margin-bottom: 14px;
+  letter-spacing: 0.08em;
+  color: #64748b;
+  margin-bottom: 12px;
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-/* Scan Section */
+/* Scan Section — Modern Floating Curved Action Box */
 .scanSection {
   display: flex;
   flex-direction: column;
@@ -361,10 +408,10 @@
 
 .scanBtn {
   width: 100%;
-  min-height: 88px;
-  background: linear-gradient(135deg, rgba(46, 91, 255, 0.15) 0%, rgba(10, 46, 181, 0.2) 100%);
-  border: 2px solid rgba(46, 91, 255, 0.4);
-  border-radius: 16px;
+  min-height: 92px;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
   color: #ffffff;
   display: flex;
   flex-direction: column;
@@ -374,23 +421,23 @@
   cursor: pointer;
   transition: all 0.25s ease;
   font-family: var(--font-heading);
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 800;
-  letter-spacing: 0.04em;
-  padding: 20px;
+  letter-spacing: 0.02em;
+  padding: 22px;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
 }
 
 .scanBtn:hover, .scanBtn:active {
-  background: linear-gradient(135deg, rgba(46, 91, 255, 0.3) 0%, rgba(10, 46, 181, 0.35) 100%);
-  border-color: rgba(46, 91, 255, 0.7);
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(46, 91, 255, 0.25);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.22);
 }
 
 .scanBtnSub {
   font-size: 0.78rem;
   font-weight: 500;
-  color: #8f9bb3;
+  color: #94a3b8;
   font-family: var(--font-body);
   letter-spacing: 0;
 }
@@ -400,15 +447,16 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  margin: 20px 0;
-  font-size: 0.8rem;
-  color: #8f9bb3;
+  margin: 18px 0;
+  font-size: 0.78rem;
+  color: #94a3b8;
+  font-weight: 500;
 }
 
 .orLine {
   flex: 1;
   height: 1px;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.08);
 }
 
 /* Search Row */
@@ -419,32 +467,33 @@
 
 .searchInput {
   flex: 1;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 14px;
   padding: 12px 16px;
-  color: #ffffff;
-  font-size: 0.95rem;
+  color: #0f172a;
+  font-size: 0.92rem;
   font-family: var(--font-body);
   outline: none;
-  transition: border-color 0.2s;
+  transition: all 0.2s;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
 }
 
 .searchInput::placeholder {
-  color: #64748b;
+  color: #94a3b8;
 }
 
 .searchInput:focus {
-  border-color: rgba(46, 91, 255, 0.5);
-  background: rgba(255, 255, 255, 0.08);
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
 .searchBtn {
   width: 48px;
   height: 48px;
-  background: var(--color-cobalt-blue, #2E5BFF);
+  background: #0f172a;
   border: none;
-  border-radius: 10px;
+  border-radius: 14px;
   color: #ffffff;
   display: flex;
   align-items: center;
@@ -452,10 +501,12 @@
   cursor: pointer;
   transition: all 0.2s;
   flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
 }
 
 .searchBtn:hover {
-  background: #1e47e6;
+  background: #1e293b;
+  transform: translateY(-1px);
 }
 
 .searchBtn:disabled {
@@ -527,23 +578,25 @@
   gap: 12px;
 }
 
-/* Ticket Card */
+/* Ticket Card — Floating Dark Island Card (Crypto Wallet Style) */
 .ticketCard {
-  background: linear-gradient(180deg, rgba(6, 13, 33, 0.85) 0%, rgba(4, 8, 20, 0.95) 100%);
+  background: #0f172a;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  padding: 16px;
+  border-radius: 24px;
+  padding: 20px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
+  color: #ffffff;
 }
 
 .ticketCard:hover {
-  border-color: rgba(46, 91, 255, 0.3);
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.25);
+  border-color: rgba(56, 189, 248, 0.3);
 }
 
 .ticketHeader {
@@ -554,23 +607,34 @@
 
 .callIdBadge {
   font-family: monospace;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 700;
-  color: #8bb2ff;
-  background: rgba(46, 91, 255, 0.1);
-  padding: 3px 8px;
-  border-radius: 6px;
-  border: 1px solid rgba(46, 91, 255, 0.2);
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(56, 189, 248, 0.25);
 }
 
 .pendingBadge {
-  font-size: 0.68rem;
+  font-size: 0.7rem;
   font-weight: 800;
-  color: #FF6B00;
-  background: rgba(255, 107, 0, 0.12);
-  padding: 3px 8px;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 107, 0, 0.25);
+  color: #fb923c;
+  background: rgba(251, 146, 60, 0.15);
+  padding: 4px 10px;
+  border-radius: 9999px;
+  border: 1px solid rgba(251, 146, 60, 0.3);
+  letter-spacing: 0.04em;
+}
+
+.inProgressBadge {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.18);
+  padding: 4px 10px;
+  border-radius: 9999px;
+  border: 1px solid rgba(56, 189, 248, 0.4);
   letter-spacing: 0.04em;
 }
 
@@ -582,20 +646,20 @@
 
 .unitModel {
   font-family: var(--font-heading);
-  font-size: 0.95rem;
+  font-size: 1.05rem;
   font-weight: 800;
   color: #ffffff;
 }
 
 .unitSn {
-  font-size: 0.75rem;
-  color: #8f9bb3;
+  font-size: 0.76rem;
+  color: #94a3b8;
   font-family: monospace;
 }
 
 .issueText {
-  font-size: 0.82rem;
-  color: #94a3b8;
+  font-size: 0.85rem;
+  color: #cbd5e1;
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -604,103 +668,72 @@
   overflow: hidden;
 }
 
-.ticketFooter {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+/* Multi-Day Dates Row */
+.ticketDatesRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.ticketDate {
-  font-size: 0.75rem;
-  color: #64748b;
-  margin-bottom: 4px;
-}
-
-/* Action buttons container */
-.ticketActions {
+.ticketDateItem {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  width: 100%;
+  gap: 2px;
 }
 
-.openUnitBtn {
+.ticketDateLabel {
+  font-size: 0.65rem;
+  color: #94a3b8;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ticketDateVal {
+  font-size: 0.78rem;
+  color: #f1f5f9;
+  font-weight: 700;
+}
+
+.ticketDateSched {
+  color: #38bdf8;
+}
+
+/* Latest Progress Summary */
+.ticketProgressSummary {
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 12px;
+  padding: 8px 12px;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ticketProgressLabel {
+  font-size: 0.65rem;
+  color: #38bdf8;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.ticketProgressText {
   font-size: 0.8rem;
-  font-weight: 700;
-  color: #8bb2ff;
-  background: none;
-  border: 1px solid rgba(139, 178, 255, 0.2);
-  border-radius: 8px;
-  padding: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-  width: 100%;
+  color: #e2e8f0;
+  line-height: 1.4;
 }
 
-.openUnitBtn:hover {
-  background: rgba(139, 178, 255, 0.08);
-}
-
-/* Level Badge */
-.levelBadge {
-  font-size: 0.55rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: #00d68f;
-  background: rgba(0, 214, 143, 0.1);
-  border: 1px solid rgba(0, 214, 143, 0.3);
-  padding: 4px 10px;
-  border-radius: 20px;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-/* Ticket action buttons & meta */
+/* Ticket Action Buttons (Pills) */
 .ticketFooter {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding-top: 12px;
+  gap: 10px;
+  padding-top: 10px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.ticketFooterMeta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.ticketDate {
-  font-size: 0.75rem;
-  color: #8f9bb3;
-}
-
-.openUnitLink {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: rgba(46, 91, 255, 0.1);
-  border: 1px solid rgba(46, 91, 255, 0.25);
-  border-radius: 6px;
-  color: #8bb2ff;
-  font-size: 0.75rem;
-  font-weight: 700;
-  padding: 4px 10px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.openUnitLink:hover {
-  background: rgba(46, 91, 255, 0.2);
-  color: #ffffff;
-  border-color: rgba(46, 91, 255, 0.5);
 }
 
 .ticketActionGroup {
@@ -717,13 +750,37 @@
   }
 }
 
+.updateProgressBtn {
+  width: 100%;
+  padding: 12px 14px;
+  background: #2563eb;
+  border: none;
+  border-radius: 9999px;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.updateProgressBtn:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+}
+
 .noteBtn {
   width: 100%;
-  padding: 10px 14px;
-  background: rgba(46, 91, 255, 0.12);
-  border: 1px solid rgba(46, 91, 255, 0.35);
-  border-radius: 10px;
-  color: #8bb2ff;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+  color: #ffffff;
   font-weight: 700;
   font-size: 0.82rem;
   cursor: pointer;
@@ -735,33 +792,33 @@
 }
 
 .noteBtn:hover {
-  background: rgba(46, 91, 255, 0.22);
+  background: rgba(255, 255, 255, 0.15);
   color: #ffffff;
-  border-color: rgba(46, 91, 255, 0.6);
 }
 
 .closeBtn {
   width: 100%;
-  padding: 10px 14px;
-  background: linear-gradient(135deg, #FF6B00 0%, #E05300 100%);
+  padding: 12px 14px;
+  background: #ffffff;
   border: none;
-  border-radius: 10px;
-  color: #ffffff;
+  border-radius: 9999px;
+  color: #0f172a;
   font-weight: 800;
   font-size: 0.82rem;
   cursor: pointer;
-  transition: all 0.2s;
-  letter-spacing: 0.02em;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  letter-spacing: 0.01em;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-  box-shadow: 0 4px 14px rgba(255, 107, 0, 0.25);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
 }
 
 .closeBtn:hover {
+  background: #f1f5f9;
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(255, 107, 0, 0.4);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -788,11 +845,12 @@
   gap: 6px;
   font-size: 0.75rem;
   font-weight: 700;
-  color: #8f9bb3;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 3px 10px;
-  border-radius: 20px;
+  color: #64748b;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 4px 12px;
+  border-radius: 9999px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
 }
 
 .ticketSliderNav {
@@ -804,20 +862,22 @@
 .ticketSliderNavBtn {
   width: 34px;
   height: 34px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #ffffff;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  color: #0f172a;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
 }
 
 .ticketSliderNavBtn:hover:not(:disabled) {
-  background: rgba(46, 91, 255, 0.25);
-  border-color: rgba(46, 91, 255, 0.6);
+  background: #0f172a;
+  color: #ffffff;
+  border-color: #0f172a;
   transform: translateY(-1px);
 }
 
@@ -1888,4 +1948,271 @@
 .docCloseBtn:hover {
   background: rgba(255, 255, 255, 0.15);
   color: #ffffff;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   PROGRESS MODAL (Multi-day visit & intermediate progress)
+   ───────────────────────────────────────────────────────────── */
+.progressModalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.progressModal {
+  background: #ffffff;
+  border-radius: 28px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  color: #0f172a;
+}
+
+.progressModalHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.progressModalBadge {
+  font-family: monospace;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #2563eb;
+  background: rgba(37, 99, 235, 0.08);
+  padding: 3px 8px;
+  border-radius: 6px;
+  display: inline-block;
+  margin-bottom: 4px;
+}
+
+.progressModalTitle {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+.progressModalClose {
+  background: #f1f5f9;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.progressModalClose:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.progressModalBody {
+  padding: 20px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.progressUnitBox {
+  background: #f8fafc;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 16px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.progressUnitName {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: #0f172a;
+}
+
+.progressUnitSn {
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.progressIssueText {
+  font-size: 0.8rem;
+  color: #475569;
+  margin-top: 4px;
+}
+
+.progressField {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.progressLabel {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.statusPills {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.statusPill {
+  padding: 10px 12px;
+  background: #f8fafc;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.statusPill:hover {
+  background: #f1f5f9;
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+.statusPillActive {
+  background: #0f172a !important;
+  border-color: #0f172a !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+}
+
+.progressInput {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 0.9rem;
+  font-family: var(--font-body);
+  color: #0f172a;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.progressInput:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.progressTextarea {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-size: 0.9rem;
+  font-family: var(--font-body);
+  color: #0f172a;
+  outline: none;
+  resize: vertical;
+  line-height: 1.5;
+  transition: all 0.2s;
+}
+
+.progressTextarea:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.progressHelper {
+  font-size: 0.72rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.progressCheckField {
+  background: #f8fafc;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
+  padding: 10px 14px;
+}
+
+.progressCheckLabel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  user-select: none;
+}
+
+.progressActions {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.progressCancelBtn {
+  padding: 12px;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 9999px;
+  color: #64748b;
+  font-weight: 700;
+  font-size: 0.86rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.progressCancelBtn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.progressSubmitBtn {
+  padding: 12px;
+  background: #0f172a;
+  border: none;
+  border-radius: 9999px;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.86rem;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.2);
+}
+
+.progressSubmitBtn:hover:not(:disabled) {
+  background: #1e293b;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.3);
+}
+
+.progressSubmitBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }

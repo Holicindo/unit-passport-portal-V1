@@ -48,7 +48,12 @@ export class ServiceLogsService {
       scheduled_date: logData.scheduled_date ? new Date(logData.scheduled_date) : undefined,
       delivery_date: logData.delivery_date ? new Date(logData.delivery_date) : undefined,
     });
-    return this.logRepo.save(log);
+    const saved = await this.logRepo.save(log);
+
+    // Kirim notifikasi lonceng ke Klien jika ada progress/status baru
+    await this.notifyClientServiceUpdate(saved.id, saved.status, saved.technician_name, saved.scheduled_date, saved.action_taken);
+
+    return saved;
   }
 
   async findByUnit(unitId: string) {
@@ -107,12 +112,12 @@ export class ServiceLogsService {
     const saved = await this.logRepo.save(log);
 
     // Kirim notifikasi lonceng ke akun Klien yang memiliki unit ini
-    await this.notifyClientServiceUpdate(saved.id, saved.status, saved.technician_name, saved.scheduled_date);
+    await this.notifyClientServiceUpdate(saved.id, saved.status, saved.technician_name, saved.scheduled_date, saved.action_taken);
 
     return saved;
   }
 
-  private async notifyClientServiceUpdate(logId: string, status: string, techName?: string, schedDate?: Date | null) {
+  private async notifyClientServiceUpdate(logId: string, status: string, techName?: string, schedDate?: Date | null, actionTaken?: string) {
     try {
       const fullLog = await this.logRepo.findOne({
         where: { id: logId },
@@ -148,9 +153,15 @@ export class ServiceLogsService {
       if (schedStr) {
         content += ` Rencana kunjungan: ${schedStr}.`;
       }
+      if (actionTaken && actionTaken.trim()) {
+        content += ` Catatan teknisi: "${actionTaken.trim()}".`;
+      }
       if (status === 'COMPLETED') {
         title = 'Servis Selesai';
         content = `Pengerjaan servis unit ${sn} (${model}) telah selesai. Laporan servis telah tercatat di sistem Holicindo.`;
+        if (actionTaken && actionTaken.trim()) {
+          content += ` Ringkasan tindakan: "${actionTaken.trim()}".`;
+        }
       }
 
       for (const cu of clientUsers) {

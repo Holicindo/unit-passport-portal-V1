@@ -10,7 +10,7 @@ import {
 import dynamic from 'next/dynamic';
 import styles from './partner-portal.module.css';
 import { 
-  TicketCard, CompletedTicketCard, TicketSlider, NoteModal, ConfirmCloseModal,
+  TicketCard, CompletedTicketCard, TicketSlider, NoteModal, ConfirmCloseModal, ProgressModal,
   Ticket 
 } from './components/TicketComponents';
 
@@ -32,6 +32,11 @@ export default function PartnerPortalPage() {
   const [noteModalOpen, setNoteModalOpen] = useState(false);
   const [noteText, setNoteText] = useState('');
   const [selectedUnit, setSelectedUnit] = useState<any>(null);
+
+  // Progress Update Modal (Multi-day visit / intermediate actions)
+  const [progressModalOpen, setProgressModalOpen] = useState(false);
+  const [ticketToProgress, setTicketToProgress] = useState<Ticket | null>(null);
+  const [progressLoading, setProgressLoading] = useState(false);
 
   // Confirmation Modal (Yakin udah selesai? Belum / Udah)
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -62,20 +67,42 @@ export default function PartnerPortalPage() {
         const all: any[] = res.data?.data ?? res.data ?? [];
         
         // Filter tickets for this technician / partner
-        const minePending = all.filter((log: any) => {
-          if (log.status !== 'PENDING') return false;
-          if (user.partner_id) {
-            return log.partner?.id === user.partner_id || log.technician_name === user.name;
+        const isMatchTechnician = (log: any) => {
+          if (!user) return false;
+          // Match by technician_name (case-insensitive substring, handles comma-separated list like "Abi, Budi")
+          if (log.technician_name && user.name) {
+            const assignedTechs = log.technician_name.toLowerCase().split(',').map((s: string) => s.trim());
+            const myName = user.name.toLowerCase().trim();
+            if (assignedTechs.some((t: string) => t.includes(myName) || myName.includes(t))) {
+              return true;
+            }
           }
-          return !log.partner || log.technician_name === user.name || log.partner?.id;
+          // Match by partner_id if user belongs to partner
+          if (user.partner_id && log.partner?.id === user.partner_id) {
+            return true;
+          }
+          // If unassigned or generic partner
+          if (!log.technician_name || log.technician_name.toLowerCase().includes('pending') || log.technician_name.toLowerCase().includes('alokasi')) {
+            if (user.partner_id && log.partner?.id === user.partner_id) return true;
+            if (!user.partner_id) return true;
+          }
+          return false;
+        };
+
+        const isPendingOrInProgress = (status: string) => {
+          const s = (status || '').toUpperCase().trim();
+          return s === 'PENDING' || s === 'IN PROGRESS' || s === 'IN_PROGRESS' || s === 'SCHEDULED' || s === 'PROSES';
+        };
+
+        const minePending = all.filter((log: any) => {
+          if (!isPendingOrInProgress(log.status)) return false;
+          return isMatchTechnician(log);
         });
 
         const mineCompleted = all.filter((log: any) => {
-          if (log.status !== 'COMPLETED') return false;
-          if (user.partner_id) {
-            return log.partner?.id === user.partner_id || log.technician_name === user.name;
-          }
-          return true;
+          const s = (log.status || '').toUpperCase().trim();
+          if (s !== 'COMPLETED' && s !== 'SELESAI' && s !== 'DONE') return false;
+          return isMatchTechnician(log);
         });
 
         setStats({
@@ -131,6 +158,70 @@ export default function PartnerPortalPage() {
     setSelectedUnit(log.unit ?? null);
     setNoteText(log.action_taken || '');
     setNoteModalOpen(true);
+  };
+
+  // Open progress update modal
+  const handleOpenProgressModal = (log: Ticket) => {
+    setTicketToProgress(log);
+    setProgressModalOpen(true);
+  };
+
+  // Submit progress update (Updates existing ticket OR adds multi-day sub-row)
+  const handleSaveProgress = async (data: {
+    status: string;
+    actionTaken: string;
+    scheduledDate?: string;
+    createSubRow?: boolean;
+  }) => {
+    if (!ticketToProgress) return;
+    setProgressLoading(true);
+    try {
+      if (data.createSubRow && !ticketToProgress.id.startsWith('MOCK-')) {
+        // Create new progress record sharing the same call_id so history shows multi-day visits
+        await serviceLogApi.create({
+          unitId: ticketToProgress.unit?.id,
+          call_id: ticketToProgress.call_id || ticketToProgress.id,
+          issue_description: ticketToProgress.issue_description,
+          action_taken: data.actionTaken,
+          technician_name: ticketToProgress.technician_name || user?.name || undefined,
+          service_date: data.scheduledDate ? new Date(data.scheduledDate) : new Date(),
+          scheduled_date: data.scheduledDate ? new Date(data.scheduledDate) : undefined,
+          status: data.status,
+          task_type: 'CORRECTIVE',
+        });
+      }
+
+      // Also update the main ticket's current active status and latest action
+      if (!ticketToProgress.id.startsWith('MOCK-')) {
+        await serviceLogApi.update(ticketToProgress.id, {
+          status: data.status,
+          action_taken: data.actionTaken,
+          scheduled_date: data.scheduledDate ? new Date(data.scheduledDate) : undefined,
+        });
+      }
+
+      // Update state locally
+      setPendingTickets((prev) =>
+        prev.map((t) =>
+          t.id === ticketToProgress.id
+            ? {
+                ...t,
+                status: data.status,
+                action_taken: data.actionTaken,
+                scheduled_date: data.scheduledDate || t.scheduled_date,
+              }
+            : t
+        )
+      );
+
+      setProgressModalOpen(false);
+      setTicketToProgress(null);
+    } catch (err) {
+      console.error('Failed to update progress:', err);
+      alert('Gagal memperbarui progres servis. Silakan coba kembali.');
+    } finally {
+      setProgressLoading(false);
+    }
   };
 
   // Step 1: Initiate close ticket -> trigger confirmation modal
@@ -367,6 +458,7 @@ export default function PartnerPortalPage() {
               tickets={displayedTickets}
               onCloseTicket={(l) => handleInitiateClose(l)}
               onOpenNote={(l) => openNoteModal(l)}
+              onUpdateProgress={(l) => handleOpenProgressModal(l)}
             />
           )}
         </section>
@@ -374,6 +466,18 @@ export default function PartnerPortalPage() {
 
       {/* QR Scanner Modal */}
       <QrScannerModal isOpen={showScanner} onClose={() => setShowScanner(false)} />
+
+      {/* Modal for updating progress (Multi-day visit / intermediate actions) */}
+      <ProgressModal
+        isOpen={progressModalOpen}
+        ticket={ticketToProgress}
+        onClose={() => {
+          setProgressModalOpen(false);
+          setTicketToProgress(null);
+        }}
+        onSaveProgress={handleSaveProgress}
+        loading={progressLoading}
+      />
 
       {/* Modal for adding service note */}
       {noteModalOpen && (
