@@ -2020,15 +2020,36 @@
     gap: 16px;
   }
 
+  /* Desktop Header Row - ensure greeting appears first */
+  .desktopHeaderRow {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+    order: 1;
+  }
+
   .pageHeader {
     order: 1;
     margin-bottom: 0;
+  }
+
+  .desktopHeaderActions {
+    order: 2;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .desktopPillBtn {
+    font-size: 0.75rem;
+    padding: 7px 14px;
   }
 
   /* Mobile: 3 stat cards lebih compact */
   .threeStatsRow {
     grid-template-columns: repeat(3, 1fr);
     gap: 10px;
+    order: 3;
   }
 
   .miniStatCard {
