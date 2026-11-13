@@ -2036,13 +2036,16 @@
 
   .desktopHeaderActions {
     order: 2;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: 8px;
   }
 
   .desktopPillBtn {
-    font-size: 0.75rem;
-    padding: 7px 14px;
+    font-size: 0.72rem;
+    padding: 8px 10px;
+    white-space: nowrap;
+    justify-content: center;
   }
 
   /* Mobile: 3 stat cards lebih compact */
