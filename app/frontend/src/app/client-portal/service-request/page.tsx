@@ -1,14 +1,39 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { unitApi } from '@/lib/api';
 import {
   ArrowLeft, Calendar, Package, Wrench, CheckCircle2,
-  MapPin, Phone, User, ChevronDown,
+  MapPin, Phone, User, ChevronDown, Search, X,
 } from 'lucide-react';
 import styles from '../ClientPortal.module.css';
 import srStyles from './service-request.module.css';
+
+// Data provinsi dan kota Indonesia (major cities)
+const CITIES_BY_PROVINCE = {
+  'DKI Jakarta': ['Jakarta Pusat', 'Jakarta Utara', 'Jakarta Selatan', 'Jakarta Timur', 'Jakarta Barat'],
+  'Jawa Barat': ['Bandung', 'Bekasi', 'Bogor', 'Cirebon', 'Depok', 'Sukabumi', 'Tasikmalaya', 'Karawang'],
+  'Jawa Tengah': ['Semarang', 'Solo', 'Magelang', 'Purwokerto', 'Pekalongan', 'Tegal', 'Salatiga'],
+  'Jawa Timur': ['Surabaya', 'Malang', 'Sidoarjo', 'Gresik', 'Mojokerto', 'Pasuruan', 'Probolinggo', 'Kediri', 'Blitar', 'Madiun', 'Banyuwangi'],
+  'DI Yogyakarta': ['Yogyakarta', 'Sleman', 'Bantul'],
+  'Banten': ['Tangerang', 'Tangerang Selatan', 'Serang', 'Cilegon'],
+  'Bali': ['Denpasar', 'Badung', 'Gianyar', 'Tabanan'],
+  'Sumatera Utara': ['Medan', 'Binjai', 'Pematang Siantar', 'Tebing Tinggi'],
+  'Sumatera Barat': ['Padang', 'Bukittinggi', 'Payakumbuh'],
+  'Sumatera Selatan': ['Palembang', 'Lubuklinggau', 'Prabumulih'],
+  'Riau': ['Pekanbaru', 'Dumai'],
+  'Kepulauan Riau': ['Batam', 'Tanjung Pinang', 'Bintan'],
+  'Lampung': ['Bandar Lampung', 'Metro'],
+  'Kalimantan Barat': ['Pontianak', 'Singkawang'],
+  'Kalimantan Timur': ['Balikpapan', 'Samarinda', 'Bontang'],
+  'Kalimantan Selatan': ['Banjarmasin', 'Banjarbaru'],
+  'Sulawesi Selatan': ['Makassar', 'Parepare', 'Palopo'],
+  'Sulawesi Utara': ['Manado', 'Bitung', 'Tomohon'],
+  'Papua': ['Jayapura'],
+  'Nusa Tenggara Barat': ['Mataram', 'Lombok'],
+  'Nusa Tenggara Timur': ['Kupang'],
+};
 
 export default function ServiceRequestPage() {
   const router = useRouter();
@@ -21,14 +46,81 @@ export default function ServiceRequestPage() {
   const [success, setSuccess] = useState(false);
   const [error, setError]     = useState('');
 
+  // Modal states
+  const [showUnitModal, setShowUnitModal] = useState(false);
+  const [showProvinceModal, setShowProvinceModal] = useState(false);
+  const [showCityModal, setShowCityModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
   const [form, setForm] = useState({
     unit_id: initialUnitId,
+    province: '',
     city: '',
     contact_name: '',
     contact_phone: '',
     notes: '',
     preferred_date: '',
   });
+
+  // Cities filtered by selected province
+  const availableCities = form.province ? CITIES_BY_PROVINCE[form.province as keyof typeof CITIES_BY_PROVINCE] || [] : [];
+
+  // Filtered lists based on search
+  const filteredUnits = useMemo(() => {
+    if (!searchQuery) return fleet;
+    const q = searchQuery.toLowerCase();
+    return fleet.filter(u => 
+      u.serial_number?.toLowerCase().includes(q) ||
+      u.model_name?.toLowerCase().includes(q) ||
+      u.current_client?.city?.toLowerCase().includes(q) ||
+      u.specs?.city?.toLowerCase().includes(q)
+    );
+  }, [fleet, searchQuery]);
+
+  const filteredProvinces = useMemo(() => {
+    if (!searchQuery) return Object.keys(CITIES_BY_PROVINCE);
+    const q = searchQuery.toLowerCase();
+    return Object.keys(CITIES_BY_PROVINCE).filter(prov => prov.toLowerCase().includes(q));
+  }, [searchQuery]);
+
+  const filteredCities = useMemo(() => {
+    if (!searchQuery) return availableCities;
+    const q = searchQuery.toLowerCase();
+    return availableCities.filter(city => city.toLowerCase().includes(q));
+  }, [availableCities, searchQuery]);
+
+  // Handlers
+  const handleSelectUnit = (unitId: string) => {
+    handleUnitChange(unitId);
+    setShowUnitModal(false);
+    setSearchQuery('');
+  };
+
+  const handleSelectProvince = (province: string) => {
+    setForm(f => ({ ...f, province, city: '' }));
+    setShowProvinceModal(false);
+    setSearchQuery('');
+  };
+
+  const handleSelectCity = (city: string) => {
+    setForm(f => ({ ...f, city }));
+    setShowCityModal(false);
+    setSearchQuery('');
+  };
+
+  const openModal = (type: 'unit' | 'province' | 'city') => {
+    setSearchQuery('');
+    if (type === 'unit') setShowUnitModal(true);
+    else if (type === 'province') setShowProvinceModal(true);
+    else if (type === 'city') setShowCityModal(true);
+  };
+
+  const closeAllModals = () => {
+    setShowUnitModal(false);
+    setShowProvinceModal(false);
+    setShowCityModal(false);
+    setSearchQuery('');
+  };
 
   // Ambil fleet untuk dropdown pilih unit
   useEffect(() => {
@@ -39,10 +131,26 @@ export default function ServiceRequestPage() {
         if (initialUnitId) {
           const matched = units.find((u: any) => u.id === initialUnitId);
           if (matched) {
+            const cityFromUnit = matched.current_client?.city || matched.specs?.city || '';
+            
+            // Try to match city to province
+            let matchedProvince = '';
+            let matchedCity = cityFromUnit;
+            
+            if (cityFromUnit) {
+              for (const [province, cities] of Object.entries(CITIES_BY_PROVINCE)) {
+                if (cities.includes(cityFromUnit)) {
+                  matchedProvince = province;
+                  break;
+                }
+              }
+            }
+            
             setForm(f => ({
               ...f,
               unit_id: initialUnitId,
-              city: matched.current_client?.city || matched.specs?.city || f.city,
+              province: matchedProvince,
+              city: matchedCity,
             }));
           }
         }
@@ -54,10 +162,27 @@ export default function ServiceRequestPage() {
   // Auto-fill kota dari unit yang dipilih
   const handleUnitChange = (unitId: string) => {
     const unit = fleet.find(u => u.id === unitId);
+    const cityFromUnit = unit?.current_client?.city || unit?.specs?.city || '';
+    
+    // Try to match city to province
+    let matchedProvince = '';
+    let matchedCity = cityFromUnit;
+    
+    if (cityFromUnit) {
+      // Check if city exists in our database
+      for (const [province, cities] of Object.entries(CITIES_BY_PROVINCE)) {
+        if (cities.includes(cityFromUnit)) {
+          matchedProvince = province;
+          break;
+        }
+      }
+    }
+    
     setForm(f => ({
       ...f,
       unit_id: unitId,
-      city: unit?.current_client?.city || unit?.specs?.city || f.city,
+      province: matchedProvince,
+      city: matchedCity,
     }));
   };
 
@@ -111,7 +236,7 @@ export default function ServiceRequestPage() {
               className={styles.btnSecondary}
               onClick={() => {
                 setSuccess(false);
-                setForm({ unit_id: '', city: '', contact_name: '', contact_phone: '', notes: '', preferred_date: '' });
+                setForm({ unit_id: '', province: '', city: '', contact_name: '', contact_phone: '', notes: '', preferred_date: '' });
               }}
             >
               Buat Permintaan Baru
@@ -151,22 +276,17 @@ export default function ServiceRequestPage() {
               {loading ? (
                 <div className={styles.skeleton} style={{ height: 48, borderRadius: 12 }} />
               ) : (
-                <div className={srStyles.selectWrap}>
-                  <select
-                    className={srStyles.select}
-                    value={form.unit_id}
-                    onChange={e => handleUnitChange(e.target.value)}
-                    required
-                  >
-                    <option value="">-- Pilih unit yang ingin diservis --</option>
-                    {fleet.map(u => (
-                      <option key={u.id} value={u.id}>
-                        {u.serial_number} — {u.model_name || 'Model TBA'} ({u.current_client?.city || u.specs?.city || 'Lokasi TBA'})
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown size={15} className={srStyles.selectIcon} />
-                </div>
+                <button
+                  type="button"
+                  className={srStyles.selectButton}
+                  onClick={() => openModal('unit')}
+                >
+                  <Package size={16} className={srStyles.selectButtonIcon} />
+                  <span className={srStyles.selectButtonText}>
+                    {selectedUnit ? `${selectedUnit.serial_number} • ${selectedUnit.model_name}` : 'Pilih unit yang ingin diservis'}
+                  </span>
+                  <ChevronDown size={14} className={srStyles.selectButtonChevron} />
+                </button>
               )}
 
               {/* Preview unit yang dipilih */}
@@ -218,15 +338,39 @@ export default function ServiceRequestPage() {
                   />
                 </div>
                 <div className={srStyles.formGroup}>
+                  <label className={srStyles.label}>Provinsi *</label>
+                  <button
+                    type="button"
+                    className={srStyles.selectButton}
+                    onClick={() => openModal('province')}
+                  >
+                    <MapPin size={16} className={srStyles.selectButtonIcon} />
+                    <span className={srStyles.selectButtonText}>
+                      {form.province || 'Pilih provinsi lokasi unit'}
+                    </span>
+                    <ChevronDown size={14} className={srStyles.selectButtonChevron} />
+                  </button>
+                  {!form.province && (
+                    <div className={srStyles.formHint}>Pilih provinsi dimana unit berada</div>
+                  )}
+                </div>
+                <div className={srStyles.formGroup}>
                   <label className={srStyles.label}>Kota *</label>
-                  <input
-                    className={srStyles.input}
-                    type="text"
-                    placeholder="Kota lokasi unit"
-                    value={form.city}
-                    onChange={e => setForm(f => ({ ...f, city: e.target.value }))}
-                    required
-                  />
+                  <button
+                    type="button"
+                    className={srStyles.selectButton}
+                    onClick={() => form.province && openModal('city')}
+                    disabled={!form.province}
+                  >
+                    <MapPin size={16} className={srStyles.selectButtonIcon} />
+                    <span className={srStyles.selectButtonText}>
+                      {form.city || (form.province ? 'Pilih kota' : 'Pilih provinsi terlebih dahulu')}
+                    </span>
+                    <ChevronDown size={14} className={srStyles.selectButtonChevron} />
+                  </button>
+                  {!form.province && (
+                    <div className={srStyles.formHint}>Kota akan muncul setelah memilih provinsi</div>
+                  )}
                 </div>
                 <div className={srStyles.formGroup}>
                   <label className={srStyles.label}>Tanggal Diinginkan</label>
@@ -283,35 +427,183 @@ export default function ServiceRequestPage() {
         <div className={srStyles.infoPanel}>
           <div className={srStyles.infoCard}>
             <div className={srStyles.infoCardIcon}>
-              <Calendar size={22} color="var(--brand-cobalt-blue)" />
+              <Calendar size={22} />
             </div>
-            <h3 className={srStyles.infoCardTitle}>Proses Permintaan</h3>
-            <ol className={srStyles.infoSteps}>
-              <li>Isi form dan kirim permintaan</li>
-              <li>Tim Holicindo akan menghubungi Anda dalam 1×24 jam</li>
-              <li>Konfirmasi jadwal bersama tim</li>
-              <li>Teknisi dikirim ke lokasi unit</li>
-            </ol>
+            <div className={srStyles.infoCardContent}>
+              <h3 className={srStyles.infoCardTitle}>Proses Permintaan</h3>
+              <ol className={srStyles.infoSteps}>
+                <li>Isi form dan kirim permintaan</li>
+                <li>Tim Holicindo akan menghubungi Anda dalam 1×24 jam</li>
+                <li>Konfirmasi jadwal bersama tim</li>
+                <li>Teknisi dikirim ke lokasi unit</li>
+              </ol>
+            </div>
           </div>
 
           <div className={srStyles.infoCard}>
             <div className={srStyles.infoCardIcon}>
-              <Phone size={22} color="var(--brand-cobalt-blue)" />
+              <Phone size={22} />
             </div>
-            <h3 className={srStyles.infoCardTitle}>Butuh Bantuan Segera?</h3>
-            <p className={srStyles.infoCardDesc}>
-              Untuk kerusakan mendesak, gunakan fitur chat langsung dengan tim Holicindo.
-            </p>
-            <button
-              className={styles.btnSecondary}
-              style={{ width: '100%', justifyContent: 'center', marginTop: 8 }}
-              onClick={() => router.push('/client-portal/messages')}
-            >
-              <Phone size={14} /> Hubungi via Chat
-            </button>
+            <div className={srStyles.infoCardContent}>
+              <h3 className={srStyles.infoCardTitle}>Butuh Bantuan Segera?</h3>
+              <p className={srStyles.infoCardDesc}>
+                Untuk kerusakan mendesak, gunakan fitur chat langsung dengan tim Holicindo.
+              </p>
+              <button
+                className={styles.btnSecondary}
+                style={{ width: '100%', justifyContent: 'center', marginTop: 8 }}
+                onClick={() => router.push('/client-portal/messages')}
+              >
+                <Phone size={14} /> Hubungi via Chat
+              </button>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* ── Modal: Pilih Unit ── */}
+      {showUnitModal && (
+        <div className={srStyles.modal} onClick={closeAllModals}>
+          <div className={srStyles.modalContent} onClick={e => e.stopPropagation()}>
+            <div className={srStyles.modalHeader}>
+              <h3 className={srStyles.modalTitle}>Pilih Unit</h3>
+              <button className={srStyles.modalClose} onClick={closeAllModals}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className={srStyles.modalSearch}>
+              <Search size={16} className={srStyles.modalSearchIcon} />
+              <input
+                type="text"
+                className={srStyles.modalSearchInput}
+                placeholder="Cari serial number, model, atau lokasi..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <div className={srStyles.modalList}>
+              {filteredUnits.length === 0 ? (
+                <div className={srStyles.modalEmpty}>
+                  <Package size={28} />
+                  <p>Tidak ada unit ditemukan</p>
+                </div>
+              ) : (
+                filteredUnits.map(u => (
+                  <button
+                    key={u.id}
+                    type="button"
+                    className={`${srStyles.modalItem} ${form.unit_id === u.id ? srStyles.modalItemActive : ''}`}
+                    onClick={() => handleSelectUnit(u.id)}
+                  >
+                    <Package size={16} className={srStyles.modalItemIcon} />
+                    <div className={srStyles.modalItemContent}>
+                      <div className={srStyles.modalItemTitle}>{u.serial_number}</div>
+                      <div className={srStyles.modalItemSubtitle}>
+                        {u.model_name || 'Model TBA'} • {u.current_client?.city || u.specs?.city || 'Lokasi TBA'}
+                      </div>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Pilih Provinsi ── */}
+      {showProvinceModal && (
+        <div className={srStyles.modal} onClick={closeAllModals}>
+          <div className={srStyles.modalContent} onClick={e => e.stopPropagation()}>
+            <div className={srStyles.modalHeader}>
+              <h3 className={srStyles.modalTitle}>Pilih Provinsi</h3>
+              <button className={srStyles.modalClose} onClick={closeAllModals}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className={srStyles.modalSearch}>
+              <Search size={16} className={srStyles.modalSearchIcon} />
+              <input
+                type="text"
+                className={srStyles.modalSearchInput}
+                placeholder="Cari provinsi..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <div className={srStyles.modalList}>
+              {filteredProvinces.length === 0 ? (
+                <div className={srStyles.modalEmpty}>
+                  <MapPin size={28} />
+                  <p>Tidak ada provinsi ditemukan</p>
+                </div>
+              ) : (
+                filteredProvinces.map(prov => (
+                  <button
+                    key={prov}
+                    type="button"
+                    className={`${srStyles.modalItem} ${form.province === prov ? srStyles.modalItemActive : ''}`}
+                    onClick={() => handleSelectProvince(prov)}
+                  >
+                    <MapPin size={16} className={srStyles.modalItemIcon} />
+                    <div className={srStyles.modalItemContent}>
+                      <div className={srStyles.modalItemTitle}>{prov}</div>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Pilih Kota ── */}
+      {showCityModal && (
+        <div className={srStyles.modal} onClick={closeAllModals}>
+          <div className={srStyles.modalContent} onClick={e => e.stopPropagation()}>
+            <div className={srStyles.modalHeader}>
+              <h3 className={srStyles.modalTitle}>Pilih Kota</h3>
+              <button className={srStyles.modalClose} onClick={closeAllModals}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className={srStyles.modalSearch}>
+              <Search size={16} className={srStyles.modalSearchIcon} />
+              <input
+                type="text"
+                className={srStyles.modalSearchInput}
+                placeholder="Cari kota..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <div className={srStyles.modalList}>
+              {filteredCities.length === 0 ? (
+                <div className={srStyles.modalEmpty}>
+                  <MapPin size={28} />
+                  <p>Tidak ada kota ditemukan</p>
+                </div>
+              ) : (
+                filteredCities.map(city => (
+                  <button
+                    key={city}
+                    type="button"
+                    className={`${srStyles.modalItem} ${form.city === city ? srStyles.modalItemActive : ''}`}
+                    onClick={() => handleSelectCity(city)}
+                  >
+                    <MapPin size={16} className={srStyles.modalItemIcon} />
+                    <div className={srStyles.modalItemContent}>
+                      <div className={srStyles.modalItemTitle}>{city}</div>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -84,6 +84,7 @@ function QrScanner({ onResult }: { onResult: (token: string) => void }) {
   const canvasRef  = useRef<HTMLCanvasElement>(null);
   const streamRef  = useRef<MediaStream | null>(null);
   const [error, setError]   = useState('');
+  const [loading, setLoading] = useState(true); // Loading state untuk initial camera access
   const [active, setActive] = useState(false);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment'); // Default kamera belakang
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -133,6 +134,7 @@ function QrScanner({ onResult }: { onResult: (token: string) => void }) {
 
   const startCamera = useCallback(async () => {
     setError('');
+    setLoading(true);
     try {
       const constraints = {
         video: { 
@@ -149,6 +151,7 @@ function QrScanner({ onResult }: { onResult: (token: string) => void }) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
         setActive(true);
+        setLoading(false);
 
         // Coba gunakan BarcodeDetector dulu (lebih cepat)
         if ('BarcodeDetector' in window && (window as any).BarcodeDetector) {
@@ -181,6 +184,7 @@ function QrScanner({ onResult }: { onResult: (token: string) => void }) {
               }, 300);
             } else {
               setError('Scanner QR tidak tersedia di browser ini. Gunakan pencarian manual.');
+              setLoading(false);
               stopCamera();
             }
           }
@@ -197,12 +201,14 @@ function QrScanner({ onResult }: { onResult: (token: string) => void }) {
             }, 300);
           } else {
             setError('Scanner QR tidak tersedia. Gunakan pencarian manual di bawah.');
+            setLoading(false);
             stopCamera();
           }
         }
       }
     } catch (err: any) {
       console.error('Camera error:', err);
+      setLoading(false);
       if (err.name === 'NotAllowedError') {
         setError('Izin kamera ditolak. Aktifkan akses kamera di pengaturan browser, lalu refresh halaman ini.');
       } else if (err.name === 'NotFoundError') {
@@ -222,6 +228,14 @@ function QrScanner({ onResult }: { onResult: (token: string) => void }) {
     }, 300);
   }, [stopCamera, startCamera]);
 
+  // Auto-start camera on mount
+  useEffect(() => {
+    // Tunggu jsQR selesai load sebelum start camera
+    if (jsQR !== null) {
+      startCamera();
+    }
+  }, [jsQR, startCamera]);
+
   useEffect(() => {
     return () => { stopCamera(); };
   }, [stopCamera]);
@@ -230,7 +244,13 @@ function QrScanner({ onResult }: { onResult: (token: string) => void }) {
     <div className={scanStyles.cameraWrap}>
       <canvas ref={canvasRef} style={{ display: 'none' }} />
       <div className={scanStyles.viewfinder}>
-        {active ? (
+        {loading && !error ? (
+          <div className={scanStyles.cameraPrompt}>
+            <div className={scanStyles.spinner} />
+            <p className={scanStyles.cameraPromptText}>Mengakses kamera...</p>
+            <p className={scanStyles.cameraHint}>Izinkan akses kamera untuk memindai QR Code</p>
+          </div>
+        ) : active ? (
           <>
             <video
               ref={videoRef}
@@ -255,15 +275,15 @@ function QrScanner({ onResult }: { onResult: (token: string) => void }) {
               </button>
             </div>
           </>
-        ) : (
+        ) : error ? (
           <div className={scanStyles.cameraPrompt}>
-            <QrCode size={52} color="var(--brand-cobalt-blue)" style={{ opacity: 0.7 }} />
-            <p className={scanStyles.cameraPromptText}>Arahkan kamera ke QR Code pada unit</p>
-            <button className={styles.btnPrimary} onClick={startCamera}>
-              <Camera size={16} /> Buka Kamera
-            </button>
+            <AlertTriangle size={48} color="var(--brand-space-grey)" style={{ opacity: 0.5 }} />
+            <p className={scanStyles.cameraPromptText} style={{ color: 'var(--brand-space-grey)' }}>
+              Kamera tidak tersedia
+            </p>
+            <p className={scanStyles.cameraHint}>{error}</p>
           </div>
-        )}
+        ) : null}
       </div>
 
       {error && (

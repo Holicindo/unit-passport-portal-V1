@@ -1410,14 +1410,12 @@
   transition: all 0.2s ease;
   text-decoration: none;
   font-family: var(--font-heading);
-  box-shadow: 0 4px 16px rgba(234, 88, 12, 0.45);
 }
 
 .btnWarning:hover {
   background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%) !important;
   color: #ffffff !important;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(234, 88, 12, 0.6);
 }
 
 .btnWarning:active {
