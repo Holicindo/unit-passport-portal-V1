@@ -83,8 +83,9 @@ function QrScanner({ onResult }: { onResult: (token: string) => void }) {
   const videoRef   = useRef<HTMLVideoElement>(null);
   const canvasRef  = useRef<HTMLCanvasElement>(null);
   const streamRef  = useRef<MediaStream | null>(null);
+  const hasStartedRef = useRef(false); // Flag untuk prevent multiple starts
   const [error, setError]   = useState('');
-  const [loading, setLoading] = useState(true); // Loading state untuk initial camera access
+  const [loading, setLoading] = useState(false); // Loading state untuk initial camera access (start as false)
   const [active, setActive] = useState(false);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment'); // Default kamera belakang
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -92,11 +93,15 @@ function QrScanner({ onResult }: { onResult: (token: string) => void }) {
 
   // Load jsQR library dynamically
   useEffect(() => {
-    import('jsqr').then(module => {
-      setJsQR(() => module.default);
-    }).catch(() => {
-      console.warn('jsQR not available, will try BarcodeDetector');
-    });
+    import('jsqr')
+      .then(module => {
+        console.log('[QR Scanner] jsQR loaded successfully');
+        setJsQR(() => module.default);
+      })
+      .catch(err => {
+        console.warn('[QR Scanner] jsQR not available, will try BarcodeDetector', err);
+        setJsQR(() => null); // Set to null explicitly so useEffect knows it's done loading
+      });
   }, []);
 
   const stopCamera = useCallback(() => {
@@ -109,6 +114,7 @@ function QrScanner({ onResult }: { onResult: (token: string) => void }) {
       intervalRef.current = null;
     }
     setActive(false);
+    hasStartedRef.current = false; // Reset flag saat stop
   }, []);
 
   const scanFrame = useCallback(() => {
@@ -133,6 +139,7 @@ function QrScanner({ onResult }: { onResult: (token: string) => void }) {
   }, [jsQR]);
 
   const startCamera = useCallback(async () => {
+    console.log('[QR Scanner] Starting camera...', { facingMode, jsQR: !!jsQR });
     setError('');
     setLoading(true);
     try {
@@ -144,14 +151,48 @@ function QrScanner({ onResult }: { onResult: (token: string) => void }) {
         },
       };
 
+      console.log('[QR Scanner] Requesting camera access...', constraints);
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      console.log('[QR Scanner] Camera stream obtained', stream.getTracks());
       streamRef.current = stream;
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+        console.log('[QR Scanner] Stream assigned to video element');
+        
+        // Wait for video metadata to load
+        await new Promise<void>((resolve) => {
+          if (!videoRef.current) return resolve();
+          
+          videoRef.current.onloadedmetadata = () => {
+            console.log('[QR Scanner] Video metadata loaded');
+            resolve();
+          };
+          
+          // Fallback timeout
+          setTimeout(() => {
+            console.log('[QR Scanner] Metadata timeout, proceeding anyway');
+            resolve();
+          }, 2000);
+        });
+        
+        // Explicitly play video
+        try {
+          await videoRef.current.play();
+          console.log('[QR Scanner] Video playing successfully');
+        } catch (playErr) {
+          console.error('[QR Scanner] Video play error:', playErr);
+        }
+        
         setActive(true);
         setLoading(false);
+        console.log('[QR Scanner] Camera active and ready', { 
+          active: true, 
+          videoElement: !!videoRef.current,
+          videoSrc: videoRef.current?.srcObject,
+          videoWidth: videoRef.current?.videoWidth,
+          videoHeight: videoRef.current?.videoHeight
+        });
 
         // Coba gunakan BarcodeDetector dulu (lebih cepat)
         if ('BarcodeDetector' in window && (window as any).BarcodeDetector) {
@@ -220,21 +261,32 @@ function QrScanner({ onResult }: { onResult: (token: string) => void }) {
   }, [onResult, stopCamera, scanFrame, jsQR, facingMode]);
 
   const toggleCamera = useCallback(async () => {
+    hasStartedRef.current = false; // Reset flag before toggling
     stopCamera();
     setFacingMode(prev => prev === 'environment' ? 'user' : 'environment');
     // Wait a bit before restarting
     setTimeout(() => {
+      hasStartedRef.current = true;
       startCamera();
     }, 300);
   }, [stopCamera, startCamera]);
 
-  // Auto-start camera on mount
+  // Auto-start camera on mount (ONLY ONCE) - DISABLED for stability
+  // User will click button to start camera manually
   useEffect(() => {
-    // Tunggu jsQR selesai load sebelum start camera
-    if (jsQR !== null) {
-      startCamera();
-    }
-  }, [jsQR, startCamera]);
+    console.log('[QR Scanner] Component mounted');
+    // Commenting out auto-start due to Fast Refresh issues in development
+    // Production build will work fine, but for better UX we use manual button
+    
+    // if (!hasStartedRef.current) {
+    //   console.log('[QR Scanner] Starting camera immediately...');
+    //   hasStartedRef.current = true;
+    //   setTimeout(() => {
+    //     startCamera();
+    //   }, 100);
+    // }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only once on mount
 
   useEffect(() => {
     return () => { stopCamera(); };
@@ -244,21 +296,24 @@ function QrScanner({ onResult }: { onResult: (token: string) => void }) {
     <div className={scanStyles.cameraWrap}>
       <canvas ref={canvasRef} style={{ display: 'none' }} />
       <div className={scanStyles.viewfinder}>
-        {loading && !error ? (
-          <div className={scanStyles.cameraPrompt}>
-            <div className={scanStyles.spinner} />
-            <p className={scanStyles.cameraPromptText}>Mengakses kamera...</p>
-            <p className={scanStyles.cameraHint}>Izinkan akses kamera untuk memindai QR Code</p>
-          </div>
-        ) : active ? (
+        <video
+          ref={videoRef}
+          className={scanStyles.video}
+          playsInline
+          muted
+          autoPlay
+          webkit-playsinline="true"
+          style={{ 
+            width: '100%', 
+            height: '100%', 
+            objectFit: 'cover',
+            display: active ? 'block' : 'none',
+            transform: facingMode === 'user' ? 'scaleX(-1)' : 'none' // Mirror only for front camera
+          }}
+        />
+        
+        {active && (
           <>
-            <video
-              ref={videoRef}
-              className={scanStyles.video}
-              playsInline
-              muted
-              autoPlay
-            />
             <div className={scanStyles.scanFrame}>
               <span className={scanStyles.corner + ' ' + scanStyles.cornerTL} />
               <span className={scanStyles.corner + ' ' + scanStyles.cornerTR} />
@@ -268,22 +323,39 @@ function QrScanner({ onResult }: { onResult: (token: string) => void }) {
             </div>
             <div className={scanStyles.cameraControls}>
               <button className={scanStyles.flipBtn} onClick={toggleCamera} title="Balik kamera">
-                <Camera size={16} /> Balik
+                <Camera size={16} /> {facingMode === 'environment' ? 'Kamera Depan' : 'Kamera Belakang'}
               </button>
               <button className={scanStyles.stopBtn} onClick={stopCamera}>
                 <X size={16} /> Stop
               </button>
             </div>
           </>
-        ) : error ? (
+        )}
+        
+        {loading && !error && !active && (
           <div className={scanStyles.cameraPrompt}>
-            <AlertTriangle size={48} color="var(--brand-space-grey)" style={{ opacity: 0.5 }} />
-            <p className={scanStyles.cameraPromptText} style={{ color: 'var(--brand-space-grey)' }}>
-              Kamera tidak tersedia
-            </p>
-            <p className={scanStyles.cameraHint}>{error}</p>
+            <div className={scanStyles.spinner} />
+            <p className={scanStyles.cameraPromptText}>Mengakses kamera...</p>
+            <p className={scanStyles.cameraHint}>Izinkan akses kamera untuk memindai QR Code</p>
           </div>
-        ) : null}
+        )}
+        
+        {!loading && !active && !error && (
+          <div className={scanStyles.cameraPrompt}>
+            <QrCode size={48} color="var(--brand-cobalt-blue)" style={{ opacity: 0.7 }} />
+            <p className={scanStyles.cameraPromptText}>Arahkan kamera ke QR Code pada unit</p>
+            <button 
+              className={styles.btnPrimary} 
+              onClick={() => {
+                console.log('[QR Scanner] Manual button clicked');
+                startCamera();
+              }}
+              style={{ marginTop: 16 }}
+            >
+              <Camera size={16} /> Buka Kamera
+            </button>
+          </div>
+        )}
       </div>
 
       {error && (
