@@ -2,6 +2,7 @@
 
 import React from 'react';
 import styles from './CoolingReportForm.module.css';
+import { CustomSelect } from '../ui/CustomSelect';
 
 interface Props {
   data: any;
@@ -111,8 +112,8 @@ export default function WarmReportForm({ data, onChange }: Props) {
       <SectionTitle number="1" title="Informasi Dokumen" />
       <Card>
         <TwoCol>
-          <Field label="Nomor Order Dokumen">
-            <Input value={h.order_document || ''} onChange={(v) => setH('order_document', v)} placeholder="Nomor order..." />
+          <Field label="Nomor Order Dokumen" hint="Contoh: ITR-2025-001">
+            <Input value={h.order_document || ''} onChange={(v) => setH('order_document', v)} placeholder="ITR-2025-001" />
           </Field>
           <Field label="Kode Produksi">
             <Input value={h.production_code || ''} onChange={(v) => setH('production_code', v)} placeholder="Kode produksi..." />
@@ -161,7 +162,18 @@ export default function WarmReportForm({ data, onChange }: Props) {
               <Input value={row.temp_dalam || ''} onChange={(v) => setRow(idx, 'temp_dalam', v)} placeholder="°C" />
             </Field>
             <Field label="Tipe Digital Control">
-              <Input value={row.digital_type || ''} onChange={(v) => setRow(idx, 'digital_type', v)} placeholder="Contoh: TL Z40" />
+              <CustomSelect
+                options={[
+                  { value: 'TL Z40', label: 'TL Z40' },
+                  { value: 'ETC-60', label: 'ETC-60' },
+                  { value: 'DF-96', label: 'DF-96' },
+                  { value: 'SF-104', label: 'SF-104' },
+                  { value: 'Other', label: 'Other' },
+                ]}
+                value={row.digital_type || ''}
+                onChange={(v) => setRow(idx, 'digital_type', v)}
+                placeholder="Pilih tipe digital control"
+              />
             </Field>
           </TwoCol>
         </Card>

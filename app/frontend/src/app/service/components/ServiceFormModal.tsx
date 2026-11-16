@@ -39,6 +39,14 @@ interface ServiceFormModalProps {
   existingCallId?: string;
   setExistingCallId?: (v: string) => void;
   existingCallIds?: string[];
+  soNumber?: string;
+  setSoNumber?: (v: string) => void;
+  doNumber?: string;
+  setDoNumber?: (v: string) => void;
+  warrantyStatus?: string;
+  setWarrantyStatus?: (v: string) => void;
+  customerRefNumber?: string;
+  setCustomerRefNumber?: (v: string) => void;
 }
 
 const fieldStyle: React.CSSProperties = {
@@ -101,6 +109,10 @@ export default function ServiceFormModal(props: ServiceFormModalProps) {
     ticketType = 'NEW', setTicketType,
     existingCallId = '', setExistingCallId,
     existingCallIds = [],
+    soNumber = '', setSoNumber,
+    doNumber = '', setDoNumber,
+    warrantyStatus = 'GARANSI', setWarrantyStatus,
+    customerRefNumber = '', setCustomerRefNumber,
   } = props;
 
   if (!show) return null;
@@ -117,7 +129,6 @@ export default function ServiceFormModal(props: ServiceFormModalProps) {
       return;
     }
     if (!issueDescription.trim()) { setFormError('Tuliskan Deskripsi Kendala.'); return; }
-    if (!actionTaken.trim()) { setFormError('Tuliskan Tindakan / Penanganan Awal.'); return; }
     onSubmit();
   };
 
@@ -245,9 +256,9 @@ export default function ServiceFormModal(props: ServiceFormModalProps) {
             )}
           </div>
 
-          {/* ── SECTION 3: Laporan Kendala ── */}
+          {/* ── SECTION 3: Laporan Kendala & Dokumen Terkait ── */}
           <div style={sectionStyle}>
-            <SectionHeader icon={<ClipboardList size={14} />} title="Laporan Kendala" />
+            <SectionHeader icon={<ClipboardList size={14} />} title="Laporan Kendala & Dokumen" />
 
             <div>
               <label style={labelStyle}>Jenis Pekerjaan *</label>
@@ -267,8 +278,56 @@ export default function ServiceFormModal(props: ServiceFormModalProps) {
                 placeholder="Contoh: Showcase minuman bocor, berisik / Suhu tidak dingin seperti biasanya..."
                 autoComplete="new-password"
                 required
-                style={{ ...fieldStyle, minHeight: '80px', resize: 'vertical' }}
+                style={{ ...fieldStyle, minHeight: '75px', resize: 'vertical' }}
               />
+            </div>
+
+            {/* Kolom Nomor SO & DO, Status Garansi, dan No Ref Customer */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div>
+                <label style={labelStyle}>Nomor SO (Sales Order)</label>
+                <input
+                  type="text"
+                  placeholder="Contoh: 2220592 atau SO26025531"
+                  value={soNumber}
+                  onChange={(e) => setSoNumber && setSoNumber(e.target.value)}
+                  style={fieldStyle}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>Nomor DO (Delivery Order)</label>
+                <input
+                  type="text"
+                  placeholder="Contoh: DO26073545"
+                  value={doNumber}
+                  onChange={(e) => setDoNumber && setDoNumber(e.target.value)}
+                  style={fieldStyle}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div>
+                <label style={labelStyle}>Status Garansi</label>
+                <CustomSelect
+                  value={warrantyStatus}
+                  onChange={(val) => setWarrantyStatus && setWarrantyStatus(val)}
+                  options={[
+                    { value: 'GARANSI', label: 'Garansi (Warranty: Yes)' },
+                    { value: 'NON_GARANSI', label: 'Tidak Garansi (Warranty: No)' },
+                  ]}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>Nomor Referensi Customer</label>
+                <input
+                  type="text"
+                  placeholder="Contoh: #SBUX20230730195873 / PO#"
+                  value={customerRefNumber}
+                  onChange={(e) => setCustomerRefNumber && setCustomerRefNumber(e.target.value)}
+                  style={fieldStyle}
+                />
+              </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
@@ -289,9 +348,9 @@ export default function ServiceFormModal(props: ServiceFormModalProps) {
             </div>
           </div>
 
-          {/* ── SECTION 4: Penugasan & Tindakan ── */}
+          {/* ── SECTION 4: Alokasi & Penugasan Awal ── */}
           <div style={sectionStyle}>
-            <SectionHeader icon={<UserCheck size={14} />} title="Penugasan & Tindakan Awal" />
+            <SectionHeader icon={<UserCheck size={14} />} title="Alokasi & Penugasan Awal" />
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div>
@@ -315,17 +374,9 @@ export default function ServiceFormModal(props: ServiceFormModalProps) {
               </div>
             </div>
 
-            <div>
-              <label style={labelStyle}>Handling Awal (Tindakan / Pemeriksaan) *</label>
-              <textarea
-                value={actionTaken}
-                onChange={(e) => setActionTaken(e.target.value)}
-                placeholder="Contoh: Setelah dicek kabel putus, setting ulang kalibrasi suhu..."
-                autoComplete="new-password"
-                required
-                style={{ ...fieldStyle, minHeight: '70px', resize: 'vertical' }}
-              />
-            </div>
+            <p style={{ margin: '4px 0 0 0', fontSize: '0.74rem', color: '#64748b', fontStyle: 'italic', lineHeight: 1.4 }}>
+              * Bagian <strong>Tindakan / Handling Lapangan</strong> akan diisi setelah penugasan dijalankan oleh teknisi di halaman log servis atau detail tiket.
+            </p>
 
             {taskType === 'INSTALLATION' && (
               <div>

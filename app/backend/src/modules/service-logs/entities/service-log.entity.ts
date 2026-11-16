@@ -84,6 +84,21 @@ export class ServiceLog {
   @Column({ default: false })
   is_allocated!: boolean;
 
+  @Column({ nullable: true })
+  so_number!: string;
+
+  @Column({ nullable: true })
+  do_number!: string;
+
+  @Column({ nullable: true })
+  warranty_status!: string; // 'GARANSI' | 'NON_GARANSI' | 'Yes' | 'No'
+
+  @Column({ nullable: true })
+  customer_ref_number!: string;
+
+  @Column({ nullable: true })
+  spk_document_url!: string;
+
   @OneToMany(() => ServiceLogAttachment, (attachment) => attachment.service_log)
   attachments!: ServiceLogAttachment[];
 

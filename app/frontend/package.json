@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "cross-env TURBOPACK=0 next dev",
+    "dev": "cross-env TURBOPACK=0 next dev -p 3000",
     "build": "cross-env NODE_OPTIONS=\"--max-old-space-size=2048\" next build --webpack",
     "start": "next start",
     "lint": "eslint",

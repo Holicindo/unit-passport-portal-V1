@@ -1,9 +1,12 @@
 import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Between } from 'typeorm';
 import { ServiceReport, FormType, ReportStatus } from './entities/service-report.entity';
 import { CreateServiceReportDto } from './dto/create-service-report.dto';
 import { User } from '../auth/entities/user.entity';
+import { Unit } from '../units/entities/unit.entity';
+import { ServiceLog } from '../service-logs/entities/service-log.entity';
+import { UnitHealthScore } from '../health-score/entities/unit-health-score.entity';
 
 import { generatePrefixedId } from '../../common/utils/id-generator';
 
@@ -12,6 +15,12 @@ export class ReportsService {
   constructor(
     @InjectRepository(ServiceReport)
     private reportRepo: Repository<ServiceReport>,
+    @InjectRepository(Unit)
+    private unitRepo: Repository<Unit>,
+    @InjectRepository(ServiceLog)
+    private serviceLogRepo: Repository<ServiceLog>,
+    @InjectRepository(UnitHealthScore)
+    private healthScoreRepo: Repository<UnitHealthScore>,
   ) {}
 
   async create(dto: CreateServiceReportDto, user: User) {
@@ -159,6 +168,150 @@ export class ReportsService {
     } catch (err: any) {
       console.error('[ReportsService] Update Error:', err);
       throw new InternalServerErrorException(`Gagal mengupdate laporan: ${err.message}`);
+    }
+  }
+
+  async generateMonthlyReport(monthStr?: string, clientId?: string) {
+    const targetMonth = monthStr || new Date().toISOString().slice(0, 7);
+    const [year, month] = targetMonth.split('-').map(Number);
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59);
+
+    try {
+      let unitQuery = this.unitRepo.createQueryBuilder('unit')
+        .leftJoinAndSelect('unit.current_client', 'client');
+
+      if (clientId) {
+        unitQuery = unitQuery.where('client.id = :clientId', { clientId });
+      }
+
+      const units = await unitQuery.getMany();
+      const unitIds = units.map((u) => u.id);
+
+      if (unitIds.length === 0) {
+        return {
+          month: targetMonth,
+          summary: { totalUnits: 0, avgHealthScore: 0, totalServices: 0, repairRecommended: 0 },
+          healthScores: [],
+          maintenance: [],
+        };
+      }
+
+      const serviceLogs = await this.serviceLogRepo
+        .createQueryBuilder('log')
+        .leftJoinAndSelect('log.unit', 'unit')
+        .leftJoinAndSelect('log.partner', 'partner')
+        .where('log."unitId" IN (:...unitIds)', { unitIds })
+        .andWhere('log.service_date BETWEEN :startDate AND :endDate', {
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+        })
+        .orderBy('log.service_date', 'DESC')
+        .getMany();
+
+      // Ambil seluruh catatan skor kesehatan pada bulan terkait
+      const startDateStr = startDate.toISOString().split('T')[0];
+      const endDateStr = endDate.toISOString().split('T')[0];
+
+      const monthlyScores = await this.healthScoreRepo
+        .createQueryBuilder('hs')
+        .where('hs.unit_id IN (:...unitIds)', { unitIds })
+        .andWhere('hs.date >= :startDateStr AND hs.date <= :endDateStr', {
+          startDateStr,
+          endDateStr,
+        })
+        .getMany();
+
+      const healthScores = units.map((unit) => {
+        const unitScores = monthlyScores
+          .filter((hs) => hs.unit_id === unit.id && hs.overall_score != null)
+          .map((hs) => hs.overall_score as number);
+
+        let avgScore: number | null = null;
+        let minScore: number | null = null;
+        let maxScore: number | null = null;
+
+        if (unitScores.length > 0) {
+          avgScore = Math.round(unitScores.reduce((a, b) => a + b, 0) / unitScores.length);
+          minScore = Math.round(Math.min(...unitScores));
+          maxScore = Math.round(Math.max(...unitScores));
+        }
+
+        const isRepairRecommended = avgScore !== null && avgScore < 70;
+        const recommendation =
+          avgScore === null
+            ? 'Belum ada data telemetri tercatat pada bulan ini'
+            : avgScore < 70
+            ? 'Perlu inspeksi teknis segera (Health Score di bawah ambang batas aman 70)'
+            : avgScore < 80
+            ? 'Lakukan perawatan berkala & pengecekan sirkulasi suhu'
+            : 'Kondisi unit optimal, lanjutkan pemantauan berkala';
+
+        return {
+          unitId: unit.id,
+          serialNumber: unit.serial_number,
+          modelName: unit.model_name,
+          branch: unit.outlet_branch || unit.current_client?.city || '—',
+          avgHealthScore: avgScore,
+          minScore,
+          maxScore,
+          readingsCount: unitScores.length,
+          status: avgScore === null ? 'N/A' : avgScore >= 80 ? 'NORMAL' : 'PERHATIAN',
+          repairRecommended: isRepairRecommended,
+          recommendation,
+        };
+      });
+
+      const maintenance = serviceLogs.map((log) => {
+        const isRepairRecommended =
+          log.status === 'COMPLETED' &&
+          !!(
+            log.action_taken?.toLowerCase().includes('ganti') ||
+            log.action_taken?.toLowerCase().includes('repair') ||
+            log.action_taken?.toLowerCase().includes('rusak') ||
+            log.action_taken?.toLowerCase().includes('perbaikan')
+          );
+
+        return {
+          id: log.id,
+          callId: log.call_id || log.id,
+          unitSerialNumber: (log.unit as any)?.serial_number || '—',
+          serviceDate: log.service_date,
+          taskType: log.task_type,
+          issueDescription: log.issue_description || '—',
+          actionTaken: log.action_taken || '—',
+          status: log.status,
+          soNumber: (log as any).so_number || '—',
+          doNumber: (log as any).do_number || '—',
+          technicianName: log.technician_name || '—',
+          repairRecommended: isRepairRecommended,
+        };
+      });
+
+      const validScores = healthScores
+        .filter((h) => h.avgHealthScore !== null)
+        .map((h) => h.avgHealthScore!);
+      const averageFleetHealth =
+        validScores.length > 0
+          ? Math.round(validScores.reduce((a, b) => a + b, 0) / validScores.length)
+          : null;
+
+      const unitsNeedingRepair = healthScores.filter((h) => h.repairRecommended).length;
+
+      return {
+        month: targetMonth,
+        summary: {
+          totalUnitsMonitored: units.length,
+          averageFleetHealth,
+          totalServicesLogged: serviceLogs.length,
+          unitsNeedingRepair,
+        },
+        healthScoreMonthlyReport: healthScores,
+        maintenanceReport: maintenance,
+      };
+    } catch (err: any) {
+      console.error('[ReportsService] generateMonthlyReport Error:', err);
+      throw new InternalServerErrorException(`Gagal menghasilkan laporan bulanan: ${err.message}`);
     }
   }
 }

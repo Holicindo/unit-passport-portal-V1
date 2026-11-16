@@ -119,12 +119,6 @@ export default function Cooling3ReportTemplate({ mode = 'edit', data = {}, unit 
             <th colSpan={2}>Digital Control Type<br/><span style={{fontWeight:'normal',fontSize:'6px'}}>數位控制類型</span></th>
             <th colSpan={5}>Setting<br/><span style={{fontWeight:'normal',fontSize:'6px'}}>設定</span></th>
           </tr>
-          <tr style={{ backgroundColor: '#f8fafc', fontSize: '7px' }}>
-            <th colSpan={2}>(Suhu Disetting)</th>
-            <th colSpan={2}>(Suhu Dalam Kabinet)</th>
-            <th colSpan={2}>(Tipe Kontrol)</th>
-            <th colSpan={5}>(Parameter)</th>
-          </tr>
         </thead>
         <tbody>
           <TempRow label="CAKE" rowData={cake} rowKey="cake" showPart={true} />

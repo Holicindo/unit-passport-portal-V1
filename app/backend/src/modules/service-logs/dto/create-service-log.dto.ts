@@ -77,4 +77,29 @@ export class CreateServiceLogDto {
   @IsString()
   @IsOptional()
   replaced_sparepart?: string;
+
+  @ApiProperty({ example: 'SO26025531', required: false })
+  @IsString()
+  @IsOptional()
+  so_number?: string;
+
+  @ApiProperty({ example: 'DO26073545', required: false })
+  @IsString()
+  @IsOptional()
+  do_number?: string;
+
+  @ApiProperty({ example: 'GARANSI', required: false })
+  @IsString()
+  @IsOptional()
+  warranty_status?: string;
+
+  @ApiProperty({ example: 'REF-SBUX-001', required: false })
+  @IsString()
+  @IsOptional()
+  customer_ref_number?: string;
+
+  @ApiProperty({ example: 'https://...', required: false })
+  @IsString()
+  @IsOptional()
+  spk_document_url?: string;
 }

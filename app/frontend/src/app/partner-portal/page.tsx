@@ -3,15 +3,15 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { serviceLogApi, unitApi } from '@/lib/api';
-import { 
+import {
   Wrench, Search, LogOut, QrCode, AlertCircle, Loader2, ChevronDown, CheckCircle2,
   Layers, Zap, BookOpen, PlayCircle, FileText, ChevronRight
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import styles from './partner-portal.module.css';
-import { 
+import {
   TicketCard, CompletedTicketCard, TicketSlider, NoteModal, ConfirmCloseModal, ProgressModal,
-  Ticket 
+  Ticket
 } from './components/TicketComponents';
 
 const QrScannerModal = dynamic(() => import('@/components/layout/QrScannerModal'), { ssr: false });
@@ -65,7 +65,7 @@ export default function PartnerPortalPage() {
       try {
         const res = await serviceLogApi.findAll(1, 100);
         const all: any[] = res.data?.data ?? res.data ?? [];
-        
+
         // Filter tickets for this technician / partner
         const isMatchTechnician = (log: any) => {
           if (!user) return false;
@@ -212,11 +212,11 @@ export default function PartnerPortalPage() {
         prev.map((t) =>
           t.id === ticketToProgress.id
             ? {
-                ...t,
-                status: data.status,
-                action_taken: data.actionTaken,
-                scheduled_date: data.scheduledDate || t.scheduled_date,
-              }
+              ...t,
+              status: data.status,
+              action_taken: data.actionTaken,
+              scheduled_date: data.scheduledDate || t.scheduled_date,
+            }
             : t
         )
       );
@@ -242,7 +242,7 @@ export default function PartnerPortalPage() {
     if (!ticketToClose) return;
     setClosingLoading(true);
     const actionTakenText = ticketToClose.action_taken || noteText || 'Servis selesai dan tiket ditutup oleh teknisi.';
-    
+
     try {
       if (!ticketToClose.id.startsWith('MOCK-')) {
         await serviceLogApi.update(ticketToClose.id, {
@@ -299,7 +299,7 @@ export default function PartnerPortalPage() {
 
   // Determine tickets to display based on active tab
   // Tugas Hari Ini and Pending ONLY show active pending tasks, never completed tickets
-  const displayedTickets = 
+  const displayedTickets =
     activeTab === 'COMPLETED'
       ? completedTickets
       : pendingTickets;
@@ -434,8 +434,8 @@ export default function PartnerPortalPage() {
             {activeTab === 'COMPLETED'
               ? 'Riwayat Tiket Selesai'
               : activeTab === 'PENDING'
-              ? 'Tiket Aktif / Pending'
-              : 'Tugas Hari Ini'}
+                ? 'Tiket Aktif / Pending'
+                : 'Tugas Hari Ini'}
             {displayedTickets.length > 0 && (
               <span className={styles.ticketCount}>{displayedTickets.length}</span>
             )}

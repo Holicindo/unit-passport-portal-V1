@@ -264,6 +264,9 @@ export default function ClientDashboard() {
           <Link href="/client-portal/fleet" className={styles.desktopPillBtn}>
             <Package size={15} /> Semua Unit
           </Link>
+          <Link href="/client-portal/reports" className={styles.desktopPillBtn}>
+            <FileText size={15} /> Laporan Bulanan
+          </Link>
           <Link href="/client-portal/units/scan" className={styles.desktopPillBtn}>
             <QrCode size={15} /> Scan QR
           </Link>

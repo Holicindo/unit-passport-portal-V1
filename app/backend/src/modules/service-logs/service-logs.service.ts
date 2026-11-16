@@ -105,6 +105,11 @@ export class ServiceLogsService {
     if (data.replaced_sparepart !== undefined) log.replaced_sparepart = data.replaced_sparepart;
     if (data.is_allocated !== undefined) log.is_allocated = data.is_allocated;
     if (data.task_type !== undefined) log.task_type = data.task_type;
+    if (data.so_number !== undefined) log.so_number = data.so_number;
+    if (data.do_number !== undefined) log.do_number = data.do_number;
+    if (data.warranty_status !== undefined) log.warranty_status = data.warranty_status;
+    if (data.customer_ref_number !== undefined) log.customer_ref_number = data.customer_ref_number;
+    if (data.spk_document_url !== undefined) log.spk_document_url = data.spk_document_url;
     if (data.status === 'COMPLETED') {
       log.completed_at = new Date();
     }

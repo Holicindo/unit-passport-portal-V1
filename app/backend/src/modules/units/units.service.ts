@@ -31,10 +31,28 @@ export class UnitsService {
 
   // L2 Client — Fleet list for specific client
   async findAllByClient(clientId: string) {
-    return this.unitRepo.find({
-      where: { current_client: { id: clientId } },
-      relations: ['warranties', 'service_logs', 'current_client', 'ownership_history', 'ownership_history.from_client', 'ownership_history.to_client'],
-    });
+    const qb = this.unitRepo.createQueryBuilder('unit')
+      .leftJoinAndSelect('unit.current_client', 'current_client')
+      .leftJoinAndSelect('unit.warranties', 'warranties')
+      .leftJoinAndSelect('unit.service_logs', 'service_logs')
+      .leftJoinAndSelect('unit.ownership_history', 'ownership_history')
+      .leftJoinAndSelect('ownership_history.from_client', 'oh_from_client')
+      .leftJoinAndSelect('ownership_history.to_client', 'oh_to_client')
+      .where('current_client.id = :clientId', { clientId });
+
+    // Join latest health score (same as admin findAll)
+    qb.leftJoinAndMapOne(
+      'unit.latest_health_score',
+      'unit_health_scores',
+      'hs',
+      `hs.unit_id = unit.id AND hs.date = (
+        SELECT MAX(hs2.date) FROM unit_health_scores hs2 WHERE hs2.unit_id = unit.id
+      )`,
+    );
+
+    qb.orderBy('unit.created_at', 'DESC');
+
+    return qb.getMany();
   }
 
   // L2 Client — Single unit detail with ownership check

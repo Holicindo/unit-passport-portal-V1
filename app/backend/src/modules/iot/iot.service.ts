@@ -6,6 +6,7 @@ import { Unit } from '../units/entities/unit.entity';
 import { User, UserRole } from '../auth/entities/user.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/entities/notification.entity';
+import { EmailAlertService } from './email-alert.service';
 
 // Struktur payload yang dikirim oleh ESP32
 export interface TelemetryPayload {
@@ -23,10 +24,14 @@ export interface TelemetryPayload {
   isDoor4Open?: boolean;
 }
 
-// Ambang batas alert
-const ALERT_THRESHOLDS = {
+// Ambang batas alert (Revisi Portal & IoT Monitoring System)
+export const ALERT_THRESHOLDS = {
   TEMP_CABINET_MAX: 10,       // °C — Suhu kabinet tidak boleh lebih dari ini
   TEMP_EVAPORATOR_MAX: 5,     // °C — Suhu evaporator tidak boleh lebih dari ini
+  TEMP_CONDENSER_MAX: 42,     // °C — Suhu kondensor di atas 42°C memicu alarm kritis
+  DOOR_OPEN_MAX_MINUTES: 30,  // Menit — Alarm jika pintu terbuka lebih dari 30 menit
+  OFFLINE_MAX_HOURS: 24,      // Jam — Alarm jika unit mati / tidak beroperasi > 24 jam
+  HEALTH_SCORE_MIN: 70,       // Nilai — Alarm jika nilai Health Score unit turun di bawah 70
   VOLTAGE_MIN: 190,           // V  — Tegangan minimum normal
   VOLTAGE_MAX: 240,           // V  — Tegangan maksimum normal
 };
@@ -38,12 +43,16 @@ export class IotService {
   // Map per-unit: kapan terakhir kali riwayat disimpan ke DB (throttle 5 menit)
   private static readonly lastHistorySave = new Map<string, number>();
 
+  // Map untuk melacak kapan pintu pertama kali terdeteksi terbuka: unitId -> Date.now()
+  private static readonly doorOpenStartTime = new Map<string, number>();
+
   constructor(
     @InjectRepository(IotTelemetryLog)
     private readonly telemetryLogRepo: Repository<IotTelemetryLog>,
     @InjectRepository(Unit)
     private readonly unitRepo: Repository<Unit>,
     private readonly notificationsService: NotificationsService,
+    private readonly emailAlertService: EmailAlertService,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
   ) { }
@@ -181,6 +190,15 @@ export class IotService {
     const isAnyDoorOpen = !!(payload.isDoor1Open || payload.isDoor2Open || payload.isDoor3Open || payload.isDoor4Open);
     this.trackDoorEvent(unit.id, isAnyDoorOpen);
 
+    // Track durasi pintu terbuka (untuk alarm > 30 menit)
+    if (isAnyDoorOpen) {
+      if (!IotService.doorOpenStartTime.has(unit.id)) {
+        IotService.doorOpenStartTime.set(unit.id, Date.now());
+      }
+    } else {
+      IotService.doorOpenStartTime.delete(unit.id);
+    }
+
     this.logger.log(`✅ [IOT SAVED DB] Unit ID: ${unit.id} (${payload.unitId}) | Last Seen: ${new Date().toLocaleTimeString()}`);
 
     // 4. Periksa kondisi alert
@@ -188,64 +206,138 @@ export class IotService {
   }
 
   /**
-   * Memeriksa apakah ada kondisi abnormal dan membuat notifikasi jika ada.
+   * Helper untuk mencari daftar email penerima (user admin + user klien pemilik unit).
+   */
+  private async getRecipientEmailsForUnit(unit: Unit): Promise<string[]> {
+    const emails: string[] = [];
+    try {
+      // 1. Ambil email admin
+      const admins = await this.userRepo.find({
+        where: [{ role: UserRole.ADMIN }, { role: UserRole.SUPER_ADMIN as any }],
+        select: ['email'],
+      });
+      admins.forEach(a => { if (a.email) emails.push(a.email); });
+
+      // 2. Ambil email klien pemilik unit
+      const clientId = (unit as any).currentClientId || unit.current_client?.id;
+      if (clientId) {
+        const clientUsers = await this.userRepo.find({
+          where: { client_id: clientId },
+          select: ['email'],
+        });
+        clientUsers.forEach(u => { if (u.email) emails.push(u.email); });
+      }
+    } catch (err: any) {
+      this.logger.error(`Error mencari recipient emails unit: ${err.message}`);
+    }
+    return Array.from(new Set(emails));
+  }
+
+  /**
+   * Memeriksa apakah ada kondisi abnormal dan membuat notifikasi serta email warning.
    */
   private async checkAlerts(unit: Unit, payload: TelemetryPayload): Promise<void> {
-    const alerts: { title: string; content: string }[] = [];
+    const alerts: {
+      title: string;
+      content: string;
+      type: string;
+      currentValue: string;
+      limit: string;
+      severity: 'CRITICAL' | 'WARNING';
+    }[] = [];
 
-    // Cek suhu kabinet (abaikan nilai -127 = sensor tidak terbaca)
-    if (payload.tempCabinet !== null && payload.tempCabinet !== undefined && payload.tempCabinet !== -127 && payload.tempCabinet > ALERT_THRESHOLDS.TEMP_CABINET_MAX) {
-      alerts.push({
-        title: `🌡️ Suhu Kabinet Tinggi: ${unit.model_name}`,
-        content: `Suhu kabinet unit ${unit.serial_number} (${unit.outlet_branch}) mencapai ${payload.tempCabinet}°C, melebihi batas normal ${ALERT_THRESHOLDS.TEMP_CABINET_MAX}°C.`,
-      });
-    }
-
-    // Cek suhu evaporator (hanya jika ada data valid dan tidak sedang defrost untuk unit bermasalah)
-    // Tambahan: abaikan alert untuk A26051860 karena baru nyala dan data masih tidak stabil
+    // 1. Alarm Suhu Kondensor (> 42°C) - Revisi Item 1
     if (
-      payload.tempEvaporator !== null &&
-      payload.tempEvaporator !== undefined &&
-      payload.tempEvaporator !== -127 &&
-      payload.tempEvaporator > ALERT_THRESHOLDS.TEMP_EVAPORATOR_MAX &&
-      payload.unitId !== 'A26051860' // Skip alert untuk unit ini dulu
+      payload.tempCondenser !== null &&
+      payload.tempCondenser !== undefined &&
+      payload.tempCondenser !== -127 &&
+      payload.tempCondenser > ALERT_THRESHOLDS.TEMP_CONDENSER_MAX
     ) {
       alerts.push({
-        title: `❄️ Suhu Evaporator Tidak Normal: ${unit.model_name}`,
-        content: `Suhu evaporator unit ${unit.serial_number} (${unit.outlet_branch}) mencapai ${payload.tempEvaporator}°C, melebihi batas normal ${ALERT_THRESHOLDS.TEMP_EVAPORATOR_MAX}°C.`,
+        title: `🔥 Suhu Kondensor Kritis (> ${ALERT_THRESHOLDS.TEMP_CONDENSER_MAX}°C): ${unit.model_name}`,
+        content: `Suhu kondensor unit ${unit.serial_number} (${unit.outlet_branch || 'Umum'}) mencapai ${payload.tempCondenser}°C, melebihi batas aman operasional ${ALERT_THRESHOLDS.TEMP_CONDENSER_MAX}°C. Harap periksa sirkulasi udara dan kipas kondensor.`,
+        type: 'HIGH_CONDENSER_TEMP',
+        currentValue: `${payload.tempCondenser}°C`,
+        limit: `Maks ${ALERT_THRESHOLDS.TEMP_CONDENSER_MAX}°C`,
+        severity: 'CRITICAL',
       });
     }
 
-    // Cek tegangan (hanya jika PZEM sudah terpasang, voltage > 0)
-    if (payload.voltage > 0) {
-      if (payload.voltage < ALERT_THRESHOLDS.VOLTAGE_MIN || payload.voltage > ALERT_THRESHOLDS.VOLTAGE_MAX) {
+    // 2. Alarm Pintu Terbuka > 30 Menit - Revisi Item 2
+    const isAnyDoorOpen = !!(payload.isDoor1Open || payload.isDoor2Open || payload.isDoor3Open || payload.isDoor4Open);
+    if (isAnyDoorOpen && IotService.doorOpenStartTime.has(unit.id)) {
+      const openDurationMinutes = Math.floor((Date.now() - IotService.doorOpenStartTime.get(unit.id)!) / 60000);
+      if (openDurationMinutes >= ALERT_THRESHOLDS.DOOR_OPEN_MAX_MINUTES) {
         alerts.push({
-          title: `⚡ Tegangan Listrik Tidak Normal: ${unit.model_name}`,
-          content: `Tegangan listrik unit ${unit.serial_number} (${unit.outlet_branch}) terdeteksi ${payload.voltage}V. Batas normal: ${ALERT_THRESHOLDS.VOLTAGE_MIN}V - ${ALERT_THRESHOLDS.VOLTAGE_MAX}V.`,
+          title: `🚪 Pintu Kabinet Terbuka > 30 Menit: ${unit.model_name}`,
+          content: `Pintu kabinet unit ${unit.serial_number} (${unit.outlet_branch || 'Umum'}) telah terbuka terus menerus selama ${openDurationMinutes} menit (batas aman: 30 menit). Hal ini berisiko menaikkan suhu kabinet dan membebani kompresor.`,
+          type: 'DOOR_OPEN_PROLONGED',
+          currentValue: `Terbuka ${openDurationMinutes} menit`,
+          limit: `Maks ${ALERT_THRESHOLDS.DOOR_OPEN_MAX_MINUTES} menit`,
+          severity: 'WARNING',
         });
       }
     }
 
+    // 3. Cek Suhu Kabinet Normal (> 10°C)
+    if (payload.tempCabinet !== null && payload.tempCabinet !== undefined && payload.tempCabinet !== -127 && payload.tempCabinet > ALERT_THRESHOLDS.TEMP_CABINET_MAX) {
+      alerts.push({
+        title: `🌡️ Suhu Kabinet Melebihi Batas: ${unit.model_name}`,
+        content: `Suhu kabinet unit ${unit.serial_number} (${unit.outlet_branch || 'Umum'}) terdeteksi ${payload.tempCabinet}°C, melebihi batas normal ${ALERT_THRESHOLDS.TEMP_CABINET_MAX}°C.`,
+        type: 'HIGH_TEMP',
+        currentValue: `${payload.tempCabinet}°C`,
+        limit: `Maks ${ALERT_THRESHOLDS.TEMP_CABINET_MAX}°C`,
+        severity: 'CRITICAL',
+      });
+    }
+
+    // 4. Cek tegangan (jika terdeteksi di luar 190V - 240V)
+    if (payload.voltage > 0 && (payload.voltage < ALERT_THRESHOLDS.VOLTAGE_MIN || payload.voltage > ALERT_THRESHOLDS.VOLTAGE_MAX)) {
+      alerts.push({
+        title: `⚡ Tegangan Listrik Anomali: ${unit.model_name}`,
+        content: `Tegangan listrik unit ${unit.serial_number} (${unit.outlet_branch || 'Umum'}) terdeteksi ${payload.voltage}V. Batas normal: ${ALERT_THRESHOLDS.VOLTAGE_MIN}V - ${ALERT_THRESHOLDS.VOLTAGE_MAX}V.`,
+        type: 'VOLTAGE_ANOMALY',
+        currentValue: `${payload.voltage}V`,
+        limit: `${ALERT_THRESHOLDS.VOLTAGE_MIN}V - ${ALERT_THRESHOLDS.VOLTAGE_MAX}V`,
+        severity: 'WARNING',
+      });
+    }
+
     if (alerts.length === 0) return;
 
-    // Cari satu admin untuk menerima notifikasi
+    // Dapatkan target admin untuk notifikasi in-app
     const admin = await this.userRepo.findOne({ where: { role: UserRole.ADMIN } });
     const targetUserId = admin ? admin.id : null;
 
-    if (!targetUserId) {
-      this.logger.warn('Tidak ada admin yang ditemukan untuk menerima alert.');
-      return;
-    }
+    // Ambil daftar email penerima
+    const recipientEmails = await this.getRecipientEmailsForUnit(unit);
 
-    // Kirim semua alert ke sistem notifikasi
     for (const alert of alerts) {
       this.logger.warn(`🚨 ALERT: ${alert.title}`);
-      await this.notificationsService.createNotification({
-        user_id: targetUserId,
-        type: NotificationType.ALERT,
-        sender_name: 'IoT Sistem',
-        title: alert.title,
-        content: alert.content,
+
+      // 1. Simpan ke sistem notifikasi in-app
+      if (targetUserId) {
+        await this.notificationsService.createNotification({
+          user_id: targetUserId,
+          type: NotificationType.ALERT,
+          sender_name: 'IoT Sistem',
+          title: alert.title,
+          content: alert.content,
+        });
+      }
+
+      // 2. Kirim warning email ke user / admin terkait
+      await this.emailAlertService.sendIotAlertEmail({
+        to: recipientEmails,
+        unitSerialNumber: unit.serial_number,
+        unitModel: unit.model_name,
+        clientName: (unit as any).current_client?.company_name,
+        outletBranch: unit.outlet_branch,
+        alertTitle: alert.title,
+        alertType: alert.type,
+        currentValue: alert.currentValue,
+        thresholdLimit: alert.limit,
+        severity: alert.severity,
       });
     }
   }
@@ -258,10 +350,123 @@ export class IotService {
       relations: ['current_client'],
     });
 
+    // Ambil data health scores terbaru untuk setiap unit
+    let latestHealthScores: Record<string, number> = {};
+    try {
+      const hsRows = await this.unitRepo.query(`
+        SELECT DISTINCT ON (unit_id) unit_id, overall_score 
+        FROM unit_health_scores 
+        ORDER BY unit_id, date DESC, created_at DESC
+      `);
+      if (Array.isArray(hsRows)) {
+        hsRows.forEach((r: any) => {
+          latestHealthScores[r.unit_id] = Number(r.overall_score);
+        });
+      }
+    } catch (err: any) {
+      this.logger.error(`Error querying health scores for alerts: ${err.message}`);
+    }
+
     const activeAlerts: any[] = [];
+    const now = Date.now();
 
     units.forEach((unit) => {
-      // 1. Check Temperature Cabinet
+      // 1. Alarm Suhu Kondensor (> 42°C) - Kritis
+      const condTemp = unit.last_temp_condenser;
+      if (condTemp !== null && condTemp !== undefined && condTemp !== -127 && condTemp > ALERT_THRESHOLDS.TEMP_CONDENSER_MAX) {
+        activeAlerts.push({
+          id: `ALT-COND-${unit.id}`,
+          unit_id: unit.id,
+          serial_number: unit.serial_number,
+          model_name: unit.model_name,
+          client_name: unit.current_client?.company_name || 'Klien Umum',
+          type: 'HIGH_CONDENSER_TEMP',
+          severity: 'CRITICAL',
+          title: 'Suhu Kondensor Melebihi 42°C',
+          value: `${condTemp}°C`,
+          limit: `Maks ${ALERT_THRESHOLDS.TEMP_CONDENSER_MAX}°C`,
+          last_seen: unit.last_seen_at || new Date(),
+        });
+      }
+
+      // 2. Alarm Pintu Terbuka (> 30 Menit)
+      const isDoorOpen = unit.is_door1_open || unit.is_door2_open || unit.is_door3_open || unit.is_door4_open;
+      if (isDoorOpen) {
+        const openStart = IotService.doorOpenStartTime.get(unit.id);
+        const durationMin = openStart ? Math.floor((now - openStart) / 60000) : 0;
+        const isExceeded = durationMin >= ALERT_THRESHOLDS.DOOR_OPEN_MAX_MINUTES;
+
+        activeAlerts.push({
+          id: `ALT-DOOR-${unit.id}`,
+          unit_id: unit.id,
+          serial_number: unit.serial_number,
+          model_name: unit.model_name,
+          client_name: unit.current_client?.company_name || 'Klien Umum',
+          type: 'DOOR_OPEN',
+          severity: isExceeded ? 'CRITICAL' : 'WARNING',
+          title: isExceeded ? 'Pintu Terbuka > 30 Menit' : 'Pintu Kabinet Terbuka',
+          value: isExceeded ? `Terbuka ${durationMin} mnt` : 'Door Open',
+          limit: `Maks ${ALERT_THRESHOLDS.DOOR_OPEN_MAX_MINUTES} Menit`,
+          last_seen: unit.last_seen_at || new Date(),
+        });
+      }
+
+      // 3. Alarm Unit Mati / Tidak Beroperasi (> 24 Jam)
+      if (unit.iot_unit_id) {
+        if (!unit.last_seen_at) {
+          activeAlerts.push({
+            id: `ALT-OFFLINE-${unit.id}`,
+            unit_id: unit.id,
+            serial_number: unit.serial_number,
+            model_name: unit.model_name,
+            client_name: unit.current_client?.company_name || 'Klien Umum',
+            type: 'UNIT_OFFLINE',
+            severity: 'CRITICAL',
+            title: 'Unit Mati / Non-Operasional',
+            value: 'Belum Pernah Aktif',
+            limit: `Maks ${ALERT_THRESHOLDS.OFFLINE_MAX_HOURS} Jam`,
+            last_seen: new Date(),
+          });
+        } else {
+          const offlineHours = (now - new Date(unit.last_seen_at).getTime()) / (1000 * 60 * 60);
+          if (offlineHours > ALERT_THRESHOLDS.OFFLINE_MAX_HOURS) {
+            const formattedOffline = offlineHours >= 48 ? `${Math.floor(offlineHours / 24)} hari` : `${Math.floor(offlineHours)} jam`;
+            activeAlerts.push({
+              id: `ALT-OFFLINE-${unit.id}`,
+              unit_id: unit.id,
+              serial_number: unit.serial_number,
+              model_name: unit.model_name,
+              client_name: unit.current_client?.company_name || 'Klien Umum',
+              type: 'UNIT_OFFLINE',
+              severity: 'CRITICAL',
+              title: `Unit Mati > 24 Jam (${formattedOffline})`,
+              value: `Offline ${formattedOffline}`,
+              limit: `Maks ${ALERT_THRESHOLDS.OFFLINE_MAX_HOURS} Jam`,
+              last_seen: unit.last_seen_at,
+            });
+          }
+        }
+      }
+
+      // 4. Alarm Health Score (< 70)
+      const hsScore = latestHealthScores[unit.id];
+      if (hsScore !== undefined && hsScore !== null && hsScore < ALERT_THRESHOLDS.HEALTH_SCORE_MIN) {
+        activeAlerts.push({
+          id: `ALT-HS-${unit.id}`,
+          unit_id: unit.id,
+          serial_number: unit.serial_number,
+          model_name: unit.model_name,
+          client_name: unit.current_client?.company_name || 'Klien Umum',
+          type: 'LOW_HEALTH_SCORE',
+          severity: 'WARNING',
+          title: `Health Score Rendah (${Math.round(hsScore)}/100)`,
+          value: `${Math.round(hsScore)}/100`,
+          limit: `Min ${ALERT_THRESHOLDS.HEALTH_SCORE_MIN}`,
+          last_seen: unit.last_seen_at || new Date(),
+        });
+      }
+
+      // 5. Check Suhu Kabinet Melebihi Batas (> 10°C)
       if (unit.last_temp_cabinet !== null && unit.last_temp_cabinet !== undefined && unit.last_temp_cabinet > ALERT_THRESHOLDS.TEMP_CABINET_MAX && unit.last_temp_cabinet !== -127) {
         activeAlerts.push({
           id: `ALT-TEMP-${unit.id}`,
@@ -278,24 +483,7 @@ export class IotService {
         });
       }
 
-      // 2. Check Door Open
-      if (unit.is_door1_open || unit.is_door2_open || unit.is_door3_open || unit.is_door4_open) {
-        activeAlerts.push({
-          id: `ALT-DOOR-${unit.id}`,
-          unit_id: unit.id,
-          serial_number: unit.serial_number,
-          model_name: unit.model_name,
-          client_name: unit.current_client?.company_name || 'Klien Umum',
-          type: 'DOOR_OPEN',
-          severity: 'WARNING',
-          title: 'Pintu Kabinet Terbuka',
-          value: 'Door Open',
-          limit: 'Normal Closed',
-          last_seen: unit.last_seen_at || new Date(),
-        });
-      }
-
-      // 3. Voltage Anomaly
+      // 6. Voltage Anomaly
       if (unit.last_voltage && (unit.last_voltage < ALERT_THRESHOLDS.VOLTAGE_MIN || unit.last_voltage > ALERT_THRESHOLDS.VOLTAGE_MAX)) {
         activeAlerts.push({
           id: `ALT-VOLT-${unit.id}`,
@@ -312,7 +500,7 @@ export class IotService {
         });
       }
 
-      // 4. Check Compressor Over-Current / Kompresor Melemah (> 12A atau beban berlebih)
+      // 7. Check Compressor Over-Current / Kompresor Melemah (> 12A)
       const live = IotService.liveTelemetryMap.get(unit.id);
       const liveCurrent = live?.current ?? 0;
       const normalAmp = unit.compressor_normal_ampere || 1.5;

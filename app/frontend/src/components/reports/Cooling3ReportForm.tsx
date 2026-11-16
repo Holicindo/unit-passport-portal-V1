@@ -2,6 +2,7 @@
 
 import React from 'react';
 import styles from './CoolingReportForm.module.css';
+import { CustomSelect } from '../ui/CustomSelect';
 
 interface Props {
   data: any;
@@ -64,9 +65,22 @@ function TempSection({ title, data, onChange }: { title: string; data: any; onCh
     <Card title={title}>
       <TwoCol>
         <Field label="Suhu yang Diminta (Required)"><Input value={data.required || ''} onChange={v => onChange('required', v)} placeholder="Contoh: -18 s/d -22" /></Field>
-        <Field label="Suhu Setting (Disetting)"><Input value={data.setting_temp || ''} onChange={v => onChange('setting_temp', v)} placeholder="°C" /></Field>
+        <Field label="Setting Temperature">
+          <CustomSelect
+            options={[
+              { value: 'TL Z40', label: 'TL Z40' },
+              { value: 'ETC-60', label: 'ETC-60' },
+              { value: 'DF-96', label: 'DF-96' },
+              { value: 'SF-104', label: 'SF-104' },
+              { value: 'Other', label: 'Other' },
+            ]}
+            value={data.digital_type || ''}
+            onChange={v => onChange('digital_type', v)}
+            placeholder="Pilih tipe digital control"
+          />
+        </Field>
         <Field label="Suhu Dalam Kabinet"><Input value={data.temp_dalam || ''} onChange={v => onChange('temp_dalam', v)} placeholder="°C" /></Field>
-        <Field label="Tipe Kontrol Digital"><Input value={data.digital_type || ''} onChange={v => onChange('digital_type', v)} placeholder="Contoh: TL Z40" /></Field>
+        <Field label="Suhu Disetting (°C)"><Input value={data.setting_temp || ''} onChange={v => onChange('setting_temp', v)} placeholder="°C" /></Field>
       </TwoCol>
       <Field label="Parameter Setting Controller">
         <textarea className={styles.textarea} rows={2} value={data.setting || ''} onChange={e => onChange('setting', e.target.value)} placeholder="Contoh: E1=2 E12=2 ..." />
@@ -101,7 +115,7 @@ export default function Cooling3ReportForm({ data, onChange }: Props) {
       <SectionTitle number="1" title="Informasi Dokumen" />
       <Card>
         <TwoCol>
-          <Field label="Nomor Order Dokumen"><Input value={h.order_document || ''} onChange={v => setH('order_document', v)} placeholder="Nomor order..." /></Field>
+          <Field label="Nomor Order Dokumen" hint="Contoh: ITR-2025-001"><Input value={h.order_document || ''} onChange={v => setH('order_document', v)} placeholder="ITR-2025-001" /></Field>
           <Field label="Kode Produksi"><Input value={h.production_code || ''} onChange={v => setH('production_code', v)} placeholder="Kode produksi..." /></Field>
           <Field label="Nama Pelanggan"><Input value={h.customer || ''} onChange={v => setH('customer', v)} placeholder="Nama pelanggan..." /></Field>
           <Field label="Kategori Unit"><Input value={h.category || ''} onChange={v => setH('category', v)} placeholder="Contoh: Cold Case" /></Field>
@@ -130,7 +144,21 @@ export default function Cooling3ReportForm({ data, onChange }: Props) {
       <div className={styles.subSectionTitle}>Kompresor (Compressor)</div>
       <div className={styles.sideBySide}>
         <Card title="Sisi Kiri (Left)">
-          <Field label="Tipe Kompresor"><Input value={cl.comp_type || ''} onChange={v => setCL('comp_type', v)} placeholder="Contoh: Embraco" /></Field>
+          <Field label="Tipe Kompresor">
+            <CustomSelect
+              options={[
+                { value: 'Embraco', label: 'Embraco' },
+                { value: 'Copeland', label: 'Copeland' },
+                { value: 'Danfoss', label: 'Danfoss' },
+                { value: 'Tecumseh', label: 'Tecumseh' },
+                { value: 'Bitzer', label: 'Bitzer' },
+                { value: 'Other', label: 'Other' },
+              ]}
+              value={cl.comp_type || ''}
+              onChange={v => setCL('comp_type', v)}
+              placeholder="Pilih tipe kompresor"
+            />
+          </Field>
           <Field label="Serial Number"><Input value={cl.comp_sn || ''} onChange={v => setCL('comp_sn', v)} placeholder="Nomor seri..." /></Field>
           <TwoCol>
             <Field label="Tipe Freon"><Input value={cl.freon_type || ''} onChange={v => setCL('freon_type', v)} placeholder="R134a" /></Field>
@@ -142,7 +170,21 @@ export default function Cooling3ReportForm({ data, onChange }: Props) {
           </TwoCol>
         </Card>
         <Card title="Sisi Kanan (Right)">
-          <Field label="Tipe Kompresor"><Input value={cr.comp_type || ''} onChange={v => setCR('comp_type', v)} placeholder="Contoh: Embraco" /></Field>
+          <Field label="Tipe Kompresor">
+            <CustomSelect
+              options={[
+                { value: 'Embraco', label: 'Embraco' },
+                { value: 'Copeland', label: 'Copeland' },
+                { value: 'Danfoss', label: 'Danfoss' },
+                { value: 'Tecumseh', label: 'Tecumseh' },
+                { value: 'Bitzer', label: 'Bitzer' },
+                { value: 'Other', label: 'Other' },
+              ]}
+              value={cr.comp_type || ''}
+              onChange={v => setCR('comp_type', v)}
+              placeholder="Pilih tipe kompresor"
+            />
+          </Field>
           <Field label="Serial Number"><Input value={cr.comp_sn || ''} onChange={v => setCR('comp_sn', v)} placeholder="Nomor seri..." /></Field>
           <TwoCol>
             <Field label="Tipe Freon"><Input value={cr.freon_type || ''} onChange={v => setCR('freon_type', v)} placeholder="R134a" /></Field>
@@ -156,15 +198,43 @@ export default function Cooling3ReportForm({ data, onChange }: Props) {
       </div>
       <div className={styles.subSectionTitle}>Kondensor</div>
       <div className={styles.sideBySide}>
-        <Card title="Sisi Kiri"><Field label="Keterangan"><textarea className={styles.textarea} rows={2} value={cl.condensor || ''} onChange={e => setCL('condensor', e.target.value)} placeholder="Keterangan kondensor kiri..." /></Field></Card>
-        <Card title="Sisi Kanan"><Field label="Keterangan"><textarea className={styles.textarea} rows={2} value={cr.condensor || ''} onChange={e => setCR('condensor', e.target.value)} placeholder="Keterangan kondensor kanan..." /></Field></Card>
+        <Card title="Sisi Kiri">
+          <Field label="Keterangan">
+            <CustomSelect
+              options={[
+                { value: 'Fin Tube', label: 'Fin Tube' },
+                { value: 'Wire on Tube', label: 'Wire on Tube' },
+                { value: 'Microchannel', label: 'Microchannel' },
+                { value: 'Other', label: 'Other' },
+              ]}
+              value={cl.condensor || ''}
+              onChange={v => setCL('condensor', v)}
+              placeholder="Pilih tipe kondensor"
+            />
+          </Field>
+        </Card>
+        <Card title="Sisi Kanan">
+          <Field label="Keterangan">
+            <CustomSelect
+              options={[
+                { value: 'Fin Tube', label: 'Fin Tube' },
+                { value: 'Wire on Tube', label: 'Wire on Tube' },
+                { value: 'Microchannel', label: 'Microchannel' },
+                { value: 'Other', label: 'Other' },
+              ]}
+              value={cr.condensor || ''}
+              onChange={v => setCR('condensor', v)}
+              placeholder="Pilih tipe kondensor"
+            />
+          </Field>
+        </Card>
       </div>
       <div className={styles.subSectionTitle}>Evaporator</div>
       <div className={styles.sideBySide}>
         <Card title="Sisi Kiri">
           <ThreeCol>
-            <Field label="Diameter (Ø)"><Input value={cl.evap_dia || ''} onChange={v => setCL('evap_dia', v)} placeholder="mm" /></Field>
-            <Field label="Panjang (x)"><Input value={cl.evap_length || ''} onChange={v => setCL('evap_length', v)} placeholder="mm" /></Field>
+            <Field label="Diameter (inch)"><Input value={cl.evap_dia || ''} onChange={v => setCL('evap_dia', v)} placeholder="inch" /></Field>
+            <Field label="Panjang (mm)"><Input value={cl.evap_length || ''} onChange={v => setCL('evap_length', v)} placeholder="mm" /></Field>
             <Field label="Row (R x)"><Input value={cl.evap_t || ''} onChange={v => setCL('evap_t', v)} placeholder="T" /></Field>
           </ThreeCol>
           <TwoCol>
@@ -172,15 +242,20 @@ export default function Cooling3ReportForm({ data, onChange }: Props) {
             <Field label="Ukuran x (mm)"><Input value={cl.evap_x || ''} onChange={v => setCL('evap_x', v)} placeholder="mm" /></Field>
           </TwoCol>
           <div className={styles.checkRow}>
-            <CheckItem label="Menggunakan Capiler" checked={cl.has_capiler || false} onChange={v => setCL('has_capiler', v)} />
-            {cl.has_capiler && <Field label="Ukuran Capiler (cm)"><Input value={cl.capiler_size || ''} onChange={v => setCL('capiler_size', v)} placeholder="cm" /></Field>}
+            <CheckItem label="Menggunakan Pipa Kapiler" checked={cl.has_capiler || false} onChange={v => setCL('has_capiler', v)} />
+            {cl.has_capiler && (
+              <>
+                <Field label="Diameter (mm)"><Input value={cl.capiler_dia || ''} onChange={v => setCL('capiler_dia', v)} placeholder="mm" /></Field>
+                <Field label="Panjang (cm)"><Input value={cl.capiler_length || ''} onChange={v => setCL('capiler_length', v)} placeholder="cm" /></Field>
+              </>
+            )}
             <CheckItem label="Menggunakan Expansion Valve" checked={cl.has_expansion || false} onChange={v => setCL('has_expansion', v)} />
           </div>
         </Card>
         <Card title="Sisi Kanan">
           <ThreeCol>
-            <Field label="Diameter (Ø)"><Input value={cr.evap_dia || ''} onChange={v => setCR('evap_dia', v)} placeholder="mm" /></Field>
-            <Field label="Panjang (x)"><Input value={cr.evap_length || ''} onChange={v => setCR('evap_length', v)} placeholder="mm" /></Field>
+            <Field label="Diameter (inch)"><Input value={cr.evap_dia || ''} onChange={v => setCR('evap_dia', v)} placeholder="inch" /></Field>
+            <Field label="Panjang (mm)"><Input value={cr.evap_length || ''} onChange={v => setCR('evap_length', v)} placeholder="mm" /></Field>
             <Field label="Row (R x)"><Input value={cr.evap_t || ''} onChange={v => setCR('evap_t', v)} placeholder="T" /></Field>
           </ThreeCol>
           <TwoCol>
@@ -188,8 +263,13 @@ export default function Cooling3ReportForm({ data, onChange }: Props) {
             <Field label="Ukuran x (mm)"><Input value={cr.evap_x || ''} onChange={v => setCR('evap_x', v)} placeholder="mm" /></Field>
           </TwoCol>
           <div className={styles.checkRow}>
-            <CheckItem label="Menggunakan Capiler" checked={cr.has_capiler || false} onChange={v => setCR('has_capiler', v)} />
-            {cr.has_capiler && <Field label="Ukuran Capiler (cm)"><Input value={cr.capiler_size || ''} onChange={v => setCR('capiler_size', v)} placeholder="cm" /></Field>}
+            <CheckItem label="Menggunakan Pipa Kapiler" checked={cr.has_capiler || false} onChange={v => setCR('has_capiler', v)} />
+            {cr.has_capiler && (
+              <>
+                <Field label="Diameter (mm)"><Input value={cr.capiler_dia || ''} onChange={v => setCR('capiler_dia', v)} placeholder="mm" /></Field>
+                <Field label="Panjang (cm)"><Input value={cr.capiler_length || ''} onChange={v => setCR('capiler_length', v)} placeholder="cm" /></Field>
+              </>
+            )}
             <CheckItem label="Menggunakan Expansion Valve" checked={cr.has_expansion || false} onChange={v => setCR('has_expansion', v)} />
           </div>
         </Card>
@@ -197,12 +277,38 @@ export default function Cooling3ReportForm({ data, onChange }: Props) {
       <div className={styles.subSectionTitle}>Fan Evaporator & Fan Antimist</div>
       <div className={styles.sideBySide}>
         <Card title="Sisi Kiri">
-          <Field label="Model Fan Evaporator"><Input value={cl.fan_evap_model || ''} onChange={v => setCL('fan_evap_model', v)} placeholder="Contoh: EBM-Papst" /></Field>
+          <Field label="Model Fan Evaporator">
+            <CustomSelect
+              options={[
+                { value: 'EBM-Papst', label: 'EBM-Papst' },
+                { value: 'Oriental Motor', label: 'Oriental Motor' },
+                { value: 'Yate Loon', label: 'Yate Loon' },
+                { value: 'Sunon', label: 'Sunon' },
+                { value: 'Other', label: 'Other' },
+              ]}
+              value={cl.fan_evap_model || ''}
+              onChange={v => setCL('fan_evap_model', v)}
+              placeholder="Pilih model fan evaporator"
+            />
+          </Field>
           <Field label="Jumlah Fan Evap (PCS)"><Input value={cl.fan_evap_qty || ''} onChange={v => setCL('fan_evap_qty', v)} placeholder="Contoh: 2" /></Field>
           <Field label="Keterangan Fan Antimist"><textarea className={styles.textarea} rows={2} value={cl.fan_antimist_notes || ''} onChange={e => setCL('fan_antimist_notes', e.target.value)} placeholder="Keterangan..." /></Field>
         </Card>
         <Card title="Sisi Kanan">
-          <Field label="Model Fan Evaporator"><Input value={cr.fan_evap_model || ''} onChange={v => setCR('fan_evap_model', v)} placeholder="Contoh: EBM-Papst" /></Field>
+          <Field label="Model Fan Evaporator">
+            <CustomSelect
+              options={[
+                { value: 'EBM-Papst', label: 'EBM-Papst' },
+                { value: 'Oriental Motor', label: 'Oriental Motor' },
+                { value: 'Yate Loon', label: 'Yate Loon' },
+                { value: 'Sunon', label: 'Sunon' },
+                { value: 'Other', label: 'Other' },
+              ]}
+              value={cr.fan_evap_model || ''}
+              onChange={v => setCR('fan_evap_model', v)}
+              placeholder="Pilih model fan evaporator"
+            />
+          </Field>
           <Field label="Jumlah Fan Evap (PCS)"><Input value={cr.fan_evap_qty || ''} onChange={v => setCR('fan_evap_qty', v)} placeholder="Contoh: 2" /></Field>
           <Field label="Keterangan Fan Antimist"><textarea className={styles.textarea} rows={2} value={cr.fan_antimist_notes || ''} onChange={e => setCR('fan_antimist_notes', e.target.value)} placeholder="Keterangan..." /></Field>
         </Card>

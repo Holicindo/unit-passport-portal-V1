@@ -106,7 +106,7 @@
 
   /* Make tables more compact in print */
   .denseTable th, .denseTable td {
-    padding: 1.5px 3px !important;
+    padding: 5px 3px !important;
     font-size: 7px !important;
   }
 
@@ -158,8 +158,12 @@
 
   .coolingReport .denseTable th,
   .coolingReport .denseTable td {
-    padding: 2px 4px !important;
+    padding: 5px 4px !important;
     font-size: 8px !important;
+  }
+
+  .coolingReport .a4Sheet tbody tr {
+    height: 22px !important;
   }
 
   .coolingReport .sheetHeaderTable td {
@@ -294,9 +298,10 @@
   background: transparent;
   font-size: 8px;
   color: #000000;
-  padding: 2px 4px;
+  padding: 4px 4px;
   box-sizing: border-box;
   font-family: inherit;
+  min-height: 20px;
 }
 
 .cellInput:disabled {
@@ -641,9 +646,14 @@
 }
 
 .a4Sheet tbody td {
-  padding: 2px 4px !important;
+  padding: 6px 4px !important;
   color: #000000 !important;
   border: 1px solid #475569 !important;
+  min-height: 24px !important;
+}
+
+.a4Sheet tbody tr {
+  height: 24px;
 }
 
 .a4Sheet tbody tr:hover {

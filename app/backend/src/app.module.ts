@@ -1,6 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import * as dotenv from 'dotenv';
+import { resolve } from 'path';
+
+// Force override process.env with actual .env files (prevents stale terminal session variables)
+dotenv.config({ path: resolve(process.cwd(), '.env'), override: true });
+dotenv.config({ path: resolve(__dirname, '../.env'), override: true });
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { Client } from './modules/clients/entities/client.entity';

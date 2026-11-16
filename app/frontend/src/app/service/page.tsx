@@ -108,6 +108,10 @@ export default function ServicePage() {
   const [deliveryDate, setDeliveryDate] = useState('');
   const [ticketType, setTicketType] = useState<'NEW' | 'FOLLOW_UP'>('NEW');
   const [existingCallId, setExistingCallId] = useState('');
+  const [soNumber, setSoNumber] = useState('');
+  const [doNumber, setDoNumber] = useState('');
+  const [warrantyStatus, setWarrantyStatus] = useState('GARANSI');
+  const [customerRefNumber, setCustomerRefNumber] = useState('');
 
   const fetchData = async () => {
     setLoading(true);
@@ -182,17 +186,23 @@ export default function ServicePage() {
     try {
       await serviceLogApi.create({
         unitId: selectedUnitId, partnerId: selectedPartnerId || undefined,
-        call_id: ticketType === 'FOLLOW_UP' && existingCallId.trim() ? existingCallId.trim() : undefined,
-        issue_description: issueDescription.trim(), action_taken: actionTaken.trim(),
+        call_id: ticketType === 'FOLLOW_UP' && existingCallId.trim() ? existingCallId.trim() : (existingCallId.trim() || undefined),
+        issue_description: issueDescription.trim(), action_taken: actionTaken.trim() || 'Menunggu penugasan teknisi dari Holicindo HQ.',
         status, technician_name: technicianName.trim() || undefined,
         task_type: taskType,
         scheduled_date: scheduledDate || undefined,
         delivery_date: deliveryDate || undefined,
+        so_number: soNumber.trim() || undefined,
+        do_number: doNumber.trim() || undefined,
+        warranty_status: warrantyStatus || undefined,
+        customer_ref_number: customerRefNumber.trim() || undefined,
       });
       setSelectedUnitId(''); setSelectedPartnerId(''); setIssueDescription('');
-      setActionTaken('Dalam proses pengecekan teknis.'); setTechnicianName('Menunggu Alokasi');
+      setActionTaken(''); setTechnicianName('Menunggu Alokasi');
       setStatus('PENDING'); setTaskType('CORRECTIVE'); setScheduledDate(new Date().toISOString().split('T')[0]);
-      setDeliveryDate(''); setTicketType('NEW'); setExistingCallId(''); setIsModalOpen(false);
+      setDeliveryDate(''); setTicketType('NEW'); setExistingCallId('');
+      setSoNumber(''); setDoNumber(''); setWarrantyStatus('GARANSI'); setCustomerRefNumber('');
+      setIsModalOpen(false);
       await fetchData();
     } catch (err: any) {
       const msg = err.response?.data?.message;
@@ -1275,6 +1285,10 @@ export default function ServicePage() {
         ticketType={ticketType} setTicketType={setTicketType}
         existingCallId={existingCallId} setExistingCallId={setExistingCallId}
         existingCallIds={Array.from(new Set(logs.map(l => l.call_id).filter(Boolean)))}
+        soNumber={soNumber} setSoNumber={setSoNumber}
+        doNumber={doNumber} setDoNumber={setDoNumber}
+        warrantyStatus={warrantyStatus} setWarrantyStatus={setWarrantyStatus}
+        customerRefNumber={customerRefNumber} setCustomerRefNumber={setCustomerRefNumber}
       />
       <ConfirmSubmitModal show={isConfirmOpen} onConfirm={handleActualSubmit} onCancel={() => setIsConfirmOpen(false)} />
       {selectedDetailLog && (

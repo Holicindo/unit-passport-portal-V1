@@ -66,7 +66,7 @@ export default function CoolingReportTemplate({ mode = 'edit', data = {}, unit =
           <tr>
             <td className={styles.logoCell} rowSpan={3} style={{ width: '15%', background: '#000000', color: '#ffffff', fontSize: '20px' }}><span style={{ color: '#ffffff' }}>HOLIC</span></td>
             <td className={styles.titleCell} rowSpan={3} style={{ width: '50%', borderLeft: '1px solid #000', borderRight: '1px solid #000' }}>
-              <div style={{ fontSize: '10px', fontWeight: 'normal' }}>Post-Production</div>
+      
               <div style={{ fontSize: '22px', marginTop: '4px' }}>Cooling System Report</div>
             </td>
             <td style={{ width: '15%', fontSize: '7px', borderBottom: '1px solid #000', paddingLeft: '4px' }}>
@@ -166,12 +166,6 @@ export default function CoolingReportTemplate({ mode = 'edit', data = {}, unit =
             <th colSpan={2}>Temperature Dalam<br/><span style={{fontWeight:'normal', fontSize:'6px'}}>櫃內溫度</span></th>
             <th colSpan={2}>Digital Control Type<br/><span style={{fontWeight:'normal', fontSize:'6px'}}>數位控制類型</span></th>
             <th colSpan={5}>Setting<br/><span style={{fontWeight:'normal', fontSize:'6px'}}>設定</span></th>
-          </tr>
-          <tr style={{ backgroundColor: '#f8fafc', fontSize: '7px' }}>
-            <th colSpan={2}>(Suhu Disetting)</th>
-            <th colSpan={2}>(Suhu Dalam Kabinet)</th>
-            <th colSpan={2}>(Tipe Kontrol)</th>
-            <th colSpan={5}>(Parameter)</th>
           </tr>
         </thead>
         <tbody>

@@ -23,14 +23,14 @@ const EMPTY_FORM = {
       comp_type: '', comp_sn: '', freon_type: '', freon_weight: '',
       press_start: '', press_run: '', amp_start: '', amp_run: '',
       condensor: '', evap_dia: '', evap_length: '', evap_t: '',
-      evap_gap: '', evap_x: '', has_capiler: false, capiler_size: '',
+      evap_gap: '', evap_x: '', has_capiler: false, capiler_dia: '', capiler_length: '',
       has_expansion: false, fan_evap_model: '', fan_evap_qty: '', fan_antimist_notes: ''
     },
     right: {
       comp_type: '', comp_sn: '', freon_type: '', freon_weight: '',
       press_start: '', press_run: '', amp_start: '', amp_run: '',
       condensor: '', evap_dia: '', evap_length: '', evap_t: '',
-      evap_gap: '', evap_x: '', has_capiler: false, capiler_size: '',
+      evap_gap: '', evap_x: '', has_capiler: false, capiler_dia: '', capiler_length: '',
       has_expansion: false, fan_evap_model: '', fan_evap_qty: '', fan_antimist_notes: ''
     }
   },

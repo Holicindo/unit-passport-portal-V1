@@ -126,6 +126,8 @@ export const reportApi = {
     });
   },
   deleteBulk: (ids: string[]) => api.post('/reports/delete-bulk', { ids }),
+  getMonthlyReport: (month?: string, clientId?: string) =>
+    api.get(`/reports/monthly?${month ? `month=${month}` : ''}${clientId ? `&clientId=${clientId}` : ''}`),
 };
 
 export const serviceLogApi = {
@@ -133,6 +135,13 @@ export const serviceLogApi = {
   create: (data: any) => api.post('/service-logs', data),
   update: (id: string, data: any) => api.put(`/service-logs/${id}`, data),
   findByUnit: (unitId: string) => api.get(`/service-logs/unit/${unitId}`),
+  uploadAttachment: (logId: string, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post(`/service-logs/${logId}/attachments`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
   bulkReschedule: (ids: string[], newDate: string, newDeliveryDate?: string) =>
     api.post('/service-logs/bulk-reschedule', { ids, newDate, newDeliveryDate }),
   bulkDelete: (ids: string[]) => api.post('/service-logs/bulk-delete', { ids }),

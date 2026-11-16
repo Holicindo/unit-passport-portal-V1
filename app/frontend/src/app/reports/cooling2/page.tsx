@@ -18,8 +18,8 @@ const EMPTY_FORM = {
     rtd:  { required: '', setting_temp: '', temp_dalam: '', digital_type: '', setting: '' },
   },
   cooling_system: {
-    left:  { comp_type: '', comp_sn: '', freon_type: '', freon_weight: '', press_start: '', press_run: '', amp_start: '', amp_run: '', condensor: '', evap_dia: '', evap_length: '', evap_t: '', evap_gap: '', evap_x: '', has_capiler: false, capiler_size: '', has_expansion: false, fan_evap_model: '', fan_evap_qty: '', fan_antimist_notes: '' },
-    right: { comp_type: '', comp_sn: '', freon_type: '', freon_weight: '', press_start: '', press_run: '', amp_start: '', amp_run: '', condensor: '', evap_dia: '', evap_length: '', evap_t: '', evap_gap: '', evap_x: '', has_capiler: false, capiler_size: '', has_expansion: false, fan_evap_model: '', fan_evap_qty: '', fan_antimist_notes: '' },
+    left:  { comp_type: '', comp_sn: '', freon_type: '', freon_weight: '', press_start: '', press_run: '', amp_start: '', amp_run: '', condensor: '', evap_dia: '', evap_length: '', evap_t: '', evap_gap: '', evap_x: '', has_capiler: false, capiler_dia: '', capiler_length: '', has_expansion: false, fan_evap_model: '', fan_evap_qty: '', fan_antimist_notes: '' },
+    right: { comp_type: '', comp_sn: '', freon_type: '', freon_weight: '', press_start: '', press_run: '', amp_start: '', amp_run: '', condensor: '', evap_dia: '', evap_length: '', evap_t: '', evap_gap: '', evap_x: '', has_capiler: false, capiler_dia: '', capiler_length: '', has_expansion: false, fan_evap_model: '', fan_evap_qty: '', fan_antimist_notes: '' },
   },
   performance_inspection: { evap_min: '', evap_max: '', evap_left_min: '', evap_left_max: '', evap_right_min: '', evap_right_max: '', cond_min: '', cond_max: '', comp_min: '', comp_max: '', kabinet_min: '', kabinet_max: '', kabinet_hum: '', room_min: '', room_max: '', room_hum: '', qc_1: false, qc_2: false, qc_2_time: '', qc_3: false, qc_4: false },
   footer: { tech_name: '', qc_name: '' },

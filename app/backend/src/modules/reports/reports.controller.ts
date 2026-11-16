@@ -1,20 +1,31 @@
-                                                                                                                                  import { Controller, Post, Get, Patch, Body, Param, UseGuards, Request, Query, UseInterceptors, UploadedFiles } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Body,
+  Param,
+  UseGuards,
+  Request,
+  Query,
+  UseInterceptors,
+  UploadedFiles,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { ReportsService } from './reports.service';
 import { CreateServiceReportDto } from './dto/create-service-report.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../auth/entities/user.entity';
-
-import { FilesInterceptor } from '@nestjs/platform-express';
 import { StorageService } from '../storage/storage.service';
-import { Multer } from 'multer';
+import { FormType } from './entities/service-report.entity';
 
-@ApiTags('Service Reports')
-@Controller('reports')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@ApiTags('reports')
 @ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Controller('reports')
 export class ReportsController {
   constructor(
     private readonly reportsService: ReportsService,
@@ -23,69 +34,97 @@ export class ReportsController {
 
   @Post('upload-photos')
   @Roles(UserRole.ADMIN, UserRole.PARTNER)
-  @UseInterceptors(FilesInterceptor('photos'))
-  @ApiOperation({ summary: 'Upload multiple photos for a report' })
+  @ApiOperation({ summary: 'Upload foto laporan ke S3' })
+  @UseInterceptors(FilesInterceptor('files', 10))
   async uploadPhotos(@UploadedFiles() files: Express.Multer.File[]) {
-    const results = await Promise.all(
-      files.map(file => this.storageService.uploadFile(file, 'reports')),
+    if (!files || files.length === 0) {
+      return { urls: [] };
+    }
+    const urls = await Promise.all(
+      files.map((file) =>
+        this.storageService.uploadFile(file, 'reports'),
+      ),
     );
-    return results.map(r => r.url);
+    return { urls: urls.map((r) => r.url) };
+  }
+
+  @Get('monthly')
+  @Roles(UserRole.ADMIN, UserRole.PARTNER, UserRole.CLIENT)
+  @ApiOperation({ summary: 'Get monthly consolidated report (Health Score & Maintenance)' })
+  async getMonthlyReport(
+    @Query('month') month?: string,
+    @Query('clientId') clientId?: string,
+    @Request() req?: any,
+  ) {
+    const activeClientId =
+      req?.user?.role === UserRole.CLIENT ? req.user.client_id : clientId;
+    return this.reportsService.generateMonthlyReport(month, activeClientId);
   }
 
   @Get()
-  @Roles(UserRole.ADMIN, UserRole.PARTNER, UserRole.CLIENT, UserRole.QC)
-  @ApiOperation({ summary: 'Get all reports with pagination, type, and status filtering' })
-  findAll(
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10,
+  @Roles(UserRole.ADMIN, UserRole.PARTNER)
+  @ApiOperation({ summary: 'Ambil semua laporan dengan pagination dan filter' })
+  async findAll(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
     @Query('type') type?: string,
     @Query('status') status?: string,
     @Query('unitId') unitId?: string,
     @Query('search') search?: string,
   ) {
-    return this.reportsService.findAll(page, limit, type as any, status, unitId, search);
+    return this.reportsService.findAll(
+      page ? parseInt(page, 10) : 1,
+      limit ? parseInt(limit, 10) : 10,
+      type as FormType | 'REVISED' | undefined,
+      status,
+      unitId,
+      search,
+    );
   }
 
   @Post()
   @Roles(UserRole.ADMIN, UserRole.PARTNER)
-  @ApiOperation({ summary: 'Create/Submit a new service report (Admin/Partner only)' })
-  create(@Body() dto: CreateServiceReportDto, @Request() req: any) {
+  @ApiOperation({ summary: 'Buat laporan baru' })
+  async create(@Body() dto: CreateServiceReportDto, @Request() req: any) {
     return this.reportsService.create(dto, req.user);
   }
 
   @Get('unit/:unitId')
   @Roles(UserRole.ADMIN, UserRole.PARTNER, UserRole.CLIENT)
-  @ApiOperation({ summary: 'Get report history for a specific unit' })
-  findByUnit(@Param('unitId') unitId: string, @Request() req: any) {
-    const isClient = req.user?.role === UserRole.CLIENT;
-    return this.reportsService.findByUnit(unitId, isClient);
+  @ApiOperation({ summary: 'Ambil laporan berdasarkan unit' })
+  async findByUnit(
+    @Param('unitId') unitId: string,
+    @Request() req: any,
+  ) {
+    const isPublic = req?.user?.role === UserRole.CLIENT;
+    return this.reportsService.findByUnit(unitId, isPublic);
   }
 
   @Get('service-log/:serviceLogId')
   @Roles(UserRole.ADMIN, UserRole.PARTNER, UserRole.CLIENT)
-  @ApiOperation({ summary: 'Get report history for a specific service log' })
-  findByServiceLog(@Param('serviceLogId') serviceLogId: string) {
+  @ApiOperation({ summary: 'Ambil laporan berdasarkan service log' })
+  async findByServiceLog(@Param('serviceLogId') serviceLogId: string) {
     return this.reportsService.findByServiceLog(serviceLogId);
-  }
-
-  @Get(':id')
-  @Roles(UserRole.ADMIN, UserRole.PARTNER, UserRole.CLIENT, UserRole.QC)
-  @ApiOperation({ summary: 'Get specific report details' })
-  findOne(@Param('id') id: string) {
-    return this.reportsService.findOne(id);
   }
 
   @Post('delete-bulk')
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Delete multiple reports (Admin only)' })
-  deleteBulk(@Body('ids') ids: string[]) {
-    return this.reportsService.removeBulk(ids);
+  @ApiOperation({ summary: 'Hapus beberapa laporan sekaligus' })
+  async removeBulk(@Body() body: { ids: string[] }) {
+    return this.reportsService.removeBulk(body.ids);
+  }
+
+  @Get(':id')
+  @Roles(UserRole.ADMIN, UserRole.PARTNER, UserRole.CLIENT)
+  @ApiOperation({ summary: 'Ambil laporan berdasarkan ID' })
+  async findOne(@Param('id') id: string) {
+    return this.reportsService.findOne(id);
   }
 
   @Patch(':id')
-  @Roles(UserRole.ADMIN, UserRole.PARTNER, UserRole.QC)
-  @ApiOperation({ summary: 'Update specific report details' })
-  update(@Param('id') id: string, @Body() updateData: any) {
-    return this.reportsService.update(id, updateData);
+  @Roles(UserRole.ADMIN, UserRole.PARTNER)
+  @ApiOperation({ summary: 'Update laporan' })
+  async update(@Param('id') id: string, @Body() body: any) {
+    return this.reportsService.update(id, body);
   }
 }

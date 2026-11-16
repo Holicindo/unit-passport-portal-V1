@@ -4,8 +4,10 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   Wrench, Calendar, User, Clock, CheckCircle2, AlertCircle, ChevronDown, 
-  ChevronUp, Shield, Package, Check, Phone, ArrowRight, MessageSquare, ExternalLink
+  ChevronUp, Shield, Package, Check, Phone, ArrowRight, MessageSquare, ExternalLink,
+  FileText, Upload, Paperclip
 } from 'lucide-react';
+import { serviceLogApi } from '@/lib/api';
 import styles from '../id.module.css';
 
 interface ServiceHistorySectionProps {
@@ -55,6 +57,27 @@ function formatDate(dateStr: string | null) {
 export default function ServiceHistorySection({ serviceLogs }: ServiceHistorySectionProps) {
   const router = useRouter();
   const [expandedCallIds, setExpandedCallIds] = useState<Record<string, boolean>>({});
+  const [uploadingLogId, setUploadingLogId] = useState<string | null>(null);
+  const [localSpkUrls, setLocalSpkUrls] = useState<Record<string, string>>({});
+
+  const handleUploadSpk = async (logId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploadingLogId(logId);
+      const res: any = await serviceLogApi.uploadAttachment(logId, file);
+      const url = res?.url || res?.data?.url;
+      if (url) {
+        setLocalSpkUrls(prev => ({ ...prev, [logId]: url }));
+      }
+    } catch (err: any) {
+      console.error('Failed to upload SPK document:', err);
+    } finally {
+      setUploadingLogId(null);
+      e.target.value = '';
+    }
+  };
 
   // Group logs by call_id / id sama persis dengan log servis
   const groupedList = React.useMemo(() => {
@@ -162,6 +185,7 @@ export default function ServiceHistorySection({ serviceLogs }: ServiceHistorySec
                 <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 800, color: '#93c5fd', textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.7rem' }}>Teknisi</th>
                 <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 800, color: '#93c5fd', textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.7rem' }}>Kendala</th>
                 <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 800, color: '#93c5fd', textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.7rem' }}>Penanganan</th>
+                <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 800, color: '#93c5fd', textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.7rem' }}>Lampiran SPK</th>
                 <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 800, color: '#93c5fd', textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.7rem' }}>Detail</th>
               </tr>
             </thead>
@@ -359,6 +383,73 @@ export default function ServiceHistorySection({ serviceLogs }: ServiceHistorySec
                         )}
                       </td>
 
+                      {/* Lampiran SPK */}
+                      <td style={{ padding: '10px 12px', verticalAlign: 'top', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                        {(() => {
+                          const spkUrl = localSpkUrls[mainLog.id] || mainLog.spk_document_url || (Array.isArray(mainLog.attachments) && mainLog.attachments.find((a: string) => a.includes('spk') || a.endsWith('.pdf')));
+                          const isUploading = uploadingLogId === mainLog.id;
+
+                          return (
+                            <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                              {spkUrl ? (
+                                <a
+                                  href={spkUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    padding: '3px 8px',
+                                    borderRadius: '5px',
+                                    background: 'rgba(59, 130, 246, 0.15)',
+                                    border: '1px solid rgba(96, 165, 250, 0.4)',
+                                    color: '#93c5fd',
+                                    fontSize: '0.68rem',
+                                    fontWeight: 700,
+                                    textDecoration: 'none',
+                                    transition: 'all 0.15s ease'
+                                  }}
+                                  title="Lihat / Unduh Dokumen SPK"
+                                >
+                                  <FileText size={12} color="#60a5fa" />
+                                  <span>Dokumen SPK</span>
+                                  <ExternalLink size={10} style={{ opacity: 0.7 }} />
+                                </a>
+                              ) : null}
+
+                              <label
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  padding: '3px 7px',
+                                  borderRadius: '5px',
+                                  background: spkUrl ? 'transparent' : 'rgba(255, 255, 255, 0.06)',
+                                  border: `1px dashed ${spkUrl ? 'rgba(255, 255, 255, 0.15)' : 'rgba(96, 165, 250, 0.35)'}`,
+                                  color: spkUrl ? '#94a3b8' : '#93c5fd',
+                                  fontSize: '0.64rem',
+                                  fontWeight: 600,
+                                  cursor: isUploading ? 'not-allowed' : 'pointer',
+                                  transition: 'all 0.15s ease',
+                                }}
+                                title="Unggah berkas SPK (PDF/Gambar)"
+                              >
+                                <Upload size={10} />
+                                <span>{isUploading ? 'Mengunggah...' : (spkUrl ? 'Ganti SPK' : 'Unggah SPK')}</span>
+                                <input
+                                  type="file"
+                                  accept=".pdf,image/*,.doc,.docx"
+                                  disabled={isUploading}
+                                  onChange={(e) => handleUploadSpk(mainLog.id, e)}
+                                  style={{ display: 'none' }}
+                                />
+                              </label>
+                            </div>
+                          );
+                        })()}
+                      </td>
+
                       {/* Detail button */}
                       <td style={{ padding: '10px 12px', verticalAlign: 'top', textAlign: 'center' }}>
                         <button
@@ -397,8 +488,52 @@ export default function ServiceHistorySection({ serviceLogs }: ServiceHistorySec
                     {/* Expanded detail row */}
                     {isExpanded && (
                       <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
-                        <td colSpan={8} style={{ padding: '12px 18px', background: 'rgba(0, 0, 0, 0.25)' }}>
+                        <td colSpan={9} style={{ padding: '12px 18px', background: 'rgba(0, 0, 0, 0.25)' }}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            {/* Metadata Tambahan: SO, DO, Garansi, Ref Customer */}
+                            <div style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '12px',
+                              flexWrap: 'wrap',
+                              padding: '8px 12px',
+                              background: 'rgba(255,255,255,0.03)',
+                              borderRadius: '6px',
+                              border: '1px solid rgba(255,255,255,0.06)',
+                              fontSize: '0.7rem'
+                            }}>
+                              {mainLog.so_number && (
+                                <span style={{ color: '#cbd5e1' }}>
+                                  <strong style={{ color: '#93c5fd' }}>SO#:</strong> {mainLog.so_number}
+                                </span>
+                              )}
+                              {mainLog.do_number && (
+                                <span style={{ color: '#cbd5e1' }}>
+                                  <strong style={{ color: '#93c5fd' }}>DO#:</strong> {mainLog.do_number}
+                                </span>
+                              )}
+                              {mainLog.warranty_status && (
+                                <span style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  padding: '2px 8px',
+                                  borderRadius: '4px',
+                                  fontSize: '0.65rem',
+                                  fontWeight: 800,
+                                  background: mainLog.warranty_status === 'Garansi' || mainLog.warranty_status === 'Yes' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                                  color: mainLog.warranty_status === 'Garansi' || mainLog.warranty_status === 'Yes' ? '#34d399' : '#fbbf24',
+                                  border: mainLog.warranty_status === 'Garansi' || mainLog.warranty_status === 'Yes' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(245, 158, 11, 0.3)',
+                                }}>
+                                  Garansi: {mainLog.warranty_status}
+                                </span>
+                              )}
+                              {mainLog.customer_ref_number && (
+                                <span style={{ color: '#cbd5e1' }}>
+                                  <strong style={{ color: '#93c5fd' }}>Ref Customer:</strong> {mainLog.customer_ref_number}
+                                </span>
+                              )}
+                            </div>
                             {/* Hasil */}
                             {mainLog.planning_notes && (
                               <div style={{

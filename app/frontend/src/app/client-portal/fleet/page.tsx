@@ -301,6 +301,7 @@ export default function ClientFleet() {
                       <th>Model</th>
                       <th>Lokasi</th>
                       <th>Kota</th>
+                      <th>Health Score</th>
                       <th>Garansi Habis</th>
                       <th>Servis Terakhir</th>
                       <th>Status</th>
@@ -343,6 +344,53 @@ export default function ClientFleet() {
                           {/* col-4: kota */}
                           <td data-label="Kota" className={styles.fleetCardCityCell}>
                             {unit.city || unit.specs?.city || unit.current_client?.city || '-'}
+                          </td>
+                          {/* col-5: health score */}
+                          <td data-label="Health Score" style={{ whiteSpace: 'nowrap' }}>
+                            {(() => {
+                              const score = unit.latest_health_score?.overall_score;
+                              if (score === null || score === undefined) {
+                                return (
+                                  <span style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    padding: '2px 8px',
+                                    borderRadius: '12px',
+                                    background: 'rgba(255, 255, 255, 0.05)',
+                                    color: 'var(--brand-space-grey)',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 500
+                                  }}>
+                                    Belum ada data
+                                  </span>
+                                );
+                              }
+                              const numScore = Math.round(Number(score));
+                              const isGood = numScore >= 80;
+                              const isWarn = numScore >= 70 && numScore < 80;
+                              const color = isGood ? '#10B981' : isWarn ? '#F59E0B' : '#EF4444';
+                              const bg = isGood ? 'rgba(16, 185, 129, 0.12)' : isWarn ? 'rgba(245, 158, 11, 0.12)' : 'rgba(239, 68, 68, 0.12)';
+                              const border = isGood ? 'rgba(16, 185, 129, 0.3)' : isWarn ? 'rgba(245, 158, 11, 0.3)' : 'rgba(239, 68, 68, 0.3)';
+
+                              return (
+                                <span style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  padding: '3px 9px',
+                                  borderRadius: '20px',
+                                  background: bg,
+                                  color: color,
+                                  border: `1px solid ${border}`,
+                                  fontSize: '0.78rem',
+                                  fontWeight: 800,
+                                  letterSpacing: '0.02em'
+                                }}>
+                                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: color }} />
+                                  {numScore}/100
+                                </span>
+                              );
+                            })()}
                           </td>
                           <td className={styles.hiddenOnMobile} data-label="Garansi Habis">
                             {warrantyExp ? (

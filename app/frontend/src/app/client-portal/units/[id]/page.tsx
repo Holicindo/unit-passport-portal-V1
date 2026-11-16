@@ -149,6 +149,7 @@ export default function ClientUnitDetail() {
   const [serviceRequested, setServiceRequested] = useState(false);
   const [expandedLogId, setExpandedLogId]     = useState<string | null>(null);
   const [showAllReports, setShowAllReports]   = useState(false);
+  const [showAllLogsModal, setShowAllLogsModal] = useState(false);
   const [photoIdx, setPhotoIdx]               = useState(0);
   const [manualIdx, setManualIdx]             = useState(0);
 
@@ -726,6 +727,64 @@ export default function ClientUnitDetail() {
             </div>
           </div>
 
+          {/* Card 3: Laporan Terbaru (Dipindahkan ke bawah Kepemilikan Unit) */}
+          <div className={styles.card}>
+            <div className={styles.cardHeader}>
+              <h2 className={styles.cardTitle}>
+                <FileText size={18} style={{ display: 'inline', marginRight: 8, color: '#38bdf8', verticalAlign: 'text-bottom' }} />
+                Laporan Terbaru ({reports.length})
+              </h2>
+              {reports.length > 2 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllReports(!showAllReports)}
+                  className={styles.cardAction}
+                >
+                  {showAllReports ? 'Ringkas' : 'Lihat Semua'}
+                </button>
+              )}
+            </div>
+            <div className={styles.cardBody} style={{ padding: '16px 22px' }}>
+              {reports.length === 0 ? (
+                <div style={{ padding: '20px', textAlign: 'center', color: '#94a3b8', fontSize: '0.82rem' }}>
+                  Belum ada laporan
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px' }}>
+                  {(showAllReports ? reports : reports.slice(0, 4)).map((rep: any) => (
+                    <a
+                      key={rep.id}
+                      href={`/client-portal/reports/${rep.id}`}
+                      style={{
+                        padding: '12px 14px',
+                        borderRadius: '12px',
+                        background: 'rgba(7, 23, 41, 0.55)',
+                        border: '1px solid rgba(56, 189, 248, 0.15)',
+                        textDecoration: 'none',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseOver={e => e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.4)'}
+                      onMouseOut={e => e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.15)'}
+                    >
+                      <div>
+                        <div style={{ fontWeight: 800, fontSize: '0.84rem', color: '#ffffff', letterSpacing: '0.3px' }}>
+                          {rep.form_type?.replace(/_/g, ' ') || 'Laporan'}
+                        </div>
+                        <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 3 }}>
+                          {rep.created_at ? new Date(rep.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
+                        </div>
+                      </div>
+                      <ExternalLink size={15} color="#38bdf8" />
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
         </div>
 
         {/* ══════════════ KOLOM KANAN (Kesehatan Unit, Riwayat Servis, Laporan Terbaru) ══════════════ */}
@@ -781,7 +840,7 @@ export default function ClientUnitDetail() {
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {logs.map((log: any) => {
+                  {logs.slice(0, 10).map((log: any) => {
                     const isExpanded = expandedLogId === log.id;
                     return (
                       <div
@@ -845,64 +904,35 @@ export default function ClientUnitDetail() {
                       </div>
                     );
                   })}
-                </div>
-              )}
-            </div>
-          </div>
 
-          {/* Card 3: Laporan Terbaru (Dipindahkan ke kolom kanan di bawah Riwayat Servis) */}
-          <div className={styles.card}>
-            <div className={styles.cardHeader}>
-              <h2 className={styles.cardTitle}>
-                <FileText size={18} style={{ display: 'inline', marginRight: 8, color: '#38bdf8', verticalAlign: 'text-bottom' }} />
-                Laporan Terbaru ({reports.length})
-              </h2>
-              {reports.length > 2 && (
-                <button
-                  type="button"
-                  onClick={() => setShowAllReports(!showAllReports)}
-                  className={styles.cardAction}
-                >
-                  {showAllReports ? 'Ringkas' : 'Lihat Semua'}
-                </button>
-              )}
-            </div>
-            <div className={styles.cardBody} style={{ padding: '12px 16px' }}>
-              {reports.length === 0 ? (
-                <div style={{ padding: '20px', textAlign: 'center', color: '#94a3b8', fontSize: '0.82rem' }}>
-                  Belum ada laporan
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {(showAllReports ? reports : reports.slice(0, 3)).map((rep: any) => (
-                    <a
-                      key={rep.id}
-                      href={`/client-portal/reports/${rep.id}`}
+                  {/* Tombol Tampilkan Riwayat Lebih Banyak jika > 10 */}
+                  {logs.length > 10 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAllLogsModal(true)}
                       style={{
+                        marginTop: '8px',
                         padding: '10px 14px',
+                        background: 'rgba(56, 189, 248, 0.1)',
+                        border: '1px solid rgba(56, 189, 248, 0.3)',
                         borderRadius: '10px',
-                        background: 'rgba(7, 23, 41, 0.55)',
-                        border: '1px solid rgba(56, 189, 248, 0.15)',
-                        textDecoration: 'none',
+                        color: '#38bdf8',
+                        fontWeight: 700,
+                        fontSize: '0.8rem',
+                        cursor: 'pointer',
                         display: 'flex',
-                        justifyContent: 'space-between',
                         alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
                         transition: 'all 0.2s ease'
                       }}
-                      onMouseOver={e => e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.4)'}
-                      onMouseOut={e => e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.15)'}
+                      onMouseOver={e => e.currentTarget.style.background = 'rgba(56, 189, 248, 0.18)'}
+                      onMouseOut={e => e.currentTarget.style.background = 'rgba(56, 189, 248, 0.1)'}
                     >
-                      <div>
-                        <div style={{ fontWeight: 800, fontSize: '0.82rem', color: '#ffffff', letterSpacing: '0.3px' }}>
-                          {rep.form_type?.replace(/_/g, ' ') || 'Laporan'}
-                        </div>
-                        <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 2 }}>
-                          {rep.created_at ? new Date(rep.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
-                        </div>
-                      </div>
-                      <ExternalLink size={14} color="#38bdf8" />
-                    </a>
-                  ))}
+                      <Wrench size={14} />
+                      Tampilkan Riwayat Lebih Banyak ({logs.length - 10} lainnya)
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -911,6 +941,100 @@ export default function ClientUnitDetail() {
         </div>
 
       </div>
+
+      {/* ── Modal Semua Riwayat Servis ── */}
+      {showAllLogsModal && (
+        <div className={unitStyles.modalOverlay} onClick={() => setShowAllLogsModal(false)}>
+          <div
+            className={unitStyles.modal}
+            onClick={e => e.stopPropagation()}
+            style={{ maxWidth: '650px', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}
+          >
+            <div className={unitStyles.modalHeader}>
+              <h3 className={unitStyles.modalTitle} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Wrench size={18} color="#38bdf8" />
+                Semua Riwayat Servis ({logs.length})
+              </h3>
+              <button className={unitStyles.modalClose} onClick={() => setShowAllLogsModal(false)}>×</button>
+            </div>
+            <div style={{ overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '10px', flex: 1 }}>
+              {logs.map((log: any) => {
+                const isExpanded = expandedLogId === log.id;
+                return (
+                  <div
+                    key={log.id}
+                    onClick={() => setExpandedLogId(isExpanded ? null : log.id)}
+                    style={{
+                      padding: '12px 14px',
+                      borderRadius: '12px',
+                      background: 'rgba(7, 23, 41, 0.55)',
+                      border: '1px solid rgba(56, 189, 248, 0.15)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, color: '#ffffff', lineHeight: 1.3 }}>
+                          {log.action_taken || log.issue_description || 'Servis & Pemeliharaan'}
+                        </h4>
+                        <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 4 }}>
+                          {log.service_date
+                            ? new Date(log.service_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+                            : '—'}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                        <span style={{
+                          background: 'rgba(245, 158, 11, 0.15)',
+                          color: '#f59e0b',
+                          fontSize: '0.65rem',
+                          fontWeight: 700,
+                          padding: '2px 8px',
+                          borderRadius: '10px',
+                          border: '1px solid rgba(245, 158, 11, 0.3)',
+                        }}>
+                          Proses
+                        </span>
+                        <ChevronDown
+                          size={16}
+                          color="#38bdf8"
+                          style={{
+                            transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                            transition: 'transform 0.2s ease',
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {isExpanded && (
+                      <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px dashed rgba(56, 189, 248, 0.15)', fontSize: '0.75rem', color: '#cbd5e1' }}>
+                        {log.issue_description && (
+                          <p style={{ margin: '0 0 8px 0', lineHeight: 1.4 }}>{log.issue_description}</p>
+                        )}
+                        <div style={{ display: 'flex', gap: '14px', color: '#94a3b8' }}>
+                          {log.technician_name && <span>Teknisi: {log.technician_name}</span>}
+                          {log.partner?.partner_name && <span>Mitra: {log.partner.partner_name}</span>}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ padding: '12px 20px', borderTop: '1px solid rgba(56, 189, 248, 0.15)', display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                className={styles.btnSecondary}
+                onClick={() => setShowAllLogsModal(false)}
+                style={{ fontSize: '0.8rem', padding: '6px 16px' }}
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Modal Request Servis ── */}
       {showModal && (

@@ -32,6 +32,13 @@ export default function ServiceDetailModal({ log, partners, technicianOptions = 
   const [editScheduledDate, setEditScheduledDate] = useState(log.scheduled_date ? log.scheduled_date.split('T')[0] : '');
   const [editDeliveryDate, setEditDeliveryDate] = useState(log.delivery_date ? log.delivery_date.split('T')[0] : '');
   const [editInternalNotes, setEditInternalNotes] = useState(log.internal_notes || '');
+  const [editSoNumber, setEditSoNumber] = useState(log.so_number || '');
+  const [editDoNumber, setEditDoNumber] = useState(log.do_number || '');
+  const [editWarrantyStatus, setEditWarrantyStatus] = useState(log.warranty_status || 'GARANSI');
+  const [editCustomerRefNumber, setEditCustomerRefNumber] = useState(log.customer_ref_number || '');
+  const [spkFile, setSpkFile] = useState<File | null>(null);
+  const [uploadingSpk, setUploadingSpk] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   // Sparepart list as array for tag editing
   const parseSparepartStr = (str: string) => str ? str.split(';').map((s: string) => s.trim()).filter(Boolean) : [];
   const [editSparepartItems, setEditSparepartItems] = useState<string[]>(parseSparepartStr(log.replaced_sparepart || ''));
@@ -80,6 +87,10 @@ export default function ServiceDetailModal({ log, partners, technicianOptions = 
       setEditScheduledDate(log.scheduled_date ? log.scheduled_date.split('T')[0] : '');
       setEditDeliveryDate(log.delivery_date ? log.delivery_date.split('T')[0] : '');
       setEditInternalNotes(log.internal_notes || '');
+      setEditSoNumber(log.so_number || '');
+      setEditDoNumber(log.do_number || '');
+      setEditWarrantyStatus(log.warranty_status || 'GARANSI');
+      setEditCustomerRefNumber(log.customer_ref_number || '');
       setEditSparepartItems(parseSparepartStr(log.replaced_sparepart || ''));
       setSparepartSearch('');
       setShowSparepartDropdown(false);
@@ -108,6 +119,10 @@ export default function ServiceDetailModal({ log, partners, technicianOptions = 
     setEditScheduledDate(log.scheduled_date ? log.scheduled_date.split('T')[0] : '');
     setEditDeliveryDate(log.delivery_date ? log.delivery_date.split('T')[0] : '');
     setEditInternalNotes(log.internal_notes || '');
+    setEditSoNumber(log.so_number || '');
+    setEditDoNumber(log.do_number || '');
+    setEditWarrantyStatus(log.warranty_status || 'GARANSI');
+    setEditCustomerRefNumber(log.customer_ref_number || '');
     setEditSparepartItems(parseSparepartStr(log.replaced_sparepart || ''));
     setSparepartSearch('');
     setShowSparepartDropdown(false);
@@ -151,6 +166,10 @@ export default function ServiceDetailModal({ log, partners, technicianOptions = 
         action_taken: editActionTaken.trim() || undefined,
         planning_notes: editResult.trim() || null,
         internal_notes: editInternalNotes.trim() || null,
+        so_number: editSoNumber.trim() || null,
+        do_number: editDoNumber.trim() || null,
+        warranty_status: editWarrantyStatus || null,
+        customer_ref_number: editCustomerRefNumber.trim() || null,
         is_allocated: !!(editTechnician || editPartnerId),
         replaced_sparepart: overrideSpareparts !== undefined
           ? overrideSpareparts
@@ -162,6 +181,28 @@ export default function ServiceDetailModal({ log, partners, technicianOptions = 
       setShowCompleteSparepartModal(false);
     } catch { alert('Gagal memperbarui kondisi dan penugasan servis.'); }
     finally { setSubmitting(false); }
+  };
+
+  const handleUploadSpk = async (file: File) => {
+    try {
+      setUploadingSpk(true);
+      const { serviceLogApi } = await import('@/lib/api');
+      const res = await serviceLogApi.uploadAttachment(log.id, file);
+      // update spk_document_url if available
+      const attUrl = res.data?.file_url || res.data?.url;
+      if (attUrl) {
+        const { data: updated } = await serviceLogApi.update(log.id, { spk_document_url: attUrl });
+        onUpdate(updated);
+      } else {
+        onUpdate({ ...log, attachments: [...(log.attachments || []), res.data] });
+      }
+      alert('Dokumen SPK berhasil diunggah.');
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Gagal mengunggah dokumen SPK.');
+    } finally {
+      setUploadingSpk(false);
+      setSpkFile(null);
+    }
   };
 
   const parsed = parseDetailedIssue(log.issue_description);
@@ -458,6 +499,30 @@ export default function ServiceDetailModal({ log, partners, technicianOptions = 
                     placeholder="Catatan khusus admin servis call..."
                     style={{ width: '100%', marginTop: '4px', padding: '10px 14px', borderRadius: '10px', border: '1px solid #CBD5E1', fontSize: '0.9rem', color: 'var(--color-deep-navy)', outline: 'none', minHeight: '60px', fontFamily: 'inherit', resize: 'vertical', background: '#F8FAFC' }} />
                 </div>
+
+                {/* Kolom SO, DO, Garansi, & No Ref Customer saat edit */}
+                <div className={styles.detailItem}><span className={styles.detailLabel}>Nomor SO (Sales Order)</span>
+                  <input type="text" value={editSoNumber} onChange={(e) => setEditSoNumber(e.target.value)}
+                    placeholder="Contoh: SO26025531 / 2220592"
+                    style={{ width: '100%', marginTop: '4px', padding: '10px 14px', borderRadius: '10px', border: '1px solid #CBD5E1', fontSize: '0.9rem', color: 'var(--color-deep-navy)', outline: 'none' }} />
+                </div>
+                <div className={styles.detailItem}><span className={styles.detailLabel}>Nomor DO (Delivery Order)</span>
+                  <input type="text" value={editDoNumber} onChange={(e) => setEditDoNumber(e.target.value)}
+                    placeholder="Contoh: DO26073545"
+                    style={{ width: '100%', marginTop: '4px', padding: '10px 14px', borderRadius: '10px', border: '1px solid #CBD5E1', fontSize: '0.9rem', color: 'var(--color-deep-navy)', outline: 'none' }} />
+                </div>
+                <div className={styles.detailItem}><span className={styles.detailLabel}>Status Garansi</span>
+                  <CustomSelect value={editWarrantyStatus} onChange={(val) => setEditWarrantyStatus(val)}
+                    options={[
+                      { value: 'GARANSI', label: 'Garansi (Warranty: Yes)' },
+                      { value: 'NON_GARANSI', label: 'Tidak Garansi (Warranty: No)' },
+                    ]} />
+                </div>
+                <div className={styles.detailItem}><span className={styles.detailLabel}>Nomor Referensi Customer</span>
+                  <input type="text" value={editCustomerRefNumber} onChange={(e) => setEditCustomerRefNumber(e.target.value)}
+                    placeholder="Contoh: #SBUX20230730195873"
+                    style={{ width: '100%', marginTop: '4px', padding: '10px 14px', borderRadius: '10px', border: '1px solid #CBD5E1', fontSize: '0.9rem', color: 'var(--color-deep-navy)', outline: 'none' }} />
+                </div>
               </>) : (
                 <div className={styles.detailItemFull}>
                   <div className={styles.detailStructuredBox}>
@@ -607,6 +672,104 @@ export default function ServiceDetailModal({ log, partners, technicianOptions = 
                         ) : (
                           <span style={{ fontStyle: 'italic', color: '#94a3b8' }}>Tidak ada catatan internal admin.</span>
                         )}
+                      </div>
+                    </div>
+
+                    {/* Row 8: Nomor SO & DO, Status Garansi, & No Ref Customer */}
+                    <div className={styles.detailStructuredRow}>
+                      <div className={styles.detailStructuredLabel}>Nomor SO & DO</div>
+                      <div className={styles.detailStructuredVal} style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                        <div><strong style={{ color: '#64748b', fontSize: '0.75rem' }}>SO:</strong> <span style={{ fontWeight: 700, color: 'var(--color-deep-navy)' }}>{log.so_number || '-'}</span></div>
+                        <div><strong style={{ color: '#64748b', fontSize: '0.75rem' }}>DO:</strong> <span style={{ fontWeight: 700, color: 'var(--color-deep-navy)' }}>{log.do_number || '-'}</span></div>
+                      </div>
+                    </div>
+
+                    <div className={styles.detailStructuredRow}>
+                      <div className={styles.detailStructuredLabel}>Status Garansi</div>
+                      <div className={styles.detailStructuredVal}>
+                        {log.warranty_status === 'NON_GARANSI' || log.warranty_status === 'No' ? (
+                          <span style={{ padding: '3px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 700, background: 'rgba(239, 68, 68, 0.1)', color: '#dc2626', border: '1px solid rgba(239, 68, 68, 0.25)' }}>
+                            Tidak Garansi (No)
+                          </span>
+                        ) : (
+                          <span style={{ padding: '3px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 700, background: 'rgba(16, 185, 129, 0.1)', color: '#059669', border: '1px solid rgba(16, 185, 129, 0.25)' }}>
+                            Garansi (Yes)
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className={styles.detailStructuredRow}>
+                      <div className={styles.detailStructuredLabel}>No. Ref. Customer</div>
+                      <div className={styles.detailStructuredVal}>
+                        <span>{log.customer_ref_number || '-'}</span>
+                      </div>
+                    </div>
+
+                    {/* Row 9: Dokumen SPK (Lampiran Attachment) */}
+                    <div className={styles.detailStructuredRow}>
+                      <div className={styles.detailStructuredLabel}>Lampiran SPK</div>
+                      <div className={styles.detailStructuredVal}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                          {log.spk_document_url || (log.attachments && log.attachments.length > 0) ? (
+                            <a
+                              href={log.spk_document_url || log.attachments?.[0]?.file_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                padding: '4px 10px',
+                                borderRadius: '6px',
+                                background: 'rgba(46,91,255,0.1)',
+                                color: '#2E5BFF',
+                                border: '1px solid rgba(46,91,255,0.25)',
+                                fontSize: '0.78rem',
+                                fontWeight: 700,
+                                textDecoration: 'none'
+                              }}
+                            >
+                              <FileText size={13} />
+                              <span>Lihat Dokumen SPK</span>
+                              <ExternalLink size={11} />
+                            </a>
+                          ) : (
+                            <span style={{ fontStyle: 'italic', color: '#94a3b8', fontSize: '0.8rem' }}>Belum ada lampiran SPK</span>
+                          )}
+
+                          <input
+                            type="file"
+                            ref={fileInputRef}
+                            style={{ display: 'none' }}
+                            accept=".pdf,.jpg,.jpeg,.png"
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              if (f) handleUploadSpk(f);
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={uploadingSpk}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              padding: '4px 10px',
+                              borderRadius: '6px',
+                              background: '#f1f5f9',
+                              border: '1px solid #cbd5e1',
+                              color: '#475569',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            <FilePlus size={12} />
+                            <span>{uploadingSpk ? 'Mengunggah...' : 'Upload / Ganti SPK'}</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
