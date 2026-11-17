@@ -46,6 +46,9 @@ export class IotService {
   // Map untuk melacak kapan pintu pertama kali terdeteksi terbuka: unitId -> Date.now()
   private static readonly doorOpenStartTime = new Map<string, number>();
 
+  // Cooldown pencatatan notifikasi in-app agar tidak spam ribuan record setiap payload (1 jam per alert per unit)
+  private static readonly lastInAppAlertSent = new Map<string, number>();
+
   constructor(
     @InjectRepository(IotTelemetryLog)
     private readonly telemetryLogRepo: Repository<IotTelemetryLog>,
@@ -315,15 +318,21 @@ export class IotService {
     for (const alert of alerts) {
       this.logger.warn(`🚨 ALERT: ${alert.title}`);
 
-      // 1. Simpan ke sistem notifikasi in-app
+      // 1. Simpan ke sistem notifikasi in-app — dengan cooldown 1 jam per alert per unit agar tidak spam
       if (targetUserId) {
-        await this.notificationsService.createNotification({
-          user_id: targetUserId,
-          type: NotificationType.ALERT,
-          sender_name: 'IoT Sistem',
-          title: alert.title,
-          content: alert.content,
-        });
+        const inAppKey = `${unit.id}:${alert.type}:inapp`;
+        const lastSent = IotService.lastInAppAlertSent.get(inAppKey) || 0;
+        const cooldownMs = 60 * 60 * 1000; // 1 jam
+        if (Date.now() - lastSent > cooldownMs) {
+          await this.notificationsService.createNotification({
+            user_id: targetUserId,
+            type: NotificationType.ALERT,
+            sender_name: 'IoT Sistem',
+            title: alert.title,
+            content: alert.content,
+          });
+          IotService.lastInAppAlertSent.set(inAppKey, Date.now());
+        }
       }
 
       // 2. Kirim warning email ke user / admin terkait

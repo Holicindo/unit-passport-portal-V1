@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import { reportApi } from '@/lib/api';
 import { 
   FileText, Calendar, Activity, Wrench, AlertTriangle, 
-  CheckCircle2, RefreshCw, ArrowLeft, ChevronRight, X,
+  CheckCircle2, RefreshCw, ArrowLeft, ChevronRight, ChevronDown, ChevronLeft, X,
   Thermometer, Zap, DoorOpen, PowerOff, ShieldCheck,
-  TrendingUp, Clock, Info
+  TrendingUp, Clock, Info, Loader2
 } from 'lucide-react';
 import styles from '../ClientPortal.module.css';
 
@@ -22,6 +22,35 @@ export default function ClientMonthlyReportPage() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'HEALTH' | 'MAINTENANCE'>('HEALTH');
   const [selectedUnitDetail, setSelectedUnitDetail] = useState<any>(null);
+  const [showMonthDropdown, setShowMonthDropdown] = useState(false);
+  const [pickerYear, setPickerYear] = useState(() => {
+    const d = new Date();
+    return d.getFullYear();
+  });
+  const [loadingUnitId, setLoadingUnitId] = useState<string | null>(null);
+
+  const months = [
+    { num: '01', name: 'Januari', short: 'Jan' },
+    { num: '02', name: 'Februari', short: 'Feb' },
+    { num: '03', name: 'Maret', short: 'Mar' },
+    { num: '04', name: 'April', short: 'Apr' },
+    { num: '05', name: 'Mei', short: 'Mei' },
+    { num: '06', name: 'Juni', short: 'Jun' },
+    { num: '07', name: 'Juli', short: 'Jul' },
+    { num: '08', name: 'Agustus', short: 'Agu' },
+    { num: '09', name: 'September', short: 'Sep' },
+    { num: '10', name: 'Oktober', short: 'Okt' },
+    { num: '11', name: 'November', short: 'Nov' },
+    { num: '12', name: 'Desember', short: 'Des' },
+  ];
+
+  const handleOpenDetail = (row: any) => {
+    setLoadingUnitId(row.unitId);
+    setTimeout(() => {
+      setSelectedUnitDetail(row);
+      setLoadingUnitId(null);
+    }, 150);
+  };
 
   const fetchReport = async () => {
     try {
@@ -76,34 +105,116 @@ export default function ClientMonthlyReportPage() {
           </p>
         </div>
 
-        {/* Filter Bulan */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            background: 'rgba(255, 255, 255, 0.05)',
-            border: '1px solid rgba(56, 189, 248, 0.25)',
-            borderRadius: '10px',
-            padding: '6px 14px',
-            color: '#ffffff'
-          }}>
-            <Calendar size={15} color="#38bdf8" />
-            <input
-              type="month"
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value)}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: '#ffffff',
-                fontFamily: 'inherit',
-                fontSize: '0.85rem',
-                outline: 'none',
-                cursor: 'pointer'
-              }}
-            />
-          </div>
+        {/* Filter Bulan dengan Custom Dropdown & Modal Pilihan Sesuai Tema Dark */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, position: 'relative' }}>
+          <button
+            type="button"
+            onClick={() => {
+              const [currY] = selectedMonth.split('-');
+              if (currY) setPickerYear(parseInt(currY, 10));
+              setShowMonthDropdown(prev => !prev);
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              background: 'rgba(8, 23, 41, 0.85)',
+              border: '1px solid rgba(56, 189, 248, 0.35)',
+              borderRadius: '10px',
+              padding: '8px 16px',
+              color: '#ffffff',
+              cursor: 'pointer',
+              fontWeight: 600,
+              fontSize: '0.88rem',
+              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.25)',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <Calendar size={16} color="#38bdf8" />
+            <span>{formatMonthName(selectedMonth)}</span>
+            <ChevronDown size={15} color="#94a3b8" style={{ transform: showMonthDropdown ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+          </button>
+
+          {/* Modal / Popup Dropdown Kalender Bulan */}
+          {showMonthDropdown && (
+            <>
+              <div 
+                style={{ position: 'fixed', inset: 0, zIndex: 998 }} 
+                onClick={() => setShowMonthDropdown(false)} 
+              />
+              <div style={{
+                position: 'absolute',
+                top: 'calc(100% + 8px)',
+                right: 0,
+                width: '300px',
+                background: '#071729',
+                border: '1px solid rgba(56, 189, 248, 0.3)',
+                borderRadius: '12px',
+                padding: '16px',
+                zIndex: 999,
+                boxShadow: '0 12px 32px rgba(0, 0, 0, 0.6), 0 0 15px rgba(56, 189, 248, 0.1)',
+                backdropFilter: 'blur(16px)',
+              }}>
+                {/* Year Navigation */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                  <button
+                    type="button"
+                    onClick={() => setPickerYear(y => y - 1)}
+                    style={{ background: 'rgba(255, 255, 255, 0.06)', border: 'none', color: '#94a3b8', borderRadius: 6, padding: '4px 8px', cursor: 'pointer' }}
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                  <span style={{ fontSize: '1rem', fontWeight: 700, color: '#38bdf8' }}>{pickerYear}</span>
+                  <button
+                    type="button"
+                    onClick={() => setPickerYear(y => y + 1)}
+                    style={{ background: 'rgba(255, 255, 255, 0.06)', border: 'none', color: '#94a3b8', borderRadius: 6, padding: '4px 8px', cursor: 'pointer' }}
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+
+                {/* 12 Months Grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                  {months.map((m) => {
+                    const targetVal = `${pickerYear}-${m.num}`;
+                    const isSelected = selectedMonth === targetVal;
+                    return (
+                      <button
+                        key={m.num}
+                        type="button"
+                        onClick={() => {
+                          setSelectedMonth(targetVal);
+                          setShowMonthDropdown(false);
+                        }}
+                        style={{
+                          padding: '10px 4px',
+                          borderRadius: 8,
+                          fontSize: '0.8rem',
+                          fontWeight: isSelected ? 700 : 500,
+                          cursor: 'pointer',
+                          textAlign: 'center',
+                          border: isSelected ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.05)',
+                          background: isSelected ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.03)',
+                          color: isSelected ? '#38bdf8' : '#e2e8f0',
+                          transition: 'all 0.15s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isSelected) (e.currentTarget.style.background = 'rgba(56, 189, 248, 0.1)');
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isSelected) (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)');
+                        }}
+                      >
+                        {m.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
+          )}
+
           <button
             onClick={fetchReport}
             className={styles.btnSecondary}
@@ -259,7 +370,7 @@ export default function ClientMonthlyReportPage() {
                       return (
                         <tr
                           key={row.unitId}
-                          onClick={() => setSelectedUnitDetail(row)}
+                          onClick={() => handleOpenDetail(row)}
                           style={{ cursor: 'pointer', transition: 'background 0.15s' }}
                           title="Klik untuk melihat visualisasi grafik dan rincian lengkap 5 pilar IoT"
                         >
@@ -336,10 +447,19 @@ export default function ClientMonthlyReportPage() {
                               style={{ padding: '4px 10px', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: 4 }}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setSelectedUnitDetail(row);
+                                handleOpenDetail(row);
                               }}
+                              disabled={loadingUnitId === row.unitId}
                             >
-                              Rincian <ChevronRight size={13} />
+                              {loadingUnitId === row.unitId ? (
+                                <>
+                                  <Loader2 size={13} className="spin" /> Membuka...
+                                </>
+                              ) : (
+                                <>
+                                  Rincian <ChevronRight size={13} />
+                                </>
+                              )}
                             </button>
                           </td>
                         </tr>
@@ -562,43 +682,115 @@ export default function ClientMonthlyReportPage() {
               {/* Visual Mini-Chart SVG Tren Suhu & Health Score 14 Hari */}
               <div style={{ marginTop: 10 }}>
                 <span style={{ fontSize: '0.72rem', color: '#94a3b8', display: 'block', marginBottom: 6 }}>
-                  Visualisasi Tren Suhu Kabinet &amp; Kondensor (14 Periode Terakhir):
+                  Visualisasi Tren Suhu Kabinet &amp; Kondensor (Periode Bulan Ini):
                 </span>
-                <div style={{ background: '#040d17', borderRadius: '8px', padding: '12px', border: '1px solid rgba(56, 189, 248, 0.1)' }}>
-                  <svg viewBox="0 0 500 90" style={{ width: '100%', height: '80px', overflow: 'visible' }}>
-                    {/* Safe zone box 2°C - 8°C */}
-                    <rect x="0" y="30" width="500" height="30" fill="rgba(16, 185, 129, 0.08)" />
-                    <line x1="0" y1="30" x2="500" y2="30" stroke="rgba(16, 185, 129, 0.3)" strokeDasharray="3 3" />
-                    <line x1="0" y1="60" x2="500" y2="60" stroke="rgba(16, 185, 129, 0.3)" strokeDasharray="3 3" />
-                    
-                    {/* Suhu Kabinet Line (Stabil ~4-5°C) */}
-                    <polyline
-                      fill="none"
-                      stroke="#38bdf8"
-                      strokeWidth="2.5"
-                      points="0,45 40,43 80,47 120,44 160,42 200,48 240,44 280,45 320,43 360,46 400,44 440,45 480,43 500,44"
-                    />
-                    
-                    {/* Suhu Kondensor Line (Stabil ~38-41°C) */}
-                    <polyline
-                      fill="none"
-                      stroke="#f59e0b"
-                      strokeWidth="2"
-                      strokeDasharray="4 2"
-                      points="0,75 40,73 80,78 120,74 160,70 200,79 240,75 280,72 320,74 360,82 400,75 440,73 480,72 500,74"
-                    />
-                  </svg>
-                  <div style={{ display: 'flex', gap: 16, marginTop: 6, fontSize: '0.68rem', color: '#94a3b8' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{ width: 12, height: 3, background: '#38bdf8', display: 'inline-block' }} /> Suhu Kabinet (Stabil)
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{ width: 12, height: 3, background: '#f59e0b', display: 'inline-block' }} /> Suhu Kondensor
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{ width: 12, height: 8, background: 'rgba(16, 185, 129, 0.2)', display: 'inline-block' }} /> Zona Aman 2°C - 8°C
-                    </div>
-                  </div>
+                <div style={{ background: '#040d17', borderRadius: '8px', padding: '14px', border: '1px solid rgba(56, 189, 248, 0.15)' }}>
+                  {(() => {
+                    const trend: any[] = selectedUnitDetail.dailyTrend || [];
+                    const chartW = 500;
+                    const chartH = 100;
+                    const padding = 20;
+
+                    // Range suhu: Y dari -5°C (bawah: 90px) sampai 55°C (atas: 10px)
+                    const minT = -5;
+                    const maxT = 55;
+                    const getY = (val: number) => chartH - padding - ((val - minT) / (maxT - minT)) * (chartH - 2 * padding);
+
+                    const ySafeTop = getY(8);   // Suhu 8°C
+                    const ySafeBottom = getY(2); // Suhu 2°C
+                    const y42 = getY(42);       // Garis batas overheat 42°C
+
+                    if (trend.length === 0) {
+                      return (
+                        <div style={{ textAlign: 'center', padding: '24px 0', color: '#64748b', fontSize: '0.78rem' }}>
+                          Belum ada rekaman riwayat tren suhu untuk unit ini pada periode ini.
+                        </div>
+                      );
+                    }
+
+                    const stepX = trend.length > 1 ? (chartW - 2 * padding) / (trend.length - 1) : 0;
+
+                    const cabPoints = trend
+                      .map((d, i) => {
+                        const val = d.cabinetTemp ?? 4.5;
+                        const x = padding + i * stepX;
+                        const y = getY(val);
+                        return `${x.toFixed(1)},${y.toFixed(1)}`;
+                      })
+                      .join(' ');
+
+                    const condPoints = trend
+                      .map((d, i) => {
+                        const val = d.condenserTemp ?? 38.0;
+                        const x = padding + i * stepX;
+                        const y = getY(val);
+                        return `${x.toFixed(1)},${y.toFixed(1)}`;
+                      })
+                      .join(' ');
+
+                    return (
+                      <>
+                        <svg viewBox={`0 0 ${chartW} ${chartH}`} style={{ width: '100%', height: '110px', overflow: 'visible' }}>
+                          {/* Grid line & Labels */}
+                          <line x1={padding} y1={y42} x2={chartW - padding} y2={y42} stroke="rgba(239, 68, 68, 0.35)" strokeDasharray="3 3" />
+                          <text x={chartW - padding + 4} y={y42 + 3} fill="#f87171" fontSize="9" fontWeight="bold">42°C (Maks)</text>
+
+                          {/* Safe Zone (2°C - 8°C) */}
+                          <rect
+                            x={padding}
+                            y={Math.min(ySafeTop, ySafeBottom)}
+                            width={chartW - 2 * padding}
+                            height={Math.abs(ySafeBottom - ySafeTop)}
+                            fill="rgba(16, 185, 129, 0.12)"
+                          />
+                          <line x1={padding} y1={ySafeTop} x2={chartW - padding} y2={ySafeTop} stroke="rgba(16, 185, 129, 0.4)" strokeDasharray="2 2" />
+                          <line x1={padding} y1={ySafeBottom} x2={chartW - padding} y2={ySafeBottom} stroke="rgba(16, 185, 129, 0.4)" strokeDasharray="2 2" />
+                          <text x={chartW - padding + 4} y={ySafeTop + 3} fill="#34d399" fontSize="8">8°C</text>
+                          <text x={chartW - padding + 4} y={ySafeBottom + 3} fill="#34d399" fontSize="8">2°C</text>
+
+                          {/* Polylines */}
+                          <polyline fill="none" stroke="#f59e0b" strokeWidth="2" strokeDasharray="4 2" points={condPoints} />
+                          <polyline fill="none" stroke="#38bdf8" strokeWidth="2.5" points={cabPoints} />
+
+                          {/* Data points & labels */}
+                          {trend.map((d, i) => {
+                            const x = padding + i * stepX;
+                            const yCab = getY(d.cabinetTemp ?? 4.5);
+                            const yCond = getY(d.condenserTemp ?? 38.0);
+                            return (
+                              <g key={i}>
+                                <circle cx={x} cy={yCab} r={3} fill="#38bdf8" />
+                                <circle cx={x} cy={yCond} r={2.5} fill="#f59e0b" />
+                                {/* Tanggal label */}
+                                <text x={x} y={chartH - 4} fill="#64748b" fontSize="8" textAnchor="middle">
+                                  {d.date}
+                                </text>
+                              </g>
+                            );
+                          })}
+                        </svg>
+
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginTop: 10, fontSize: '0.7rem', color: '#94a3b8', alignItems: 'center' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{ width: 14, height: 3, background: '#38bdf8', borderRadius: 2, display: 'inline-block' }} />
+                            <span>Suhu Kabinet</span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{ width: 14, height: 2, borderBottom: '2px dashed #f59e0b', display: 'inline-block' }} />
+                            <span>Suhu Kondensor</span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{ width: 12, height: 8, background: 'rgba(16, 185, 129, 0.25)', border: '1px solid rgba(16, 185, 129, 0.4)', borderRadius: 2, display: 'inline-block' }} />
+                            <span>Zona Standar (2°C - 8°C)</span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{ width: 12, height: 1, borderBottom: '2px dashed #f87171', display: 'inline-block' }} />
+                            <span>Ambang Overheat (&gt;42°C)</span>
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
             </div>

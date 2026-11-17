@@ -302,9 +302,12 @@ export class ReportsService {
         const dailyTrend = unitScores.slice(-14).map(s => ({
           date: s.date ? s.date.slice(5) : '—',
           healthScore: s.overall_score || 0,
-          cabinetTemp: s.cabinet_cooling_rate ? 4.5 : 5.0,
-          condenserTemp: s.condenser_peak || 38.5,
-          dutyCycle: s.duty_cycle_percentage || 55,
+          // Estimasi suhu kabinet dari cooling rate (semakin rendah cooling rate → suhu lebih tinggi)
+          cabinetTemp: s.cabinet_cooling_rate != null
+            ? Math.round((6.0 - s.cabinet_cooling_rate * 0.5) * 10) / 10
+            : null,
+          condenserTemp: s.condenser_peak || null,
+          dutyCycle: s.duty_cycle_percentage || null,
         }));
 
         const isRepairRecommended = (avgScore !== null && avgScore < 70) || (avgDutyCycle !== null && avgDutyCycle > 80);
@@ -338,11 +341,32 @@ export class ReportsService {
             maxCondenserTemp,
             tempBreachHours: maxCondenserTemp && maxCondenserTemp > 42 ? 3.5 : 0,
             avgDailyDoorOpens,
-            doorOver30mEvents: unitAlerts.filter(a => a.type.includes('Pintu')).length,
-            offlineOver24hEvents: unitAlerts.filter(a => a.type.includes('Mati')).length,
+            doorOver30mEvents: (() => {
+              // Deduplikasi: hitung hari unik di mana alarm Pintu pernah terjadi (bukan total record)
+              const doorAlertDates = new Set(
+                unitAlerts
+                  .filter(a => a.type.includes('Pintu'))
+                  .map(a => new Date(a.date).toISOString().split('T')[0])
+              );
+              return doorAlertDates.size;
+            })(),
+            offlineOver24hEvents: (() => {
+              const offlineDates = new Set(
+                unitAlerts
+                  .filter(a => a.type.includes('Mati'))
+                  .map(a => new Date(a.date).toISOString().split('T')[0])
+              );
+              return offlineDates.size;
+            })(),
             compressorDutyCycle: avgDutyCycle,
             compressorStartsPerHour: avgStartsPerHour,
-            totalAlertsCount: unitAlerts.length,
+            totalAlertsCount: (() => {
+              // Deduplikasi: hitung kombinasi unik tipe + hari (bukan total notifikasi)
+              const uniqueAlertDays = new Set(
+                unitAlerts.map(a => `${a.type}:${new Date(a.date).toISOString().split('T')[0]}`)
+              );
+              return uniqueAlertDays.size;
+            })(),
           },
           alerts: unitAlerts,
           dailyTrend,
