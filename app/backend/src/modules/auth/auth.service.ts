@@ -184,4 +184,60 @@ export class AuthService {
       },
     };
   }
+
+  /**
+   * Validasi atau buat otomatis akun pengguna dari login Google OAuth.
+   */
+  async validateOrCreateGoogleUser(data: { email: string; name: string; picture?: string; googleId?: string }) {
+    let user = await this.userRepository.findOne({ where: { email: data.email } });
+
+    if (!user) {
+      // Buat Client otomatis jika akun baru mendaftar via Google
+      const newClient = this.clientRepository.create({
+        company_name: data.name || data.email.split('@')[0],
+        email: data.email,
+      });
+      const savedClient = await this.clientRepository.save(newClient);
+
+      // Buat password acak yang aman untuk akun Google
+      const randomPassword = await bcrypt.hash(Math.random().toString(36).slice(-10) + Date.now(), 10);
+
+      user = this.userRepository.create({
+        email: data.email,
+        name: data.name,
+        password: randomPassword,
+        role: UserRole.CLIENT,
+        client_id: savedClient.id,
+        status: 'ACTIVE',
+        last_login: new Date(),
+      });
+      user = await this.userRepository.save(user);
+    } else {
+      user.last_login = new Date();
+      if (!user.name || user.name === 'Unknown User') {
+        user.name = data.name;
+      }
+      user = await this.userRepository.save(user);
+    }
+
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      client_id: user.client_id,
+      partner_id: user.partner_id,
+    };
+
+    return {
+      access_token: this.jwtService.sign(payload),
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        client_id: user.client_id,
+        partner_id: user.partner_id,
+      },
+    };
+  }
 }

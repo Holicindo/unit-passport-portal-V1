@@ -1,0 +1,430 @@
+/* reports.module.css — Styling Responsif & Compact untuk Monthly Fleet Report */
+
+.reportContainer {
+  padding-bottom: 90px;
+  letter-spacing: -0.2px;
+  /* Rapatkan jarak antar huruf secara default */
+}
+
+/* Header & Filter Bulan */
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.headerTitleWrapper {
+  flex: 1;
+  min-width: 260px;
+}
+
+.filterControls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.monthDropdownBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(8, 23, 41, 0.9);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 10px;
+  padding: 8px 14px;
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+  letter-spacing: normal;
+}
+
+.monthDropdownBtn:hover {
+  background: rgba(14, 36, 61, 0.95);
+  border-color: rgba(56, 189, 248, 0.6);
+}
+
+.monthPickerPopup {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 290px;
+  background: #071729;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 14px;
+  padding: 14px;
+  z-index: 999;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.7), 0 0 15px rgba(56, 189, 248, 0.15);
+  backdrop-filter: blur(16px);
+}
+
+/* 1. Summary Cards (Executive Summary) */
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.summaryCard {
+  padding: 14px 16px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.summaryCardLabel {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.summaryCardVal {
+  font-size: 1.65rem;
+  font-weight: 800;
+  margin-top: 4px;
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+}
+
+.summaryCardSub {
+  font-size: 0.7rem;
+  margin-top: 4px;
+  letter-spacing: normal;
+}
+
+/* Tabs */
+.tabRow {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.tabBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  letter-spacing: -0.1px;
+}
+
+/* ──────────────────────────────────────────────────────────── */
+/* STYLING CELL DESKTOP & MOBILE TABEL LAPORAN                 */
+/* ──────────────────────────────────────────────────────────── */
+.unitHeaderCell {
+  width: auto;
+}
+
+.unitCardSerialRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: auto;
+}
+
+.unitCardBadgeMobile {
+  display: none; /* Sembunyikan badge ini di desktop karena desktop sudah punya kolom Status sendiri */
+}
+
+.unitSerialTitle {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #38bdf8;
+  letter-spacing: -0.2px;
+}
+
+.cellRow {
+  display: contents;
+  /* Desktop fallback */
+}
+
+.cellLabel {
+  display: none;
+  /* Muncul hanya di mobile */
+}
+
+.cellValue {
+  display: inline;
+  letter-spacing: -0.2px;
+}
+
+.unitRowActionCell {
+  text-align: center;
+}
+
+.textCenterCell {
+  text-align: center !important;
+}
+
+.unitActionBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 5px 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 8px;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  background: rgba(56, 189, 248, 0.12);
+  color: #38bdf8;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  letter-spacing: normal;
+}
+
+.unitActionBtn:hover {
+  background: rgba(56, 189, 248, 0.25);
+  color: #ffffff;
+}
+
+/* Modal Rincian IoT */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modalContent {
+  width: 100%;
+  max-width: 920px;
+  max-height: 88vh;
+  overflow-y: auto;
+  background: #071729;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 18px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  letter-spacing: -0.2px;
+}
+
+/* ──────────────────────────────────────────────────────────── */
+/* MEDIA QUERIES UNTUK MOBILE VIEW (max-width: 768px)         */
+/* ──────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .reportContainer {
+    padding-bottom: 105px;
+  }
+
+  /* Summary Grid 2x2 compact */
+  .summaryGrid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+    margin-bottom: 14px !important;
+  }
+
+  .summaryCard {
+    padding: 10px 12px !important;
+    border-radius: 12px !important;
+  }
+
+  .summaryCardLabel {
+    font-size: 0.62rem !important;
+    letter-spacing: 0.1px !important;
+  }
+
+  .summaryCardVal {
+    font-size: 1.25rem !important;
+    margin-top: 2px !important;
+    letter-spacing: -0.4px !important;
+  }
+
+  .summaryCardSub {
+    font-size: 0.62rem !important;
+    line-height: 1.2 !important;
+    margin-top: 2px !important;
+  }
+
+  /* Filter Bulan */
+  .headerRow {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 10px;
+  }
+
+  .filterControls {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .monthDropdownBtn {
+    flex: 1;
+    justify-content: space-between;
+    padding: 7px 12px !important;
+    font-size: 0.8rem !important;
+  }
+
+  .monthPickerPopup {
+    right: auto !important;
+    left: 0 !important;
+    width: 100% !important;
+    max-width: 310px !important;
+  }
+
+  /* Tabs di mobile */
+  .tabRow {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .tabBtn {
+    width: 100%;
+    justify-content: center;
+    padding: 8px 10px;
+    font-size: 0.75rem;
+  }
+
+  /* ── DESAIN CARD UNIT MOBILE SESUAI GAMBAR 2 (SUPER COMPACT & RAPIH) ── */
+  .reportContainer :global(.dataTable tbody) {
+    padding: 6px 0 !important;
+    gap: 10px !important;
+  }
+
+  .reportContainer :global(.dataTable tbody tr) {
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 10px 12px !important;
+    border-radius: 12px !important;
+    gap: 0 !important;
+    background: linear-gradient(145deg, #0d233a 0%, #081729 60%, #050f1b 100%) !important;
+    border: 1px solid rgba(56, 189, 248, 0.25) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
+    margin-bottom: 8px !important;
+  }
+
+  /* Reset semua td bawaan tabel */
+  .reportContainer :global(.dataTable tbody td) {
+    display: block !important;
+    width: 100% !important;
+    padding: 0 !important;
+    border: none !important;
+    margin: 0 !important;
+    color: inherit !important;
+  }
+
+  /* Matikan pseudo ::before bawaan dataTable */
+  .reportContainer :global(.dataTable tbody td::before) {
+    display: none !important;
+    content: none !important;
+  }
+
+  /* Header Card di Mobile: Serial Number di paling KIRI, Badge di paling KANAN (Dipisah Jauh) */
+  .unitHeaderCell {
+    border-bottom: 1px solid rgba(56, 189, 248, 0.15) !important;
+    padding-bottom: 6px !important;
+    margin-bottom: 6px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .unitCardSerialRow {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .unitCardBadgeMobile {
+    display: inline-flex !important;
+    margin-left: auto !important;
+  }
+
+  .unitSerialTitle {
+    font-size: 0.95rem !important;
+    font-weight: 800 !important;
+    color: #38bdf8 !important;
+    letter-spacing: -0.4px !important;
+    font-family: inherit !important;
+  }
+
+  /* Setiap baris data: Label Kiri, Value Kanan Sejajar Rapi */
+  .cellRow {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    padding: 1.5px 0 !important;
+    box-sizing: border-box !important;
+    line-height: 1.2 !important;
+  }
+
+  .cellLabel {
+    display: block !important;
+    font-size: 0.72rem !important;
+    color: #94a3b8 !important;
+    font-weight: 500 !important;
+    letter-spacing: -0.3px !important;
+    white-space: nowrap !important;
+    line-height: 1.3 !important;
+  }
+
+  .cellValue {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    font-size: 0.76rem !important;
+    font-weight: 600 !important;
+    color: #ffffff !important;
+    letter-spacing: -0.3px !important;
+    text-align: right !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Tombol Rincian di Bagian Bawah */
+  .unitRowActionCell {
+    margin-top: 6px !important;
+    padding-top: 6px !important;
+    border-top: 1px solid rgba(56, 189, 248, 0.12) !important;
+    width: 100% !important;
+    display: block !important;
+  }
+
+  .unitActionBtn {
+    width: 100% !important;
+    padding: 7px 12px !important;
+    font-size: 0.75rem !important;
+    border-radius: 8px !important;
+    justify-content: center !important;
+    letter-spacing: -0.1px !important;
+  }
+
+  /* Modal responsif di layar ponsel */
+  .modalOverlay {
+    padding: 10px !important;
+    align-items: flex-end !important;
+  }
+
+  .modalContent {
+    max-height: 85vh !important;
+    padding: 16px !important;
+    border-radius: 18px 18px 0 0 !important;
+    gap: 12px !important;
+  }
+}

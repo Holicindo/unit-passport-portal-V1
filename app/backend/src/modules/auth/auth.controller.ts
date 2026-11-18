@@ -1,5 +1,7 @@
-import { Controller, Post, Get, Patch, Body, Request, HttpCode, HttpStatus, UseGuards, Param } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Body, Request, Res, HttpCode, HttpStatus, UseGuards, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
+import type { Response } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -19,6 +21,31 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Return JWT token and user info' })
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto.email, loginDto.password);
+  }
+
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  @ApiOperation({ summary: 'Trigger Google OAuth login flow' })
+  async googleAuth(@Query('redirect') redirect?: string) {
+    // Passport otomatis mengarahkan ke halaman persetujuan login Google
+  }
+
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  @ApiOperation({ summary: 'Handle Google OAuth callback redirect' })
+  async googleAuthCallback(@Request() req: any, @Res() res: Response) {
+    const authResult = req.user;
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+
+    if (!authResult || !authResult.access_token) {
+      return res.redirect(`${frontendUrl}/login?error=GoogleAuthFailed`);
+    }
+
+    const token = authResult.access_token;
+    const userEncoded = encodeURIComponent(JSON.stringify(authResult.user));
+
+    // Redirect kembali ke halaman login frontend untuk menyimpan token ke localStorage
+    return res.redirect(`${frontendUrl}/login?token=${token}&user=${userEncoded}`);
   }
 
   @Post('register')
