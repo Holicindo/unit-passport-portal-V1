@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { IotTelemetryLog } from './entities/iot-telemetry-log.entity';
@@ -149,6 +150,16 @@ export class IotService {
     }
 
     // 3. Update kondisi terkini di tabel units (setiap pesan = real-time)
+    const isAnyDoorOpen = !!(payload.isDoor1Open || payload.isDoor2Open || payload.isDoor3Open || payload.isDoor4Open);
+    let doorOpenedAtToPersist = unit.door_opened_at;
+
+    if (isAnyDoorOpen) {
+      if (!doorOpenedAtToPersist) {
+        doorOpenedAtToPersist = new Date();
+      }
+    } else {
+      doorOpenedAtToPersist = null as any;
+    }
 
     const updatePayload: any = {
       last_temp_cabinet: payload.tempCabinet,
@@ -157,6 +168,7 @@ export class IotService {
       last_voltage: payload.voltage,
       last_power: payload.power,
       last_seen_at: new Date(),
+      door_opened_at: doorOpenedAtToPersist,
       is_door1_open: payload.isDoor1Open,
       is_door2_open: payload.isDoor2Open,
       is_door3_open: payload.isDoor3Open,
@@ -190,7 +202,6 @@ export class IotService {
     });
 
     // Track door event (real-time, tidak throttled)
-    const isAnyDoorOpen = !!(payload.isDoor1Open || payload.isDoor2Open || payload.isDoor3Open || payload.isDoor4Open);
     this.trackDoorEvent(unit.id, isAnyDoorOpen);
 
     // Track durasi pintu terbuka (untuk alarm > 30 menit)
@@ -266,10 +277,11 @@ export class IotService {
       });
     }
 
-    // 2. Alarm Pintu Terbuka > 30 Menit - Revisi Item 2
+    // 2. Alarm Pintu Terbuka > 30 Menit - Revisi Item 2 (Database-backed timer)
     const isAnyDoorOpen = !!(payload.isDoor1Open || payload.isDoor2Open || payload.isDoor3Open || payload.isDoor4Open);
-    if (isAnyDoorOpen && IotService.doorOpenStartTime.has(unit.id)) {
-      const openDurationMinutes = Math.floor((Date.now() - IotService.doorOpenStartTime.get(unit.id)!) / 60000);
+    const doorOpenSince = unit.door_opened_at ? new Date(unit.door_opened_at).getTime() : IotService.doorOpenStartTime.get(unit.id);
+    if (isAnyDoorOpen && doorOpenSince) {
+      const openDurationMinutes = Math.floor((Date.now() - doorOpenSince) / 60000);
       if (openDurationMinutes >= ALERT_THRESHOLDS.DOOR_OPEN_MAX_MINUTES) {
         alerts.push({
           title: `🚪 Pintu Kabinet Terbuka > 30 Menit: ${unit.model_name}`,
@@ -401,7 +413,7 @@ export class IotService {
       // 2. Alarm Pintu Terbuka (> 30 Menit)
       const isDoorOpen = unit.is_door1_open || unit.is_door2_open || unit.is_door3_open || unit.is_door4_open;
       if (isDoorOpen) {
-        const openStart = IotService.doorOpenStartTime.get(unit.id);
+        const openStart = unit.door_opened_at ? new Date(unit.door_opened_at).getTime() : IotService.doorOpenStartTime.get(unit.id);
         const durationMin = openStart ? Math.floor((now - openStart) / 60000) : 0;
         const isExceeded = durationMin >= ALERT_THRESHOLDS.DOOR_OPEN_MAX_MINUTES;
 
@@ -531,6 +543,87 @@ export class IotService {
     });
 
     return activeAlerts;
+  }
+
+  // ─── CRON JOB: DETEKSI UNIT MATI / NON-OPERASIONAL (> 24 JAM) ─────────────
+  // Berjalan otomatis setiap 1 jam untuk memeriksa unit aktif yang hilang sinyal
+  @Cron(CronExpression.EVERY_HOUR)
+  async checkOfflineUnitsCron(): Promise<void> {
+    this.logger.log('⏰ [CRON] Memeriksa unit mati / non-operasional (> 24 jam)...');
+    try {
+      const units = await this.unitRepo.find({
+        where: { status: 'ACTIVE' },
+        relations: ['current_client'],
+      });
+
+      const now = Date.now();
+      const admin = await this.userRepo.findOne({ where: { role: UserRole.ADMIN } });
+      const targetUserId = admin ? admin.id : null;
+
+      for (const unit of units) {
+        // Hanya cek unit yang memiliki device IoT
+        if (!unit.iot_unit_id) continue;
+
+        let isOffline = false;
+        let offlineDesc = '';
+
+        if (!unit.last_seen_at) {
+          isOffline = true;
+          offlineDesc = 'Unit belum pernah mengirim sinyal telemetri sejak didaftarkan.';
+        } else {
+          const hoursOffline = (now - new Date(unit.last_seen_at).getTime()) / (1000 * 60 * 60);
+          if (hoursOffline > ALERT_THRESHOLDS.OFFLINE_MAX_HOURS) {
+            isOffline = true;
+            const formatted = hoursOffline >= 48 ? `${Math.floor(hoursOffline / 24)} hari` : `${Math.floor(hoursOffline)} jam`;
+            offlineDesc = `Unit tidak mengirim sinyal telemetri selama lebih dari ${formatted} (batas toleransi: 24 jam).`;
+          }
+        }
+
+        if (isOffline) {
+          const alertType = 'UNIT_OFFLINE';
+          const alertTitle = `🚨 Unit Mati / Tidak Beroperasi > 24 Jam: ${unit.model_name}`;
+          const alertContent = `Unit ${unit.serial_number} (${unit.outlet_branch || 'Umum'}) terindikasi non-operasional. ${offlineDesc} Mohon lakukan pengecekan fisik dan konektivitas modul IoT.`;
+
+          // Cooldown 24 jam untuk alert unit mati agar tidak kirim email spam tiap jam
+          const cooldownKey = `${unit.id}:${alertType}`;
+          const lastSent = IotService.lastInAppAlertSent.get(cooldownKey) || 0;
+          const COOLDOWN_24H = 24 * 60 * 60 * 1000;
+
+          if (now - lastSent > COOLDOWN_24H) {
+            // 1. Simpan ke notifikasi portal (in-app)
+            if (targetUserId) {
+              await this.notificationsService.createNotification({
+                user_id: targetUserId,
+                type: NotificationType.ALERT,
+                sender_name: 'IoT Sistem Monitoring',
+                title: alertTitle,
+                content: alertContent,
+              });
+            }
+
+            // 2. Kirim Notifikasi Email
+            const recipientEmails = await this.getRecipientEmailsForUnit(unit);
+            await this.emailAlertService.sendIotAlertEmail({
+              to: recipientEmails,
+              unitSerialNumber: unit.serial_number,
+              unitModel: unit.model_name,
+              clientName: unit.current_client?.company_name,
+              outletBranch: unit.outlet_branch,
+              alertTitle,
+              alertType,
+              currentValue: 'Non-Operasional (> 24 Jam)',
+              thresholdLimit: `Maks ${ALERT_THRESHOLDS.OFFLINE_MAX_HOURS} Jam`,
+              severity: 'CRITICAL',
+            });
+
+            IotService.lastInAppAlertSent.set(cooldownKey, now);
+            this.logger.warn(`⚠️ [OFFLINE ALERT SENT] Unit ${unit.serial_number}`);
+          }
+        }
+      }
+    } catch (err: any) {
+      this.logger.error(`Error running offline units cron: ${err.message}`);
+    }
   }
 
   // Cache memori telemetry live tercepat per unit ID (agar real-time 0 delay dan 0 write beban ke DB)

@@ -99,6 +99,9 @@ export class Unit {
   is_door4_open?: boolean;
 
   @Column({ type: 'timestamp', nullable: true })
+  door_opened_at?: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
   last_seen_at?: Date;
 
   // --- Health Score V2 Configuration & Baseline ---

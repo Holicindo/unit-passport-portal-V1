@@ -5,7 +5,11 @@ import { Repository } from 'typeorm';
 import { UnitHealthScore, LifecycleState } from './entities/unit-health-score.entity';
 import { IotTelemetryLog } from '../iot/entities/iot-telemetry-log.entity';
 import { Unit } from '../units/entities/unit.entity';
-import { IotService } from '../iot/iot.service';
+import { User, UserRole } from '../auth/entities/user.entity';
+import { IotService, ALERT_THRESHOLDS } from '../iot/iot.service';
+import { EmailAlertService } from '../iot/email-alert.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '../notifications/entities/notification.entity';
 
 // ─── STATISTICAL HELPERS ──────────────────────────────────────────────────────
 function getPercentile(arr: number[], q: number): number {
@@ -60,6 +64,7 @@ interface Cycle {
 @Injectable()
 export class HealthScoreService {
   private readonly logger = new Logger(HealthScoreService.name);
+  private static readonly lastHealthScoreAlertSent = new Map<string, number>();
 
   constructor(
     @InjectRepository(UnitHealthScore)
@@ -68,7 +73,11 @@ export class HealthScoreService {
     private readonly telemetryLogRepo: Repository<IotTelemetryLog>,
     @InjectRepository(Unit)
     private readonly unitRepo: Repository<Unit>,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
     private readonly iotService: IotService,
+    private readonly emailAlertService: EmailAlertService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   // ─── CRON: SETIAP JAM ──────────────────────────────────────────────────────
@@ -628,7 +637,103 @@ export class HealthScoreService {
       `| DoorRec=${avgDoorRecoveryMin.toFixed(1)}min Defrost=${defrostCycleCount}x VoltAnomaly=${(voltageAnomalyRatio*100).toFixed(1)}%`,
     );
 
+    // ─── ALARM HEALTH SCORE RENDAH (< 70) ───────────────────────────────────
+    if (overallScore < ALERT_THRESHOLDS.HEALTH_SCORE_MIN && !isStartupPhase) {
+      await this.triggerLowHealthScoreAlert(unit, overallScore, {
+        subCabinetScore,
+        subEvapScore,
+        subCondenserScore,
+        subElecScore,
+      });
+    }
+
     return healthScore;
+  }
+
+  /**
+   * Mengirim alert (in-app + email) jika Health Score unit turun di bawah 70
+   */
+  private async triggerLowHealthScoreAlert(
+    unit: Unit,
+    score: number,
+    subscores: {
+      subCabinetScore: number;
+      subEvapScore: number;
+      subCondenserScore: number;
+      subElecScore: number;
+    },
+  ): Promise<void> {
+    const alertType = 'LOW_HEALTH_SCORE';
+    const cooldownKey = `${unit.id}:${alertType}`;
+    const now = Date.now();
+    const lastSent = HealthScoreService.lastHealthScoreAlertSent.get(cooldownKey) || 0;
+    const COOLDOWN_24H = 24 * 60 * 60 * 1000; // Notifikasi evaluasi kesehatan harian (1x per 24 jam)
+
+    if (now - lastSent < COOLDOWN_24H) {
+      return;
+    }
+
+    const roundedScore = Math.round(score);
+    const alertTitle = `⚠️ Peringatan Kesehatan Unit: Health Score Turun (${roundedScore}/100)`;
+
+    // Rangkum faktor penyebab penurunan
+    const causes: string[] = [];
+    if (subscores.subCondenserScore < 70) causes.push('Suhu kondensor tinggi / ventilasi terhambat');
+    if (subscores.subCabinetScore < 70) causes.push('Suhu kabinet tidak stabil / di luar batas target');
+    if (subscores.subEvapScore < 70) causes.push('Evaporator lambat menyerap dingin / siklus defrost abnormal');
+    if (subscores.subElecScore < 70) causes.push('Kompresor bekerja terlalu berat (duty cycle tinggi / tegangan anomali)');
+    const causeDesc = causes.length > 0 ? causes.join(', ') : 'Penurunan performa umum pada sistem pendingin';
+
+    const alertContent = `Unit ${unit.serial_number} (${unit.outlet_branch || 'Umum'}) memperoleh Health Score ${roundedScore}/100 (batas minimum aman: 70/100). Faktor indikasi: ${causeDesc}. Disarankan melakukan pengecekan atau perawatan preventif.`;
+
+    try {
+      // 1. Simpan ke notifikasi in-app
+      const admin = await this.userRepo.findOne({ where: { role: UserRole.ADMIN } });
+      if (admin) {
+        await this.notificationsService.createNotification({
+          user_id: admin.id,
+          type: NotificationType.ALERT,
+          sender_name: 'Evaluasi IoT & Health Score',
+          title: alertTitle,
+          content: alertContent,
+        });
+      }
+
+      // 2. Kirim Notifikasi Email
+      const recipientEmails: string[] = [];
+      const admins = await this.userRepo.find({
+        where: [{ role: UserRole.ADMIN }, { role: UserRole.SUPER_ADMIN as any }],
+        select: ['email'],
+      });
+      admins.forEach(a => { if (a.email) recipientEmails.push(a.email); });
+
+      const clientId = (unit as any).currentClientId || unit.current_client?.id;
+      if (clientId) {
+        const clientUsers = await this.userRepo.find({
+          where: { client_id: clientId },
+          select: ['email'],
+        });
+        clientUsers.forEach(u => { if (u.email) recipientEmails.push(u.email); });
+      }
+
+      await this.emailAlertService.sendIotAlertEmail({
+        to: Array.from(new Set(recipientEmails)),
+        unitSerialNumber: unit.serial_number,
+        unitModel: unit.model_name,
+        clientName: unit.current_client?.company_name,
+        outletBranch: unit.outlet_branch,
+        alertTitle,
+        alertType,
+        currentValue: `${roundedScore}/100`,
+        thresholdLimit: `Min ${ALERT_THRESHOLDS.HEALTH_SCORE_MIN}`,
+        severity: roundedScore < 50 ? 'CRITICAL' : 'WARNING',
+      });
+
+      HealthScoreService.lastHealthScoreAlertSent.set(cooldownKey, now);
+      this.logger.warn(`📉 [HEALTH SCORE ALERT SENT] Unit ${unit.serial_number} Score=${roundedScore}`);
+    } catch (err: any) {
+      this.logger.error(`Error triggering low health score alert: ${err.message}`);
+    }
   }
 
   // ─── PUBLIC API METHODS ───────────────────────────────────────────────────
