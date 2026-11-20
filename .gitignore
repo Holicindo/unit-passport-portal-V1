@@ -35,5 +35,6 @@ Thumbs.db
 .idea/
 # Security
 *.pem
+*.csv
 app/backend/temp/
 app/backend/src/scripts/*.ts
