@@ -93,10 +93,10 @@ export class IotService {
       this.logger.log(`🔧 [HACK] Kabinet dikoreksi: ${payload.tempCabinet}°C (dari Evap: ${payload.tempEvaporator}°C)`);
     }
 
-    // 2. HACK EVAPORATOR & KONDENSOR: Hanya untuk unit A26071976 yang bermasalah
-    //    Deteksi defrost berdasarkan kondensor + evaporator tinggi
-    //    ATAU jika evaporator sudah dikoreksi di kabinet hack
-    const isUnitWithHack = payload.unitId === 'A26071976';
+    // 2. Deteksi Defrost / Koreksi Anomali Sensor
+    //    Unit target dapat dikonfigurasi melalui ENV (IOT_SENSOR_CORRECTION_UNITS=unitA,unitB)
+    const sensorCorrectionUnits = (process.env.IOT_SENSOR_CORRECTION_UNITS || 'A26071976').split(',').map(u => u.trim());
+    const isUnitWithHack = sensorCorrectionUnits.includes(payload.unitId);
     const isDefrostCycle = isUnitWithHack && (
       (payload.tempCondenser !== -127 && payload.tempCondenser > 40) ||
       (payload.tempEvaporator !== -127 && payload.tempEvaporator > 5) ||
