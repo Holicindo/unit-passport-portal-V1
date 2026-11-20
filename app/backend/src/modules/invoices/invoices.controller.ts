@@ -6,6 +6,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../auth/entities/user.entity';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
+import { UpdateInvoiceDto } from './dto/update-invoice.dto';
 
 @ApiTags('Invoices')
 @Controller('invoices')
@@ -35,7 +36,7 @@ export class InvoicesController {
   @Put(':id')
   @Roles(UserRole.ADMIN, UserRole.PARTNER)
   @ApiOperation({ summary: 'Admin/Partner: Update an existing invoice' })
-  update(@Param('id') id: string, @Body() body: any) {
+  update(@Param('id') id: string, @Body() body: UpdateInvoiceDto) {
     return this.invoicesService.update(id, body);
   }
 

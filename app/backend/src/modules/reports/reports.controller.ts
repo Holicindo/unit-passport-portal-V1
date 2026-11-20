@@ -15,6 +15,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { ReportsService } from './reports.service';
 import { CreateServiceReportDto } from './dto/create-service-report.dto';
+import { UpdateServiceReportDto } from './dto/update-service-report.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -124,7 +125,7 @@ export class ReportsController {
   @Patch(':id')
   @Roles(UserRole.ADMIN, UserRole.PARTNER)
   @ApiOperation({ summary: 'Update laporan' })
-  async update(@Param('id') id: string, @Body() body: any) {
+  async update(@Param('id') id: string, @Body() body: UpdateServiceReportDto) {
     return this.reportsService.update(id, body);
   }
 }

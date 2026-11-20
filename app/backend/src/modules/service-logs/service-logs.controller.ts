@@ -8,6 +8,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../auth/entities/user.entity';
 import { CreateServiceLogDto } from './dto/create-service-log.dto';
+import { UpdateServiceLogDto } from './dto/update-service-log.dto';
 
 @ApiTags('Service Logs')
 @Controller('service-logs')
@@ -79,7 +80,7 @@ export class ServiceLogsController {
   @Put(':id')
   @Roles(UserRole.PARTNER, UserRole.MECHANIC, UserRole.ADMIN)
   @ApiOperation({ summary: 'Partner/Mechanic/Admin: Update an existing service log' })
-  update(@Param('id') id: string, @Body() body: any) {
+  update(@Param('id') id: string, @Body() body: UpdateServiceLogDto) {
     return this.serviceLogsService.update(id, body);
   }
 

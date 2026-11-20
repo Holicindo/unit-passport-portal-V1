@@ -5,6 +5,8 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../auth/entities/user.entity';
+import { CreatePartnerDto } from './dto/create-partner.dto';
+import { UpdatePartnerDto } from './dto/update-partner.dto';
 
 @ApiTags('Partners Management')
 @Controller('partners')
@@ -24,7 +26,7 @@ export class PartnersController {
   @Post()
   @ApiOperation({ summary: 'Admin: Create a new partner' })
   @ApiResponse({ status: 201, description: 'Partner created' })
-  create(@Body() body: any) {
+  create(@Body() body: CreatePartnerDto) {
     return this.partnersService.create(body);
   }
 
@@ -37,7 +39,7 @@ export class PartnersController {
   @Patch(':id')
   @ApiOperation({ summary: 'Admin: Update a partner' })
   @ApiResponse({ status: 200, description: 'Partner updated' })
-  update(@Param('id') id: string, @Body() body: any) {
+  update(@Param('id') id: string, @Body() body: UpdatePartnerDto) {
     return this.partnersService.update(id, body);
   }
 

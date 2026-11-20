@@ -6,6 +6,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../auth/entities/user.entity';
 import { CreateDeliveryDto } from './dto/create-delivery.dto';
+import { UpdateDeliveryDto } from './dto/update-delivery.dto';
 
 @ApiTags('Deliveries')
 @Controller('deliveries')
@@ -42,7 +43,7 @@ export class DeliveriesController {
   @Put(':id')
   @Roles(UserRole.ADMIN, UserRole.PARTNER)
   @ApiOperation({ summary: 'Admin/Partner: Update an existing delivery' })
-  update(@Param('id') id: string, @Body() body: any) {
+  update(@Param('id') id: string, @Body() body: UpdateDeliveryDto) {
     return this.deliveriesService.update(id, body);
   }
 

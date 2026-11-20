@@ -626,6 +626,35 @@ export class IotService {
     }
   }
 
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  cleanupStaleMemoryMaps() {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      // Bersihkan doorCounterMap yang bukan hari ini
+      for (const [key] of IotService.doorCounterMap.entries()) {
+        if (!key.endsWith(`:${today}`)) {
+          IotService.doorCounterMap.delete(key);
+        }
+      }
+
+      // Bersihkan lastInAppAlertSent & lastHistorySave yang lebih dari 7 hari
+      const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      for (const [key, timestamp] of IotService.lastInAppAlertSent.entries()) {
+        if (timestamp < sevenDaysAgo) {
+          IotService.lastInAppAlertSent.delete(key);
+        }
+      }
+      for (const [key, timestamp] of IotService.lastHistorySave.entries()) {
+        if (timestamp < sevenDaysAgo) {
+          IotService.lastHistorySave.delete(key);
+        }
+      }
+      this.logger.log('🧹 [MEMORY CLEANUP] Stale IoT memory maps cleaned up successfully.');
+    } catch (e: any) {
+      this.logger.error(`Failed to cleanup stale memory maps: ${e.message}`);
+    }
+  }
+
   // Cache memori telemetry live tercepat per unit ID (agar real-time 0 delay dan 0 write beban ke DB)
   private static readonly liveTelemetryMap = new Map<string, any>();
 

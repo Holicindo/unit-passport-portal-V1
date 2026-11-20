@@ -6,6 +6,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../auth/entities/user.entity';
 import { CreateInstallationDto } from './dto/create-installation.dto';
+import { UpdateInstallationDto } from './dto/update-installation.dto';
 
 @ApiTags('Installations')
 @Controller('installations')
@@ -42,7 +43,7 @@ export class InstallationsController {
   @Put(':id')
   @Roles(UserRole.ADMIN, UserRole.PARTNER)
   @ApiOperation({ summary: 'Admin/Partner: Update an existing installation' })
-  update(@Param('id') id: string, @Body() body: any) {
+  update(@Param('id') id: string, @Body() body: UpdateInstallationDto) {
     return this.installationsService.update(id, body);
   }
 

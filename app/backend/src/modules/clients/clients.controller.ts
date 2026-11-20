@@ -9,6 +9,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../auth/entities/user.entity';
 import { CreateClientDto } from './dto/create-client.dto';
+import { UpdateClientDto } from './dto/update-client.dto';
 
 @ApiTags('Clients Management')
 @Controller('clients')
@@ -45,7 +46,7 @@ export class ClientsController {
   }
   @Patch(':id')
   @ApiOperation({ summary: 'Admin: Update client' })
-  update(@Param('id') id: string, @Body() data: any) {
+  update(@Param('id') id: string, @Body() data: UpdateClientDto) {
     return this.clientsService.update(id, data);
   }
 

@@ -38,24 +38,26 @@ async function bootstrap() {
   });
 
   // Swagger Configuration
-  const config = new DocumentBuilder()
-    .setTitle('Holicindo Unit Passport API [Phase 1]')
-    .setDescription(
-      'REST API for managing equipment lifecycles, warranties, and technical documentation. ' +
-      'Implements 4 Access Levels: Public (QR), Client (Fleet), Partner (Technical), and Admin (Internal).',
-    )
-    .setVersion('1.0')
-    .addTag('Authentication', 'Login and account management')
-    .addTag('Units Management', 'Equipment tracking, QR scanning, and technical diagrams')
-    .addTag('Clients Management', 'Customer data and fleet ownership')
-    .addTag('Partners Management', 'Service technician network')
-    .addTag('Warranties', 'Unit warranty periods')
-    .addTag('Service Logs', 'Maintenance and repair records')
-    .addBearerAuth()
-    .build();
-    
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api-docs', app, document);
+  if (process.env.ENABLE_SWAGGER === 'true' || process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('Holicindo Unit Passport API [Phase 1]')
+      .setDescription(
+        'REST API for managing equipment lifecycles, warranties, and technical documentation. ' +
+        'Implements 4 Access Levels: Public (QR), Client (Fleet), Partner (Technical), and Admin (Internal).',
+      )
+      .setVersion('1.0')
+      .addTag('Authentication', 'Login and account management')
+      .addTag('Units Management', 'Equipment tracking, QR scanning, and technical diagrams')
+      .addTag('Clients Management', 'Customer data and fleet ownership')
+      .addTag('Partners Management', 'Service technician network')
+      .addTag('Warranties', 'Unit warranty periods')
+      .addTag('Service Logs', 'Maintenance and repair records')
+      .addBearerAuth()
+      .build();
+      
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api-docs', app, document);
+  }
 
   const port = process.env.PORT ?? 3001;
   await app.listen(port);
