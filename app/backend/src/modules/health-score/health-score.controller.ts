@@ -1,8 +1,11 @@
-import { Controller, Get, Post, Param } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Controller, Get, Post, Param, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { HealthScoreService } from './health-score.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('Health Score')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('health-scores')
 export class HealthScoreController {
   constructor(private readonly healthScoreService: HealthScoreService) {}

@@ -49,14 +49,15 @@ export default function QCDashboardPage() {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
+      const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
       
       // Fetch units count
-      const unitsRes = await axios.get('http://localhost:3001/units', {
+      const unitsRes = await axios.get(`${API_BASE}/units`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       // Fetch reports count
-      const reportsRes = await axios.get('http://localhost:3001/reports', {
+      const reportsRes = await axios.get(`${API_BASE}/reports`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
