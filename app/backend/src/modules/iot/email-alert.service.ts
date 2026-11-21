@@ -64,7 +64,16 @@ export class EmailAlertService {
     }
 
     const defaultAdminEmail = this.configService.get<string>('ADMIN_ALERT_EMAIL') || this.configService.get<string>('ADMIN_EMAIL') || 'admin@holicindo.com';
-    const recipients = Array.from(new Set([...(payload.to || []), defaultAdminEmail])).filter(Boolean);
+    
+    // Daftar email yang dikecualikan dari penerimaan alert IoT
+    const EXCLUDED_EMAILS = [
+      'mp@holicindo.com',
+      'follow-up03@holicindo.com',
+    ].map(e => e.toLowerCase().trim());
+
+    const recipients = Array.from(new Set([...(payload.to || []), defaultAdminEmail]))
+      .filter(Boolean)
+      .filter(email => !EXCLUDED_EMAILS.includes(email.toLowerCase().trim()));
 
     if (recipients.length === 0) {
       this.logger.warn(`Tidak ada alamat email penerima untuk unit ${payload.unitSerialNumber}`);
