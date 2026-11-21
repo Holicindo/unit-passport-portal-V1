@@ -20,10 +20,10 @@ export interface AlertEmailPayload {
 export class EmailAlertService {
   private readonly logger = new Logger(EmailAlertService.name);
   private transporter: nodemailer.Transporter | null = null;
-  // Anti-spam cooldown map: key: `${unitId}:${alertType}` => timestamp (ms)
+  // Anti-spam cooldown map per unit: key: unitSerialNumber => timestamp (ms)
   private readonly alertCooldownMap = new Map<string, number>();
-  // Default cooldown 1 jam agar tidak flooding email
-  private readonly COOLDOWN_MS = 60 * 60 * 1000;
+  // Cooldown 7 jam per unit agar tidak flooding email spam
+  private readonly COOLDOWN_MS = 7 * 60 * 60 * 1000;
 
   constructor(private readonly configService: ConfigService) {
     this.initTransporter();
@@ -51,15 +51,24 @@ export class EmailAlertService {
 
   /**
    * Kirim email warning ke admin & user terkait jika ambang batas IoT terlampaui.
+   * Hanya mengirim jika severity === 'CRITICAL' dengan cooldown 7 jam per unit.
    */
   async sendIotAlertEmail(payload: AlertEmailPayload): Promise<boolean> {
-    const cooldownKey = `${payload.unitSerialNumber}:${payload.alertType}`;
+    // 1. FILTER KETAT: Hanya kirim email untuk alert yang benar-benar SANGAT KRITIKAL
+    if (payload.severity !== 'CRITICAL') {
+      this.logger.debug(`ℹ️ Email diabaikan untuk alert ${payload.alertType} (severity: ${payload.severity} bukan CRITICAL)`);
+      return false;
+    }
+
+    // 2. Cooldown 7 jam per unit (global per unit)
+    const cooldownKey = payload.unitSerialNumber;
     const now = Date.now();
     const lastSent = this.alertCooldownMap.get(cooldownKey) || 0;
 
     if (now - lastSent < this.COOLDOWN_MS) {
       const remainingMin = Math.round((this.COOLDOWN_MS - (now - lastSent)) / 60000);
-      this.logger.debug(`⏳ Email alert untuk ${cooldownKey} sedang dalam cooldown (${remainingMin} menit tersisa)`);
+      const remainingHours = (remainingMin / 60).toFixed(1);
+      this.logger.debug(`⏳ Email alert untuk unit ${cooldownKey} sedang dalam cooldown 7 jam (${remainingHours} jam tersisa)`);
       return false;
     }
 
